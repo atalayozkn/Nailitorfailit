@@ -1,0 +1,122 @@
+HexGen Documentation
+Version: 1.1.0
+Author: Yigit Saglam a.k.a. Armin Prime
+Category: Hex-Based Map and Level Generator for Unity
+Introduction
+HexGen is a powerful Unity tool designed for game developers who need an easy and efficient way to generate hexagonal grid-based maps. It is ideal for strategy games, turn-based tactics, tabletop simulations, and resource management games. HexGen allows users to paint biomes, adjust terrain height, and generate a complete hex-based world directly within the Unity Editor.
+
+Installation Requirements
+Unity 2022.3 or later (Tested on windows but possibly works on mac too.)
+Unity Editor access
+
+Setup
+Import the HexGen package into your Unity project.
+Once imported, go to Tools > HexGen > Generate World to open the Hex Editor.
+
+
+
+Features Overview
+
+1. Biome Painting
+Assign different biomes to individual hex tiles.
+Biomes can have unique materials and colors.
+Supports custom biome creation.
+
+2. Height Painting
+Adjust the height of individual hex tiles.
+Visual feedback for height changes in the painting canvas.
+Smooth height transitions for better terrain shaping.
+
+3. Biome Generation Tool
+Create new biomes quickly from the Unity Editor.
+Assign custom materials and colors for easy identification.
+Accessible from Tools > HexGen > Generate New Biome.
+
+4. Save & Load System
+Save your hex map as a JSON file.
+Reload maps with previously assigned biomes and height values.
+Save maps in Assets/HexMapGenerator/Saves for easy access.
+
+5. World Generation
+Converts the painted hex grid into a full 3D world.
+Automatically applies biome materials and height settings.
+Generates optimized hex tiles with smooth shading and correct UV mapping.
+
+
+
+How to Use HexGen
+
+1. Opening the Hex Editor
+Navigate to Tools > HexGen > Generate World to open the Hex Editor window.
+
+2. Setting Up the Grid
+Define the width, height, and hex size for the map. (Recommended size: 1)
+Click "Confirm & Open Canvas" to start painting.
+
+3. Painting Biomes
+Select a biome from the list.
+Click and drag on the grid to paint hex tiles.
+The selected biome remains active until another is chosen.
+
+4. Painting Heights
+Switch to the Paint Heights tab.
+Adjust height using the slider.
+Click and drag on the grid to modify tile height visually.
+
+5. Saving & Loading Maps
+Enter a map name in the "Save Map" field.
+Click Save Map to store the current configuration.
+Click Load Map to restore a previously saved map.
+
+6. Generating the World
+Click Generate World to create 3D hex tiles.
+The world will be generated based on the assigned biomes and heights.
+
+
+
+Creating a Custom Biome
+
+1. Navigate to Tools/HexGen/Generate New Biome.
+
+2. Set the name of new biome asset.
+
+3. Assign a material and color.
+
+4. Your custom biome ready to use.
+
+
+
+Common Issues & Solutions
+
+1. Map does not generate
+Ensure you have painted at least one tile before clicking Generate World.
+Check the Unity console for errors.
+
+2. Biome colors do not update
+Try repainting the tiles and regenerating the world.
+Ensure each biome has a valid material assigned.
+
+3. Sidewalls appear black
+This is a feature of the custom shader.
+Adjust the sidewall color in the assigned material.
+
+4. Height painting not visible
+Ensure the height slider is set to a value above zero.
+Try repainting the tile to update visual feedback.
+
+
+Future Updates
+Advanced terrain blending.
+Procedural biome generation.
+Multi-layered hex grid support.
+Exporting maps to external formats.
+
+
+Support & Feedback
+If you encounter issues or have suggestions for HexGen, feel free to leave a comment or reach out via email:
+📧 yigitsaglamdev@gmail.com
+
+
+License
+This version of HexGen is free to use for personal and commercial projects. Redistribution, modification, or resale without permission is not allowed. Future versions may include additional licensing options.
+
