@@ -20,6 +20,10 @@ namespace PlayerScripts
         [Header("Input")]
         public InputActionReference move;
         public InputActionReference jump;
+        public InputActionReference sprint;
+
+        [Header("Sprint Settings")]
+        [SerializeField] private float sprintMultiplier = 3f;
 
         private Rigidbody rb;
         private Collider col;
@@ -35,7 +39,7 @@ namespace PlayerScripts
 
         private const int _carryLayerIndex = 1;
 
-        private bool _isGrounded;
+        [SerializeField] private bool _isGrounded;
 
         // Public property for actual speed
         public float CurrentSpeed => baseSpeed * speedMultiplier;
@@ -94,6 +98,8 @@ namespace PlayerScripts
                 SetCarrying(_playerCarry.IsCarrying);
 
                 _stateMachine.Tick();
+
+                HandleSprint();
             }
         }
         void FixedUpdate()
@@ -117,6 +123,20 @@ namespace PlayerScripts
             if (IsOwner)
             {
                 if (jump != null) jump.action.Disable();
+            }
+        }
+
+        private void HandleSprint()
+        {
+            if (sprint == null) return;
+
+            if (sprint.action.IsPressed() && _isGrounded)
+            {
+                speedMultiplier = sprintMultiplier;
+            }
+            else
+            {
+                speedMultiplier = 1f;
             }
         }
 

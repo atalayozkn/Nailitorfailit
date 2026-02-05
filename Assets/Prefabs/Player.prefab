@@ -98,9 +98,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!136 &3592478046540940422
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -165,14 +165,17 @@ MonoBehaviour:
   _animator: {fileID: 1130448257493552005}
   baseSpeed: 10
   rotationSpeed: 10
-  jumpForce: 7
+  jumpForce: 11
   groundMask:
     serializedVersion: 2
     m_Bits: 256
-  groundCheckDist: 0.01
+  groundCheckDist: 0.001
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  sprintMultiplier: 2
   _playerCarry: {fileID: 840326137979703875}
+  _isGrounded: 0
 --- !u!114 &-7872092929084345497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -509,22 +512,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClientNetworkAnimatorClientNetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
+  NetworkAnimatorExpanded: 0
+  AuthorityMode: 0
+  m_Animator: {fileID: 1130448257493552005}
   TransitionStateInfoList:
   - IsCrossFadeExit: 0
     Layer: 0
     OriginatingState: 2081823275
     DestinationState: -1938423366
-    TransitionDuration: 0
+    TransitionDuration: 0.25000095
     TriggerNameHash: 125937960
     TransitionIndex: 1
   - IsCrossFadeExit: 0
     Layer: 0
     OriginatingState: -1969774338
     DestinationState: -1938423366
-    TransitionDuration: 0
+    TransitionDuration: 0.25000018
     TriggerNameHash: 125937960
     TransitionIndex: 1
-  m_Animator: {fileID: 1130448257493552005}
+  AnimatorParameterEntries:
+    ParameterEntries:
+    - name: Speed
+      NameHash: -823668238
+      Synchronize: 1
+      ParameterType: 1
+    - name: IsCarrying
+      NameHash: 2126089053
+      Synchronize: 1
+      ParameterType: 4
+    - name: IsGrounded
+      NameHash: 507951781
+      Synchronize: 1
+      ParameterType: 4
+    - name: Jump
+      NameHash: 125937960
+      Synchronize: 1
+      ParameterType: 9
+  AnimatorParametersExpanded: 0
 --- !u!4 &6435648711927337471 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}

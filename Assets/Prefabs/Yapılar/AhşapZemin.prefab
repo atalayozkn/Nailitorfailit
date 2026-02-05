@@ -81,6 +81,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &7855835626133027986
 MeshFilter:
@@ -201,6 +202,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!64 &5860696512413968455
 MeshCollider:
@@ -237,7 +239,7 @@ GameObject:
   - component: {fileID: 6742107871131326298}
   - component: {fileID: 4183982035765873380}
   - component: {fileID: 3999394201363623291}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: "Ah\u015FapZemin"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,6 +311,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &6742107871131326298
 BoxCollider:
@@ -343,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3417856658
+  GlobalObjectIdHash: 535708387
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
