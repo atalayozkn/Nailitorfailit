@@ -1,7 +1,8 @@
 using UnityEngine;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine.InputSystem;
 using Interactions;
+using ItemScript;
 
 namespace PlayerScripts
 {
@@ -18,8 +19,8 @@ namespace PlayerScripts
         [SerializeField] private float maxChargeTime = 1.5f;
 
         [Header("Physics Settings")]
-       // [SerializeField] private float smoothForce = 15f; // Lowered default since we removed DeltaTime
-       // [SerializeField] private float maxDistance = 2.0f;
+        // [SerializeField] private float smoothForce = 15f; // Lowered default since we removed DeltaTime
+        // [SerializeField] private float maxDistance = 2.0f;
         [SerializeField] private float minThrowForce = 5f;
         [SerializeField] private float maxThrowForce = 25f;
         [SerializeField] private float speedPerWeight = 0.5f;
@@ -29,7 +30,7 @@ namespace PlayerScripts
 
         private Rigidbody carriedRb;
         private IPickupable currentCarriable;
-        private NetworkObject currentNetObj;
+        private NetworkIdentity currentNetObj;
 
         private float interactPressStartTime;
         public bool IsCarrying => currentCarriable != null;
@@ -40,14 +41,19 @@ namespace PlayerScripts
             detector = GetComponent<InteractionDetector>();
         }
 
-        public override void OnNetworkSpawn()
+        public override void OnStartLocalPlayer()
         {
-            if (IsOwner) m_interactAction?.action.Enable();
+            if (m_interactAction != null) m_interactAction.action.Enable();
+        }
+        public override void OnStopLocalPlayer()
+        {
+            if (m_interactAction != null) m_interactAction.action.Disable();
         }
 
         private void Update()
         {
-            if (!IsOwner) return;
+            if (!isOwned) return;
+
             HandleInput();
         }
 
@@ -72,6 +78,7 @@ namespace PlayerScripts
             }
         }
 
+
         private void PerformInteraction()
         {
             bool foundTarget = detector.TryFindTarget(transform.position, out IInteractable target, out Collider targetCol);
@@ -80,31 +87,32 @@ namespace PlayerScripts
             {
                 if (foundTarget)
                 {
-                    // WorkStation.Interact() true dönerse buraya girer
+                    // WorkStation.Interact() true dï¿½nerse buraya girer
                     if (target.Interact(currentCarriable))
                     {
-                        // SENARYO 1: Ýnþaata tuðla koyduk (Yok olmalý)
+                        // SENARYO 1: ï¿½nï¿½aata tuï¿½la koyduk (Yok olmalï¿½)
                         if (ShouldConsumeHeldItem(targetCol))
                         {
                             ConsumeHeldItem();
                         }
-                        // SENARYO 2: WorkStation'a ham madde koyduk (Yok olmamalý ama elimizden çýkmalý)
+                        // SENARYO 2: WorkStation'a ham madde koyduk (Yok olmamalï¿½ ama elimizden ï¿½ï¿½kmalï¿½)
                         else
                         {
-                            // BURASI EKSÝKTÝ: Nesneyi makineye verdik, artýk biz yönetmiyoruz.
+                            // BURASI EKSï¿½KTï¿½: Nesneyi makineye verdik, artï¿½k biz yï¿½netmiyoruz.
                             ReleaseObjectReference();
                         }
                         return;
                     }
                 }
-                DropObject(); // Hedef yoksa veya etkileþim baþarýsýzsa yere at
+                DropObject(); // Hedef yoksa veya etkileï¿½im baï¿½arï¿½sï¿½zsa yere at
             }
             else if (foundTarget) // Not carrying, Found something
             {
                 if (target is IPickupable)
                 {
-                    var netObj = targetCol.GetComponentInParent<NetworkObject>();
-                    if (netObj != null) RequestPickup(netObj);
+                    var netObj = targetCol.GetComponentInParent<NetworkIdentity>();
+                    //if (netObj != null) RequestPickup(netObj);
+                    if (netObj != null) CmdRequestPickup(netObj);
                 }
                 else
                 {
@@ -116,15 +124,16 @@ namespace PlayerScripts
         private bool ShouldConsumeHeldItem(Collider target)
         {
             // If the target is a "Construction", only consume if we are NOT using a tool
-            if (target.GetComponentInParent<IConstructable>() != null)
+            if (currentNetObj != null)
             {
-                return currentCarriable.Tool == Tools.None;
+                currentNetObj.gameObject.SetActive(false); // Gecikme olmasÄ±n diye kapa
+                CmdRequestDespawn(currentNetObj); // Server'a silmesini sÃ¶yle
             }
             return false;
         }
 
 
-        private void InitializeCarry(IPickupable item, NetworkObject netObj)
+        private void InitializeCarry(IPickupable item, NetworkIdentity netObj)
         {
             currentCarriable = item;
             currentNetObj = netObj;
@@ -183,7 +192,7 @@ namespace PlayerScripts
                 MoveHeldObject();
             }
         }
-        
+
 
         private void UpdateSpeed()
         {
@@ -224,13 +233,13 @@ namespace PlayerScripts
 
         private void ReleaseObjectReference()
         {
-            // Çarpýþmalarý tekrar aç (Eðer gerekirse, ama nesne artýk istasyonda olduðu için çok dert deðil)
+            // ï¿½arpï¿½ï¿½malarï¿½ tekrar aï¿½ (Eï¿½er gerekirse, ama nesne artï¿½k istasyonda olduï¿½u iï¿½in ï¿½ok dert deï¿½il)
             if (carriedRb != null)
             {
                 Physics.IgnoreCollision(GetComponent<Collider>(), carriedRb.GetComponent<Collider>(), false);
             }
 
-            // Referanslarý temizle - böylece FixedUpdate artýk bu objeyi hareket ettirmeye çalýþmaz
+            // Referanslarï¿½ temizle - bï¿½ylece FixedUpdate artï¿½k bu objeyi hareket ettirmeye ï¿½alï¿½ï¿½maz
             carriedRb = null;
             currentCarriable = null;
             currentNetObj = null;
@@ -245,7 +254,7 @@ namespace PlayerScripts
             {
                 // Hide immediately so it doesn't float while waiting for ping
                 currentNetObj.gameObject.SetActive(false);
-                RequestDespawnServerRpc(currentNetObj);
+                CmdRequestDespawn(currentNetObj);
             }
 
             // Manually clear state without triggering OnDrop logic
@@ -258,40 +267,63 @@ namespace PlayerScripts
             UpdateSpeed();
         }
 
-        // --- RPCs ---
-        [Rpc(SendTo.Server)]
-        private void RequestPickupOnPlayerServerRpc(NetworkObjectReference itemRef)
+
+        /*[Command]
+        private void RequestPickupOnPlayer(NetworkObjectReference itemRef)
         {
-            if (!itemRef.TryGet(out NetworkObject itemObj)) return;
+            if (!itemRef.TryGet(out NetworkIdentity itemObj)) return;
             if (itemObj.GetComponent<IPickupable>() == null) return;
 
             itemObj.ChangeOwnership(OwnerClientId);
             ReceiveItemClientRpc(itemRef, RpcTarget.Single(OwnerClientId, RpcTargetUse.Temp));
         }
-
-        [Rpc(SendTo.SpecifiedInParams)]
-        private void ReceiveItemClientRpc(NetworkObjectReference itemRef, RpcParams rpcParams = default)
+        //IT MAYBE CHANGE **********************************
+        [Command]//[Rpc(SendTo.SpecifiedInParams)]
+        private void CmdReceiveItem(NetworkObjectReference itemRef, RpcParams rpcParams = default)
         {
-            if (itemRef.TryGet(out NetworkObject itemObj))
+            if (itemRef.TryGet(out NetworkIdentity itemObj))
             {
                 var item = itemObj.GetComponent<IPickupable>();
                 if (item != null) InitializeCarry(item, itemObj);
             }
         }
 
-        private void RequestPickup(NetworkObject itemNetworkObject)
+        private void RequestPickup(NetworkIdentity itemNetworkObject)
         {
             if (!IsOwner) return;
             RequestPickupOnPlayerServerRpc(itemNetworkObject);
+        }*/
+
+        [Command]
+        private void CmdRequestDespawn(NetworkIdentity itemNetObj)
+        {
+            if (itemNetObj != null)
+            {
+                NetworkServer.Destroy(itemNetObj.gameObject);
+            }
         }
 
-        [Rpc(SendTo.Server)]
-        private void RequestDespawnServerRpc(NetworkObjectReference itemRef)
+
+        [Command]
+        private void CmdRequestPickup(NetworkIdentity itemObj)
         {
-            if (itemRef.TryGet(out NetworkObject itemNetObj))
+            if (itemObj == null) return;
+            if (itemObj.GetComponent<IPickupable>() == null) return;
+
+            // Mirror'da yetki verme (Opsiyonel, eÄŸer istemci fizik kontrolÃ¼ yapacaksa)
+            itemObj.RemoveClientAuthority();
+            itemObj.AssignClientAuthority(connectionToClient);
+
+            // Sadece bu oyuncuya "Eline al" mesajÄ± gÃ¶nder
+            TargetReceiveItem(connectionToClient, itemObj);
+        }
+        [TargetRpc] // Sadece belli bir kiÅŸiye giden RPC
+        private void TargetReceiveItem(NetworkConnection target, NetworkIdentity itemObj)
+        {
+            if (itemObj != null)
             {
-                if (itemNetObj.IsSceneObject==true) itemNetObj.Despawn(false);
-                else itemNetObj.Despawn(true);
+                var item = itemObj.GetComponent<IPickupable>();
+                if (item != null) InitializeCarry(item, itemObj);
             }
         }
     }

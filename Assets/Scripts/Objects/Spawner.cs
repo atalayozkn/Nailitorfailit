@@ -1,5 +1,5 @@
 ﻿using Interactions;
-using Unity.Netcode;
+using Mirror;
 using Unity.VisualScripting;
 using UnityEngine;
 using ItemScript;
@@ -24,14 +24,13 @@ public class NetworkSpawner : NetworkBehaviour, IInteractable
     {
         // If the Server calls this, we execute logic immediately.
         // If a Client calls this, we send a message (RPC) to the server.
-        SpawnObjectServerRpc();
+        CmdSpawnObject();
     }
 
-    
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void SpawnObjectServerRpc()
+
+    [Command(requiresAuthority = false)] // Herkes spawn isteyebilsin diye false
+    private void CmdSpawnObject()
     {
-        Debug.Log("inside spawn");
         if (objectPrefab == null)
         {
             Debug.LogError("No Prefab assigned!");
@@ -41,21 +40,10 @@ public class NetworkSpawner : NetworkBehaviour, IInteractable
         Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
         Quaternion rot = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
 
-        // 3. Instantiate the object (Standard Unity stuff)
         CarriableObject instance = Instantiate(objectPrefab, pos, rot);
-
-        // 4. IMPORTANT: Tell Netcode to spawn it across the network
-        // This makes it appear on all 4 players' screens.
-        var networkObject = instance.GetComponent<NetworkObject>();
-        if (networkObject != null)
-        {
-            networkObject.Spawn();
-        }
-        else
-        {
-            Debug.LogError("The object you tried to spawn does not have a NetworkObject component!");
-        }
-
         instance.InitializeObject(this.materialType);
+
+        // Mirror'da DOĞRU spawn yöntemi:
+        NetworkServer.Spawn(instance.gameObject);
     }
 }

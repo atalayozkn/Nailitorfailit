@@ -1,5 +1,5 @@
 using PlayerScripts;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 using Interactions;
 
@@ -13,11 +13,12 @@ namespace ItemScript
         [Header("Interaction Data")]
         [Tooltip("If this item is a resource material (e.g. Brick), set it here.")]
         [SerializeField]
-        private NetworkVariable<MaterialType> netMaterialType = new NetworkVariable<MaterialType>(
+        /*private NetworkVariable<MaterialType> netMaterialType = new NetworkVariable<MaterialType>(
             MaterialType.None,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
-        );
+        );*/
+        private MaterialType netMaterialType = MaterialType.None;
         [SerializeField] private float itemWeight;
 
 
@@ -27,7 +28,8 @@ namespace ItemScript
         // Interface Implementation
         public string ItemType => itemType;
         public float Weight => itemWeight;
-        public MaterialType Material => netMaterialType.Value;
+        //public MaterialType Material => netMaterialType.Value; OLD COOP SYSTEM 
+        public MaterialType Material => netMaterialType;
         public Tools Tool => toolType;
 
         private Rigidbody rb;
@@ -64,17 +66,18 @@ namespace ItemScript
             }
         }
 
-        public override void OnNetworkSpawn()
+        public override void OnStartClient()
         {
-            base.OnNetworkSpawn();
-            float itemWeight = netMaterialType.Value.GetWeight();
+            //base.OnNetworkSpawn();
+            base.OnStartClient();
+            float itemWeight = netMaterialType.GetWeight();
         }
 
         public void InitializeObject(MaterialType typeOfMaterial)
         {
-            if (IsServer)
+            if (isServer)
             {
-                netMaterialType.Value = typeOfMaterial;
+                netMaterialType = typeOfMaterial;
             }
             else
             {
@@ -117,7 +120,7 @@ namespace ItemScript
         // Helper to check if this object is a specific material
         public bool IsMaterial(MaterialType requiredMaterial)
         {
-            return netMaterialType.Value == requiredMaterial;
+            return netMaterialType == requiredMaterial;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using PlayerScripts;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 using Interactions;
 using GameData;
@@ -17,22 +17,25 @@ namespace ItemScript
         [SerializeField] private Collider blockingCollider; // The collider that stops players walking through
 
         // Network State
-        private NetworkVariable<bool> isBuilt = new NetworkVariable<bool>(false);
+        //private NetworkVariable<bool> isBuilt = new NetworkVariable<bool>(false); WITH THE MIRROR SYSTEM IT HAS BEEN CHANGED
+
+        [SyncVar(hook = nameof(OnBuiltStateChanged))]
+        private bool isBuilt = false;
 
         // Properties from Profile
         public ConstructType ConstructType => profile != null ? profile.constructType : ConstructType.Frame;
-        public bool IsBuilt => isBuilt.Value;
+        public bool IsBuilt => isBuilt;
 
-        public override void OnNetworkSpawn()
+        /*public override void OnStartClient()
         {
             isBuilt.OnValueChanged += OnBuiltStateChanged;
             UpdateVisuals(isBuilt.Value);
-        }
+        }*/
 
-        public override void OnNetworkDespawn()
+        /*public override void OnStopClient()
         {
             isBuilt.OnValueChanged -= OnBuiltStateChanged;
-        }
+        }*/
 
         private void OnBuiltStateChanged(bool prev, bool curr)
         {
@@ -49,24 +52,25 @@ namespace ItemScript
         public bool Interact(IPickupable heldItem)
         {
             Debug.Log("Interacting with ConstructObject");
-            if (isBuilt.Value) return false;
+            if (isBuilt) return false;
             if (heldItem == null) return false;
             if (profile == null) return false;
 
             // Check Material match
             if (heldItem.Material == profile.requiredMaterial)
             {
-                BuildServerRpc();
+                CmdBuildServer();
                 return true; // Return true to destroy the material in player's hand
             }
 
             return false;
         }
 
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        private void BuildServerRpc()
+
+        [Command]//[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void CmdBuildServer()
         {
-            isBuilt.Value = true;
+            isBuilt = true;
             // You could add logic here for "Partial Builds" (requiring 3 wood instead of 1)
         }
     }

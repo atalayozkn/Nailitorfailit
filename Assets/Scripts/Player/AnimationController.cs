@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
 public class AnimationController : NetworkBehaviour
@@ -24,7 +24,7 @@ public class AnimationController : NetworkBehaviour
 
     void Update()
     {
-        if (!IsOwner) return;
+        if (!isOwned) return;
         // 1. Calculate Actual Speed
         float currentSpeed = 0f;
 
