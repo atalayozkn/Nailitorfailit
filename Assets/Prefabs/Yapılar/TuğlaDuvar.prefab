@@ -89,6 +89,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!64 &4724457259969160256
 MeshCollider:
@@ -127,7 +128,7 @@ GameObject:
   - component: {fileID: 3999394201363623291}
   m_Layer: 0
   m_Name: "Tu\u011FlaDuvar"
-  m_TagString: Untagged
+  m_TagString: WallOrFloor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -197,6 +198,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &6742107871131326298
 BoxCollider:
@@ -231,7 +233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 17923834
+  GlobalObjectIdHash: 378704091
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -261,6 +263,8 @@ MonoBehaviour:
   ghostMesh: {fileID: 5218742291934528437}
   builtMesh: {fileID: 2576657057858181299}
   blockingCollider: {fileID: 0}
+  isBuilt:
+    m_InternalValue: 0
 --- !u!1 &5218742291934528437
 GameObject:
   m_ObjectHideFlags: 0
@@ -349,6 +353,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &8176866528786001059
 GameObject:

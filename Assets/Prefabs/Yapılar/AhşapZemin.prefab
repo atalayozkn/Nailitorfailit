@@ -241,7 +241,7 @@ GameObject:
   - component: {fileID: 3999394201363623291}
   m_Layer: 8
   m_Name: "Ah\u015FapZemin"
-  m_TagString: Untagged
+  m_TagString: WallOrFloor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -346,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 535708387
+  GlobalObjectIdHash: 2867534948
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -376,6 +376,8 @@ MonoBehaviour:
   ghostMesh: {fileID: 1497840362943458631}
   builtMesh: {fileID: 941347510501044460}
   blockingCollider: {fileID: 0}
+  isBuilt:
+    m_InternalValue: 0
 --- !u!1 &8176866528786001059
 GameObject:
   m_ObjectHideFlags: 0
