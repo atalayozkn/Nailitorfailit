@@ -8649,7 +8649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7559842654472181205, guid: 7f07b88660dc54b4b81f0ef4116d09d8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7559842654472181205, guid: 7f07b88660dc54b4b81f0ef4116d09d8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -19953,7 +19953,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
+  m_CustomShadowLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
@@ -19985,13 +19985,13 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
-    m_Type: 0
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
     m_Bias: 0.05
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 1
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
