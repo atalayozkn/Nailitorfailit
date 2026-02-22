@@ -1,5 +1,5 @@
 using System.Collections;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -67,7 +67,7 @@ namespace PlayerScripts
         }
         void Update()
         {
-            if (IsOwner)
+            if (isOwned)
             {
                 // 1. Check Ground (Simple Center Raycast)
                 // (Using bounds.extents.y gets us to the bottom of the collider regardless of shape)
@@ -104,23 +104,23 @@ namespace PlayerScripts
         }
         void FixedUpdate()
         {
-            if (!IsOwner) return;
+            if (!isOwned) return;
             HandleMovement();
         }
 
-        public override void OnNetworkSpawn()
+        public override void OnStartClient()
         {
             // Use OnNetworkSpawn instead of Start for Netcode initialization
-            if (IsOwner)
+            if (isOwned)
             {
                 if (jump != null) jump.action.Enable();
             }
         }
 
-        public override void OnNetworkDespawn()
+        public override void OnStopClient()
         {
             // Use OnNetworkDespawn instead of OnDisable
-            if (IsOwner)
+            if (isOwned)
             {
                 if (jump != null) jump.action.Disable();
             }

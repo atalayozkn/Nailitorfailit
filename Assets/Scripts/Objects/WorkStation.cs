@@ -2,7 +2,7 @@
 using ItemScript;
 using GameData;
 using System.Collections.Generic;
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
 public class WorkStation : NetworkBehaviour, IInteractable
@@ -17,31 +17,36 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
     // Network State
     // We store the index of the recipe currently being processed (-1 if none)
+    /* WITH THE MIRROR SYSTEM IT HAS BEEN CHANGED
     private NetworkVariable<int> activeRecipeIndex = new NetworkVariable<int>(-1);
     private NetworkVariable<float> currentProgress = new NetworkVariable<float>(0f);
     private NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
-
+    */
+    // Eğer değer değişince metod çalışsın istersen: [SyncVar(hook = nameof(OnRecipeChanged))]
+    [SyncVar] private int activeRecipeIndex = -1;
+    [SyncVar(hook = nameof(OnProgressChanged))] private float currentProgress = 0f;
+    [SyncVar] private bool isOccupied = false;
     // Local Reference
     private CarriableObject currentHeldItem;
 
-    public override void OnNetworkSpawn()
+    /*public override void OnStartClient()
     {
         currentProgress.OnValueChanged += OnProgressChanged;
     }
 
-    public override void OnNetworkDespawn()
+    public override void OnStopClient()
     {
         currentProgress.OnValueChanged -= OnProgressChanged;
-    }
+    }*/
 
     private void OnProgressChanged(float oldVal, float newVal)
     {
         // Update UI locally based on Network Data
         if (progressBar != null)
         {
-            if (activeRecipeIndex.Value != -1)
+            if (activeRecipeIndex != -1)
             {
-                float maxTime = validRecipes[activeRecipeIndex.Value].workDuration;
+                float maxTime = validRecipes[activeRecipeIndex].workDuration;
                 progressBar.value = newVal / maxTime;
                 progressBar.gameObject.SetActive(newVal > 0);
             }
@@ -55,7 +60,7 @@ public class WorkStation : NetworkBehaviour, IInteractable
     public bool Interact(IPickupable heldItem)
     {
         // 1. PLACE ITEM (If hands full, station empty)
-        if (heldItem != null && !isOccupied.Value)
+        if (heldItem != null && !isOccupied)
         {
             CarriableObject obj = heldItem as CarriableObject;
             if (obj == null) return false;
@@ -65,19 +70,19 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
             if (recipeIdx != -1)
             {
-                PlaceItemServerRpc(obj.NetworkObjectId, recipeIdx);
+                CmdPlaceItem(obj.netId, recipeIdx);
                 return true;
             }
             return false; // This station doesn't accept this item
         }
 
         // 2. DO WORK (If hands empty/tool, station occupied)
-        if (isOccupied.Value)
+        if (isOccupied)
         {
             // Optional: Check if player is holding the required tool defined in the recipe
             Tools heldToolType = heldItem != null ? heldItem.Tool : Tools.None;
 
-            RequestWorkServerRpc();
+            CmdRequestWork();
             return true;
         }
 
@@ -93,11 +98,11 @@ public class WorkStation : NetworkBehaviour, IInteractable
         return -1;
     }
 
-    [Rpc(SendTo.Server)]
-    private void PlaceItemServerRpc(ulong objectId, int recipeIndex)
+    [Command(requiresAuthority = false)]
+    private void CmdPlaceItem(uint objectNetId, int recipeIndex)
     {
 
-        if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objectId, out NetworkObject netObj))
+        if (NetworkServer.spawned.TryGetValue(objectNetId, out NetworkIdentity netObj))
         {
             currentHeldItem = netObj.GetComponent<CarriableObject>();
 
@@ -118,23 +123,23 @@ public class WorkStation : NetworkBehaviour, IInteractable
             currentHeldItem.transform.rotation = placementPoint.rotation;
 
             // Update State
-            isOccupied.Value = true;
-            activeRecipeIndex.Value = recipeIndex;
-            currentProgress.Value = 0f;
+            isOccupied = true;
+            activeRecipeIndex = recipeIndex;
+            currentProgress = 0f;
         }
     }
 
-    [Rpc(SendTo.Server)]
-    private void RequestWorkServerRpc()
+    [Command(requiresAuthority = false)]
+    private void CmdRequestWork()
     {
-        if (activeRecipeIndex.Value == -1) return;
+        if (activeRecipeIndex == -1) return;
 
-        ProcessingRecipe recipe = validRecipes[activeRecipeIndex.Value];
+        ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
 
         // Increment Progress
-        currentProgress.Value += 0.5f; // Adjust "Work Speed" here
+        currentProgress += 0.5f; // Adjust "Work Speed" here
 
-        if (currentProgress.Value >= recipe.workDuration)
+        if (currentProgress >= recipe.workDuration)
         {
             CompleteRecipe(recipe);
         }
@@ -145,7 +150,7 @@ public class WorkStation : NetworkBehaviour, IInteractable
         // 1. Destroy Input
         if (currentHeldItem != null)
         {
-            currentHeldItem.GetComponent<NetworkObject>().Despawn(true);
+            NetworkServer.Destroy(currentHeldItem.gameObject);
         }
 
         // 2. Spawn Output(s)
@@ -153,13 +158,13 @@ public class WorkStation : NetworkBehaviour, IInteractable
         {
             Vector3 offset = new Vector3(Random.Range(-0.2f, 0.2f), 0.2f, Random.Range(-0.2f, 0.2f));
             GameObject product = Instantiate(recipe.outputPrefab, placementPoint.position + offset, Quaternion.identity);
-            product.GetComponent<NetworkObject>().Spawn();
+            NetworkServer.Spawn(product);
         }
 
         // 3. Reset Station
-        isOccupied.Value = false;
-        activeRecipeIndex.Value = -1;
-        currentProgress.Value = 0f;
+        isOccupied = false;
+        activeRecipeIndex = -1;
+        currentProgress = 0f;
         currentHeldItem = null;
     }
 }

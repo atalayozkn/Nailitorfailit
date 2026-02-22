@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Unity.Netcode;
+using Mirror;
 using PlayerScripts;
 
 public class ClientNetworkController : NetworkBehaviour
@@ -13,11 +13,11 @@ public class ClientNetworkController : NetworkBehaviour
         m_PlayerCarry.enabled = false;
     }
 
-    public override void OnNetworkSpawn()
+    public override void OnStartClient()
     {
-        base.OnNetworkSpawn();
+        base.OnStartClient();
 
-        if (IsOwner)
+        if (isOwned)
         {
             m_PlayerCarry.enabled = true;
             m_PlayerMove.enabled = true;
