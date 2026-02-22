@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -4783679648070365986}
   - component: {fileID: 1123250922776686838}
   - component: {fileID: 6283816340342176705}
+  - component: {fileID: 4682092854546149096}
   m_Layer: 0
   m_Name: kutu
   m_TagString: Pickup
@@ -95,6 +96,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &4249530769672492423
 BoxCollider:
@@ -244,12 +246,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 466282a0643119c4983b87f9c2ac2b76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: "Assembly-CSharp::\u0130temScript.CarriableOject"
-  ShowTopMostFoldoutHeaderGroup: 1
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   itemType: CarriableItem
-  netMaterialType:
-    m_InternalValue: 1
+  netMaterialType: 0
   itemWeight: 1
   toolType: 0
+--- !u!114 &4682092854546149096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6479617406932401784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 3039673156
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &6847380008224245991
 GameObject:
   m_ObjectHideFlags: 0
