@@ -1,8 +1,9 @@
-﻿using PlayerScripts;
-using Mirror;
-using UnityEngine;
+﻿using GameData;
 using Interactions;
-using GameData;
+using Mirror;
+using PlayerScripts;
+using System;
+using UnityEngine;
 
 namespace ItemScript
 {
@@ -21,6 +22,8 @@ namespace ItemScript
 
         [SyncVar(hook = nameof(OnBuiltStateChanged))]
         private bool isBuilt = false;
+
+        public Action<ConstructObject> OnBuilt;
 
         // Properties from Profile
         public ConstructType ConstructType => profile != null ? profile.constructType : ConstructType.Frame;
