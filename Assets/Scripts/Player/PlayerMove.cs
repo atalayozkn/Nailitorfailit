@@ -40,6 +40,7 @@ namespace PlayerScripts
         private const int _carryLayerIndex = 1;
 
         [SerializeField] private bool _isGrounded;
+        public bool IsGroundedPublic => _isGrounded;
 
         // Public property for actual speed
         public float CurrentSpeed => baseSpeed * speedMultiplier;
