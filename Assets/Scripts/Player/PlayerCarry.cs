@@ -55,8 +55,23 @@ namespace PlayerScripts
             if (!isOwned) return;
 
             HandleInput();
+            if (IsCarrying == false && m_interactAction.action.IsPressed())
+            {
+                TryHoldWork();
+            }
         }
 
+        private void TryHoldWork()
+        {
+            bool foundTarget = detector.TryFindTarget(transform.position, out IInteractable target, out Collider col);
+
+            if (!foundTarget) return;
+
+            if (target is WorkStation station)
+            {
+                station.RequestHoldWork();
+            }
+        }
 
         private void HandleInput()
         {
@@ -123,12 +138,12 @@ namespace PlayerScripts
 
         private bool ShouldConsumeHeldItem(Collider target)
         {
-            // If the target is a "Construction", only consume if we are NOT using a tool
-            if (currentNetObj != null)
+            // Sadece Construction gibi özel objelerde tüket
+            if (target.GetComponent<ConstructObject>() != null)
             {
-                currentNetObj.gameObject.SetActive(false); // Gecikme olmasın diye kapa
-                CmdRequestDespawn(currentNetObj); // Server'a silmesini söyle
+                return true;
             }
+
             return false;
         }
 
@@ -236,6 +251,7 @@ namespace PlayerScripts
             // �arp��malar� tekrar a� (E�er gerekirse, ama nesne art�k istasyonda oldu�u i�in �ok dert de�il)
             if (carriedRb != null)
             {
+                carriedRb.isKinematic = true;
                 Physics.IgnoreCollision(GetComponent<Collider>(), carriedRb.GetComponent<Collider>(), false);
             }
 
@@ -244,6 +260,7 @@ namespace PlayerScripts
             currentCarriable = null;
             currentNetObj = null;
             UpdateSpeed();
+
         }
         private void ConsumeHeldItem()
         {

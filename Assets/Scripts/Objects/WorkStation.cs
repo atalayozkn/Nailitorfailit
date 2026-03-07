@@ -15,6 +15,10 @@ public class WorkStation : NetworkBehaviour, IInteractable
     [SerializeField] private Transform placementPoint;
     [SerializeField] private UnityEngine.UI.Slider progressBar;
 
+    [Header("Wood")]
+    [SerializeField] private Transform putTableHere;
+    private bool justPlacedItem = false;
+
     // Network State
     // We store the index of the recipe currently being processed (-1 if none)
     /* WITH THE MIRROR SYSTEM IT HAS BEEN CHANGED
@@ -42,19 +46,25 @@ public class WorkStation : NetworkBehaviour, IInteractable
     private void OnProgressChanged(float oldVal, float newVal)
     {
         // Update UI locally based on Network Data
-        if (progressBar != null)
+        if (progressBar == null) return;
+
+        if (activeRecipeIndex != -1)
         {
-            if (activeRecipeIndex != -1)
-            {
-                float maxTime = validRecipes[activeRecipeIndex].workDuration;
-                progressBar.value = newVal / maxTime;
-                progressBar.gameObject.SetActive(newVal > 0);
-            }
-            else
-            {
-                progressBar.gameObject.SetActive(false);
-            }
+            float maxTime = validRecipes[activeRecipeIndex].workDuration;
+
+            progressBar.gameObject.SetActive(true);
+            progressBar.value = newVal / maxTime;
         }
+        else
+        {
+            progressBar.gameObject.SetActive(false);
+        }
+    }
+
+    private void Start()
+    {
+        if (progressBar != null)
+            progressBar.gameObject.SetActive(false);
     }
 
     public bool Interact(IPickupable heldItem)
@@ -67,6 +77,8 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
             // Check if this item matches ANY recipe in our list
             int recipeIdx = GetRecipeIndexForMaterial(obj.Material);
+            Debug.Log("Material Type: " + obj.Material);
+            Debug.Log("Recipe Index: " + recipeIdx);
 
             if (recipeIdx != -1)
             {
@@ -82,11 +94,23 @@ public class WorkStation : NetworkBehaviour, IInteractable
             // Optional: Check if player is holding the required tool defined in the recipe
             Tools heldToolType = heldItem != null ? heldItem.Tool : Tools.None;
 
-            CmdRequestWork();
+            if (justPlacedItem)
+            {
+                justPlacedItem = false;
+                return true;
+            }
+
             return true;
         }
 
         return false;
+    }
+
+    public void RequestHoldWork()
+    {
+        if (!isOccupied) return;
+
+        CmdRequestWork();
     }
 
     private int GetRecipeIndexForMaterial(MaterialType mat)
@@ -101,32 +125,49 @@ public class WorkStation : NetworkBehaviour, IInteractable
     [Command(requiresAuthority = false)]
     private void CmdPlaceItem(uint objectNetId, int recipeIndex)
     {
-
-        if (NetworkServer.spawned.TryGetValue(objectNetId, out NetworkIdentity netObj))
+        if (putTableHere == null)
         {
-            currentHeldItem = netObj.GetComponent<CarriableObject>();
-
-            // Lock physics
-            Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
-            if (rb)
-            {
-                // Önce hızları sıfırla (Unity 6 kuralı)
-                // rb.linearVelocity = Vector3.zero;
-                // rb.angularVelocity = Vector3.zero;
-
-                // Sonra Kinematic yap
-                rb.isKinematic = true;
-            }
-
-            // Snap position
-            currentHeldItem.transform.position = placementPoint.position;
-            currentHeldItem.transform.rotation = placementPoint.rotation;
-
-            // Update State
-            isOccupied = true;
-            activeRecipeIndex = recipeIndex;
-            currentProgress = 0f;
+            Debug.LogError("PutTableHere is not assigned!");
+            return;
         }
+
+        Debug.Log("WORKSTATION PLACE ITEM CALLED");
+
+        if (!NetworkServer.spawned.TryGetValue(objectNetId, out NetworkIdentity netObj))
+            return;
+
+        currentHeldItem = netObj.GetComponent<CarriableObject>();
+        if (currentHeldItem == null) return;
+
+        Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+            currentHeldItem.GetComponent<Collider>().enabled = false;
+        }
+
+        Vector3 originalScale = currentHeldItem.transform.localScale;
+
+        currentHeldItem.transform.SetParent(putTableHere);
+
+        currentHeldItem.transform.localPosition = Vector3.zero;
+        currentHeldItem.transform.localRotation = Quaternion.identity;
+        currentHeldItem.transform.localScale = originalScale;
+
+        currentHeldItem.transform.position = putTableHere.position;
+        currentHeldItem.transform.rotation = putTableHere.rotation;
+
+        isOccupied = true;
+        activeRecipeIndex = recipeIndex;
+        currentProgress = 0f;
+
+        justPlacedItem = true;
     }
 
     [Command(requiresAuthority = false)]
@@ -136,8 +177,7 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
         ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
 
-        // Increment Progress
-        currentProgress += 0.5f; // Adjust "Work Speed" here
+        currentProgress += Time.deltaTime * 2f;
 
         if (currentProgress >= recipe.workDuration)
         {
@@ -166,5 +206,9 @@ public class WorkStation : NetworkBehaviour, IInteractable
         activeRecipeIndex = -1;
         currentProgress = 0f;
         currentHeldItem = null;
+        if (progressBar != null)
+        {
+            progressBar.gameObject.SetActive(false);
+        }
     }
 }
