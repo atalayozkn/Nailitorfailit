@@ -7,7 +7,8 @@ namespace Interactions
         Wood,
         HalfWood,
         MetalPlate,
-        Cement
+        Cement,
+        Battery
     }
 
     public static class MaterialExtensions

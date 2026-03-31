@@ -19,6 +19,9 @@ public class WorkStation : NetworkBehaviour, IInteractable
     [SerializeField] private Transform putTableHere;
     private bool justPlacedItem = false;
 
+    [Header("Power")]
+    [SerializeField] private Generator linkedGenerator;
+
     // Network State
     // We store the index of the recipe currently being processed (-1 if none)
     /* WITH THE MIRROR SYSTEM IT HAS BEEN CHANGED
@@ -69,6 +72,13 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
     public bool Interact(IPickupable heldItem)
     {
+        //POWER CHECK
+        if (linkedGenerator != null && !linkedGenerator.IsRunning)
+        {
+            Debug.Log("No power! Generator is off.");
+            return false;
+        }
+
         // 1. PLACE ITEM (If hands full, station empty)
         if (heldItem != null && !isOccupied)
         {
@@ -173,6 +183,10 @@ public class WorkStation : NetworkBehaviour, IInteractable
     [Command(requiresAuthority = false)]
     private void CmdRequestWork()
     {
+        //CHECK POWER
+        if (linkedGenerator != null && !linkedGenerator.IsRunning)
+            return;
+
         if (activeRecipeIndex == -1) return;
 
         ProcessingRecipe recipe = validRecipes[activeRecipeIndex];

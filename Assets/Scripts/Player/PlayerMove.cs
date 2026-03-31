@@ -23,8 +23,22 @@ namespace PlayerScripts
         public InputActionReference sprint;
 
         [Header("Sprint Settings")]
-        [SerializeField] private float sprintMultiplier = 3f;
+        [SerializeField] private float sprintMultiplier = 2f;
 
+        [Header("Energy Settings")]
+        [SerializeField] private float maxEnergy = 100f;
+        [SerializeField] private float currentEnergy = 100f;
+        [SerializeField] private float energyDrainDuration = 8f; // kaç saniyede bitsin
+        [SerializeField] private float energyRegenRate = 15f; // saniyede dolum
+        [SerializeField] private float sprintUnlockThreshold = 40f;
+        private bool canSprint = true;
+
+        [Header("Energy UI")]
+        [SerializeField] private GameObject energyCanvas;
+        [SerializeField] private UnityEngine.UI.Slider energySlider;
+        public float EnergyPercent => currentEnergy / maxEnergy;
+
+        [Header("RB , Collider , Etc.")]
         private Rigidbody rb;
         private Collider col;
         private float speedMultiplier = 1f;
@@ -101,6 +115,8 @@ namespace PlayerScripts
                 _stateMachine.Tick();
 
                 HandleSprint();
+                HandleEnergy();
+                UpdateEnergyUI();
             }
         }
         void FixedUpdate()
@@ -131,7 +147,9 @@ namespace PlayerScripts
         {
             if (sprint == null) return;
 
-            if (sprint.action.IsPressed() && _isGrounded)
+            bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
+
+            if (sprint.action.IsPressed() && _isGrounded && isMoving && canSprint)
             {
                 speedMultiplier = sprintMultiplier;
             }
@@ -187,6 +205,59 @@ namespace PlayerScripts
             _isGrounded = false; // Prevent double jump immediately
 
             StartCoroutine(CheckForGround());
+        }
+
+        //Koþarken enerji azalmasý sistemi
+        private void HandleEnergy()
+        {
+            float drainPerSecond = maxEnergy / energyDrainDuration;
+
+            bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
+            bool isSprinting = sprint.action.IsPressed() && _isGrounded && isMoving && canSprint;
+
+            if (isSprinting)
+            {
+                currentEnergy -= drainPerSecond * Time.deltaTime;
+
+                if (currentEnergy <= 0f)
+                {
+                    currentEnergy = 0f;
+                    canSprint = false;
+                }
+            }
+            else
+            {
+                // regen
+                currentEnergy += energyRegenRate * Time.deltaTime;
+                currentEnergy = Mathf.Clamp(currentEnergy, 0, maxEnergy);
+
+                if (!canSprint && currentEnergy >= sprintUnlockThreshold)
+                {
+                    canSprint = true;
+                }
+            }
+        }
+        //Kola içme sistemi
+        public void RefillEnergy()
+        {
+            currentEnergy = maxEnergy;
+            canSprint = true;
+        }
+        //Enerji barý UI
+        private void UpdateEnergyUI()
+        {
+            if (energySlider != null)
+            {
+                energySlider.value = EnergyPercent;
+            }
+
+            if (energyCanvas != null)
+            {
+                if (currentEnergy < maxEnergy)
+                    energyCanvas.SetActive(true);
+                else
+                    energyCanvas.SetActive(false);
+            }
         }
 
         /// <summary>
