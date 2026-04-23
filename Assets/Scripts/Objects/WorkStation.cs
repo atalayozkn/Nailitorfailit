@@ -70,50 +70,15 @@ public class WorkStation : NetworkBehaviour, IInteractable
             progressBar.gameObject.SetActive(false);
     }
 
-    public bool Interact(IPickupable heldItem)
+    public void Interact()
     {
-        //POWER CHECK
         if (linkedGenerator != null && !linkedGenerator.IsRunning)
         {
-            Debug.Log("No power! Generator is off.");
-            return false;
+            Debug.Log("No power!");
+            return;
         }
 
-        // 1. PLACE ITEM (If hands full, station empty)
-        if (heldItem != null && !isOccupied)
-        {
-            CarriableObject obj = heldItem as CarriableObject;
-            if (obj == null) return false;
-
-            // Check if this item matches ANY recipe in our list
-            int recipeIdx = GetRecipeIndexForMaterial(obj.Material);
-            Debug.Log("Material Type: " + obj.Material);
-            Debug.Log("Recipe Index: " + recipeIdx);
-
-            if (recipeIdx != -1)
-            {
-                CmdPlaceItem(obj.netId, recipeIdx);
-                return true;
-            }
-            return false; // This station doesn't accept this item
-        }
-
-        // 2. DO WORK (If hands empty/tool, station occupied)
-        if (isOccupied)
-        {
-            // Optional: Check if player is holding the required tool defined in the recipe
-            Tools heldToolType = heldItem != null ? heldItem.Tool : Tools.None;
-
-            if (justPlacedItem)
-            {
-                justPlacedItem = false;
-                return true;
-            }
-
-            return true;
-        }
-
-        return false;
+        Debug.Log("WorkStation çalıştı");
     }
 
     public void RequestHoldWork()
@@ -123,7 +88,7 @@ public class WorkStation : NetworkBehaviour, IInteractable
         CmdRequestWork();
     }
 
-    private int GetRecipeIndexForMaterial(MaterialType mat)
+    public int GetRecipeIndexForMaterial(MaterialType mat)
     {
         for (int i = 0; i < validRecipes.Count; i++)
         {
@@ -133,7 +98,7 @@ public class WorkStation : NetworkBehaviour, IInteractable
     }
 
     [Command(requiresAuthority = false)]
-    private void CmdPlaceItem(uint objectNetId, int recipeIndex)
+    public void CmdPlaceItem(uint objectNetId, int recipeIndex)
     {
         if (putTableHere == null)
         {
@@ -164,14 +129,9 @@ public class WorkStation : NetworkBehaviour, IInteractable
 
         Vector3 originalScale = currentHeldItem.transform.localScale;
 
-        currentHeldItem.transform.SetParent(putTableHere);
-
+        currentHeldItem.transform.SetParent(putTableHere, false);
         currentHeldItem.transform.localPosition = Vector3.zero;
         currentHeldItem.transform.localRotation = Quaternion.identity;
-        currentHeldItem.transform.localScale = originalScale;
-
-        currentHeldItem.transform.position = putTableHere.position;
-        currentHeldItem.transform.rotation = putTableHere.rotation;
 
         isOccupied = true;
         activeRecipeIndex = recipeIndex;

@@ -6,8 +6,6 @@ using ItemScript;
 
 namespace PlayerScripts
 {
-    [RequireComponent(typeof(InteractionDetector))]
-    [RequireComponent(typeof(PlayerMove))]
     public class PlayerCarry : NetworkBehaviour
     {
         [Header("Input References")]
@@ -88,53 +86,53 @@ namespace PlayerScripts
                 }
                 else
                 {
-                    PerformInteraction();
+                    //PerformInteraction();
                 }
             }
         }
 
 
-        private void PerformInteraction()
-        {
-            bool foundTarget = detector.TryFindTarget(transform.position, out IInteractable target, out Collider targetCol);
+        //private void PerformInteraction()
+        //{
+        //    bool foundTarget = detector.TryFindTarget(transform.position, out IInteractable target, out Collider targetCol);
 
-            if (IsCarrying)
-            {
-                if (foundTarget)
-                {
-                    // WorkStation.Interact() true d�nerse buraya girer
-                    if (target.Interact(currentCarriable))
-                    {
-                        // SENARYO 1: �n�aata tu�la koyduk (Yok olmal�)
-                        if (ShouldConsumeHeldItem(targetCol))
-                        {
-                            ConsumeHeldItem();
-                        }
-                        // SENARYO 2: WorkStation'a ham madde koyduk (Yok olmamal� ama elimizden ��kmal�)
-                        else
-                        {
-                            // BURASI EKS�KT�: Nesneyi makineye verdik, art�k biz y�netmiyoruz.
-                            ReleaseObjectReference();
-                        }
-                        return;
-                    }
-                }
-                DropObject(); // Hedef yoksa veya etkile�im ba�ar�s�zsa yere at
-            }
-            else if (foundTarget) // Not carrying, Found something
-            {
-                if (target is IPickupable)
-                {
-                    var netObj = targetCol.GetComponentInParent<NetworkIdentity>();
-                    //if (netObj != null) RequestPickup(netObj);
-                    if (netObj != null) CmdRequestPickup(netObj);
-                }
-                else
-                {
-                    target.Interact(null);
-                }
-            }
-        }
+        //    if (IsCarrying)
+        //    {
+        //        if (foundTarget)
+        //        {
+        //            // WorkStation.Interact() true d�nerse buraya girer
+        //            if (target.Interact(currentCarriable))
+        //            {
+        //                // SENARYO 1: �n�aata tu�la koyduk (Yok olmal�)
+        //                if (ShouldConsumeHeldItem(targetCol))
+        //                {
+        //                    ConsumeHeldItem();
+        //                }
+        //                // SENARYO 2: WorkStation'a ham madde koyduk (Yok olmamal� ama elimizden ��kmal�)
+        //                else
+        //                {
+        //                    // BURASI EKS�KT�: Nesneyi makineye verdik, art�k biz y�netmiyoruz.
+        //                    ReleaseObjectReference();
+        //                }
+        //                return;
+        //            }
+        //        }
+        //        DropObject(); // Hedef yoksa veya etkile�im ba�ar�s�zsa yere at
+        //    }
+        //    else if (foundTarget) // Not carrying, Found something
+        //    {
+        //        if (target is IPickupable)
+        //        {
+        //            var netObj = targetCol.GetComponentInParent<NetworkIdentity>();
+        //            //if (netObj != null) RequestPickup(netObj);
+        //            if (netObj != null) CmdRequestPickup(netObj);
+        //        }
+        //        else
+        //        {
+        //            target.Interact(null);
+        //        }
+        //    }
+        //}
 
         private bool ShouldConsumeHeldItem(Collider target)
         {
@@ -322,7 +320,7 @@ namespace PlayerScripts
 
 
         [Command]
-        private void CmdRequestPickup(NetworkIdentity itemObj)
+        public void CmdRequestPickup(NetworkIdentity itemObj)
         {
             if (itemObj == null) return;
             if (itemObj.GetComponent<IPickupable>() == null) return;

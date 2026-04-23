@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 168528455238306486}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.05, y: 3.5, z: 1.5}
+  m_LocalPosition: {x: 0.05, y: 3.5, z: 2.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -434,8 +434,9 @@ GameObject:
   - component: {fileID: 840326137979703875}
   - component: {fileID: 8564813831788924259}
   - component: {fileID: 7781830236373469118}
-  - component: {fileID: 8690829023282464063}
   - component: {fileID: 1846327409714867783}
+  - component: {fileID: 1847222439571193004}
+  - component: {fileID: 8690829023282464063}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -507,7 +508,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1
+  m_Radius: 1.3
   m_Height: 5
   m_Direction: 1
   m_Center: {x: 0, y: 2.5, z: 0}
@@ -533,7 +534,7 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 256
-  groundCheckDist: 0.001
+  groundCheckDist: 0.1
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -545,7 +546,6 @@ MonoBehaviour:
   sprintUnlockThreshold: 40
   energyCanvas: {fileID: 9010674887014516684}
   energySlider: {fileID: 5229945135023937070}
-  _playerCarry: {fileID: 840326137979703875}
   _isGrounded: 0
 --- !u!114 &-7872092929084345497
 MonoBehaviour:
@@ -563,7 +563,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   m_PlayerMove: {fileID: 3538265395436085258}
-  m_PlayerCarry: {fileID: 840326137979703875}
 --- !u!114 &840326137979703875
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,7 +570,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6863098076542287385}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff7526802fbfc8f4cb9ac5550ef8ff76, type: 3}
   m_Name: 
@@ -623,7 +622,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6863098076542287385}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3bc6fcb5907b1244cb4f42711f4edb03, type: 3}
   m_Name: 
@@ -633,23 +632,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   angleThreshold: 1
---- !u!114 &8690829023282464063
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6863098076542287385}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
-  sceneId: 0
-  _assetId: 1439793866
-  serverOnly: 0
-  visibility: 0
-  hasSpawned: 0
 --- !u!114 &1846327409714867783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -673,6 +655,41 @@ MonoBehaviour:
   jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   hitCooldown: 0.05
+--- !u!114 &1847222439571193004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6863098076542287385}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5293f461acc5b1a4ea9d2a8bd3b7b6aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteract
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  holdPoint: {fileID: 3459897167201899350}
+  currentTarget: {fileID: 0}
+--- !u!114 &8690829023282464063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6863098076542287385}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 1439793866
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &9010674887014516684
 GameObject:
   m_ObjectHideFlags: 0

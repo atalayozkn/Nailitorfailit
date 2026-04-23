@@ -5,22 +5,22 @@ using PlayerScripts;
 public class ClientNetworkController : NetworkBehaviour
 {
     [SerializeField] private PlayerMove m_PlayerMove;
-    [SerializeField] private PlayerCarry m_PlayerCarry;
+    //[SerializeField] private PlayerCarry m_PlayerCarry;
 
     private void Awake()
     {
-        m_PlayerMove.enabled = false;
-        m_PlayerCarry.enabled = false;
+        if (m_PlayerMove != null)
+            m_PlayerMove.enabled = false;
+
+        //if (m_PlayerCarry != null)
+        //    m_PlayerCarry.enabled = false;
     }
 
-    public override void OnStartClient()
+    public override void OnStartLocalPlayer()
     {
-        base.OnStartClient();
+        base.OnStartLocalPlayer();
 
-        if (isOwned)
-        {
-            m_PlayerCarry.enabled = true;
-            m_PlayerMove.enabled = true;
-        }
+        m_PlayerMove.enabled = true;
+        //m_PlayerCarry.enabled = true;
     }
 }

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 namespace PlayerScripts
 {
-    [RequireComponent(typeof(PlayerCarry))]
     public class InteractionDetector : MonoBehaviour
     {
         [Header("Detection Settings")]

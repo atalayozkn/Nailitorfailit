@@ -40,26 +40,12 @@ public class Generator : NetworkBehaviour, IInteractable
         UpdateLight();
     }
 
-    public bool Interact(IPickupable heldItem)
+    public void Interact()
     {
-        // 🔋 Battery ile doldurma
-        if (heldItem != null && heldItem is CarriableObject item)
-        {
-            if (item.Material == MaterialType.Battery)
-            {
-                CmdRefillGenerator();
-                return true; // item yok edilir
-            }
-        }
-
-        // ⚡ Normal çalıştırma
         if (!isRunning)
         {
             CmdStartGenerator();
-            return true;
         }
-
-        return false;
     }
 
     private void UpdateUI()

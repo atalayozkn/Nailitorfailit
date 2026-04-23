@@ -5,21 +5,15 @@ using Mirror;
 
 public class EnergyDrink : NetworkBehaviour, IInteractable
 {
-    public bool Interact(IPickupable heldItem)
+    public void Interact()
     {
-        // El doluyken içemesin (opsiyonel)
-        if (heldItem != null) return false;
-
         var player = NetworkClient.connection.identity.GetComponent<PlayerMove>();
 
         if (player != null)
         {
             player.RefillEnergy();
             CmdConsume();
-            return true;
         }
-
-        return false;
     }
 
     [Command(requiresAuthority = false)]

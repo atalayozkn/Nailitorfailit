@@ -2,8 +2,6 @@
 {
     public interface IInteractable
     {
-
-        bool Interact(IPickupable heldItem);
-
+        void Interact();
     }
 }

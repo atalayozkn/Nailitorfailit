@@ -11,13 +11,10 @@ public class NetworkSpawner : NetworkBehaviour, IInteractable
     public Transform spawnPoint;
     [SerializeField] private MaterialType materialType = MaterialType.None;
 
-
-    public bool Interact(IPickupable heldItem)
+    public void Interact()
     {
-        Debug.Log("inside interact");
-        // Sonradan bunu held item varsa kullanamazsın şeklinde yapmak lazım
+        Debug.Log("Spawner çalıştı");
         RequestSpawn();
-        return true;
     }
 
     public void RequestSpawn()

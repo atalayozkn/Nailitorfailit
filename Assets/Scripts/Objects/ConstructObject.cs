@@ -52,21 +52,11 @@ namespace ItemScript
             // if (blockingCollider) blockingCollider.enabled = built; // This is not needed because collider is on the builtmesh object
         }
 
-        public bool Interact(IPickupable heldItem)
+        public void Interact()
         {
-            Debug.Log("Interacting with ConstructObject");
-            if (isBuilt) return false;
-            if (heldItem == null) return false;
-            if (profile == null) return false;
+            if (isBuilt) return;
 
-            // Check Material match
-            if (heldItem.Material == profile.requiredMaterial)
-            {
-                CmdBuildServer();
-                return true; // Return true to destroy the material in player's hand
-            }
-
-            return false;
+            CmdBuildServer();
         }
 
 

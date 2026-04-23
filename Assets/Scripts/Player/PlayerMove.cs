@@ -42,7 +42,7 @@ namespace PlayerScripts
         private Rigidbody rb;
         private Collider col;
         private float speedMultiplier = 1f;
-        [SerializeField] private PlayerCarry _playerCarry;
+        //[SerializeField] private PlayerCarry _playerCarry;
 
         // Animation state machine for player animation
         private CharacterStateMachine _stateMachine;
@@ -110,7 +110,7 @@ namespace PlayerScripts
                     }
                 }
 
-                SetCarrying(_playerCarry.IsCarrying);
+                //SetCarrying(_playerCarry.IsCarrying);
 
                 _stateMachine.Tick();
 

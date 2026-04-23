@@ -41,16 +41,10 @@ namespace ItemScript
         private RigidbodyConstraints defaultConstraints;
 
 
-        public bool Interact(IPickupable heldItem)
+        public void Interact()
         {
-            // If the player is already holding something (heldItem != null), 
-            // we generally can't pick up another item.
-            if (heldItem != null) return false;
-
-            // If hands are empty, tell the player to pick THIS object up.
-            // Note: This requires the Player to handle the actual "Attaching" logic,
-            // but we signal that this interaction was a "Pickup" success.
-            return true;
+            Debug.Log("Item alýndý");
+            // pickup logic buraya
         }
 
         private void Awake()
