@@ -123,15 +123,21 @@ public class WorkStation : NetworkBehaviour, IInteractable
             rb.constraints = RigidbodyConstraints.FreezeAll;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            rb.constraints = RigidbodyConstraints.FreezeAll;
-            currentHeldItem.GetComponent<Collider>().enabled = false;
         }
+
+        Collider itemCol = currentHeldItem.GetComponent<Collider>();
+        if (itemCol != null)
+            itemCol.enabled = false;
 
         Vector3 originalScale = currentHeldItem.transform.localScale;
 
         currentHeldItem.transform.SetParent(putTableHere, false);
         currentHeldItem.transform.localPosition = Vector3.zero;
         currentHeldItem.transform.localRotation = Quaternion.identity;
+        currentHeldItem.transform.localScale = originalScale;
+
+        // Dünya uzayında da PutTableHere ile birebir eşitle
+        currentHeldItem.transform.SetPositionAndRotation(putTableHere.position, putTableHere.rotation);
 
         isOccupied = true;
         activeRecipeIndex = recipeIndex;

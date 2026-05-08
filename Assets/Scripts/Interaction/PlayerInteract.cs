@@ -58,12 +58,14 @@ public class PlayerInteract : NetworkBehaviour
             {
                 if (TryGetWorkStation(out WorkStation station))
                 {
-                    CmdPlaceToStation(currentNetObj.netId, station.netId);
+                    uint itemNetId = currentNetObj.netId;
+
+                    ReleaseHeldItemForStation();
+                    CmdPlaceToStation(itemNetId, station.netId);
                     return;
                 }
 
                 // 2) WorkStation değilse ama bir interact target varsa
-                //    (duvar / zemin gibi) önce onu dene
                 if (currentTarget != null)
                 {
                     CmdInteract(currentTarget.netId);
@@ -282,5 +284,24 @@ public class PlayerInteract : NetworkBehaviour
         // NORMAL INTERACT
         var interactable = id.GetComponent<IInteractable>();
         interactable?.Interact();
+    }
+
+    private void ReleaseHeldItemForStation()
+    {
+        if (!IsCarrying) return;
+
+        if (carriedRb != null)
+        {
+            Physics.IgnoreCollision(
+                GetComponentInParent<Collider>(),
+                carriedRb.GetComponent<Collider>(),
+                false
+            );
+        }
+
+        currentTarget = null;
+        carriedRb = null;
+        currentCarriable = null;
+        currentNetObj = null;
     }
 }
