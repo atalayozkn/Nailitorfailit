@@ -24,6 +24,11 @@ namespace PlayerScripts
 
         [Header("Sprint Settings")]
         [SerializeField] private float sprintMultiplier = 2f;
+        
+        [Header("Carrying Pickup")]
+        [SerializeField] private PlayerInteract playerInteract;
+        [SerializeField] private float carrySpeedMultiplier = 0.65f;
+        private bool IsCarryingObject => playerInteract != null && playerInteract.IsCarrying;
 
         [Header("Energy Settings")]
         [SerializeField] private float maxEnergy = 100f;
@@ -78,6 +83,9 @@ namespace PlayerScripts
             rb = GetComponent<Rigidbody>();
             col = GetComponent<Collider>();
 
+            if (playerInteract == null)
+                playerInteract = GetComponent<PlayerInteract>();
+
             _isGrounded = true;
         }
         void Update()
@@ -102,10 +110,9 @@ namespace PlayerScripts
                         _stateMachine.ChangeState(_idleState);
                     }
 
-                    if (jump.action.WasPressedThisFrame())
+                    if (!IsCarryingObject && jump.action.WasPressedThisFrame())
                     {
                         _stateMachine.ChangeState(_jumpState);
-
                         HandleJump();
                     }
                 }
@@ -113,6 +120,8 @@ namespace PlayerScripts
                 //SetCarrying(_playerCarry.IsCarrying);
 
                 _stateMachine.Tick();
+
+                SetCarrying(IsCarryingObject);
 
                 HandleSprint();
                 HandleEnergy();
@@ -148,6 +157,13 @@ namespace PlayerScripts
             if (sprint == null) return;
 
             bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
+
+            // taþýyorsa sprint tamamen kapalý
+            if (IsCarryingObject)
+            {
+                speedMultiplier = carrySpeedMultiplier;
+                return;
+            }
 
             if (sprint.action.IsPressed() && _isGrounded && isMoving && canSprint)
             {
@@ -213,7 +229,7 @@ namespace PlayerScripts
             float drainPerSecond = maxEnergy / energyDrainDuration;
 
             bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
-            bool isSprinting = sprint.action.IsPressed() && _isGrounded && isMoving && canSprint;
+            bool isSprinting = !IsCarryingObject && sprint.action.IsPressed() && _isGrounded && isMoving && canSprint;
 
             if (isSprinting)
             {
@@ -227,7 +243,6 @@ namespace PlayerScripts
             }
             else
             {
-                // regen
                 currentEnergy += energyRegenRate * Time.deltaTime;
                 currentEnergy = Mathf.Clamp(currentEnergy, 0, maxEnergy);
 
@@ -237,12 +252,14 @@ namespace PlayerScripts
                 }
             }
         }
+
         //Kola içme sistemi
         public void RefillEnergy()
         {
             currentEnergy = maxEnergy;
             canSprint = true;
         }
+
         //Enerji barý UI
         private void UpdateEnergyUI()
         {
