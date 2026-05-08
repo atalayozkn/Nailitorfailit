@@ -16,6 +16,9 @@ public class PlayerInteract : NetworkBehaviour
     [SerializeField] private Transform holdPoint;
     public bool IsCarrying => currentCarriable != null;
 
+    [Header("Değişken")]
+    [SyncVar] private uint carriedItemNetId = 0;
+
     [Header("Cooldown")]
     private float dropCooldown = 0.2f;
     private float lastDropTime;
@@ -38,7 +41,7 @@ public class PlayerInteract : NetworkBehaviour
         if (interactAction == null || interactAction.action == null)
             return;
 
-        // 🔥 BASILI TUTMA (WORK)
+        // BASILI TUTMA -> sadece WorkStation work
         if (interactAction.action.IsPressed())
         {
             if (!IsCarrying && TryGetWorkStation(out WorkStation station))
@@ -47,24 +50,32 @@ public class PlayerInteract : NetworkBehaviour
             }
         }
 
-        // 🔥 TEK BASMA (E CLICK)
+        // TEK BASMA
         if (interactAction.action.WasPressedThisFrame())
         {
-            if (TryGetWorkStation(out WorkStation station))
+            // 1) Elde item varsa önce WorkStation kontrol et
+            if (IsCarrying)
             {
-                if (IsCarrying)
+                if (TryGetWorkStation(out WorkStation station))
                 {
                     CmdPlaceToStation(currentNetObj.netId, station.netId);
                     return;
                 }
-            }
 
-            if (IsCarrying)
-            {
+                // 2) WorkStation değilse ama bir interact target varsa
+                //    (duvar / zemin gibi) önce onu dene
+                if (currentTarget != null)
+                {
+                    CmdInteract(currentTarget.netId);
+                    return;
+                }
+
+                // 3) Hiçbir target yoksa bırak
                 Drop();
                 return;
             }
 
+            // 4) Elde item yoksa normal interact
             if (currentTarget != null)
             {
                 CmdInteract(currentTarget.netId);
@@ -72,27 +83,28 @@ public class PlayerInteract : NetworkBehaviour
         }
     }
 
+    public IPickupable GetCurrentItem()
+    {
+        return currentCarriable;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (Time.time - lastDropTime < dropCooldown)
             return;
 
-        if (!other.CompareTag("Interactable") && !other.CompareTag("Pickup"))
+        NetworkIdentity id = other.GetComponentInParent<NetworkIdentity>();
+        if (id == null) return;
+
+        if (!id.CompareTag("Interactable") && !id.CompareTag("Pickup"))
             return;
 
-        NetworkIdentity id = other.GetComponentInParent<NetworkIdentity>();
-
-        if (id != null)
-        {
-            currentTarget = id;
-        }
+        currentTarget = id;
+        Debug.Log("Target girildi: " + id.name);
     }
 
     private void OnTriggerExit(Collider other)
     {
-        //if (!other.CompareTag("Interactable"))
-        //    return;
-
         NetworkIdentity id = other.GetComponentInParent<NetworkIdentity>();
 
         if (id != null && id == currentTarget)
@@ -110,7 +122,8 @@ public class PlayerInteract : NetworkBehaviour
 
         foreach (var hit in hits)
         {
-            if (hit.TryGetComponent<WorkStation>(out station))
+            station = hit.GetComponentInParent<WorkStation>();
+            if (station != null)
             {
                 return true;
             }
@@ -123,6 +136,8 @@ public class PlayerInteract : NetworkBehaviour
     {
         if (!IsCarrying) return;
 
+        CmdClearCarriedItem();
+
         currentCarriable.OnDrop();
 
         carriedRb.isKinematic = false;
@@ -133,17 +148,20 @@ public class PlayerInteract : NetworkBehaviour
             false
         );
 
-        // 🔥 EN KRİTİK SATIR
         currentTarget = null;
-
         currentCarriable = null;
         currentNetObj = null;
         carriedRb = null;
 
         lastDropTime = Time.time;
-        currentTarget = null;
 
         Debug.Log("Item bırakıldı");
+    }
+
+    [Command]
+    private void CmdClearCarriedItem()
+    {
+        carriedItemNetId = 0;
     }
 
     [TargetRpc]
@@ -152,11 +170,11 @@ public class PlayerInteract : NetworkBehaviour
         var item = id.GetComponent<IPickupable>();
         if (item == null) return;
 
+        currentTarget = null;
         currentCarriable = item;
         currentNetObj = id;
         carriedRb = item.GetRigidbody();
 
-        // 🔥 Eski parent'ı kopar
         carriedRb.transform.SetParent(null);
 
         currentCarriable.OnPickUp();
@@ -187,7 +205,6 @@ public class PlayerInteract : NetworkBehaviour
         if (station == null || carriable == null)
             return;
 
-        // 🎯 MATERIAL KONTROL
         int recipeIndex = station.GetRecipeIndexForMaterial(carriable.Material);
 
         if (recipeIndex == -1)
@@ -196,8 +213,10 @@ public class PlayerInteract : NetworkBehaviour
             return;
         }
 
-        // 🔥 WORKSTATION METHODU
         station.CmdPlaceItem(itemId, recipeIndex);
+
+        // EN KRİTİK SATIR
+        carriedItemNetId = 0;
 
         TargetReleaseItem(connectionToClient);
     }
@@ -214,6 +233,7 @@ public class PlayerInteract : NetworkBehaviour
             );
         }
 
+        currentTarget = null;
         carriedRb = null;
         currentCarriable = null;
         currentNetObj = null;
@@ -227,18 +247,39 @@ public class PlayerInteract : NetworkBehaviour
         if (!NetworkServer.spawned.TryGetValue(netId, out NetworkIdentity id))
             return;
 
-        // 🎯 PICKUP
+        // PICKUP
         if (id.CompareTag("Pickup"))
         {
+            if (carriedItemNetId != 0) return;
+
             var item = id.GetComponent<IPickupable>();
             if (item != null)
             {
+                carriedItemNetId = id.netId;
                 TargetPickup(connectionToClient, id);
                 return;
             }
         }
 
-        // 🎯 NORMAL INTERACT
+        // CONSTRUCT
+        if (id.TryGetComponent<ItemScript.ConstructObject>(out var construct))
+        {
+            if (carriedItemNetId == 0) return;
+            if (!NetworkServer.spawned.TryGetValue(carriedItemNetId, out NetworkIdentity carriedId)) return;
+
+            var carriedObj = carriedId.GetComponent<CarriableObject>();
+            if (carriedObj == null) return;
+
+            bool built = construct.TryBuild(carriedObj);
+            if (!built) return;
+
+            NetworkServer.Destroy(carriedId.gameObject);
+            carriedItemNetId = 0;
+            TargetReleaseItem(connectionToClient);
+            return;
+        }
+
+        // NORMAL INTERACT
         var interactable = id.GetComponent<IInteractable>();
         interactable?.Interact();
     }

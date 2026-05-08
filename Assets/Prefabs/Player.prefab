@@ -431,9 +431,7 @@ GameObject:
   - component: {fileID: 3592478046540940422}
   - component: {fileID: 3538265395436085258}
   - component: {fileID: -7872092929084345497}
-  - component: {fileID: 840326137979703875}
   - component: {fileID: 8564813831788924259}
-  - component: {fileID: 7781830236373469118}
   - component: {fileID: 1846327409714867783}
   - component: {fileID: 1847222439571193004}
   - component: {fileID: 8690829023282464063}
@@ -563,28 +561,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   m_PlayerMove: {fileID: 3538265395436085258}
---- !u!114 &840326137979703875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6863098076542287385}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff7526802fbfc8f4cb9ac5550ef8ff76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.IsoCarry
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  m_interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  holdPoint: {fileID: 3459897167201899350}
-  throwHoldThreshold: 0.4
-  maxChargeTime: 1.5
-  minThrowForce: 5
-  maxThrowForce: 25
-  speedPerWeight: 0.5
 --- !u!114 &8564813831788924259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -615,23 +591,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &7781830236373469118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6863098076542287385}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bc6fcb5907b1244cb4f42711f4edb03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.InteractionDetector
-  interactRange: 4
-  interactionLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  angleThreshold: 1
 --- !u!114 &1846327409714867783
 MonoBehaviour:
   m_ObjectHideFlags: 0
