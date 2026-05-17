@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -6,6 +7,7 @@ public class Wood : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private MeshRenderer mRenderer;
+    [SerializeField] private WaterPuddle puddle;
 
     private Material instancedMaterial;
 
@@ -17,8 +19,15 @@ public class Wood : MonoBehaviour
     private float currentHealth;
 
     [Header("Visual Settings")]
-    [SerializeField] private string parameterName;
-    [SerializeField] private int materialIndex;
+    [SerializeField] private string burnParameterName;
+    [SerializeField] private int burnMaterialIndex;
+
+    [Header("Soak Settings")]
+    [SerializeField] private Transform targetTransform;
+    [SerializeField] private Vector3 soakedScale;
+    [SerializeField] private float soakDuration = 5f;
+
+    private Coroutine soakRoutineReference;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHitEvent;
@@ -29,10 +38,11 @@ public class Wood : MonoBehaviour
 
     private void OnEnable()
     {
-        instancedMaterial = mRenderer.materials[materialIndex]; //Cache Instanced Material
+        instancedMaterial = mRenderer.materials[burnMaterialIndex]; //Cache Instanced Material
         currentHealth = maxHealth; //Set Current Health as Max
         UpdateVisual(); //Update Visuals to ensure the parameter value
     }
+
     public void OnFireHit()
     {
         if (!isBurning)
@@ -40,6 +50,7 @@ public class Wood : MonoBehaviour
             isBurning = true;
             onFireStartEvent?.Invoke();
         }
+
         if (currentHealth - perHitDmg <= 0f)
         {
             currentHealth = 0f;
@@ -48,14 +59,45 @@ public class Wood : MonoBehaviour
             Destroy(gameObject, discardDuration);
             return;
         }
+
         currentHealth -= perHitDmg;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         UpdateVisual();
         onHitEvent?.Invoke();
     }
+
+    public void OnSoak()
+    {
+        if (soakRoutineReference != null)
+        {
+            StopCoroutine(soakRoutineReference);
+        }
+        soakRoutineReference = StartCoroutine(SoakingRoutine());
+    }
+
+    private IEnumerator SoakingRoutine()
+    {
+        Vector3 startScale = targetTransform.localScale;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < soakDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / soakDuration;
+            targetTransform.localScale = Vector3.Lerp(startScale, soakedScale, t);
+            yield return null;
+        }
+
+        targetTransform.localScale = soakedScale;
+        soakRoutineReference = null;
+    }
+    public void TriggerPuddle()
+    {
+        puddle.ActivatePuddle();
+    }
     private void UpdateVisual()
     {
         float damageValue = 1f - (currentHealth / maxHealth);
-        instancedMaterial.SetFloat(parameterName, damageValue);
+        instancedMaterial.SetFloat(burnParameterName, damageValue);
     }
 }
