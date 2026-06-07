@@ -6,7 +6,7 @@ public class SpawnPointRespawn : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private float respawnDelay = 3.5f;
 
-    [SerializeField] private List<HazardBounceRespawn> players = new List<HazardBounceRespawn>();
+    [SerializeField] private List<HazardBounceRespawn_SP> players = new List<HazardBounceRespawn_SP>();
 
     void FixedUpdate()
     {
@@ -15,7 +15,7 @@ public class SpawnPointRespawn : MonoBehaviour
         GameObject[] found = GameObject.FindGameObjectsWithTag(playerTag);
         for (int i = 0; i < found.Length; i++)
         {
-            var h = found[i].GetComponent<HazardBounceRespawn>();
+            var h = found[i].GetComponent<HazardBounceRespawn_SP>();
             if (h != null) players.Add(h);
         }
 

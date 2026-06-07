@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using PlayerScripts;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(PlayerMove))]
+[RequireComponent(typeof(PlayerMove_SP))]
 public class HazardBounceRespawn_SP : MonoBehaviour
 {
     [Header("Trap")]

@@ -11,6 +11,7 @@ namespace ItemScript
         [SerializeField] private ConstructProfile profile;
 
         [Header("Visuals (Assign in Inspector)")]
+        [SerializeField] private GameObject interactionMesh;
         [SerializeField] private GameObject ghostMesh;
         [SerializeField] private GameObject builtMesh;
 
@@ -34,6 +35,7 @@ namespace ItemScript
                 ghostMesh.SetActive(!built);
 
             if (builtMesh)
+                interactionMesh.SetActive(!built);
                 builtMesh.SetActive(built);
         }
 

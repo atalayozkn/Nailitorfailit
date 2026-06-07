@@ -88,21 +88,68 @@ public class PlayerInteract_SP : MonoBehaviour
         if (Time.time - lastDropTime < dropCooldown)
             return;
 
-        GameObject target = other.GetComponentInParent<Transform>()?.gameObject;
-        if (target == null) return;
-
-        if (!target.CompareTag("Interactable") && !target.CompareTag("Pickup"))
+        // 1) ConstructObject_SP kontrolü
+        ConstructObject_SP construct = other.GetComponentInParent<ConstructObject_SP>();
+        if (construct != null)
+        {
+            currentTarget = construct.gameObject;
+            Debug.Log("Construct target girildi: " + currentTarget.name);
             return;
+        }
 
-        currentTarget = target;
-        Debug.Log("Target girildi: " + target.name);
+        // 2) WorkStation_SP kontrolü
+        WorkStation_SP station = other.GetComponentInParent<WorkStation_SP>();
+        if (station != null)
+        {
+            currentTarget = station.gameObject;
+            Debug.Log("WorkStation target girildi: " + currentTarget.name);
+            return;
+        }
+
+        // 3) CarriableObject_SP kontrolü
+        CarriableObject_SP carriable = other.GetComponentInParent<CarriableObject_SP>();
+        if (carriable != null)
+        {
+            currentTarget = carriable.gameObject;
+            Debug.Log("Pickup target girildi: " + currentTarget.name);
+            return;
+        }
+
+        // 4) Normal interactable kontrolü
+        IInteractable interactable = other.GetComponentInParent<IInteractable>();
+        if (interactable != null)
+        {
+            MonoBehaviour mb = interactable as MonoBehaviour;
+
+            if (mb != null)
+            {
+                currentTarget = mb.gameObject;
+                Debug.Log("Interactable target girildi: " + currentTarget.name);
+            }
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        GameObject target = other.GetComponentInParent<Transform>()?.gameObject;
+        GameObject exitedTarget = null;
 
-        if (target != null && target == currentTarget)
+        ConstructObject_SP construct = other.GetComponentInParent<ConstructObject_SP>();
+        if (construct != null)
+            exitedTarget = construct.gameObject;
+
+        WorkStation_SP station = other.GetComponentInParent<WorkStation_SP>();
+        if (station != null)
+            exitedTarget = station.gameObject;
+
+        CarriableObject_SP carriable = other.GetComponentInParent<CarriableObject_SP>();
+        if (carriable != null)
+            exitedTarget = carriable.gameObject;
+
+        IInteractable interactable = other.GetComponentInParent<IInteractable>();
+        if (interactable != null && interactable is MonoBehaviour mb)
+            exitedTarget = mb.gameObject;
+
+        if (exitedTarget != null && exitedTarget == currentTarget)
         {
             currentTarget = null;
             Debug.Log("Target çýkýldý");
@@ -191,7 +238,7 @@ public class PlayerInteract_SP : MonoBehaviour
         if (station == null) return;
         if (currentObj == null) return;
 
-        CarriableObject carriable = currentObj.GetComponent<CarriableObject>();
+        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
         if (carriable == null) return;
 
         int recipeIndex = station.GetRecipeIndexForMaterial(carriable.Material);
@@ -223,11 +270,31 @@ public class PlayerInteract_SP : MonoBehaviour
         }
 
         // CONSTRUCT
-        if (target.TryGetComponent<ConstructObject>(out var construct))
+        if (target.TryGetComponent<ConstructObject_SP>(out var construct))
         {
             if (!IsCarrying) return;
 
-            CarriableObject carriedObj = currentObj.GetComponent<CarriableObject>();
+            CarriableObject_SP carriedObj = currentObj.GetComponent<CarriableObject_SP>();
+            if (carriedObj == null) return;
+
+            bool built = construct.TryBuild(carriedObj);
+            if (!built) return;
+
+            GameObject destroyObj = currentObj;
+
+            ReleaseHeldItemForStation();
+
+            Destroy(destroyObj);
+
+            Debug.Log("Build tamamlandý");
+            return;
+        }
+
+        if (construct != null)
+        {
+            if (!IsCarrying) return;
+
+            CarriableObject_SP carriedObj = currentObj.GetComponent<CarriableObject_SP>();
             if (carriedObj == null) return;
 
             bool built = construct.TryBuild(carriedObj);

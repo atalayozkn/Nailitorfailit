@@ -5,7 +5,7 @@ using ItemScript;
 public class NetworkSpawner_SP : MonoBehaviour, IInteractable
 {
     [Header("Settings")]
-    public CarriableObject objectPrefab;
+    public CarriableObject_SP objectPrefab;
     public Transform spawnPoint;
 
     [SerializeField] private MaterialType materialType = MaterialType.None;
@@ -32,7 +32,7 @@ public class NetworkSpawner_SP : MonoBehaviour, IInteractable
         Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
         Quaternion rot = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
 
-        CarriableObject instance = Instantiate(objectPrefab, pos, rot);
+        CarriableObject_SP instance = Instantiate(objectPrefab, pos, rot);
         instance.InitializeObject(materialType);
     }
 }

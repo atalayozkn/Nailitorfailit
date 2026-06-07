@@ -26,7 +26,7 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
     private float currentProgress = 0f;
     private bool isOccupied = false;
 
-    private CarriableObject currentHeldItem;
+    private CarriableObject_SP currentHeldItem;
 
     private void Start()
     {
@@ -62,7 +62,7 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
         return -1;
     }
 
-    public void PlaceItem(CarriableObject item, int recipeIndex)
+    public void PlaceItem(CarriableObject_SP item, int recipeIndex)
     {
         if (putTableHere == null)
         {
