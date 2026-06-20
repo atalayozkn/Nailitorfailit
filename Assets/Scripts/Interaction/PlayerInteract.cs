@@ -1,4 +1,5 @@
-﻿using Interactions;
+﻿using System.Collections;
+using Interactions;
 using ItemScript;
 using Mirror;
 using PlayerScripts;
@@ -23,10 +24,17 @@ public class PlayerInteract : NetworkBehaviour
     private float dropCooldown = 0.2f;
     private float lastDropTime;
 
+    private Renderer highlightedRenderer;
+    private Material highlightedMaterial;
+    private Color highlightedOriginalColor;
+
     [Header("DEBUG")]
     [SerializeField] private NetworkIdentity currentTarget;
 
-    void FixedUpdate()
+    private Coroutine holdWorkRoutine;
+    private bool interactHeld;
+
+    private void FixedUpdate()
     {
         if (!IsCarrying || carriedRb == null) return;
 
@@ -34,54 +42,81 @@ public class PlayerInteract : NetworkBehaviour
         carriedRb.MoveRotation(holdPoint.rotation);
     }
 
-    void Update()
+    private void Update()
     {
         if (!isOwned) return;
+        if (interactAction == null || interactAction.action == null) return;
 
-        if (interactAction == null || interactAction.action == null)
-            return;
+        if (interactAction.action.WasPressedThisFrame())
+        {
+            interactHeld = true;
 
-        // BASILI TUTMA -> sadece WorkStation work
-        if (interactAction.action.IsPressed())
+            HandleInteractPressed();
+
+            if (!IsCarrying && holdWorkRoutine == null)
+            {
+                holdWorkRoutine = StartCoroutine(HoldWorkRoutine());
+            }
+        }
+
+        if (interactAction.action.WasReleasedThisFrame())
+        {
+            interactHeld = false;
+
+            if (holdWorkRoutine != null)
+            {
+                StopCoroutine(holdWorkRoutine);
+                holdWorkRoutine = null;
+            }
+
+            if (TryGetWorkStation(out WorkStation station))
+            {
+                station.RequestStopWork();
+            }
+        }
+    }
+
+    private IEnumerator HoldWorkRoutine()
+    {
+        while (interactHeld)
         {
             if (!IsCarrying && TryGetWorkStation(out WorkStation station))
             {
                 station.RequestHoldWork();
             }
+
+            yield return null;
         }
 
-        // TEK BASMA
-        if (interactAction.action.WasPressedThisFrame())
+        holdWorkRoutine = null;
+    }
+
+    private void HandleInteractPressed()
+    {
+        if (IsCarrying)
         {
-            // 1) Elde item varsa önce WorkStation kontrol et
-            if (IsCarrying)
+            if (TryGetWorkStation(out WorkStation station))
             {
-                if (TryGetWorkStation(out WorkStation station))
-                {
-                    uint itemNetId = currentNetObj.netId;
+                uint itemNetId = currentNetObj.netId;
 
-                    ReleaseHeldItemForStation();
-                    CmdPlaceToStation(itemNetId, station.netId);
-                    return;
-                }
-
-                // 2) WorkStation değilse ama bir interact target varsa
-                if (currentTarget != null)
-                {
-                    CmdInteract(currentTarget.netId);
-                    return;
-                }
-
-                // 3) Hiçbir target yoksa bırak
-                Drop();
+                ReleaseHeldItemForStation();
+                CmdPlaceToStation(itemNetId, station.netId);
                 return;
             }
 
-            // 4) Elde item yoksa normal interact
             if (currentTarget != null)
             {
                 CmdInteract(currentTarget.netId);
+                return;
             }
+
+            Drop();
+            return;
+        }
+
+        if (currentTarget != null)
+        {
+            CmdInteract(currentTarget.netId);
         }
     }
 
@@ -101,7 +136,8 @@ public class PlayerInteract : NetworkBehaviour
         if (!id.CompareTag("Interactable") && !id.CompareTag("Pickup"))
             return;
 
-        currentTarget = id;
+        SetCurrentTarget(id);
+
         Debug.Log("Target girildi: " + id.name);
     }
 
@@ -111,9 +147,64 @@ public class PlayerInteract : NetworkBehaviour
 
         if (id != null && id == currentTarget)
         {
-            currentTarget = null;
+            ClearCurrentTarget();
             Debug.Log("Target çıkıldı");
         }
+    }
+
+    private void SetCurrentTarget(NetworkIdentity newTarget)
+    {
+        if (currentTarget == newTarget)
+            return;
+
+        RestoreHighlight();
+
+        currentTarget = newTarget;
+
+        ApplyHighlight(currentTarget);
+    }
+
+    private void ClearCurrentTarget()
+    {
+        RestoreHighlight();
+        currentTarget = null;
+    }
+
+    private void ApplyHighlight(NetworkIdentity target)
+    {
+        if (target == null) return;
+
+        highlightedRenderer = target.GetComponent<Renderer>();
+
+        if (highlightedRenderer == null)
+        {
+            highlightedRenderer = target.GetComponentInChildren<Renderer>(true);
+        }
+
+        if (highlightedRenderer == null) return;
+
+        Material[] mats = highlightedRenderer.materials;
+        if (mats == null || mats.Length == 0) return;
+
+        highlightedMaterial = mats[0];
+        highlightedOriginalColor = highlightedMaterial.color;
+
+        highlightedMaterial.color = Color.Lerp(
+            highlightedOriginalColor,
+            Color.red,
+            0.9f
+        );
+    }
+
+    private void RestoreHighlight()
+    {
+        if (highlightedMaterial != null)
+        {
+            highlightedMaterial.color = highlightedOriginalColor;
+        }
+
+        highlightedRenderer = null;
+        highlightedMaterial = null;
     }
 
     private bool TryGetWorkStation(out WorkStation station)
@@ -126,9 +217,7 @@ public class PlayerInteract : NetworkBehaviour
         {
             station = hit.GetComponentInParent<WorkStation>();
             if (station != null)
-            {
                 return true;
-            }
         }
 
         return false;
@@ -150,7 +239,8 @@ public class PlayerInteract : NetworkBehaviour
             false
         );
 
-        currentTarget = null;
+        ClearCurrentTarget();
+
         currentCarriable = null;
         currentNetObj = null;
         carriedRb = null;
@@ -172,7 +262,8 @@ public class PlayerInteract : NetworkBehaviour
         var item = id.GetComponent<IPickupable>();
         if (item == null) return;
 
-        currentTarget = null;
+        ClearCurrentTarget();
+
         currentCarriable = item;
         currentNetObj = id;
         carriedRb = item.GetRigidbody();
@@ -217,7 +308,6 @@ public class PlayerInteract : NetworkBehaviour
 
         station.CmdPlaceItem(itemId, recipeIndex);
 
-        // EN KRİTİK SATIR
         carriedItemNetId = 0;
 
         TargetReleaseItem(connectionToClient);
@@ -235,7 +325,8 @@ public class PlayerInteract : NetworkBehaviour
             );
         }
 
-        currentTarget = null;
+        ClearCurrentTarget();
+
         carriedRb = null;
         currentCarriable = null;
         currentNetObj = null;
@@ -249,7 +340,6 @@ public class PlayerInteract : NetworkBehaviour
         if (!NetworkServer.spawned.TryGetValue(netId, out NetworkIdentity id))
             return;
 
-        // PICKUP
         if (id.CompareTag("Pickup"))
         {
             if (carriedItemNetId != 0) return;
@@ -263,7 +353,6 @@ public class PlayerInteract : NetworkBehaviour
             }
         }
 
-        // CONSTRUCT
         if (id.TryGetComponent<ItemScript.ConstructObject>(out var construct))
         {
             if (carriedItemNetId == 0) return;
@@ -281,7 +370,6 @@ public class PlayerInteract : NetworkBehaviour
             return;
         }
 
-        // NORMAL INTERACT
         var interactable = id.GetComponent<IInteractable>();
         interactable?.Interact();
     }
@@ -299,9 +387,15 @@ public class PlayerInteract : NetworkBehaviour
             );
         }
 
-        currentTarget = null;
+        ClearCurrentTarget();
+
         carriedRb = null;
         currentCarriable = null;
         currentNetObj = null;
+    }
+
+    private void OnDisable()
+    {
+        RestoreHighlight();
     }
 }

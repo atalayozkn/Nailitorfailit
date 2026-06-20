@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -10,6 +11,9 @@ public class RunDustEmitter : MonoBehaviour
     [SerializeField] private float minSpeedToEmit = 2.2f;
     [SerializeField] private float stopDelay = 0.08f;
 
+    [Header("Performance")]
+    [SerializeField] private float checkInterval = 0.05f;
+
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.18f;
@@ -18,43 +22,101 @@ public class RunDustEmitter : MonoBehaviour
     private Rigidbody rb;
     private float stopTimer;
 
-    void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        if (runDust != null) runDust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        if (runDust != null)
+        {
+            runDust.Stop(
+                true,
+                ParticleSystemStopBehavior.StopEmittingAndClear
+            );
+        }
     }
 
-    void Update()
+    private void Start()
     {
-        if (runDust == null) return;
+        StartCoroutine(DustRoutine());
+    }
+
+    private IEnumerator DustRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(checkInterval);
+
+        while (true)
+        {
+            UpdateDust();
+
+            yield return wait;
+        }
+    }
+
+    private void UpdateDust()
+    {
+        if (runDust == null)
+            return;
 
         bool grounded = IsGrounded();
-        float horizontalSpeed = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z).magnitude;
 
-        bool shouldEmit = grounded && horizontalSpeed >= minSpeedToEmit;
+        float horizontalSpeed =
+            new Vector3(
+                rb.linearVelocity.x,
+                0f,
+                rb.linearVelocity.z
+            ).magnitude;
+
+        bool shouldEmit =
+            grounded &&
+            horizontalSpeed >= minSpeedToEmit;
 
         if (shouldEmit)
         {
             stopTimer = 0f;
-            if (!runDust.isPlaying) runDust.Play();
+
+            if (!runDust.isPlaying)
+            {
+                runDust.Play();
+            }
         }
         else
         {
-            stopTimer += Time.deltaTime;
-            if (runDust.isPlaying && stopTimer >= stopDelay)
-                runDust.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            stopTimer += checkInterval;
+
+            if (
+                runDust.isPlaying &&
+                stopTimer >= stopDelay
+            )
+            {
+                runDust.Stop(
+                    true,
+                    ParticleSystemStopBehavior.StopEmitting
+                );
+            }
         }
     }
 
     private bool IsGrounded()
     {
-        if (groundCheck == null) return true; // groundCheck yoksa sadece hýza bakar
-        return Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundLayer, QueryTriggerInteraction.Ignore);
+        if (groundCheck == null)
+            return true;
+
+        return Physics.CheckSphere(
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
     }
 
-    void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
-        if (groundCheck == null) return;
-        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (groundCheck == null)
+            return;
+
+        Gizmos.DrawWireSphere(
+            groundCheck.position,
+            groundCheckRadius
+        );
     }
 }

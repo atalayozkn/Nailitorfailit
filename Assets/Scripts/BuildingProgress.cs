@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,6 +10,7 @@ public class BuildingProgress : MonoBehaviour
     [Header("Timer Settings")]
     [SerializeField] private float startTime = 120f;
     [SerializeField] private float bonusTimePerBuild = 3f;
+    [SerializeField] private float timerTickRate = 0.1f;
 
     [Header("UI References")]
     [SerializeField] private Slider progressSlider;
@@ -16,9 +18,11 @@ public class BuildingProgress : MonoBehaviour
 
     [Header("Smooth Settings")]
     [SerializeField] private float smoothSpeed = 5f;
+    [SerializeField] private float sliderTickRate = 0.02f;
 
     [Header("Player Detection")]
     [SerializeField] private string playerTag = "Player";
+    [SerializeField] private float playerDetectRate = 0.25f;
 
     [Header("Debug")]
     [SerializeField] private float progressPercent;
@@ -32,68 +36,104 @@ public class BuildingProgress : MonoBehaviour
 
     [SerializeField] private List<ConstructObject> constructs = new List<ConstructObject>();
 
-    private List<GameObject> players = new List<GameObject>();
-
     private int totalCount;
     private int builtCount;
 
     public float ProgressPercent => progressPercent;
 
-    // =============================
+    private Coroutine playerDetectRoutine;
+    private Coroutine timerRoutine;
+    private Coroutine sliderRoutine;
 
-    void Awake()
+    private void Awake()
     {
         FindAllConstructs();
+
         currentTime = startTime;
         UpdateUI();
     }
 
-    void Update()
+    private void Start()
     {
-        DetectPlayers();
-        UpdateTimer();
-        UpdateSliderSmooth();
+        playerDetectRoutine = StartCoroutine(PlayerDetectRoutine());
+        sliderRoutine = StartCoroutine(SliderSmoothRoutine());
     }
 
-    // =============================
-    // PLAYER DETECT
-    // =============================
-    private void DetectPlayers()
+    private IEnumerator PlayerDetectRoutine()
     {
-        players.Clear();
-        players.AddRange(GameObject.FindGameObjectsWithTag(playerTag));
+        WaitForSeconds wait = new WaitForSeconds(playerDetectRate);
 
-        if (!timerStartedByPlayer && players.Count > 0)
+        while (!timerStartedByPlayer && !gameFinished)
         {
-            timerStartedByPlayer = true;
-            StartTimer();
-            Debug.Log("Player detected → Timer started");
-        }
-    }
+            GameObject player = GameObject.FindGameObjectWithTag(playerTag);
 
-    // =============================
-    // TIMER
-    // =============================
-    private void UpdateTimer()
-    {
-        if (!timerRunning || gameFinished) return;
+            if (player != null)
+            {
+                timerStartedByPlayer = true;
+                StartTimer();
 
-        currentTime -= Time.deltaTime;
+                Debug.Log("Player detected → Timer started");
+                yield break;
+            }
 
-        if (currentTime <= 0f)
-        {
-            currentTime = 0f;
-            timerRunning = false;
-            gameFinished = true;
-            GameOver();
+            yield return wait;
         }
 
-        UpdateTimeText();
+        playerDetectRoutine = null;
     }
 
-    // =============================
-    // SMOOTH SLIDER
-    // =============================
+    public void StartTimer()
+    {
+        if (timerRunning || gameFinished) return;
+
+        timerRunning = true;
+
+        if (timerRoutine == null)
+            timerRoutine = StartCoroutine(TimerRoutine());
+    }
+
+    private IEnumerator TimerRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(timerTickRate);
+
+        while (timerRunning && !gameFinished)
+        {
+            currentTime -= timerTickRate;
+
+            if (currentTime <= 0f)
+            {
+                currentTime = 0f;
+                timerRunning = false;
+                gameFinished = true;
+
+                UpdateTimeText();
+                GameOver();
+
+                timerRoutine = null;
+                yield break;
+            }
+
+            UpdateTimeText();
+
+            yield return wait;
+        }
+
+        timerRoutine = null;
+    }
+
+    private IEnumerator SliderSmoothRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(sliderTickRate);
+
+        while (!gameFinished)
+        {
+            UpdateSliderSmooth();
+            yield return wait;
+        }
+
+        sliderRoutine = null;
+    }
+
     private void UpdateSliderSmooth()
     {
         if (progressSlider == null) return;
@@ -101,16 +141,10 @@ public class BuildingProgress : MonoBehaviour
         progressSlider.value = Mathf.Lerp(
             progressSlider.value,
             targetSliderValue,
-            Time.deltaTime * smoothSpeed);
+            sliderTickRate * smoothSpeed
+        );
     }
 
-    // =============================
-    public void StartTimer()
-    {
-        timerRunning = true;
-    }
-
-    // =============================
     private void FindAllConstructs()
     {
         constructs.Clear();
@@ -118,7 +152,7 @@ public class BuildingProgress : MonoBehaviour
 
         GameObject[] objs = GameObject.FindGameObjectsWithTag("WallOrFloor");
 
-        foreach (var obj in objs)
+        foreach (GameObject obj in objs)
         {
             ConstructObject construct = obj.GetComponent<ConstructObject>();
             if (construct == null) continue;
@@ -128,7 +162,6 @@ public class BuildingProgress : MonoBehaviour
             if (construct.IsBuilt)
                 builtCount++;
 
-            // 🔥 EVENT DINLE
             construct.OnBuilt -= OnConstructBuilt;
             construct.OnBuilt += OnConstructBuilt;
         }
@@ -139,7 +172,6 @@ public class BuildingProgress : MonoBehaviour
         Debug.Log($"Found {totalCount} construct objects.");
     }
 
-    // =============================
     public void OnConstructBuilt(ConstructObject obj)
     {
         if (gameFinished) return;
@@ -154,15 +186,17 @@ public class BuildingProgress : MonoBehaviour
         {
             gameFinished = true;
             timerRunning = false;
+
+            StopAllRunningCoroutines();
+
             WinCondition();
         }
     }
 
-    // =============================
     private void UpdateProgress()
     {
         if (totalCount == 0)
-            progressPercent = 0;
+            progressPercent = 0f;
         else
             progressPercent = (float)builtCount / totalCount * 100f;
 
@@ -175,7 +209,6 @@ public class BuildingProgress : MonoBehaviour
             targetSliderValue = progressPercent / 100f;
     }
 
-    // =============================
     private void UpdateTimeText()
     {
         if (timeText == null) return;
@@ -192,9 +225,30 @@ public class BuildingProgress : MonoBehaviour
         UpdateTimeText();
     }
 
-    // =============================
+    private void StopAllRunningCoroutines()
+    {
+        if (playerDetectRoutine != null)
+        {
+            StopCoroutine(playerDetectRoutine);
+            playerDetectRoutine = null;
+        }
+
+        if (timerRoutine != null)
+        {
+            StopCoroutine(timerRoutine);
+            timerRoutine = null;
+        }
+
+        if (sliderRoutine != null)
+        {
+            StopCoroutine(sliderRoutine);
+            sliderRoutine = null;
+        }
+    }
+
     private void GameOver()
     {
+        StopAllRunningCoroutines();
         Debug.Log("GAME OVER");
     }
 
@@ -203,7 +257,6 @@ public class BuildingProgress : MonoBehaviour
         Debug.Log("YOU WIN!");
     }
 
-    // =============================
     public float GetRemainingTime()
     {
         return currentTime;

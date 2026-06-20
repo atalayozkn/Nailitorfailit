@@ -1,6 +1,7 @@
 ﻿using Interactions;
 using ItemScript;
 using GameData;
+using System.Collections;
 using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
@@ -22,33 +23,32 @@ public class WorkStation : NetworkBehaviour, IInteractable
     [Header("Power")]
     [SerializeField] private Generator linkedGenerator;
 
-    // Network State
-    // We store the index of the recipe currently being processed (-1 if none)
-    /* WITH THE MIRROR SYSTEM IT HAS BEEN CHANGED
-    private NetworkVariable<int> activeRecipeIndex = new NetworkVariable<int>(-1);
-    private NetworkVariable<float> currentProgress = new NetworkVariable<float>(0f);
-    private NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
-    */
-    // Eğer değer değişince metod çalışsın istersen: [SyncVar(hook = nameof(OnRecipeChanged))]
+    [Header("Work Settings")]
+    [SerializeField] private float workSpeed = 2f;
+    [SerializeField] private float workTickRate = 0.05f;
+
     [SyncVar] private int activeRecipeIndex = -1;
-    [SyncVar(hook = nameof(OnProgressChanged))] private float currentProgress = 0f;
+
+    [SyncVar(hook = nameof(OnProgressChanged))]
+    private float currentProgress = 0f;
+
     [SyncVar] private bool isOccupied = false;
-    // Local Reference
+
     private CarriableObject currentHeldItem;
+    private Coroutine workRoutine;
 
-    /*public override void OnStartClient()
+    private void Start()
     {
-        currentProgress.OnValueChanged += OnProgressChanged;
+        UpdateProgressUI(currentProgress);
     }
-
-    public override void OnStopClient()
-    {
-        currentProgress.OnValueChanged -= OnProgressChanged;
-    }*/
 
     private void OnProgressChanged(float oldVal, float newVal)
     {
-        // Update UI locally based on Network Data
+        UpdateProgressUI(newVal);
+    }
+
+    private void UpdateProgressUI(float progressValue)
+    {
         if (progressBar == null) return;
 
         if (activeRecipeIndex != -1)
@@ -56,18 +56,13 @@ public class WorkStation : NetworkBehaviour, IInteractable
             float maxTime = validRecipes[activeRecipeIndex].workDuration;
 
             progressBar.gameObject.SetActive(true);
-            progressBar.value = newVal / maxTime;
+            progressBar.value = maxTime > 0f ? progressValue / maxTime : 0f;
         }
         else
         {
             progressBar.gameObject.SetActive(false);
+            progressBar.value = 0f;
         }
-    }
-
-    private void Start()
-    {
-        if (progressBar != null)
-            progressBar.gameObject.SetActive(false);
     }
 
     public void Interact()
@@ -92,8 +87,10 @@ public class WorkStation : NetworkBehaviour, IInteractable
     {
         for (int i = 0; i < validRecipes.Count; i++)
         {
-            if (validRecipes[i].inputMaterial == mat) return i;
+            if (validRecipes[i].inputMaterial == mat)
+                return i;
         }
+
         return -1;
     }
 
@@ -105,6 +102,9 @@ public class WorkStation : NetworkBehaviour, IInteractable
             Debug.LogError("PutTableHere is not assigned!");
             return;
         }
+
+        if (recipeIndex < 0 || recipeIndex >= validRecipes.Count)
+            return;
 
         Debug.Log("WORKSTATION PLACE ITEM CALLED");
 
@@ -136,59 +136,114 @@ public class WorkStation : NetworkBehaviour, IInteractable
         currentHeldItem.transform.localRotation = Quaternion.identity;
         currentHeldItem.transform.localScale = originalScale;
 
-        // Dünya uzayında da PutTableHere ile birebir eşitle
-        currentHeldItem.transform.SetPositionAndRotation(putTableHere.position, putTableHere.rotation);
+        currentHeldItem.transform.SetPositionAndRotation(
+            putTableHere.position,
+            putTableHere.rotation
+        );
 
         isOccupied = true;
         activeRecipeIndex = recipeIndex;
         currentProgress = 0f;
-
         justPlacedItem = true;
+
+        UpdateProgressUI(currentProgress);
     }
 
     [Command(requiresAuthority = false)]
     private void CmdRequestWork()
     {
-        //CHECK POWER
+        if (!isOccupied) return;
+
         if (linkedGenerator != null && !linkedGenerator.IsRunning)
             return;
 
-        if (activeRecipeIndex == -1) return;
+        if (activeRecipeIndex == -1)
+            return;
 
-        ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
-
-        currentProgress += Time.deltaTime * 2f;
-
-        if (currentProgress >= recipe.workDuration)
+        if (workRoutine == null)
         {
-            CompleteRecipe(recipe);
+            workRoutine = StartCoroutine(ServerWorkRoutine());
         }
+    }
+
+    private IEnumerator ServerWorkRoutine()
+    {
+        while (isOccupied && activeRecipeIndex != -1)
+        {
+            if (linkedGenerator != null && !linkedGenerator.IsRunning)
+            {
+                workRoutine = null;
+                yield break;
+            }
+
+            ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
+
+            currentProgress += workTickRate * workSpeed;
+
+            if (currentProgress >= recipe.workDuration)
+            {
+                CompleteRecipe(recipe);
+                workRoutine = null;
+                yield break;
+            }
+
+            yield return new WaitForSeconds(workTickRate);
+        }
+
+        workRoutine = null;
     }
 
     private void CompleteRecipe(ProcessingRecipe recipe)
     {
-        // 1. Destroy Input
         if (currentHeldItem != null)
         {
             NetworkServer.Destroy(currentHeldItem.gameObject);
         }
 
-        // 2. Spawn Output(s)
         for (int i = 0; i < recipe.outputCount; i++)
         {
-            Vector3 offset = new Vector3(Random.Range(-0.2f, 0.2f), 0.2f, Random.Range(-0.2f, 0.2f));
-            GameObject product = Instantiate(recipe.outputPrefab, placementPoint.position + offset, Quaternion.identity);
+            Vector3 offset = new Vector3(
+                Random.Range(-0.2f, 0.2f),
+                0.2f,
+                Random.Range(-0.2f, 0.2f)
+            );
+
+            GameObject product = Instantiate(
+                recipe.outputPrefab,
+                placementPoint.position + offset,
+                Quaternion.identity
+            );
+
             NetworkServer.Spawn(product);
         }
 
-        // 3. Reset Station
         isOccupied = false;
         activeRecipeIndex = -1;
         currentProgress = 0f;
         currentHeldItem = null;
-        if (progressBar != null)
+        justPlacedItem = false;
+
+        UpdateProgressUI(currentProgress);
+    }
+
+
+    public void RequestStopWork()
+    {
+        CmdStopWork();
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdStopWork()
+    {
+        StopWorkRoutine();
+    }
+
+    private void StopWorkRoutine()
+    {
+        if (workRoutine != null)
         {
-            progressBar.gameObject.SetActive(false);
+            StopCoroutine(workRoutine);
+            workRoutine = null;
         }
     }
 }

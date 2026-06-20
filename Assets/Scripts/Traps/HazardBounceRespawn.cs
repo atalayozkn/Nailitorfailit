@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using PlayerScripts;
@@ -10,12 +11,12 @@ public class HazardBounceRespawn : MonoBehaviour
     [SerializeField] private string trapTag = "Trap";
 
     [Header("Visual")]
-    [SerializeField] private GameObject visualRoot;        // model/mesh parent (Player root değil)
+    [SerializeField] private GameObject visualRoot;
 
     [Header("Ground Check (Layer)")]
-    [SerializeField] private LayerMask groundMask;         // Ground layer buraya
+    [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundCheckExtra = 0.05f;
-    [SerializeField] private Collider playerCollider;      // CapsuleCollider
+    [SerializeField] private Collider playerCollider;
 
     [Header("Disable inputs until respawn")]
     [SerializeField] private InputActionReference move;
@@ -25,65 +26,45 @@ public class HazardBounceRespawn : MonoBehaviour
     [Header("Anti Double Trigger")]
     [SerializeField] private float hitCooldown = 0.05f;
 
+    [Header("Performance")]
+    [SerializeField] private float groundCheckInterval = 0.03f;
+
     private Rigidbody rb;
     private PlayerMove playerMove;
     private float lastHitTime = -999f;
+    private Coroutine trapRoutine;
 
-    // SpawnPointRespawn bunu izleyecek
-    public bool IsTrapped { get; private set; }            // görünmez olduktan sonra true
-    public bool IsInvisible { get; private set; }          // visual kapandı mı?
+    public bool IsTrapped { get; private set; }
+    public bool IsInvisible { get; private set; }
     public float InvisibleStartTime { get; private set; } = -1f;
 
-    private enum TrapState
-    {
-        None,
-        WaitingLeaveGround,   // önce yerden kesilmesini bekle
-        WaitingLand           // sonra tekrar yere basmasını bekle
-    }
-
-    private TrapState state = TrapState.None;
-
-    void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         playerMove = GetComponent<PlayerMove>();
 
-        if (playerCollider == null) playerCollider = GetComponent<Collider>();
+        if (playerCollider == null)
+            playerCollider = GetComponent<Collider>();
 
-        // Inspector’dan verilmediyse PlayerMove’dan al
         if (move == null) move = playerMove.move;
         if (jump == null) jump = playerMove.jump;
         if (sprint == null) sprint = playerMove.sprint;
     }
 
-    void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        if (state == TrapState.WaitingLeaveGround)
-        {
-            // ✅ Önce gerçekten havaya çıktı mı?
-            if (!IsGroundedByCollider())
-            {
-                state = TrapState.WaitingLand;
-            }
-        }
-        else if (state == TrapState.WaitingLand)
-        {
-            // ✅ Havaya çıktıktan SONRA tekrar yere bastıysa görünmez yap
-            if (IsGroundedByCollider())
-            {
-                MakeInvisibleAndStartCountdown();
-                state = TrapState.None;
-            }
-        }
+        TryTrap(other);
     }
 
-    private void OnTriggerEnter(Collider other) => TryTrap(other);
-    private void OnCollisionEnter(Collision collision) => TryTrap(collision.collider);
+    private void OnCollisionEnter(Collision collision)
+    {
+        TryTrap(collision.collider);
+    }
 
     private void TryTrap(Collider other)
     {
         if (IsInvisible) return;
-        if (state != TrapState.None) return;
+        if (trapRoutine != null) return;
         if (Time.time - lastHitTime < hitCooldown) return;
         if (!other.CompareTag(trapTag)) return;
 
@@ -92,29 +73,44 @@ public class HazardBounceRespawn : MonoBehaviour
 
         lastHitTime = Time.time;
 
-        // 1) hemen zıplat (Y velocity set)
         Vector3 v = rb.linearVelocity;
         v.y = trap.BounceUpForce;
         rb.linearVelocity = v;
 
-        // 2) inputları kapat (respawn’a kadar)
         LockInputs();
 
-        // 3) ŞİMDİ: önce yerden kesilmeyi bekle, sonra yere basınca görünmez yap
-        state = TrapState.WaitingLeaveGround;
+        trapRoutine = StartCoroutine(TrapRoutine());
+    }
+
+    private IEnumerator TrapRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(groundCheckInterval);
+
+        while (IsGroundedByCollider())
+        {
+            yield return wait;
+        }
+
+        while (!IsGroundedByCollider())
+        {
+            yield return wait;
+        }
+
+        MakeInvisibleAndStartCountdown();
+
+        trapRoutine = null;
     }
 
     private void MakeInvisibleAndStartCountdown()
     {
         IsInvisible = true;
-        IsTrapped = true;                 // yere bastıktan sonra aktif olsun
-        InvisibleStartTime = Time.time;   // ✅ geri sayım burada başlar
+        IsTrapped = true;
+        InvisibleStartTime = Time.time;
 
         if (visualRoot != null)
             visualRoot.SetActive(false);
     }
 
-    // Collider bounds ile sağlam ground check
     private bool IsGroundedByCollider()
     {
         if (playerCollider == null) return false;
@@ -122,7 +118,13 @@ public class HazardBounceRespawn : MonoBehaviour
         Vector3 origin = playerCollider.bounds.center;
         float distance = playerCollider.bounds.extents.y + groundCheckExtra;
 
-        return Physics.Raycast(origin, Vector3.down, distance, groundMask, QueryTriggerInteraction.Ignore);
+        return Physics.Raycast(
+            origin,
+            Vector3.down,
+            distance,
+            groundMask,
+            QueryTriggerInteraction.Ignore
+        );
     }
 
     private void LockInputs()
@@ -151,9 +153,14 @@ public class HazardBounceRespawn : MonoBehaviour
         if (!ar.action.enabled) ar.action.Enable();
     }
 
-    // SpawnPointRespawn bunu çağıracak
     public void RespawnFinished()
     {
+        if (trapRoutine != null)
+        {
+            StopCoroutine(trapRoutine);
+            trapRoutine = null;
+        }
+
         if (visualRoot != null)
             visualRoot.SetActive(true);
 
@@ -162,6 +169,5 @@ public class HazardBounceRespawn : MonoBehaviour
         IsTrapped = false;
         IsInvisible = false;
         InvisibleStartTime = -1f;
-        state = TrapState.None;
     }
 }
