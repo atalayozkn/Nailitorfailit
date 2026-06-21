@@ -21,7 +21,9 @@ namespace ItemScript
 
         public Action<ConstructObject> OnBuilt;
 
-        public ConstructType ConstructType => profile != null ? profile.constructType : ConstructType.Frame;
+        public ConstructType ConstructType =>
+            profile != null ? profile.constructType : ConstructType.Frame;
+
         public bool IsBuilt => isBuilt;
 
         public override void OnStartClient()
@@ -37,11 +39,13 @@ namespace ItemScript
 
         private void UpdateVisuals(bool built)
         {
-            if (ghostMesh) 
+            if (interactionMesh != null)
+                interactionMesh.SetActive(!built);
+
+            if (ghostMesh != null)
                 ghostMesh.SetActive(!built);
 
-            if (builtMesh)
-                interactionMesh.SetActive(!built);
+            if (builtMesh != null)
                 builtMesh.SetActive(built);
         }
 
@@ -58,6 +62,11 @@ namespace ItemScript
             if (heldItem.Material != profile.requiredMaterial) return false;
 
             isBuilt = true;
+
+            UpdateVisuals(isBuilt);
+
+            OnBuilt?.Invoke(this);
+
             return true;
         }
     }

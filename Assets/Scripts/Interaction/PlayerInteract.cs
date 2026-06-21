@@ -97,9 +97,10 @@ public class PlayerInteract : NetworkBehaviour
         {
             if (TryGetWorkStation(out WorkStation station))
             {
+                if (currentNetObj == null) return;
+
                 uint itemNetId = currentNetObj.netId;
 
-                ReleaseHeldItemForStation();
                 CmdPlaceToStation(itemNetId, station.netId);
                 return;
             }
@@ -396,6 +397,12 @@ public class PlayerInteract : NetworkBehaviour
 
     private void OnDisable()
     {
+        if (holdWorkRoutine != null)
+        {
+            StopCoroutine(holdWorkRoutine);
+            holdWorkRoutine = null;
+        }
+
         RestoreHighlight();
     }
 }
