@@ -75,6 +75,7 @@ namespace ItemScript
             rb.linearDamping = defaultLinearDamping;
             rb.angularDamping = defaultAngularDamping;
             rb.constraints = defaultConstraints;
+            rb.WakeUp();
         }
 
         public Rigidbody GetRigidbody()

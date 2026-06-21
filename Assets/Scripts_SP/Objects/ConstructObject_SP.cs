@@ -31,12 +31,20 @@ namespace ItemScript
 
         private void UpdateVisuals(bool built)
         {
-            if (ghostMesh)
-                ghostMesh.SetActive(!built);
-
-            if (builtMesh)
+            if (interactionMesh != null)
+            {
                 interactionMesh.SetActive(!built);
+            }
+
+            if (ghostMesh != null)
+            {
+                ghostMesh.SetActive(!built);
+            }
+
+            if (builtMesh != null)
+            {
                 builtMesh.SetActive(built);
+            }
         }
 
         public void Interact()
@@ -49,6 +57,7 @@ namespace ItemScript
             if (isBuilt) return false;
             if (heldItem == null) return false;
             if (profile == null) return false;
+
             if (heldItem.Material != profile.requiredMaterial)
                 return false;
 

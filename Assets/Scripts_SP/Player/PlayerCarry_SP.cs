@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Interactions;
@@ -28,6 +29,8 @@ namespace PlayerScripts
         private GameObject currentObj;
 
         private float interactPressStartTime;
+        private bool interactHeld;
+        private Coroutine holdWorkRoutine;
 
         public bool IsCarrying => currentCarriable != null;
 
@@ -47,6 +50,8 @@ namespace PlayerScripts
         {
             if (m_interactAction != null)
                 m_interactAction.action.Disable();
+
+            StopHoldWorkRoutine();
         }
 
         private void Update()
@@ -54,11 +59,33 @@ namespace PlayerScripts
             if (m_interactAction == null || m_interactAction.action == null)
                 return;
 
-            HandleInput();
-
-            if (!IsCarrying && m_interactAction.action.IsPressed())
+            if (m_interactAction.action.WasPressedThisFrame())
             {
-                TryHoldWork();
+                interactPressStartTime = Time.time;
+                interactHeld = true;
+
+                if (!IsCarrying)
+                    StartHoldWorkRoutine();
+            }
+
+            if (m_interactAction.action.WasReleasedThisFrame())
+            {
+                interactHeld = false;
+                StopHoldWorkRoutine();
+
+                TryStopWork();
+
+                float pressDuration = Time.time - interactPressStartTime;
+
+                if (IsCarrying && pressDuration >= throwHoldThreshold)
+                {
+                    float charge = Mathf.Clamp01(
+                        (pressDuration - throwHoldThreshold) /
+                        (maxChargeTime - throwHoldThreshold)
+                    );
+
+                    ThrowObject(charge);
+                }
             }
         }
 
@@ -68,6 +95,34 @@ namespace PlayerScripts
             {
                 MoveHeldObject();
             }
+        }
+
+        private void StartHoldWorkRoutine()
+        {
+            if (holdWorkRoutine != null)
+                return;
+
+            holdWorkRoutine = StartCoroutine(HoldWorkRoutine());
+        }
+
+        private void StopHoldWorkRoutine()
+        {
+            if (holdWorkRoutine != null)
+            {
+                StopCoroutine(holdWorkRoutine);
+                holdWorkRoutine = null;
+            }
+        }
+
+        private IEnumerator HoldWorkRoutine()
+        {
+            while (interactHeld && !IsCarrying)
+            {
+                TryHoldWork();
+                yield return null;
+            }
+
+            holdWorkRoutine = null;
         }
 
         private void TryHoldWork()
@@ -88,26 +143,21 @@ namespace PlayerScripts
             }
         }
 
-        private void HandleInput()
+        private void TryStopWork()
         {
-            if (m_interactAction.action.WasPressedThisFrame())
+            if (detector == null) return;
+
+            bool foundTarget = detector.TryFindTarget(
+                transform.position,
+                out IInteractable target,
+                out Collider col
+            );
+
+            if (!foundTarget) return;
+
+            if (target is WorkStation_SP station)
             {
-                interactPressStartTime = Time.time;
-            }
-
-            if (m_interactAction.action.WasReleasedThisFrame())
-            {
-                float pressDuration = Time.time - interactPressStartTime;
-
-                if (IsCarrying && pressDuration >= throwHoldThreshold)
-                {
-                    float charge = Mathf.Clamp01(
-                        (pressDuration - throwHoldThreshold) /
-                        (maxChargeTime - throwHoldThreshold)
-                    );
-
-                    ThrowObject(charge);
-                }
+                station.RequestStopWork();
             }
         }
 

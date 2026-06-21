@@ -1,6 +1,7 @@
 using Interactions;
 using ItemScript;
 using GameData;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,11 +23,16 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
     [Header("Power")]
     [SerializeField] private Generator linkedGenerator;
 
+    [Header("Work Settings")]
+    [SerializeField] private float workSpeed = 2f;
+    [SerializeField] private float workTickRate = 0.05f;
+
     private int activeRecipeIndex = -1;
     private float currentProgress = 0f;
     private bool isOccupied = false;
 
     private CarriableObject_SP currentHeldItem;
+    private Coroutine workRoutine;
 
     private void Start()
     {
@@ -48,7 +54,58 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
     {
         if (!isOccupied) return;
 
-        RequestWork();
+        if (linkedGenerator != null && !linkedGenerator.IsRunning)
+            return;
+
+        if (activeRecipeIndex == -1)
+            return;
+
+        if (workRoutine == null)
+            workRoutine = StartCoroutine(WorkRoutine());
+    }
+
+    public void RequestStopWork()
+    {
+        StopWorkRoutine();
+    }
+
+    private void StopWorkRoutine()
+    {
+        if (workRoutine != null)
+        {
+            StopCoroutine(workRoutine);
+            workRoutine = null;
+        }
+    }
+
+    private IEnumerator WorkRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(workTickRate);
+
+        while (isOccupied && activeRecipeIndex != -1)
+        {
+            if (linkedGenerator != null && !linkedGenerator.IsRunning)
+            {
+                StopWorkRoutine();
+                yield break;
+            }
+
+            ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
+
+            currentProgress += workTickRate * workSpeed;
+
+            if (currentProgress >= recipe.workDuration)
+            {
+                CompleteRecipe(recipe);
+                yield break;
+            }
+
+            UpdateProgressUI();
+
+            yield return wait;
+        }
+
+        workRoutine = null;
     }
 
     public int GetRecipeIndexForMaterial(MaterialType mat)
@@ -110,34 +167,15 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
         isOccupied = true;
         activeRecipeIndex = recipeIndex;
         currentProgress = 0f;
-
         justPlacedItem = true;
-
-        UpdateProgressUI();
-    }
-
-    private void RequestWork()
-    {
-        if (linkedGenerator != null && !linkedGenerator.IsRunning)
-            return;
-
-        if (activeRecipeIndex == -1)
-            return;
-
-        ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
-
-        currentProgress += Time.deltaTime * 2f;
-
-        if (currentProgress >= recipe.workDuration)
-        {
-            CompleteRecipe(recipe);
-        }
 
         UpdateProgressUI();
     }
 
     private void CompleteRecipe(ProcessingRecipe recipe)
     {
+        StopWorkRoutine();
+
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem.gameObject);
@@ -174,14 +212,18 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
         if (activeRecipeIndex != -1)
         {
             float maxTime = validRecipes[activeRecipeIndex].workDuration;
-
             progressBar.gameObject.SetActive(true);
-            progressBar.value = currentProgress / maxTime;
+            progressBar.value = maxTime > 0f ? currentProgress / maxTime : 0f;
         }
         else
         {
             progressBar.gameObject.SetActive(false);
             progressBar.value = 0f;
         }
+    }
+
+    private void OnDisable()
+    {
+        StopWorkRoutine();
     }
 }

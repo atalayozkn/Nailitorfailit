@@ -35,14 +35,15 @@ namespace PlayerScripts
         [SerializeField] private float energyDrainDuration = 8f;
         [SerializeField] private float energyRegenRate = 15f;
         [SerializeField] private float sprintUnlockThreshold = 40f;
+        [SerializeField] private float energyTickRate = 0.1f;
+
         private bool canSprint = true;
 
         [Header("Energy UI")]
         [SerializeField] private GameObject energyCanvas;
         [SerializeField] private UnityEngine.UI.Slider energySlider;
-        public float EnergyPercent => currentEnergy / maxEnergy;
+        public float EnergyPercent => maxEnergy > 0f ? currentEnergy / maxEnergy : 0f;
 
-        [Header("RB , Collider , Etc.")]
         private Rigidbody rb;
         private Collider col;
         private float speedMultiplier = 1f;
@@ -59,6 +60,10 @@ namespace PlayerScripts
 
         public float CurrentSpeed => baseSpeed * speedMultiplier;
 
+        private Vector2 moveInput;
+        private bool sprintHeld;
+        private Coroutine energyRoutine;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -74,9 +79,7 @@ namespace PlayerScripts
 
             CameraController cameraController = FindFirstObjectByType<CameraController>();
             if (cameraController != null)
-            {
                 cameraController.OnPlayerInitialized(transform);
-            }
         }
 
         private void Start()
@@ -91,6 +94,8 @@ namespace PlayerScripts
             if (sprint != null) sprint.action.Enable();
 
             UpdateEnergyUI();
+
+            energyRoutine = StartCoroutine(EnergyRoutine());
         }
 
         private void OnDisable()
@@ -98,39 +103,23 @@ namespace PlayerScripts
             if (move != null) move.action.Disable();
             if (jump != null) jump.action.Disable();
             if (sprint != null) sprint.action.Disable();
+
+            if (energyRoutine != null)
+            {
+                StopCoroutine(energyRoutine);
+                energyRoutine = null;
+            }
         }
 
         private void Update()
         {
-            if (move == null || move.action == null) return;
-            if (jump == null || jump.action == null) return;
-            if (sprint == null || sprint.action == null) return;
+            ReadInput();
 
-            if (_isGrounded)
-            {
-                if (CurrentSpeed > 0)
-                {
-                    _stateMachine.ChangeState(_runState);
-                }
-                else if (_stateMachine.CurrentState == _runState)
-                {
-                    _stateMachine.ChangeState(_idleState);
-                }
-
-                if (!IsCarryingObject && jump.action.WasPressedThisFrame())
-                {
-                    _stateMachine.ChangeState(_jumpState);
-                    HandleJump();
-                }
-            }
-
-            _stateMachine.Tick();
+            HandleJumpInput();
+            HandleAnimation();
+            HandleSprint();
 
             SetCarrying(IsCarryingObject);
-
-            HandleSprint();
-            HandleEnergy();
-            UpdateEnergyUI();
         }
 
         private void FixedUpdate()
@@ -138,9 +127,50 @@ namespace PlayerScripts
             HandleMovement();
         }
 
+        private void ReadInput()
+        {
+            if (move != null && move.action != null)
+                moveInput = move.action.ReadValue<Vector2>();
+
+            if (sprint != null && sprint.action != null)
+                sprintHeld = sprint.action.IsPressed();
+        }
+
+        private void HandleJumpInput()
+        {
+            if (!_isGrounded) return;
+            if (jump == null || jump.action == null) return;
+            if (IsCarryingObject) return;
+
+            if (jump.action.WasPressedThisFrame())
+            {
+                _stateMachine.ChangeState(_jumpState);
+                HandleJump();
+            }
+        }
+
+        private void HandleAnimation()
+        {
+            bool isMoving = moveInput.magnitude > 0.1f;
+
+            if (_isGrounded)
+            {
+                if (isMoving)
+                {
+                    _stateMachine.ChangeState(_runState);
+                }
+                else if (_stateMachine.CurrentState == _runState)
+                {
+                    _stateMachine.ChangeState(_idleState);
+                }
+            }
+
+            _stateMachine.Tick();
+        }
+
         private void HandleSprint()
         {
-            bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
+            bool isMoving = moveInput.magnitude > 0.1f;
 
             if (IsCarryingObject)
             {
@@ -148,14 +178,10 @@ namespace PlayerScripts
                 return;
             }
 
-            if (sprint.action.IsPressed() && _isGrounded && isMoving && canSprint)
-            {
+            if (sprintHeld && _isGrounded && isMoving && canSprint)
                 speedMultiplier = sprintMultiplier;
-            }
             else
-            {
                 speedMultiplier = 1f;
-            }
         }
 
         public void SetSpeedModifier(float multiplier)
@@ -165,8 +191,7 @@ namespace PlayerScripts
 
         private void HandleMovement()
         {
-            Vector2 input = move.action.ReadValue<Vector2>();
-            Vector3 inputDir = new Vector3(input.x, 0, input.y);
+            Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
 
             if (inputDir.magnitude > 1f)
                 inputDir.Normalize();
@@ -175,6 +200,7 @@ namespace PlayerScripts
             targetVelocity.y = rb.linearVelocity.y;
 
             Vector3 currentVel = rb.linearVelocity;
+
             Vector3 newVel = Vector3.Lerp(
                 currentVel,
                 targetVelocity,
@@ -187,6 +213,7 @@ namespace PlayerScripts
             if (inputDir.sqrMagnitude > 0.01f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(inputDir);
+
                 rb.rotation = Quaternion.Slerp(
                     rb.rotation,
                     targetRotation,
@@ -198,7 +225,7 @@ namespace PlayerScripts
         private void HandleJump()
         {
             Vector3 vel = rb.linearVelocity;
-            vel.y = 0;
+            vel.y = 0f;
             rb.linearVelocity = vel;
 
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -207,21 +234,34 @@ namespace PlayerScripts
             StartCoroutine(CheckForGround());
         }
 
-        private void HandleEnergy()
+        private IEnumerator EnergyRoutine()
+        {
+            WaitForSeconds wait = new WaitForSeconds(energyTickRate);
+
+            while (true)
+            {
+                HandleEnergyTick();
+                UpdateEnergyUI();
+
+                yield return wait;
+            }
+        }
+
+        private void HandleEnergyTick()
         {
             float drainPerSecond = maxEnergy / energyDrainDuration;
+            bool isMoving = moveInput.magnitude > 0.1f;
 
-            bool isMoving = move.action.ReadValue<Vector2>().magnitude > 0.1f;
             bool isSprinting =
                 !IsCarryingObject &&
-                sprint.action.IsPressed() &&
+                sprintHeld &&
                 _isGrounded &&
                 isMoving &&
                 canSprint;
 
             if (isSprinting)
             {
-                currentEnergy -= drainPerSecond * Time.deltaTime;
+                currentEnergy -= drainPerSecond * energyTickRate;
 
                 if (currentEnergy <= 0f)
                 {
@@ -231,13 +271,11 @@ namespace PlayerScripts
             }
             else
             {
-                currentEnergy += energyRegenRate * Time.deltaTime;
-                currentEnergy = Mathf.Clamp(currentEnergy, 0, maxEnergy);
+                currentEnergy += energyRegenRate * energyTickRate;
+                currentEnergy = Mathf.Clamp(currentEnergy, 0f, maxEnergy);
 
                 if (!canSprint && currentEnergy >= sprintUnlockThreshold)
-                {
                     canSprint = true;
-                }
             }
         }
 
@@ -245,38 +283,22 @@ namespace PlayerScripts
         {
             currentEnergy = maxEnergy;
             canSprint = true;
+            UpdateEnergyUI();
         }
 
         private void UpdateEnergyUI()
         {
             if (energySlider != null)
-            {
                 energySlider.value = EnergyPercent;
-            }
 
             if (energyCanvas != null)
-            {
                 energyCanvas.SetActive(currentEnergy < maxEnergy);
-            }
         }
 
         public Vector2 GetAnimationDirection()
         {
             Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
             return new Vector2(localVel.x, localVel.z);
-        }
-
-        private void OnDrawGizmos()
-        {
-            if (col != null)
-            {
-                Gizmos.color = _isGrounded ? Color.green : Color.red;
-
-                Gizmos.DrawLine(
-                    col.bounds.center,
-                    col.bounds.center + Vector3.down * (col.bounds.extents.y + groundCheckDist)
-                );
-            }
         }
 
         private void SetCarrying(bool isCarrying)
@@ -300,6 +322,19 @@ namespace PlayerScripts
                 );
 
                 yield return null;
+            }
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (col != null)
+            {
+                Gizmos.color = _isGrounded ? Color.green : Color.red;
+
+                Gizmos.DrawLine(
+                    col.bounds.center,
+                    col.bounds.center + Vector3.down * (col.bounds.extents.y + groundCheckDist)
+                );
             }
         }
     }
