@@ -5,7 +5,7 @@ public class EnergyDrink_SP : MonoBehaviour
 {
     public void Interact()
     {
-        PlayerMove player = FindObjectOfType<PlayerMove>();
+        PlayerMove player = FindAnyObjectByType<PlayerMove>();
 
         if (player != null)
         {
