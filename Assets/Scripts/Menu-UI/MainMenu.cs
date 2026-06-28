@@ -6,11 +6,12 @@ public class MainMenu : MonoBehaviour
     public void GoToScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
+        Debug.Log(sceneName + " loaded");
     }
 
-    public void QuitApp()
+    public void ExitGame()
     {
         Application.Quit();
-        Debug.Log("Quit atildi");
+        Debug.Log("Game exited");
     }
 }
