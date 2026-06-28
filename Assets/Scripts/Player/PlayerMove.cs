@@ -15,7 +15,8 @@ namespace PlayerScripts
         [Header("Jump Settings")]
         [SerializeField] private float jumpForce = 5f;
         [SerializeField] private LayerMask groundMask;
-        [SerializeField] private float groundCheckDist = 0.001f;
+        [SerializeField] private float groundCheckDist = 0.05f;
+        [SerializeField] private float groundCheckInterval = 0.03f;
 
         [Header("Input")]
         public InputActionReference move;
@@ -30,25 +31,15 @@ namespace PlayerScripts
         [SerializeField] private float carrySpeedMultiplier = 0.65f;
         private bool IsCarryingObject => playerInteract != null && playerInteract.IsCarrying;
 
-        [Header("Energy Settings")]
-        [SerializeField] private float maxEnergy = 100f;
-        [SerializeField] private float currentEnergy = 100f;
-        [SerializeField] private float energyDrainDuration = 8f;
-        [SerializeField] private float energyRegenRate = 15f;
-        [SerializeField] private float sprintUnlockThreshold = 40f;
-        [SerializeField] private float energyTickRate = 0.1f;
-
-        private bool canSprint = true;
-
-        [Header("Energy UI")]
-        [SerializeField] private GameObject energyCanvas;
-        [SerializeField] private UnityEngine.UI.Slider energySlider;
-        public float EnergyPercent => currentEnergy / maxEnergy;
+        [Header("Stamina")]
+        [SerializeField] private PlayerStamina stamina;
 
         [Header("RB , Collider , Etc.")]
         private Rigidbody rb;
         private Collider col;
-        private float speedMultiplier = 1f;
+
+        private float movementStateMultiplier = 1f;
+        private float externalSpeedModifier = 1f;
 
         private CharacterStateMachine _stateMachine;
         private IdleState _idleState;
@@ -60,11 +51,14 @@ namespace PlayerScripts
         [SerializeField] private bool _isGrounded;
         public bool IsGroundedPublic => _isGrounded;
 
-        public float CurrentSpeed => baseSpeed * speedMultiplier;
+        public float CurrentSpeed => baseSpeed * movementStateMultiplier * externalSpeedModifier;
+
+        public float EnergyPercent => stamina != null ? stamina.EnergyPercent : 1f;
 
         private Vector2 moveInput;
         private bool sprintHeld;
-        private Coroutine energyRoutine;
+
+        private Coroutine groundCheckRoutine;
 
         private void Awake()
         {
@@ -78,10 +72,6 @@ namespace PlayerScripts
             _jumpState = new JumpState(_animator);
 
             _stateMachine.ChangeState(_idleState);
-
-            CameraController cameraController = FindFirstObjectByType<CameraController>();
-            if (cameraController != null)
-                cameraController.OnPlayerInitialized(transform);
         }
 
         private void Start()
@@ -89,8 +79,43 @@ namespace PlayerScripts
             if (playerInteract == null)
                 playerInteract = GetComponent<PlayerInteract>();
 
-            _isGrounded = true;
-            UpdateEnergyUI();
+            if (stamina == null)
+                stamina = GetComponent<PlayerStamina>();
+
+            _isGrounded = CheckGrounded();
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            if (!isOwned) return;
+
+            if (move != null) move.action.Enable();
+            if (jump != null) jump.action.Enable();
+            if (sprint != null) sprint.action.Enable();
+
+            CameraController cameraController = FindFirstObjectByType<CameraController>();
+            if (cameraController != null)
+                cameraController.OnPlayerInitialized(transform);
+
+            StartGroundCheckRoutine();
+        }
+
+        public override void OnStopClient()
+        {
+            base.OnStopClient();
+
+            if (!isOwned) return;
+
+            if (move != null) move.action.Disable();
+            if (jump != null) jump.action.Disable();
+            if (sprint != null) sprint.action.Disable();
+
+            StopGroundCheckRoutine();
+
+            if (stamina != null)
+                stamina.SetSprinting(false);
         }
 
         private void Update()
@@ -109,33 +134,6 @@ namespace PlayerScripts
             if (!isOwned) return;
 
             HandleMovement();
-        }
-
-        public override void OnStartClient()
-        {
-            if (!isOwned) return;
-
-            if (move != null) move.action.Enable();
-            if (jump != null) jump.action.Enable();
-            if (sprint != null) sprint.action.Enable();
-
-            if (energyRoutine == null)
-                energyRoutine = StartCoroutine(EnergyRoutine());
-        }
-
-        public override void OnStopClient()
-        {
-            if (!isOwned) return;
-
-            if (move != null) move.action.Disable();
-            if (jump != null) jump.action.Disable();
-            if (sprint != null) sprint.action.Disable();
-
-            if (energyRoutine != null)
-            {
-                StopCoroutine(energyRoutine);
-                energyRoutine = null;
-            }
         }
 
         private void ReadInput()
@@ -164,16 +162,22 @@ namespace PlayerScripts
         {
             bool isMoving = moveInput.magnitude > 0.1f;
 
-            if (_isGrounded)
+            if (!_isGrounded)
             {
-                if (isMoving)
-                {
-                    _stateMachine.ChangeState(_runState);
-                }
-                else if (_stateMachine.CurrentState == _runState)
-                {
-                    _stateMachine.ChangeState(_idleState);
-                }
+                if (_stateMachine.CurrentState != _jumpState)
+                    _stateMachine.ChangeState(_jumpState);
+
+                _stateMachine.Tick();
+                return;
+            }
+
+            if (isMoving)
+            {
+                _stateMachine.ChangeState(_runState);
+            }
+            else if (_stateMachine.CurrentState == _runState || _stateMachine.CurrentState == _jumpState)
+            {
+                _stateMachine.ChangeState(_idleState);
             }
 
             _stateMachine.Tick();
@@ -185,28 +189,36 @@ namespace PlayerScripts
 
             if (IsCarryingObject)
             {
-                speedMultiplier = carrySpeedMultiplier;
+                movementStateMultiplier = carrySpeedMultiplier;
+
+                if (stamina != null)
+                    stamina.SetSprinting(false);
+
                 return;
             }
 
-            if (sprintHeld && _isGrounded && isMoving && canSprint)
-            {
-                speedMultiplier = sprintMultiplier;
-            }
-            else
-            {
-                speedMultiplier = 1f;
-            }
+            bool staminaAllowsSprint = stamina == null || stamina.CanSprint;
+
+            bool shouldSprint =
+                sprintHeld &&
+                _isGrounded &&
+                isMoving &&
+                staminaAllowsSprint;
+
+            movementStateMultiplier = shouldSprint ? sprintMultiplier : 1f;
+
+            if (stamina != null)
+                stamina.SetSprinting(shouldSprint);
         }
 
         public void SetSpeedModifier(float multiplier)
         {
-            speedMultiplier = Mathf.Clamp(multiplier, 0.2f, 1.0f);
+            externalSpeedModifier = Mathf.Clamp(multiplier, 0.2f, 1.0f);
         }
 
         private void HandleMovement()
         {
-            Vector3 inputDir = new Vector3(moveInput.x, 0, moveInput.y);
+            Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
 
             if (inputDir.magnitude > 1f)
                 inputDir.Normalize();
@@ -240,74 +252,18 @@ namespace PlayerScripts
         private void HandleJump()
         {
             Vector3 vel = rb.linearVelocity;
-            vel.y = 0;
+            vel.y = 0f;
             rb.linearVelocity = vel;
 
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+
             _isGrounded = false;
-
-            StartCoroutine(CheckForGround());
-        }
-
-        private IEnumerator EnergyRoutine()
-        {
-            WaitForSeconds wait = new WaitForSeconds(energyTickRate);
-
-            while (true)
-            {
-                HandleEnergyTick();
-                UpdateEnergyUI();
-
-                yield return wait;
-            }
-        }
-
-        private void HandleEnergyTick()
-        {
-            float drainPerSecond = maxEnergy / energyDrainDuration;
-            bool isMoving = moveInput.magnitude > 0.1f;
-
-            bool isSprinting =
-                !IsCarryingObject &&
-                sprintHeld &&
-                _isGrounded &&
-                isMoving &&
-                canSprint;
-
-            if (isSprinting)
-            {
-                currentEnergy -= drainPerSecond * energyTickRate;
-
-                if (currentEnergy <= 0f)
-                {
-                    currentEnergy = 0f;
-                    canSprint = false;
-                }
-            }
-            else
-            {
-                currentEnergy += energyRegenRate * energyTickRate;
-                currentEnergy = Mathf.Clamp(currentEnergy, 0, maxEnergy);
-
-                if (!canSprint && currentEnergy >= sprintUnlockThreshold)
-                    canSprint = true;
-            }
         }
 
         public void RefillEnergy()
         {
-            currentEnergy = maxEnergy;
-            canSprint = true;
-            UpdateEnergyUI();
-        }
-
-        private void UpdateEnergyUI()
-        {
-            if (energySlider != null)
-                energySlider.value = EnergyPercent;
-
-            if (energyCanvas != null)
-                energyCanvas.SetActive(currentEnergy < maxEnergy);
+            if (stamina != null)
+                stamina.RefillEnergy();
         }
 
         public Vector2 GetAnimationDirection()
@@ -316,17 +272,49 @@ namespace PlayerScripts
             return new Vector2(localVel.x, localVel.z);
         }
 
-        private void OnDrawGizmos()
+        private void StartGroundCheckRoutine()
         {
-            if (col != null)
-            {
-                Gizmos.color = _isGrounded ? Color.green : Color.red;
+            if (groundCheckRoutine != null)
+                return;
 
-                Gizmos.DrawLine(
-                    col.bounds.center,
-                    col.bounds.center + Vector3.down * (col.bounds.extents.y + groundCheckDist)
-                );
+            groundCheckRoutine = StartCoroutine(GroundCheckRoutine());
+        }
+
+        private void StopGroundCheckRoutine()
+        {
+            if (groundCheckRoutine != null)
+            {
+                StopCoroutine(groundCheckRoutine);
+                groundCheckRoutine = null;
             }
+        }
+
+        private IEnumerator GroundCheckRoutine()
+        {
+            WaitForSeconds wait = new WaitForSeconds(groundCheckInterval);
+
+            while (true)
+            {
+                _isGrounded = CheckGrounded();
+
+                yield return wait;
+            }
+        }
+
+        private bool CheckGrounded()
+        {
+            if (col == null) return false;
+
+            Vector3 origin = col.bounds.center;
+            float distance = col.bounds.extents.y + groundCheckDist;
+
+            return Physics.Raycast(
+                origin,
+                Vector3.down,
+                distance,
+                groundMask,
+                QueryTriggerInteraction.Ignore
+            );
         }
 
         private void SetCarrying(bool isCarrying)
@@ -336,21 +324,30 @@ namespace PlayerScripts
             _animator.SetLayerWeight(_carryLayerIndex, isCarrying ? 0.5f : 0f);
         }
 
-        private IEnumerator CheckForGround()
+        private void OnDrawGizmos()
         {
-            yield return new WaitForSeconds(0.1f);
+            Collider drawCollider = col;
 
-            while (!_isGrounded)
-            {
-                _isGrounded = Physics.Raycast(
-                    transform.position,
-                    Vector3.down,
-                    groundCheckDist,
-                    groundMask
-                );
+            if (drawCollider == null)
+                drawCollider = GetComponent<Collider>();
 
-                yield return null;
-            }
+            if (drawCollider == null)
+                return;
+
+            Gizmos.color = _isGrounded ? Color.green : Color.red;
+
+            Vector3 origin = drawCollider.bounds.center;
+            float distance = drawCollider.bounds.extents.y + groundCheckDist;
+
+            Gizmos.DrawLine(origin, origin + Vector3.down * distance);
+        }
+
+        private void OnDisable()
+        {
+            StopGroundCheckRoutine();
+
+            if (stamina != null)
+                stamina.SetSprinting(false);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ItemScript
         [SyncVar(hook = nameof(OnBuiltStateChanged))]
         private bool isBuilt = false;
 
-        public Action<ConstructObject> OnBuilt;
+        public event Action<ConstructObject> OnBuilt;
 
         public ConstructType ConstructType =>
             profile != null ? profile.constructType : ConstructType.Frame;
@@ -32,9 +32,15 @@ namespace ItemScript
             UpdateVisuals(isBuilt);
         }
 
-        private void OnBuiltStateChanged(bool prev, bool curr)
+        public override void OnStartServer()
         {
-            UpdateVisuals(curr);
+            base.OnStartServer();
+            UpdateVisuals(isBuilt);
+        }
+
+        private void OnBuiltStateChanged(bool _, bool current)
+        {
+            UpdateVisuals(current);
         }
 
         private void UpdateVisuals(bool built)
@@ -56,16 +62,24 @@ namespace ItemScript
 
         public bool TryBuild(CarriableObject heldItem)
         {
-            if (isBuilt) return false;
-            if (heldItem == null) return false;
-            if (profile == null) return false;
-            if (heldItem.Material != profile.requiredMaterial) return false;
+            if (!isServer) return false;
+            if (!CanBuildWith(heldItem)) return false;
 
             isBuilt = true;
 
             UpdateVisuals(isBuilt);
 
             OnBuilt?.Invoke(this);
+
+            return true;
+        }
+
+        public bool CanBuildWith(CarriableObject heldItem)
+        {
+            if (isBuilt) return false;
+            if (heldItem == null) return false;
+            if (profile == null) return false;
+            if (heldItem.Material != profile.requiredMaterial) return false;
 
             return true;
         }

@@ -1,46 +1,69 @@
 ﻿using Interactions;
 using Mirror;
-using Unity.VisualScripting;
 using UnityEngine;
 using ItemScript;
+
 public class NetworkSpawner : NetworkBehaviour, IInteractable
 {
     [Header("Settings")]
-    // Note: The prefab MUST have a NetworkObject component attached to it
-    public CarriableObject objectPrefab;
-    public Transform spawnPoint;
-    [SerializeField] private MaterialType materialType = MaterialType.None;
+    [SerializeField] private GameObject objectPrefab;
+    [SerializeField] private Transform spawnPoint;
+
+    [Header("Safety")]
+    [SerializeField] private float spawnCooldown = 0.2f;
+
+    private double lastSpawnTime = -999f;
 
     public void Interact()
     {
-        Debug.Log("Spawner çalıştı");
         RequestSpawn();
     }
 
     public void RequestSpawn()
     {
-        // If the Server calls this, we execute logic immediately.
-        // If a Client calls this, we send a message (RPC) to the server.
-        CmdSpawnObject();
+        if (isServer)
+        {
+            SpawnObject();
+        }
+        else
+        {
+            CmdSpawnObject();
+        }
     }
 
-
-    [Command(requiresAuthority = false)] // Herkes spawn isteyebilsin diye false
+    [Command(requiresAuthority = false)]
     private void CmdSpawnObject()
     {
+        SpawnObject();
+    }
+
+    [Server]
+    private void SpawnObject()
+    {
+        if (NetworkTime.time - lastSpawnTime < spawnCooldown)
+            return;
+
         if (objectPrefab == null)
         {
-            Debug.LogError("No Prefab assigned!");
+            Debug.LogError("Spawner prefab atanmamış!");
+            return;
+        }
+
+        if (objectPrefab.GetComponent<NetworkIdentity>() == null)
+        {
+            Debug.LogError("Spawn edilecek prefab üzerinde NetworkIdentity yok!");
             return;
         }
 
         Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
         Quaternion rot = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
 
-        CarriableObject instance = Instantiate(objectPrefab, pos, rot);
-        instance.InitializeObject(this.materialType);
+        GameObject instance = Instantiate(objectPrefab, pos, rot);
 
-        // Mirror'da DOĞRU spawn yöntemi:
-        NetworkServer.Spawn(instance.gameObject);
+        NetworkServer.Spawn(instance);
+
+        lastSpawnTime = NetworkTime.time;
+
+        Debug.Log("Network obje spawnlandı: " + objectPrefab.name);
     }
 }
