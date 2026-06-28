@@ -9,8 +9,24 @@ public class PlayerInteract_SP : MonoBehaviour
 {
     [SerializeField] private InputActionReference interactAction;
 
+    [Header("Detection")]
+    [SerializeField] private Transform detectionOrigin;
+    [SerializeField] private LayerMask interactableMask = ~0;
+    [SerializeField] private float detectionInterval = 0.05f;
+
+    [Header("Forward Detection")]
+    [SerializeField] private float forwardCheckDistance = 1.4f;
+    [SerializeField] private float forwardCheckRadius = 0.25f;
+
+    [Header("Ground Detection")]
+    [SerializeField] private float groundCheckForwardOffset = 0.65f;
+    [SerializeField] private float groundCheckHeight = 0.8f;
+    [SerializeField] private float groundCheckDistance = 1.3f;
+    [SerializeField] private float groundCheckRadius = 0.35f;
+
     [Header("Carry")]
     private Rigidbody carriedRb;
+    private Collider carriedCollider;
     private IPickupable currentCarriable;
     private GameObject currentObj;
 
@@ -18,7 +34,7 @@ public class PlayerInteract_SP : MonoBehaviour
     public bool IsCarrying => currentCarriable != null;
 
     [Header("Cooldown")]
-    private float dropCooldown = 0.2f;
+    [SerializeField] private float dropCooldown = 0.2f;
     private float lastDropTime;
 
     [Header("Highlight")]
@@ -31,15 +47,38 @@ public class PlayerInteract_SP : MonoBehaviour
     [Header("DEBUG")]
     [SerializeField] private GameObject currentTarget;
 
+    private Collider playerCollider;
+
     private Coroutine holdWorkRoutine;
+    private Coroutine targetDetectionRoutine;
     private bool interactHeld;
 
-    private void FixedUpdate()
-    {
-        if (!IsCarrying || carriedRb == null) return;
+    private readonly RaycastHit[] detectionHits = new RaycastHit[12];
 
-        carriedRb.MovePosition(holdPoint.position);
-        carriedRb.MoveRotation(holdPoint.rotation);
+    private void Awake()
+    {
+        playerCollider = GetComponentInParent<Collider>();
+
+        if (detectionOrigin == null)
+            detectionOrigin = transform;
+    }
+
+    private void OnEnable()
+    {
+        if (interactAction != null && interactAction.action != null)
+            interactAction.action.Enable();
+
+        StartTargetDetectionRoutine();
+    }
+
+    private void OnDisable()
+    {
+        if (interactAction != null && interactAction.action != null)
+            interactAction.action.Disable();
+
+        StopHoldWorkRoutine();
+        StopTargetDetectionRoutine();
+        RestoreHighlight();
     }
 
     private void Update()
@@ -63,19 +102,221 @@ public class PlayerInteract_SP : MonoBehaviour
 
             StopHoldWorkRoutine();
 
-            if (TryGetWorkStation(out WorkStation_SP station))
+            if (TryGetCurrentTargetStation(out WorkStation_SP station))
                 station.RequestStopWork();
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (!IsCarrying || carriedRb == null) return;
+        if (holdPoint == null) return;
+
+        carriedRb.MovePosition(holdPoint.position);
+        carriedRb.MoveRotation(holdPoint.rotation);
+    }
+
+    private void StartTargetDetectionRoutine()
+    {
+        if (targetDetectionRoutine != null)
+            return;
+
+        targetDetectionRoutine = StartCoroutine(TargetDetectionRoutine());
+    }
+
+    private void StopTargetDetectionRoutine()
+    {
+        if (targetDetectionRoutine != null)
+        {
+            StopCoroutine(targetDetectionRoutine);
+            targetDetectionRoutine = null;
+        }
+    }
+
+    private IEnumerator TargetDetectionRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(detectionInterval);
+
+        while (true)
+        {
+            RefreshCurrentTarget();
+            yield return wait;
+        }
+    }
+
+    private void RefreshCurrentTarget()
+    {
+        GameObject forwardTarget = FindForwardTarget();
+        GameObject groundTarget = FindGroundTarget();
+
+        GameObject bestTarget = forwardTarget != null ? forwardTarget : groundTarget;
+
+        SetCurrentTarget(bestTarget);
+    }
+
+    private GameObject FindForwardTarget()
+    {
+        Vector3 origin = detectionOrigin.position;
+        Vector3 direction = detectionOrigin.forward;
+
+        int count = Physics.SphereCastNonAlloc(
+            origin,
+            forwardCheckRadius,
+            direction,
+            detectionHits,
+            forwardCheckDistance,
+            interactableMask,
+            QueryTriggerInteraction.Collide
+        );
+
+        return GetBestTargetFromHits(count);
+    }
+
+    private GameObject FindGroundTarget()
+    {
+        Vector3 origin =
+            transform.position +
+            transform.forward * groundCheckForwardOffset +
+            Vector3.up * groundCheckHeight;
+
+        int count = Physics.SphereCastNonAlloc(
+            origin,
+            groundCheckRadius,
+            Vector3.down,
+            detectionHits,
+            groundCheckDistance,
+            interactableMask,
+            QueryTriggerInteraction.Collide
+        );
+
+        return GetBestTargetFromHits(count);
+    }
+
+    private GameObject GetBestTargetFromHits(int hitCount)
+    {
+        GameObject bestTarget = null;
+        float bestDistance = float.MaxValue;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = detectionHits[i].collider;
+            if (hitCollider == null) continue;
+
+            GameObject possibleTarget = GetValidTargetFromCollider(hitCollider);
+            if (possibleTarget == null) continue;
+
+            float hitDistance = detectionHits[i].distance;
+
+            if (hitDistance < bestDistance)
+            {
+                bestDistance = hitDistance;
+                bestTarget = possibleTarget;
+            }
+        }
+
+        return bestTarget;
+    }
+
+    private GameObject GetValidTargetFromCollider(Collider hitCollider)
+    {
+        if (hitCollider == null) return null;
+
+        ConstructObject_SP construct = hitCollider.GetComponentInParent<ConstructObject_SP>();
+        WorkStation_SP station = hitCollider.GetComponentInParent<WorkStation_SP>();
+        CarriableObject_SP carriable = hitCollider.GetComponentInParent<CarriableObject_SP>();
+
+        IInteractable interactable = hitCollider.GetComponentInParent<IInteractable>();
+
+        GameObject target = null;
+
+        if (construct != null)
+            target = construct.gameObject;
+        else if (station != null)
+            target = station.gameObject;
+        else if (carriable != null)
+            target = carriable.gameObject;
+        else if (interactable is MonoBehaviour mb)
+            target = mb.gameObject;
+
+        if (target == null)
+            return null;
+
+        if (currentObj != null && target == currentObj)
+            return null;
+
+        bool isPickup = carriable != null || target.CompareTag("Pickup");
+        bool isStation = station != null;
+        bool isConstruct = construct != null;
+        bool isInteractable = interactable != null;
+
+        if (!isPickup && !isStation && !isConstruct && !isInteractable)
+            return null;
+
+        if (IsCarrying)
+        {
+            if (isPickup)
+                return null;
+
+            if (isStation)
+            {
+                if (CanPlaceCurrentItemToStation(station))
+                    return target;
+
+                return null;
+            }
+
+            if (isConstruct)
+            {
+                if (CanBuildCurrentItemToConstruct(construct))
+                    return target;
+
+                return null;
+            }
+
+            return null;
+        }
+
+        if (Time.time - lastDropTime < dropCooldown && isPickup)
+            return null;
+
+        if (isConstruct)
+            return null;
+
+        return target;
+    }
+
+    private bool CanPlaceCurrentItemToStation(WorkStation_SP station)
+    {
+        if (station == null) return false;
+        if (currentObj == null) return false;
+
+        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
+        if (carriable == null) return false;
+
+        return station.GetRecipeIndexForMaterial(carriable.Material) != -1;
+    }
+
+    private bool CanBuildCurrentItemToConstruct(ConstructObject_SP construct)
+    {
+        if (construct == null) return false;
+        if (currentObj == null) return false;
+
+        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
+        if (carriable == null) return false;
+
+        return construct.CanBuildWith(carriable);
+    }
+
     private IEnumerator HoldWorkRoutine()
     {
+        WaitForSeconds wait = new WaitForSeconds(0.05f);
+
         while (interactHeld)
         {
-            if (!IsCarrying && TryGetWorkStation(out WorkStation_SP station))
+            if (!IsCarrying && TryGetCurrentTargetStation(out WorkStation_SP station))
                 station.RequestHoldWork();
 
-            yield return null;
+            yield return wait;
         }
 
         holdWorkRoutine = null;
@@ -94,7 +335,7 @@ public class PlayerInteract_SP : MonoBehaviour
     {
         if (IsCarrying)
         {
-            if (TryGetWorkStation(out WorkStation_SP station))
+            if (TryGetCurrentTargetStation(out WorkStation_SP station))
             {
                 PlaceToStation(station);
                 return;
@@ -119,69 +360,19 @@ public class PlayerInteract_SP : MonoBehaviour
         return currentCarriable;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private bool TryGetCurrentTargetStation(out WorkStation_SP station)
     {
-        if (Time.time - lastDropTime < dropCooldown)
-            return;
+        station = null;
 
-        ConstructObject_SP construct = other.GetComponentInParent<ConstructObject_SP>();
-        if (construct != null)
-        {
-            SetCurrentTarget(construct.gameObject);
-            Debug.Log("Construct target girildi: " + currentTarget.name);
-            return;
-        }
+        if (currentTarget == null)
+            return false;
 
-        WorkStation_SP station = other.GetComponentInParent<WorkStation_SP>();
-        if (station != null)
-        {
-            SetCurrentTarget(station.gameObject);
-            Debug.Log("WorkStation target girildi: " + currentTarget.name);
-            return;
-        }
+        station = currentTarget.GetComponent<WorkStation_SP>();
 
-        CarriableObject_SP carriable = other.GetComponentInParent<CarriableObject_SP>();
-        if (carriable != null)
-        {
-            SetCurrentTarget(carriable.gameObject);
-            Debug.Log("Pickup target girildi: " + currentTarget.name);
-            return;
-        }
+        if (station == null)
+            station = currentTarget.GetComponentInChildren<WorkStation_SP>(true);
 
-        IInteractable interactable = other.GetComponentInParent<IInteractable>();
-        if (interactable is MonoBehaviour mb)
-        {
-            SetCurrentTarget(mb.gameObject);
-            Debug.Log("Interactable target girildi: " + currentTarget.name);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        GameObject exitedTarget = GetTargetFromCollider(other);
-
-        if (exitedTarget != null && exitedTarget == currentTarget)
-        {
-            ClearCurrentTarget();
-            Debug.Log("Target çýkýldý");
-        }
-    }
-
-    private GameObject GetTargetFromCollider(Collider other)
-    {
-        ConstructObject_SP construct = other.GetComponentInParent<ConstructObject_SP>();
-        if (construct != null) return construct.gameObject;
-
-        WorkStation_SP station = other.GetComponentInParent<WorkStation_SP>();
-        if (station != null) return station.gameObject;
-
-        CarriableObject_SP carriable = other.GetComponentInParent<CarriableObject_SP>();
-        if (carriable != null) return carriable.gameObject;
-
-        IInteractable interactable = other.GetComponentInParent<IInteractable>();
-        if (interactable is MonoBehaviour mb) return mb.gameObject;
-
-        return null;
+        return station != null;
     }
 
     private void SetCurrentTarget(GameObject newTarget)
@@ -235,45 +426,20 @@ public class PlayerInteract_SP : MonoBehaviour
         highlightedMaterial = null;
     }
 
-    private bool TryGetWorkStation(out WorkStation_SP station)
-    {
-        station = null;
-
-        Collider[] hits = Physics.OverlapSphere(transform.position, 0.5f);
-
-        foreach (var hit in hits)
-        {
-            station = hit.GetComponentInParent<WorkStation_SP>();
-
-            if (station != null)
-                return true;
-        }
-
-        return false;
-    }
-
     private void Drop()
     {
         if (!IsCarrying) return;
 
-        currentCarriable.OnDrop();
+        if (currentCarriable != null)
+            currentCarriable.OnDrop();
 
         if (carriedRb != null)
-        {
             carriedRb.isKinematic = false;
 
-            Collider playerCollider = GetComponentInParent<Collider>();
-            Collider itemCollider = carriedRb.GetComponent<Collider>();
-
-            if (playerCollider != null && itemCollider != null)
-                Physics.IgnoreCollision(playerCollider, itemCollider, false);
-        }
+        SetHeldItemCollision(false);
 
         ClearCurrentTarget();
-
-        currentCarriable = null;
-        currentObj = null;
-        carriedRb = null;
+        ClearLocalCarryReferences();
 
         lastDropTime = Time.time;
 
@@ -282,30 +448,33 @@ public class PlayerInteract_SP : MonoBehaviour
 
     private void Pickup(GameObject obj)
     {
-        var item = obj.GetComponent<IPickupable>();
+        if (obj == null) return;
+
+        IPickupable item = obj.GetComponent<IPickupable>();
         if (item == null) return;
+
+        Rigidbody itemRb = item.GetRigidbody();
+        if (itemRb == null) return;
 
         ClearCurrentTarget();
 
         currentCarriable = item;
         currentObj = obj;
-        carriedRb = item.GetRigidbody();
-
-        if (carriedRb == null) return;
+        carriedRb = itemRb;
+        carriedCollider = carriedRb.GetComponent<Collider>();
 
         carriedRb.transform.SetParent(null);
 
         currentCarriable.OnPickUp();
         carriedRb.isKinematic = true;
 
-        carriedRb.transform.position = holdPoint.position;
-        carriedRb.transform.rotation = holdPoint.rotation;
+        if (holdPoint != null)
+        {
+            carriedRb.transform.position = holdPoint.position;
+            carriedRb.transform.rotation = holdPoint.rotation;
+        }
 
-        Collider playerCollider = GetComponentInParent<Collider>();
-        Collider itemCollider = carriedRb.GetComponent<Collider>();
-
-        if (playerCollider != null && itemCollider != null)
-            Physics.IgnoreCollision(playerCollider, itemCollider, true);
+        SetHeldItemCollision(true);
 
         Debug.Log("Item alýndý: " + obj.name);
     }
@@ -327,22 +496,11 @@ public class PlayerInteract_SP : MonoBehaviour
         }
 
         GameObject placedObj = currentObj;
-        Rigidbody placedRb = carriedRb;
+
+        SetHeldItemCollision(false);
 
         ClearCurrentTarget();
-
-        if (placedRb != null)
-        {
-            Collider playerCollider = GetComponentInParent<Collider>();
-            Collider itemCollider = placedRb.GetComponent<Collider>();
-
-            if (playerCollider != null && itemCollider != null)
-                Physics.IgnoreCollision(playerCollider, itemCollider, false);
-        }
-
-        currentObj = null;
-        carriedRb = null;
-        currentCarriable = null;
+        ClearLocalCarryReferences();
 
         station.PlaceItem(carriable, recipeIndex);
 
@@ -353,7 +511,9 @@ public class PlayerInteract_SP : MonoBehaviour
     {
         if (target == null) return;
 
-        if (target.CompareTag("Pickup"))
+        CarriableObject_SP pickup = target.GetComponent<CarriableObject_SP>();
+
+        if (pickup != null || target.CompareTag("Pickup"))
         {
             if (IsCarrying) return;
 
@@ -365,64 +525,81 @@ public class PlayerInteract_SP : MonoBehaviour
 
         if (construct != null)
         {
-            if (!IsCarrying) return;
-            if (currentObj == null) return;
-
-            CarriableObject_SP carriedObj = currentObj.GetComponent<CarriableObject_SP>();
-            if (carriedObj == null) return;
-
-            bool built = false;
-
-            try
-            {
-                built = construct.TryBuild(carriedObj);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("Construct build sýrasýnda hata oluþtu: " + e.Message);
-                return;
-            }
-
-            if (!built) return;
-
-            GameObject destroyObj = currentObj;
-
-            ReleaseHeldItemForStation();
-
-            if (destroyObj != null)
-                Destroy(destroyObj);
-
-            Debug.Log("Build tamamlandý");
+            BuildConstruct(construct);
             return;
         }
 
-        var interactable = target.GetComponent<IInteractable>();
+        IInteractable interactable = target.GetComponent<IInteractable>();
         interactable?.Interact();
     }
 
-    private void ReleaseHeldItemForStation()
+    private void BuildConstruct(ConstructObject_SP construct)
     {
+        if (construct == null) return;
         if (!IsCarrying) return;
+        if (currentObj == null) return;
 
-        if (carriedRb != null)
-        {
-            Collider playerCollider = GetComponentInParent<Collider>();
-            Collider itemCollider = carriedRb.GetComponent<Collider>();
+        CarriableObject_SP carriedObj = currentObj.GetComponent<CarriableObject_SP>();
+        if (carriedObj == null) return;
 
-            if (playerCollider != null && itemCollider != null)
-                Physics.IgnoreCollision(playerCollider, itemCollider, false);
-        }
+        bool built = construct.TryBuild(carriedObj);
+        if (!built) return;
+
+        GameObject destroyObj = currentObj;
+
+        SetHeldItemCollision(false);
 
         ClearCurrentTarget();
+        ClearLocalCarryReferences();
 
+        if (destroyObj != null)
+            Destroy(destroyObj);
+
+        Debug.Log("Build tamamlandý");
+    }
+
+    private void SetHeldItemCollision(bool ignorePlayerCollision)
+    {
+        if (playerCollider == null)
+            playerCollider = GetComponentInParent<Collider>();
+
+        if (playerCollider == null || carriedCollider == null)
+            return;
+
+        Physics.IgnoreCollision(
+            playerCollider,
+            carriedCollider,
+            ignorePlayerCollision
+        );
+    }
+
+    private void ClearLocalCarryReferences()
+    {
         carriedRb = null;
+        carriedCollider = null;
         currentCarriable = null;
         currentObj = null;
     }
 
-    private void OnDisable()
+    private void OnDrawGizmosSelected()
     {
-        StopHoldWorkRoutine();
-        RestoreHighlight();
+        Transform originTransform = detectionOrigin != null ? detectionOrigin : transform;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(
+            originTransform.position,
+            originTransform.position + originTransform.forward * forwardCheckDistance
+        );
+
+        Vector3 groundOrigin =
+            transform.position +
+            transform.forward * groundCheckForwardOffset +
+            Vector3.up * groundCheckHeight;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(
+            groundOrigin,
+            groundOrigin + Vector3.down * groundCheckDistance
+        );
     }
 }

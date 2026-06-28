@@ -1,6 +1,5 @@
 using GameData;
 using Interactions;
-using System;
 using UnityEngine;
 
 namespace ItemScript
@@ -17,8 +16,6 @@ namespace ItemScript
 
         private bool isBuilt = false;
 
-        public Action<ConstructObject_SP> OnBuilt;
-
         public ConstructType ConstructType =>
             profile != null ? profile.constructType : ConstructType.Frame;
 
@@ -32,19 +29,13 @@ namespace ItemScript
         private void UpdateVisuals(bool built)
         {
             if (interactionMesh != null)
-            {
                 interactionMesh.SetActive(!built);
-            }
 
             if (ghostMesh != null)
-            {
                 ghostMesh.SetActive(!built);
-            }
 
             if (builtMesh != null)
-            {
                 builtMesh.SetActive(built);
-            }
         }
 
         public void Interact()
@@ -54,18 +45,22 @@ namespace ItemScript
 
         public bool TryBuild(CarriableObject_SP heldItem)
         {
-            if (isBuilt) return false;
-            if (heldItem == null) return false;
-            if (profile == null) return false;
-
-            if (heldItem.Material != profile.requiredMaterial)
+            if (!CanBuildWith(heldItem))
                 return false;
 
             isBuilt = true;
 
             UpdateVisuals(isBuilt);
 
-            OnBuilt?.Invoke(this);
+            return true;
+        }
+
+        public bool CanBuildWith(CarriableObject_SP heldItem)
+        {
+            if (isBuilt) return false;
+            if (heldItem == null) return false;
+            if (profile == null) return false;
+            if (heldItem.Material != profile.requiredMaterial) return false;
 
             return true;
         }

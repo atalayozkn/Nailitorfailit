@@ -1,18 +1,19 @@
 using Interactions;
 using UnityEngine;
-using ItemScript;
 
 public class NetworkSpawner_SP : MonoBehaviour, IInteractable
 {
     [Header("Settings")]
-    public CarriableObject_SP objectPrefab;
-    public Transform spawnPoint;
+    [SerializeField] private GameObject objectPrefab;
+    [SerializeField] private Transform spawnPoint;
 
-    [SerializeField] private MaterialType materialType = MaterialType.None;
+    [Header("Safety")]
+    [SerializeField] private float spawnCooldown = 0.2f;
+
+    private float lastSpawnTime = -999f;
 
     public void Interact()
     {
-        Debug.Log("Spawner çalýþtý");
         RequestSpawn();
     }
 
@@ -23,16 +24,22 @@ public class NetworkSpawner_SP : MonoBehaviour, IInteractable
 
     private void SpawnObject()
     {
+        if (Time.time - lastSpawnTime < spawnCooldown)
+            return;
+
         if (objectPrefab == null)
         {
-            Debug.LogError("No Prefab assigned!");
+            Debug.LogError("Spawner prefab atanmamýþ!");
             return;
         }
 
         Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
         Quaternion rot = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
 
-        CarriableObject_SP instance = Instantiate(objectPrefab, pos, rot);
-        instance.InitializeObject(materialType);
+        Instantiate(objectPrefab, pos, rot);
+
+        lastSpawnTime = Time.time;
+
+        Debug.Log("Obje spawnlandý: " + objectPrefab.name);
     }
 }
