@@ -3,13 +3,13 @@ using ItemScript;
 using GameData;
 using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class WorkStation_SP : MonoBehaviour, IInteractable
+public class WorkStation_MP : NetworkBehaviour, IInteractable
 {
     [Header("Configuration")]
-    [Tooltip("List all recipes this specific station can handle.")]
     [SerializeField] public List<ProcessingRecipe> validRecipes;
 
     [Header("Visuals")]
@@ -18,7 +18,6 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
 
     [Header("Wood")]
     [SerializeField] private Transform putTableHere;
-    private bool justPlacedItem = false;
 
     [Header("Power")]
     [SerializeField] private Generator linkedGenerator;
@@ -27,17 +26,25 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
     [SerializeField] private float workSpeed = 2f;
     [SerializeField] private float workTickRate = 0.05f;
 
-    private int activeRecipeIndex = -1;
-    private float currentProgress = 0f;
+    // SyncVar'lar: server'da değişir, tüm client'lara otomatik yayılır
+    [SyncVar(hook = nameof(OnOccupiedChanged))]
     private bool isOccupied = false;
 
-    private CarriableObject_SP currentHeldItem;
+    [SyncVar(hook = nameof(OnRecipeChanged))]
+    private int activeRecipeIndex = -1;
+
+    [SyncVar(hook = nameof(OnProgressChanged))]
+    private float currentProgress = 0f;
+
+    private CarriableObject_MP currentHeldItem;
     private Coroutine workRoutine;
 
     private void Start()
     {
         UpdateProgressUI();
     }
+
+    // --- IInteractable ---
 
     public void Interact()
     {
@@ -46,28 +53,26 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
             Debug.Log("No power!");
             return;
         }
-
-        Debug.Log("WorkStation �al��t�");
+        Debug.Log("WorkStation interacted");
     }
 
-    public void RequestHoldWork()
+    // --- PlayerInteract_MP tarafından çağrılır ---
+
+    public void RequestHoldWork() => CmdRequestHoldWork();
+    public void RequestStopWork() => CmdRequestStopWork();
+
+    [Command(requiresAuthority = false)]
+    private void CmdRequestHoldWork()
     {
         if (!isOccupied) return;
-
-        if (linkedGenerator != null && !linkedGenerator.IsRunning)
-            return;
-
-        if (activeRecipeIndex == -1)
-            return;
-
+        if (linkedGenerator != null && !linkedGenerator.IsRunning) return;
+        if (activeRecipeIndex == -1) return;
         if (workRoutine == null)
             workRoutine = StartCoroutine(WorkRoutine());
     }
 
-    public void RequestStopWork()
-    {
-        StopWorkRoutine();
-    }
+    [Command(requiresAuthority = false)]
+    private void CmdRequestStopWork() => StopWorkRoutine();
 
     private void StopWorkRoutine()
     {
@@ -78,6 +83,7 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
         }
     }
 
+    // Sadece server'da çalışır (Command'dan başlatıldığı için)
     private IEnumerator WorkRoutine()
     {
         WaitForSeconds wait = new WaitForSeconds(workTickRate);
@@ -91,7 +97,6 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
             }
 
             ProcessingRecipe recipe = validRecipes[activeRecipeIndex];
-
             currentProgress += workTickRate * workSpeed;
 
             if (currentProgress >= recipe.workDuration)
@@ -100,13 +105,13 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
                 yield break;
             }
 
-            UpdateProgressUI();
-
             yield return wait;
         }
 
         workRoutine = null;
     }
+
+    // --- PlaceItem ---
 
     public int GetRecipeIndexForMaterial(MaterialType mat)
     {
@@ -115,30 +120,35 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
             if (validRecipes[i].inputMaterial == mat)
                 return i;
         }
-
         return -1;
     }
 
-    public void PlaceItem(CarriableObject_SP item, int recipeIndex)
+    // PlayerInteract_MP artık bu metodu çağıracak (PlaceItem yerine)
+    [Command(requiresAuthority = false)]
+    public void CmdPlaceItem(NetworkIdentity itemIdentity, int recipeIndex)
     {
-        if (putTableHere == null)
-        {
-            Debug.LogError("PutTableHere is not assigned!");
-            return;
-        }
+        if (itemIdentity == null) return;
 
-        if (item == null)
-            return;
-
-        if (recipeIndex < 0 || recipeIndex >= validRecipes.Count)
-            return;
-
-        Debug.Log("WORKSTATION PLACE ITEM CALLED");
+        CarriableObject_MP item = itemIdentity.GetComponent<CarriableObject_MP>();
+        if (item == null) return;
+        if (recipeIndex < 0 || recipeIndex >= validRecipes.Count) return;
+        if (putTableHere == null) return;
 
         currentHeldItem = item;
+        isOccupied = true;
+        activeRecipeIndex = recipeIndex;
+        currentProgress = 0f;
 
-        Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
+        // Görsel yerleştirmeyi tüm client'lara yay
+        RpcPlaceItemVisual(itemIdentity.gameObject, putTableHere.position, putTableHere.rotation);
+    }
 
+    [ClientRpc]
+    private void RpcPlaceItemVisual(GameObject itemObj, Vector3 pos, Quaternion rot)
+    {
+        if (itemObj == null) return;
+
+        Rigidbody rb = itemObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = true;
@@ -148,29 +158,22 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
             rb.angularVelocity = Vector3.zero;
         }
 
-        Collider itemCol = currentHeldItem.GetComponent<Collider>();
+        Collider itemCol = itemObj.GetComponent<Collider>();
         if (itemCol != null)
             itemCol.enabled = false;
 
-        Vector3 originalScale = currentHeldItem.transform.localScale;
+        Vector3 originalScale = itemObj.transform.localScale;
 
-        currentHeldItem.transform.SetParent(putTableHere, false);
-        currentHeldItem.transform.localPosition = Vector3.zero;
-        currentHeldItem.transform.localRotation = Quaternion.identity;
-        currentHeldItem.transform.localScale = originalScale;
+        if (putTableHere != null)
+            itemObj.transform.SetParent(putTableHere, false);
 
-        currentHeldItem.transform.SetPositionAndRotation(
-            putTableHere.position,
-            putTableHere.rotation
-        );
-
-        isOccupied = true;
-        activeRecipeIndex = recipeIndex;
-        currentProgress = 0f;
-        justPlacedItem = true;
-
-        UpdateProgressUI();
+        itemObj.transform.localPosition = Vector3.zero;
+        itemObj.transform.localRotation = Quaternion.identity;
+        itemObj.transform.localScale = originalScale;
+        itemObj.transform.SetPositionAndRotation(pos, rot);
     }
+
+    // --- CompleteRecipe ---
 
     private void CompleteRecipe(ProcessingRecipe recipe)
     {
@@ -178,7 +181,8 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
 
         if (currentHeldItem != null)
         {
-            Destroy(currentHeldItem.gameObject);
+            NetworkServer.Destroy(currentHeldItem.gameObject); // SP: Destroy()
+            currentHeldItem = null;
         }
 
         for (int i = 0; i < recipe.outputCount; i++)
@@ -189,27 +193,31 @@ public class WorkStation_SP : MonoBehaviour, IInteractable
                 Random.Range(-0.2f, 0.2f)
             );
 
-            Instantiate(
+            GameObject output = Instantiate(
                 recipe.outputPrefab,
                 placementPoint.position + offset,
                 Quaternion.identity
             );
+
+            NetworkServer.Spawn(output); // SP'de yoktu, tüm clientlara bildir
         }
 
         isOccupied = false;
         activeRecipeIndex = -1;
         currentProgress = 0f;
-        currentHeldItem = null;
-        justPlacedItem = false;
-
-        UpdateProgressUI();
     }
+
+    // --- SyncVar hook'ları: değer değişince UI'ı güncelle ---
+
+    private void OnOccupiedChanged(bool oldVal, bool newVal) => UpdateProgressUI();
+    private void OnRecipeChanged(int oldVal, int newVal) => UpdateProgressUI();
+    private void OnProgressChanged(float oldVal, float newVal) => UpdateProgressUI();
 
     private void UpdateProgressUI()
     {
         if (progressBar == null) return;
 
-        if (activeRecipeIndex != -1)
+        if (activeRecipeIndex >= 0 && activeRecipeIndex < validRecipes.Count)
         {
             float maxTime = validRecipes[activeRecipeIndex].workDuration;
             progressBar.gameObject.SetActive(true);
