@@ -165,8 +165,7 @@ public class PlayerInteract_SP : MonoBehaviour
             direction,
             detectionHits,
             forwardCheckDistance,
-            interactableMask,
-            QueryTriggerInteraction.Collide
+            interactableMask
         );
 
         return GetBestTargetFromHits(count);
@@ -185,8 +184,7 @@ public class PlayerInteract_SP : MonoBehaviour
             Vector3.down,
             detectionHits,
             groundCheckDistance,
-            interactableMask,
-            QueryTriggerInteraction.Collide
+            interactableMask
         );
 
         return GetBestTargetFromHits(count);

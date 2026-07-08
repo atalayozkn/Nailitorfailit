@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,16 +5,18 @@ namespace PlayerScripts
 {
     public class PlayerMove_SP : MonoBehaviour
     {
+        [Header("References")]
+        [SerializeField] private PlayerStamina_SP stamina;
+        [SerializeField] private PlayerStateMachine_SP stateMachine;
+        [SerializeField] private PlayerInteract_SP playerInteract;
+        [SerializeField] private Rigidbody rb;
+
         [Header("Movement Settings")]
-        [SerializeField] private Animator _animator;
         [SerializeField] private float baseSpeed = 10f;
         [SerializeField] private float rotationSpeed = 10f;
 
         [Header("Jump Settings")]
         [SerializeField] private float jumpForce = 5f;
-        [SerializeField] private LayerMask groundMask;
-        [SerializeField] private float groundCheckDist = 0.05f;
-        [SerializeField] private float groundCheckInterval = 0.03f;
 
         [Header("Input")]
         public InputActionReference move;
@@ -26,160 +27,113 @@ namespace PlayerScripts
         [SerializeField] private float sprintMultiplier = 2f;
 
         [Header("Carrying Pickup")]
-        [SerializeField] private PlayerInteract_SP playerInteract;
         [SerializeField] private float carrySpeedMultiplier = 0.65f;
+
         private bool IsCarryingObject => playerInteract != null && playerInteract.IsCarrying;
 
-        [Header("Stamina")]
-        [SerializeField] private PlayerStamina_SP stamina;
-
-        private Rigidbody rb;
-        private Collider col;
-
-        private float movementStateMultiplier = 1f;
+        private float movementMultiplier = 1f;
         private float externalSpeedModifier = 1f;
 
-        private CharacterStateMachine _stateMachine;
-        private IdleState _idleState;
-        private RunState _runState;
-        private JumpState _jumpState;
-
-        private const int _carryLayerIndex = 1;
-
-        [SerializeField] private bool _isGrounded;
-        public bool IsGroundedPublic => _isGrounded;
-
-        public float CurrentSpeed => baseSpeed * movementStateMultiplier * externalSpeedModifier;
+        public float CurrentSpeed => baseSpeed * movementMultiplier * externalSpeedModifier;
         public float EnergyPercent => stamina != null ? stamina.EnergyPercent : 1f;
 
         private Vector2 moveInput;
         private bool sprintHeld;
 
-        private Coroutine groundCheckRoutine;
-
         private void Awake()
         {
-            rb = GetComponent<Rigidbody>();
-            col = GetComponent<Collider>();
+            if (rb == null)
+                rb = GetComponent<Rigidbody>();
 
-            _stateMachine = new CharacterStateMachine();
+            if (stamina == null)
+                stamina = GetComponent<PlayerStamina_SP>();
 
-            _idleState = new IdleState(_animator);
-            _runState = new RunState(_animator, () => rb.linearVelocity.magnitude);
-            _jumpState = new JumpState(_animator);
+            if (stateMachine == null)
+                stateMachine = GetComponent<PlayerStateMachine_SP>();
 
-            _stateMachine.ChangeState(_idleState);
+            if (playerInteract == null)
+                playerInteract = GetComponent<PlayerInteract_SP>();
 
             CameraController cameraController = FindFirstObjectByType<CameraController>();
             if (cameraController != null)
                 cameraController.OnPlayerInitialized(transform);
         }
 
-        private void Start()
-        {
-            if (playerInteract == null)
-                playerInteract = GetComponent<PlayerInteract_SP>();
-
-            if (stamina == null)
-                stamina = GetComponent<PlayerStamina_SP>();
-
-            _isGrounded = CheckGrounded();
-        }
-
         private void OnEnable()
         {
-            if (move != null) move.action.Enable();
-            if (jump != null) jump.action.Enable();
-            if (sprint != null) sprint.action.Enable();
+            if (move != null && move.action != null)
+                move.action.Enable();
 
-            StartGroundCheckRoutine();
+            if (jump != null && jump.action != null)
+                jump.action.Enable();
+
+            if (sprint != null && sprint.action != null)
+                sprint.action.Enable();
         }
 
         private void OnDisable()
         {
-            if (move != null) move.action.Disable();
-            if (jump != null) jump.action.Disable();
-            if (sprint != null) sprint.action.Disable();
+            if (move != null && move.action != null)
+                move.action.Disable();
 
-            StopGroundCheckRoutine();
+            if (jump != null && jump.action != null)
+                jump.action.Disable();
+
+            if (sprint != null && sprint.action != null)
+                sprint.action.Disable();
 
             if (stamina != null)
                 stamina.SetSprinting(false);
+
+            if (stateMachine != null)
+            {
+                stateMachine.SetMoving(false);
+                stateMachine.SetRunning(false);
+            }
         }
 
         private void Update()
         {
-            ReadInput();
-
+            HandleInput();
             HandleJumpInput();
-            HandleAnimation();
-            HandleSprint();
-
-            SetCarrying(IsCarryingObject);
         }
 
         private void FixedUpdate()
         {
+            if (stateMachine != null)
+                stateMachine.CheckGround();
+
             HandleMovement();
         }
 
-        private void ReadInput()
+        private void HandleInput()
         {
             if (move != null && move.action != null)
                 moveInput = move.action.ReadValue<Vector2>();
+            else
+                moveInput = Vector2.zero;
 
             if (sprint != null && sprint.action != null)
                 sprintHeld = sprint.action.IsPressed();
-        }
+            else
+                sprintHeld = false;
 
-        private void HandleJumpInput()
-        {
-            if (!_isGrounded) return;
-            if (jump == null || jump.action == null) return;
-            if (IsCarryingObject) return;
+            bool isMoving = moveInput.magnitude >= 0.1f;
 
-            if (jump.action.WasPressedThisFrame())
-            {
-                _stateMachine.ChangeState(_jumpState);
-                HandleJump();
-            }
-        }
-
-        private void HandleAnimation()
-        {
-            bool isMoving = moveInput.magnitude > 0.1f;
-
-            if (!_isGrounded)
-            {
-                if (_stateMachine.CurrentState != _jumpState)
-                    _stateMachine.ChangeState(_jumpState);
-
-                _stateMachine.Tick();
-                return;
-            }
-
-            if (isMoving)
-            {
-                _stateMachine.ChangeState(_runState);
-            }
-            else if (_stateMachine.CurrentState == _runState || _stateMachine.CurrentState == _jumpState)
-            {
-                _stateMachine.ChangeState(_idleState);
-            }
-
-            _stateMachine.Tick();
-        }
-
-        private void HandleSprint()
-        {
-            bool isMoving = moveInput.magnitude > 0.1f;
+            if (stateMachine != null)
+                stateMachine.SetMoving(isMoving);
 
             if (IsCarryingObject)
             {
-                movementStateMultiplier = carrySpeedMultiplier;
+                movementMultiplier = carrySpeedMultiplier;
 
                 if (stamina != null)
                     stamina.SetSprinting(false);
+
+                if (stateMachine != null)
+                    stateMachine.SetRunning(false);
+
+                UpdateGroundStateOnly(isMoving);
 
                 return;
             }
@@ -188,24 +142,64 @@ namespace PlayerScripts
 
             bool shouldSprint =
                 sprintHeld &&
-                _isGrounded &&
                 isMoving &&
                 staminaAllowsSprint;
 
-            movementStateMultiplier = shouldSprint ? sprintMultiplier : 1f;
+            movementMultiplier = shouldSprint ? sprintMultiplier : 1f;
 
             if (stamina != null)
                 stamina.SetSprinting(shouldSprint);
+
+            if (stateMachine != null)
+                stateMachine.SetRunning(shouldSprint);
+
+            UpdateGroundStateOnly(isMoving);
         }
 
-        public void SetSpeedModifier(float multiplier)
+        private void UpdateGroundStateOnly(bool isMoving)
         {
-            externalSpeedModifier = Mathf.Clamp(multiplier, 0.2f, 1.0f);
+            if (stateMachine == null)
+                return;
+
+            if (stateMachine.currentState == PlayerStates.Dead)
+                return;
+
+            if (stateMachine.currentState == PlayerStates.OnAir)
+                return;
+
+            if (isMoving)
+                stateMachine.ChangeToNavigationState();
+            else
+                stateMachine.ChangeToIdleState();
+        }
+
+        private void HandleJumpInput()
+        {
+            if (jump == null || jump.action == null)
+                return;
+
+            if (IsCarryingObject)
+                return;
+
+            if (!jump.action.WasPressedThisFrame())
+                return;
+
+            if (stateMachine != null && !stateMachine.IsGrounded)
+                return;
+
+            HandleJump();
+
+            if (stateMachine != null)
+                stateMachine.ChangeToOnAirState();
         }
 
         private void HandleMovement()
         {
-            if (rb == null) return;
+            if (rb == null)
+                return;
+
+            if (stateMachine != null && stateMachine.currentState == PlayerStates.Dead)
+                return;
 
             Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
 
@@ -240,15 +234,19 @@ namespace PlayerScripts
 
         private void HandleJump()
         {
-            if (rb == null) return;
+            if (rb == null)
+                return;
 
             Vector3 vel = rb.linearVelocity;
             vel.y = 0f;
             rb.linearVelocity = vel;
 
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }
 
-            _isGrounded = false;
+        public void SetSpeedModifier(float multiplier)
+        {
+            externalSpeedModifier = Mathf.Clamp(multiplier, 0.2f, 1.0f);
         }
 
         public void RefillEnergy()
@@ -264,77 +262,6 @@ namespace PlayerScripts
 
             Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
             return new Vector2(localVel.x, localVel.z);
-        }
-
-        private void StartGroundCheckRoutine()
-        {
-            if (groundCheckRoutine != null)
-                return;
-
-            groundCheckRoutine = StartCoroutine(GroundCheckRoutine());
-        }
-
-        private void StopGroundCheckRoutine()
-        {
-            if (groundCheckRoutine != null)
-            {
-                StopCoroutine(groundCheckRoutine);
-                groundCheckRoutine = null;
-            }
-        }
-
-        private IEnumerator GroundCheckRoutine()
-        {
-            WaitForSeconds wait = new WaitForSeconds(groundCheckInterval);
-
-            while (true)
-            {
-                _isGrounded = CheckGrounded();
-
-                yield return wait;
-            }
-        }
-
-        private bool CheckGrounded()
-        {
-            if (col == null)
-                return false;
-
-            Vector3 origin = col.bounds.center;
-            float distance = col.bounds.extents.y + groundCheckDist;
-
-            return Physics.Raycast(
-                origin,
-                Vector3.down,
-                distance,
-                groundMask,
-                QueryTriggerInteraction.Ignore
-            );
-        }
-
-        private void SetCarrying(bool isCarrying)
-        {
-            if (_animator == null) return;
-
-            _animator.SetLayerWeight(_carryLayerIndex, isCarrying ? 0.5f : 0f);
-        }
-
-        private void OnDrawGizmos()
-        {
-            Collider drawCollider = col;
-
-            if (drawCollider == null)
-                drawCollider = GetComponent<Collider>();
-
-            if (drawCollider == null)
-                return;
-
-            Gizmos.color = _isGrounded ? Color.green : Color.red;
-
-            Vector3 origin = drawCollider.bounds.center;
-            float distance = drawCollider.bounds.extents.y + groundCheckDist;
-
-            Gizmos.DrawLine(origin, origin + Vector3.down * distance);
         }
     }
 }

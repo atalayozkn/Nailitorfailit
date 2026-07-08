@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6479617406932401784
+--- !u!1 &1976539087991082810
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,50 +8,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7515920955226674452}
-  - component: {fileID: 1200983358115736339}
-  - component: {fileID: 5673514962439715066}
-  - component: {fileID: 4249530769672492423}
-  - component: {fileID: 8684526647547955195}
-  - component: {fileID: 6283816340342176705}
-  - component: {fileID: 4872700411512090058}
+  - component: {fileID: 4701255916704066978}
+  - component: {fileID: 55123759767740440}
+  - component: {fileID: 6924364127481896341}
   m_Layer: 9
-  m_Name: "Yar\u0131mAh\u015Fap"
-  m_TagString: Pickup
+  m_Name: Mesh
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7515920955226674452
+--- !u!4 &4701255916704066978
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6479617406932401784}
+  m_GameObject: {fileID: 1976539087991082810}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: -3}
-  m_LocalScale: {x: 0.2, y: 0.1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 7515920955226674452}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1200983358115736339
+--- !u!33 &55123759767740440
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6479617406932401784}
+  m_GameObject: {fileID: 1976539087991082810}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &5673514962439715066
+--- !u!23 &6924364127481896341
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6479617406932401784}
+  m_GameObject: {fileID: 1976539087991082810}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -70,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -7068095741798916436, guid: 5f9d416e97dbaee41aa0e666d968e425, type: 3}
+  - {fileID: 4947707885710963158, guid: 9cf335c2e9cc53449991c6c3023f5169, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -94,6 +90,41 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6479617406932401784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7515920955226674452}
+  - component: {fileID: 4249530769672492423}
+  - component: {fileID: 8684526647547955195}
+  - component: {fileID: 7885584406948183470}
+  m_Layer: 9
+  m_Name: "Tu\u011Fla_SP"
+  m_TagString: Pickup
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7515920955226674452
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6479617406932401784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.5, z: -3}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4701255916704066978}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &4249530769672492423
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -142,7 +173,7 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!114 &6283816340342176705
+--- !u!114 &7885584406948183470
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -151,30 +182,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 6479617406932401784}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 466282a0643119c4983b87f9c2ac2b76, type: 3}
+  m_Script: {fileID: 11500000, guid: 934e20b9a6b09d1469dca42a2c737701, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: "Assembly-CSharp::\u0130temScript.CarriableOject"
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
+  m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   itemType: CarriableItem
-  netMaterialType: 3
+  materialType: 1
   itemWeight: 1
   toolType: 0
---- !u!114 &4872700411512090058
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6479617406932401784}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
-  sceneId: 0
-  _assetId: 3579386456
-  serverOnly: 0
-  visibility: 0
-  hasSpawned: 0

@@ -38,6 +38,7 @@ namespace PlayerScripts
         private void OnDisable()
         {
             StopStaminaRoutine();
+            SetSprinting(false);
         }
 
         public void SetSprinting(bool value)

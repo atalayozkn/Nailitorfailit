@@ -466,6 +466,7 @@ GameObject:
   - component: {fileID: 8564813831788924259}
   - component: {fileID: 4362675841087792085}
   - component: {fileID: 737749050718626927}
+  - component: {fileID: 7554263769070667899}
   m_Layer: 7
   m_Name: Player_SP
   m_TagString: Player
@@ -554,23 +555,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59b48c188884e414c9fed6aaf5cca83b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.PlayerMove_SP
-  _animator: {fileID: 1130448257493552005}
-  baseSpeed: 3
+  stamina: {fileID: 7613794840206046145}
+  stateMachine: {fileID: 7554263769070667899}
+  baseSpeed: 5
   rotationSpeed: 6
   jumpForce: 8
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 256
-  groundCheckDist: 0.1
-  groundCheckInterval: 0.03
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprintMultiplier: 2
   playerInteract: {fileID: 737749050718626927}
   carrySpeedMultiplier: 0.5
-  stamina: {fileID: 7613794840206046145}
-  _isGrounded: 0
+  rb: {fileID: 2817766702726143472}
 --- !u!114 &7613794840206046145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -676,16 +672,42 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 576
   detectionInterval: 0.05
-  forwardCheckDistance: 0.2
+  forwardCheckDistance: 0.5
   forwardCheckRadius: 0
-  groundCheckForwardOffset: 0
+  groundCheckForwardOffset: 0.5
   groundCheckHeight: 0.6
-  groundCheckDistance: 0.5
-  groundCheckRadius: 0.3
+  groundCheckDistance: 0.75
+  groundCheckRadius: 0.4
   holdPoint: {fileID: 3459897167201899350}
   dropCooldown: 0.2
   highlightRedAmount: 0.9
   currentTarget: {fileID: 0}
+--- !u!114 &7554263769070667899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6863098076542287385}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3b7ec8ec58b84440be7aebe15e6fefb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMachine_SP
+  hasStateDebug: 0
+  playerMove: {fileID: 4175243230456286481}
+  <currentState>k__BackingField: 1
+  <animator>k__BackingField: {fileID: 1130448257493552005}
+  <isRunning>k__BackingField: 0
+  <interactionHandler>k__BackingField: {fileID: 737749050718626927}
+  <isJumping>k__BackingField: 0
+  <isDead>k__BackingField: 0
+  <IsGrounded>k__BackingField: 1
+  <whatIsGround>k__BackingField:
+    serializedVersion: 2
+    m_Bits: 256
+  maxDistance: 1
+  rb: {fileID: 2817766702726143472}
 --- !u!1 &9010674887014516684
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,6 +895,10 @@ PrefabInstance:
       value: karakter (2)
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}
+      propertyPath: m_Avatar
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 418678e817602184ebc1cf3a60792a10, type: 2}
@@ -887,10 +913,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3742376688659395130}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}
 --- !u!95 &1130448257493552005 stripped
 Animator:
@@ -902,18 +925,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}
   m_PrefabInstance: {fileID: 6834983306323064340}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3742376688659395130
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5916556505822350149}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 539559cf344843c489361cfd47894c10, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationController_SP
 --- !u!4 &6435648711927337471 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: dbd5e460b04f590429ef7b6bb58c1d2f, type: 3}

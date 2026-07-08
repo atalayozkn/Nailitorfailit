@@ -12,11 +12,10 @@ GameObject:
   - component: {fileID: 1200983358115736339}
   - component: {fileID: 5673514962439715066}
   - component: {fileID: 4249530769672492423}
-  - component: {fileID: 6248588674534658937}
   - component: {fileID: 8684526647547955195}
   - component: {fileID: 6283816340342176705}
   - component: {fileID: 8924691813013878004}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: "Tu\u011Fla"
   m_TagString: Pickup
   m_Icon: {fileID: 0}
@@ -115,27 +114,6 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!65 &6248588674534658937
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6479617406932401784}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.3, y: 1.3, z: 1.3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &8684526647547955195
 Rigidbody:
