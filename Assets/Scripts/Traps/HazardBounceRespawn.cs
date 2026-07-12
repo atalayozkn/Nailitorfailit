@@ -3,7 +3,6 @@ using UnityEngine.InputSystem;
 using PlayerScripts;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(PlayerMove))]
 public class HazardBounceRespawn : MonoBehaviour
 {
     [Header("Trap")]
@@ -26,7 +25,6 @@ public class HazardBounceRespawn : MonoBehaviour
     [SerializeField] private float hitCooldown = 0.05f;
 
     private Rigidbody rb;
-    private PlayerMove playerMove;
     private float lastHitTime = -999f;
 
     // SpawnPointRespawn bunu izleyecek
@@ -46,14 +44,8 @@ public class HazardBounceRespawn : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        playerMove = GetComponent<PlayerMove>();
 
         if (playerCollider == null) playerCollider = GetComponent<Collider>();
-
-        // Inspector’dan verilmediyse PlayerMove’dan al
-        if (move == null) move = playerMove.move;
-        if (jump == null) jump = playerMove.jump;
-        if (sprint == null) sprint = playerMove.sprint;
     }
 
     void Update()

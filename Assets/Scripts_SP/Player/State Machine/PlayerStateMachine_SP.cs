@@ -8,12 +8,13 @@ public enum PlayerStates
     OnAir,
     Dead,
 }
-
 public class PlayerStateMachine_SP : StateMachine_Player
 {
     [Header("References")]
     [SerializeField] private PlayerMove_SP playerMove;
+    [SerializeField] private Transform detectionTransform;
     [SerializeField] private Rigidbody rb;
+    [SerializeField] private bool debugMode;
 
     [field: SerializeField] public PlayerStates currentState { get; private set; }
     [field: SerializeField] public Animator animator { get; private set; }
@@ -33,27 +34,23 @@ public class PlayerStateMachine_SP : StateMachine_Player
 
     private void Awake()
     {
-        if (playerMove == null)
-            playerMove = GetComponent<PlayerMove_SP>();
-
-        if (rb == null)
-            rb = GetComponent<Rigidbody>();
-
-        if (animator == null)
-            animator = GetComponentInChildren<Animator>();
-
-        if (interactionHandler == null)
-            interactionHandler = GetComponent<PlayerInteract_SP>();
-
-        CheckGround();
+        IsGrounded = true;
     }
-
-    private void Start()
+    private void OnEnable()
     {
+        isDead = false;
         currentState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState_SP(this));
     }
 
+    private void OnDisable()
+    {
+        isMoving = false;
+        isRunning = false;
+        isJumping = false;
+    }
+
+    #region STATES
     public void ChangeToIdleState()
     {
         if (currentState == PlayerStates.Dead)
@@ -65,7 +62,6 @@ public class PlayerStateMachine_SP : StateMachine_Player
         currentState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState_SP(this));
     }
-
     public void ChangeToNavigationState()
     {
         if (currentState == PlayerStates.Dead)
@@ -77,7 +73,6 @@ public class PlayerStateMachine_SP : StateMachine_Player
         currentState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState_SP(this));
     }
-
     public void ChangeToOnAirState()
     {
         if (currentState == PlayerStates.Dead)
@@ -89,7 +84,6 @@ public class PlayerStateMachine_SP : StateMachine_Player
         currentState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState_SP(this));
     }
-
     public void ChangeToDeadState()
     {
         if (currentState == PlayerStates.Dead)
@@ -98,31 +92,29 @@ public class PlayerStateMachine_SP : StateMachine_Player
         currentState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState_SP(this));
     }
-
     public void ForceSwitchToIdleState()
     {
         currentState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState_SP(this));
     }
-
     public void ForceSwitchToNavigationState()
     {
         currentState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState_SP(this));
     }
-
     public void ForceSwitchToOnAirState()
     {
         currentState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState_SP(this));
     }
-
     public void ForceSwitchToDeadState()
     {
         currentState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState_SP(this));
     }
+    #endregion
 
+    #region UTILITY
     public void SetMoving(bool condition)
     {
         isMoving = condition;
@@ -145,20 +137,18 @@ public class PlayerStateMachine_SP : StateMachine_Player
 
     public bool IsCarrying()
     {
-        return interactionHandler != null && interactionHandler.IsCarrying;
+        return interactionHandler.IsCarrying();
     }
-
     private bool QueryIsGrounded()
     {
         return Physics.Raycast(
-            transform.position,
+            detectionTransform.position,
             Vector3.down,
             maxDistance,
             whatIsGround,
             QueryTriggerInteraction.Ignore
         );
     }
-
     public void CheckGround()
     {
         bool wasGrounded = IsGrounded;
@@ -203,23 +193,27 @@ public class PlayerStateMachine_SP : StateMachine_Player
         return 0f;
     }
 
-    public float GetAnimDuration(string clipName, float fallbackDuration)
-    {
-        float duration = GetAnimDuration(clipName);
+    #endregion
 
-        if (duration <= 0f)
-            return fallbackDuration;
-
-        return duration;
-    }
-
+    #region DEBUG
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = IsGrounded ? Color.green : Color.red;
+        if (detectionTransform == null)
+            return;
+        if (!debugMode) return;
+
+        Gizmos.color = Color.green;
 
         Gizmos.DrawLine(
-            transform.position,
-            transform.position + Vector3.down * maxDistance
+            detectionTransform.position,
+            detectionTransform.position + Vector3.down * maxDistance
+        );
+
+        Gizmos.DrawWireSphere(
+            detectionTransform.position + Vector3.down * maxDistance,
+            0.05f
         );
     }
+    #endregion
+
 }

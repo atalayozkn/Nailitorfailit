@@ -5,10 +5,6 @@ public class PlayerOnAirState_SP : PlayerBaseState_SP
     public static readonly int jumpStartHash = Animator.StringToHash("jumpStart");
     public static readonly int onAirHash = Animator.StringToHash("onAir");
     public static readonly int onLandHash = Animator.StringToHash("onLand");
-
-    private float jumpStartDuration;
-    private float onLandDuration;
-
     private enum AirPhase
     {
         JumpStart,
@@ -23,9 +19,6 @@ public class PlayerOnAirState_SP : PlayerBaseState_SP
 
     public override void Enter()
     {
-        jumpStartDuration = stateMachine.GetAnimDuration("jumpStart", 0.25f);
-        onLandDuration = stateMachine.GetAnimDuration("onLand", 0.35f);
-
         counterTime = 0f;
         currentPhase = AirPhase.JumpStart;
 
@@ -66,7 +59,7 @@ public class PlayerOnAirState_SP : PlayerBaseState_SP
 
     private void HandleJumpStartPhase()
     {
-        if (counterTime < jumpStartDuration)
+        if (counterTime < 0.15f)
             return;
 
         counterTime = 0f;
@@ -88,7 +81,7 @@ public class PlayerOnAirState_SP : PlayerBaseState_SP
 
     private void HandleLandingPhase()
     {
-        if (counterTime < onLandDuration)
+        if (counterTime < 0.1f)
             return;
 
         stateMachine.SetJumping(false);

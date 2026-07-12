@@ -28,8 +28,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 7515920955226674452}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -102,7 +102,7 @@ GameObject:
   - component: {fileID: 4249530769672492423}
   - component: {fileID: 8684526647547955195}
   - component: {fileID: 7885584406948183470}
-  m_Layer: 9
+  m_Layer: 6
   m_Name: "Tu\u011Fla_SP"
   m_TagString: Pickup
   m_Icon: {fileID: 0}
@@ -119,8 +119,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.5, z: -3}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4701255916704066978}
   m_Father: {fileID: 0}
@@ -144,7 +144,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.2, y: 0.2, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &8684526647547955195
 Rigidbody:
@@ -185,7 +185,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 934e20b9a6b09d1469dca42a2c737701, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
-  itemType: CarriableItem
-  materialType: 1
-  itemWeight: 1
-  toolType: 0
+  interactableType: 0
+  rb: {fileID: 8684526647547955195}
+  carriableType: 0
+  objectDiscardDelay: 3
+  onHoverOnEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onHoverOffEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onInteractEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onConsumeEvent:
+    m_PersistentCalls:
+      m_Calls: []

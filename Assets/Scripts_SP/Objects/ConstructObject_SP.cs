@@ -1,68 +1,88 @@
 using GameData;
 using Interactions;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace ItemScript
 {
-    public class ConstructObject_SP : MonoBehaviour, IConstructable, IInteractable
+    public class ConstructObject_SP : MonoBehaviour, IInteractable
     {
-        [Header("Configuration")]
-        [SerializeField] private ConstructProfile profile;
+        [Header("Component References")]
+        [SerializeField] private GameObject bluePrintObject;
+        [SerializeField] private InteractableType interactableType;
+        [SerializeField] private Collider interactionCollider;
 
-        [Header("Visuals (Assign in Inspector)")]
-        [SerializeField] private GameObject interactionMesh;
-        [SerializeField] private GameObject ghostMesh;
-        [SerializeField] private GameObject builtMesh;
+        [Header("GameObject References")]
+        [SerializeField] private GameObject brickObject;
+        [SerializeField] private GameObject glassObject;
+        [SerializeField] private GameObject stoneObject;
+        [SerializeField] private GameObject woodObject;
 
+        [Header("Events")]
+        [SerializeField] private UnityEvent onHoverOnEvent;
+        [SerializeField] private UnityEvent onHoverOffEvent;
+        [SerializeField] private UnityEvent onInteractEvent;
+
+        public InteractableType InteractableType => interactableType;
         private bool isBuilt = false;
-
-        public ConstructType ConstructType =>
-            profile != null ? profile.constructType : ConstructType.Frame;
-
-        public bool IsBuilt => isBuilt;
-
-        private void Start()
+        private PlayerInteract_SP interactionHandler;
+        private CarriableType currentCarriableType;
+        private void Awake()
         {
-            UpdateVisuals(isBuilt);
+            interactionHandler = FindFirstObjectByType<PlayerInteract_SP>();
         }
-
-        private void UpdateVisuals(bool built)
+        public void OnInteract()
         {
-            if (interactionMesh != null)
-                interactionMesh.SetActive(!built);
-
-            if (ghostMesh != null)
-                ghostMesh.SetActive(!built);
-
-            if (builtMesh != null)
-                builtMesh.SetActive(built);
+            currentCarriableType = interactionHandler.GetCurrentCarriableType();
+            Construct(currentCarriableType);
+            onInteractEvent.Invoke();
         }
-
-        public void Interact()
+        public void OnHoverOn()
         {
-            Debug.Log("ConstructObject Interact çaðrýldý");
+            onHoverOnEvent?.Invoke();
         }
-
-        public bool TryBuild(CarriableObject_SP heldItem)
+        public void OnHoverOff()
         {
-            if (!CanBuildWith(heldItem))
-                return false;
-
+            onHoverOffEvent?.Invoke();
+        }
+        private void Construct(CarriableType type)
+        {
+            if (isBuilt) return;
             isBuilt = true;
 
-            UpdateVisuals(isBuilt);
+            switch (type)
+            {
+                case CarriableType.Brick:
+                    brickObject.SetActive(true);
+                    break;
+                case CarriableType.Glass:
+                    glassObject.SetActive(true);
+                    break;
+                case CarriableType.Wood:
+                    woodObject.SetActive(true);
+                    break;
+                case CarriableType.Stone:
+                    stoneObject.SetActive(true);
+                    break;
+            }
 
-            return true;
+            bluePrintObject.SetActive(false);
+            interactionCollider.enabled = false;
+
+            CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
+            carriable.OnConsume();
+            Invoke(nameof(NotifyInteractionHandler), 0.05f);
         }
 
-        public bool CanBuildWith(CarriableObject_SP heldItem)
+        private void NotifyInteractionHandler()
         {
-            if (isBuilt) return false;
-            if (heldItem == null) return false;
-            if (profile == null) return false;
-            if (heldItem.Material != profile.requiredMaterial) return false;
-
-            return true;
+            interactionHandler.ClearCarriedObject();
+        }
+        public void RequestClosure(GameObject obj)
+        {
+            obj.SetActive(false);
+            interactionCollider.enabled = true;
+            bluePrintObject.SetActive(true);
         }
     }
 }

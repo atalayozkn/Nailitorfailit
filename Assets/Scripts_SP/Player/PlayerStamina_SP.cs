@@ -1,172 +1,152 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace PlayerScripts
 {
     public class PlayerStamina_SP : MonoBehaviour
     {
+        [Header("References")]
+        [SerializeField] private PlayerMove_SP playerMove;
+        [SerializeField] private Slider staminaSlider;
+        [SerializeField] private TextMeshProUGUI staminaText;
+
         [Header("Energy Settings")]
         [SerializeField] private float maxEnergy = 100f;
-        [SerializeField] private float currentEnergy = 100f;
-        [SerializeField] private float energyDrainDuration = 8f;
-        [SerializeField] private float energyRegenRate = 15f;
-        [SerializeField] private float sprintUnlockThreshold = 40f;
+        [SerializeField] private float rechargeDelay = 1f;
+        [SerializeField] private float perChargeAmount = 1f;
+        [SerializeField] private float chargeInterval = 0.1f;
 
-        [Header("Timing")]
-        [SerializeField] private float energyTickRate = 0.1f;
-        [SerializeField] private float regenDelay = 0.75f;
+        [Header("Mode Settings")]
+        [SerializeField] private float energisedDuration = 10f;
+        [SerializeField] private float drainedDuration = 5f;
+        [SerializeField] private float drainedMultiplier = 5f;
 
-        [Header("Energy UI")]
-        [SerializeField] private GameObject energyCanvas;
-        [SerializeField] private Slider energySlider;
+        [Header("Events")]
+        [SerializeField] private UnityEvent onChargeStartEvent;
+        [SerializeField] private UnityEvent onChargeStopEvent;
 
-        private bool canSprint = true;
-        private bool isSprinting;
-        private float lastEnergyUseTime = -999f;
+        [SerializeField] private UnityEvent onEnergisedEvent;
+        [SerializeField] private UnityEvent onEnergiseReversedEvent;
+        [SerializeField] private UnityEvent onDrainedEvent;
+        [SerializeField] private UnityEvent onDrainReversedEvent;
 
-        private Coroutine staminaRoutine;
 
-        public float EnergyPercent => maxEnergy > 0f ? currentEnergy / maxEnergy : 0f;
-        public bool CanSprint => canSprint && currentEnergy > 0f;
-
+        private float currentEnergy;
+        private Coroutine chargeRoutine;
+        private bool isEnergised;
+        private bool isDrained;
+        private float costMultiplier;
         private void OnEnable()
         {
-            UpdateEnergyUI();
+            currentEnergy = maxEnergy;
+            costMultiplier = 1.0f;
+            staminaSlider.maxValue = maxEnergy;
+            UpdateUI();
         }
-
         private void OnDisable()
         {
-            StopStaminaRoutine();
-            SetSprinting(false);
+            if (chargeRoutine != null) StopCoroutine(chargeRoutine);
+            onChargeStopEvent?.Invoke();
         }
-
-        public void SetSprinting(bool value)
+        public void ConsumeEnergy(float value)
         {
-            isSprinting = value;
+            if (isEnergised) return;
+            if (chargeRoutine != null) StopCoroutine(chargeRoutine);
 
-            if (isSprinting || currentEnergy < maxEnergy)
-                StartStaminaRoutine();
-        }
+            currentEnergy -= value;
 
-        public bool TryUseEnergy(float amount)
-        {
-            if (amount <= 0f) return true;
-            if (currentEnergy < amount) return false;
-
-            UseEnergy(amount);
-            return true;
-        }
-
-        public void UseEnergy(float amount)
-        {
-            if (amount <= 0f) return;
-
-            currentEnergy -= amount;
-            currentEnergy = Mathf.Clamp(currentEnergy, 0f, maxEnergy);
-
-            lastEnergyUseTime = Time.time;
-
-            if (currentEnergy <= 0f)
+            if (currentEnergy <= 0)
             {
                 currentEnergy = 0f;
-                canSprint = false;
-                isSprinting = false;
+                BecomeDrained();
             }
 
-            UpdateEnergyUI();
-            StartStaminaRoutine();
+            UpdateUI();
+            CancelInvoke(nameof(StartCharge));
+            Invoke(nameof(StartCharge), rechargeDelay);
         }
-
-        public void RefillEnergy()
+        public void GainEnergy(float value)
         {
-            currentEnergy = maxEnergy;
-            canSprint = true;
-            isSprinting = false;
-
-            UpdateEnergyUI();
-            StopStaminaRoutine();
+            currentEnergy += value;
+            if (currentEnergy > maxEnergy) currentEnergy = maxEnergy;
+            BecomeEnergised();
         }
-
-        private void StartStaminaRoutine()
+        private void StartCharge()
         {
-            if (staminaRoutine != null)
-                return;
-
-            staminaRoutine = StartCoroutine(StaminaRoutine());
-        }
-
-        private void StopStaminaRoutine()
-        {
-            if (staminaRoutine != null)
+            if (chargeRoutine != null)
             {
-                StopCoroutine(staminaRoutine);
-                staminaRoutine = null;
+                StopCoroutine(chargeRoutine);
             }
+
+            chargeRoutine = StartCoroutine(ChargeRoutine());
+            onChargeStartEvent?.Invoke();
         }
-
-        private IEnumerator StaminaRoutine()
+        private IEnumerator ChargeRoutine()
         {
-            WaitForSeconds wait = new WaitForSeconds(energyTickRate);
-
             while (true)
             {
-                HandleStaminaTick();
-                UpdateEnergyUI();
-
-                if (!isSprinting && currentEnergy >= maxEnergy && canSprint)
+                currentEnergy += perChargeAmount * costMultiplier;
+                UpdateUI();
+                if (currentEnergy >= maxEnergy)
                 {
                     currentEnergy = maxEnergy;
-                    UpdateEnergyUI();
-
-                    staminaRoutine = null;
+                    onChargeStopEvent?.Invoke();
                     yield break;
                 }
-
-                yield return wait;
+                yield return new WaitForSeconds(chargeInterval);
             }
         }
-
-        private void HandleStaminaTick()
+        private void BecomeEnergised()
         {
-            if (isSprinting && canSprint)
+            isEnergised = true;
+            onEnergisedEvent?.Invoke();
+            CancelInvoke(nameof(ReverseEnergised));
+            Invoke(nameof(ReverseEnergised), energisedDuration);
+        }
+        private void BecomeDrained()
+        {
+            isDrained = true;
+            costMultiplier = drainedMultiplier;
+            onDrainedEvent?.Invoke();
+            CancelInvoke(nameof(ReverseDrained));
+            Invoke(nameof(ReverseDrained), drainedDuration);
+        }
+
+        private void UpdateUI()
+        {
+            staminaSlider.value = currentEnergy;
+            staminaText.text = Mathf.FloorToInt(currentEnergy).ToString();
+        }
+
+        #region UTILITIES
+        private void ReverseEnergised()
+        {
+            isEnergised = false;
+            onEnergiseReversedEvent?.Invoke();
+        }
+        private void ReverseDrained()
+        {
+            isDrained = false;
+            costMultiplier = 1.0f;
+            onDrainReversedEvent?.Invoke();
+        }
+        public bool HasEnoughEnergy(float value)
+        {
+            float dif = currentEnergy - value;
+
+            if (dif > 0)
             {
-                float drainPerSecond = maxEnergy / energyDrainDuration;
-
-                currentEnergy -= drainPerSecond * energyTickRate;
-                currentEnergy = Mathf.Clamp(currentEnergy, 0f, maxEnergy);
-
-                lastEnergyUseTime = Time.time;
-
-                if (currentEnergy <= 0f)
-                {
-                    currentEnergy = 0f;
-                    canSprint = false;
-                    isSprinting = false;
-                }
-
-                return;
+                return true;
             }
-
-            bool canRegenNow = Time.time - lastEnergyUseTime >= regenDelay;
-
-            if (!canRegenNow)
-                return;
-
-            currentEnergy += energyRegenRate * energyTickRate;
-            currentEnergy = Mathf.Clamp(currentEnergy, 0f, maxEnergy);
-
-            if (!canSprint && currentEnergy >= sprintUnlockThreshold)
-                canSprint = true;
+            else
+            {
+                return false;
+            }
         }
 
-        private void UpdateEnergyUI()
-        {
-            if (energySlider != null)
-                energySlider.value = EnergyPercent;
-
-            if (energyCanvas != null)
-                energyCanvas.SetActive(currentEnergy < maxEnergy);
-        }
+        #endregion
     }
 }

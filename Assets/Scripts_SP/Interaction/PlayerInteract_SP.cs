@@ -1,135 +1,84 @@
 using System.Collections;
 using Interactions;
 using ItemScript;
-using PlayerScripts;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerInteract_SP : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private Transform carryTransform;
+    [SerializeField] private bool DebugMode;
+
+    [Header("Input")]
     [SerializeField] private InputActionReference interactAction;
 
     [Header("Detection")]
     [SerializeField] private Transform detectionOrigin;
-    [SerializeField] private LayerMask interactableMask = ~0;
+    [SerializeField] private LayerMask interactableMask;
     [SerializeField] private float detectionInterval = 0.05f;
 
     [Header("Forward Detection")]
-    [SerializeField] private float forwardCheckDistance = 1.4f;
-    [SerializeField] private float forwardCheckRadius = 0.25f;
+    [SerializeField] private float forwardDistance = 1.4f;
+    [SerializeField] private float forwardRadius = 0.25f;
 
     [Header("Ground Detection")]
-    [SerializeField] private float groundCheckForwardOffset = 0.65f;
-    [SerializeField] private float groundCheckHeight = 0.8f;
-    [SerializeField] private float groundCheckDistance = 1.3f;
-    [SerializeField] private float groundCheckRadius = 0.35f;
+    [SerializeField] private float groundForwardOffset = 0.65f;
+    [SerializeField] private float groundHeight = 0.8f;
+    [SerializeField] private float groundDistance = 1.3f;
+    [SerializeField] private float groundRadius = 0.35f;
 
-    [Header("Carry")]
-    private Rigidbody carriedRb;
-    private Collider carriedCollider;
-    private IPickupable currentCarriable;
-    private GameObject currentObj;
+    [Header("Interaction")]
+    [SerializeField] private float interactCooldown = 1.0f;
 
-    [SerializeField] private Transform holdPoint;
-    public bool IsCarrying => currentCarriable != null;
+    private IInteractable currentInteractable;
+    private InteractableType currentType;
 
-    [Header("Cooldown")]
-    [SerializeField] private float dropCooldown = 0.2f;
-    private float lastDropTime;
+    private CarriableObject_SP currentCarriable;
+    private CarriableType currentCarriableType;
+    private bool isCarrying;
+    private bool isInteractOnCooldown = false;
 
-    [Header("Highlight")]
-    [SerializeField] private float highlightRedAmount = 0.9f;
+    private Coroutine detectionRoutine;
 
-    private Renderer highlightedRenderer;
-    private Material highlightedMaterial;
-    private Color highlightedOriginalColor;
-
-    [Header("DEBUG")]
-    [SerializeField] private GameObject currentTarget;
-
-    private Collider playerCollider;
-
-    private Coroutine holdWorkRoutine;
-    private Coroutine targetDetectionRoutine;
-    private bool interactHeld;
-
-    private readonly RaycastHit[] detectionHits = new RaycastHit[12];
+    private readonly RaycastHit[] hits = new RaycastHit[12];
 
     private void Awake()
     {
-        playerCollider = GetComponentInParent<Collider>();
-
         if (detectionOrigin == null)
             detectionOrigin = transform;
     }
 
     private void OnEnable()
     {
-        if (interactAction != null && interactAction.action != null)
+        if (interactAction != null)
             interactAction.action.Enable();
 
-        StartTargetDetectionRoutine();
+        detectionRoutine = StartCoroutine(TargetDetectionRoutine());
     }
 
     private void OnDisable()
     {
-        if (interactAction != null && interactAction.action != null)
+        if (interactAction != null)
             interactAction.action.Disable();
 
-        StopHoldWorkRoutine();
-        StopTargetDetectionRoutine();
-        RestoreHighlight();
+        if (detectionRoutine != null)
+            StopCoroutine(detectionRoutine);
+
+        currentInteractable?.OnHoverOff();
     }
 
     private void Update()
     {
-        if (interactAction == null || interactAction.action == null)
+        if (isInteractOnCooldown)
             return;
 
-        if (interactAction.action.WasPressedThisFrame())
+        if (interactAction.action.IsPressed())
         {
-            interactHeld = true;
+            HandleInteract();
 
-            HandleInteractPressed();
-
-            if (!IsCarrying && holdWorkRoutine == null)
-                holdWorkRoutine = StartCoroutine(HoldWorkRoutine());
-        }
-
-        if (interactAction.action.WasReleasedThisFrame())
-        {
-            interactHeld = false;
-
-            StopHoldWorkRoutine();
-
-            if (TryGetCurrentTargetStation(out WorkStation_SP station))
-                station.RequestStopWork();
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!IsCarrying || carriedRb == null) return;
-        if (holdPoint == null) return;
-
-        carriedRb.MovePosition(holdPoint.position);
-        carriedRb.MoveRotation(holdPoint.rotation);
-    }
-
-    private void StartTargetDetectionRoutine()
-    {
-        if (targetDetectionRoutine != null)
-            return;
-
-        targetDetectionRoutine = StartCoroutine(TargetDetectionRoutine());
-    }
-
-    private void StopTargetDetectionRoutine()
-    {
-        if (targetDetectionRoutine != null)
-        {
-            StopCoroutine(targetDetectionRoutine);
-            targetDetectionRoutine = null;
+            isInteractOnCooldown = true;
+            Invoke(nameof(ResetInteractCooldown), interactCooldown);
         }
     }
 
@@ -139,465 +88,185 @@ public class PlayerInteract_SP : MonoBehaviour
 
         while (true)
         {
-            RefreshCurrentTarget();
+            RefreshTarget();
             yield return wait;
         }
     }
 
-    private void RefreshCurrentTarget()
+    private void RefreshTarget()
     {
-        GameObject forwardTarget = FindForwardTarget();
-        GameObject groundTarget = FindGroundTarget();
+        IInteractable interactable = FindForwardInteractable();
 
-        GameObject bestTarget = forwardTarget != null ? forwardTarget : groundTarget;
+        if (interactable == null)
+            interactable = FindGroundInteractable();
 
-        SetCurrentTarget(bestTarget);
+        SetCurrentInteractable(interactable);
     }
-
-    private GameObject FindForwardTarget()
+    private void SetCurrentInteractable(IInteractable interactable)
     {
-        Vector3 origin = detectionOrigin.position;
-        Vector3 direction = detectionOrigin.forward;
+        if (interactable == currentInteractable)
+            return;
 
-        int count = Physics.SphereCastNonAlloc(
-            origin,
-            forwardCheckRadius,
-            direction,
-            detectionHits,
-            forwardCheckDistance,
-            interactableMask
-        );
+        currentInteractable?.OnHoverOff();
 
-        return GetBestTargetFromHits(count);
-    }
+        currentInteractable = interactable;
 
-    private GameObject FindGroundTarget()
-    {
-        Vector3 origin =
-            transform.position +
-            transform.forward * groundCheckForwardOffset +
-            Vector3.up * groundCheckHeight;
-
-        int count = Physics.SphereCastNonAlloc(
-            origin,
-            groundCheckRadius,
-            Vector3.down,
-            detectionHits,
-            groundCheckDistance,
-            interactableMask
-        );
-
-        return GetBestTargetFromHits(count);
-    }
-
-    private GameObject GetBestTargetFromHits(int hitCount)
-    {
-        GameObject bestTarget = null;
-        float bestDistance = float.MaxValue;
-
-        for (int i = 0; i < hitCount; i++)
+        if (currentInteractable == null)
         {
-            Collider hitCollider = detectionHits[i].collider;
-            if (hitCollider == null) continue;
-
-            GameObject possibleTarget = GetValidTargetFromCollider(hitCollider);
-            if (possibleTarget == null) continue;
-
-            float hitDistance = detectionHits[i].distance;
-
-            if (hitDistance < bestDistance)
-            {
-                bestDistance = hitDistance;
-                bestTarget = possibleTarget;
-            }
-        }
-
-        return bestTarget;
-    }
-
-    private GameObject GetValidTargetFromCollider(Collider hitCollider)
-    {
-        if (hitCollider == null) return null;
-
-        ConstructObject_SP construct = hitCollider.GetComponentInParent<ConstructObject_SP>();
-        WorkStation_SP station = hitCollider.GetComponentInParent<WorkStation_SP>();
-        CarriableObject_SP carriable = hitCollider.GetComponentInParent<CarriableObject_SP>();
-
-        IInteractable interactable = hitCollider.GetComponentInParent<IInteractable>();
-
-        GameObject target = null;
-
-        if (construct != null)
-            target = construct.gameObject;
-        else if (station != null)
-            target = station.gameObject;
-        else if (carriable != null)
-            target = carriable.gameObject;
-        else if (interactable is MonoBehaviour mb)
-            target = mb.gameObject;
-
-        if (target == null)
-            return null;
-
-        if (currentObj != null && target == currentObj)
-            return null;
-
-        bool isPickup = carriable != null || target.CompareTag("Pickup");
-        bool isStation = station != null;
-        bool isConstruct = construct != null;
-        bool isInteractable = interactable != null;
-
-        if (!isPickup && !isStation && !isConstruct && !isInteractable)
-            return null;
-
-        if (IsCarrying)
-        {
-            if (isPickup)
-                return null;
-
-            if (isStation)
-            {
-                if (CanPlaceCurrentItemToStation(station))
-                    return target;
-
-                return null;
-            }
-
-            if (isConstruct)
-            {
-                if (CanBuildCurrentItemToConstruct(construct))
-                    return target;
-
-                return null;
-            }
-
-            return null;
-        }
-
-        if (Time.time - lastDropTime < dropCooldown && isPickup)
-            return null;
-
-        if (isConstruct)
-            return null;
-
-        return target;
-    }
-
-    private bool CanPlaceCurrentItemToStation(WorkStation_SP station)
-    {
-        if (station == null) return false;
-        if (currentObj == null) return false;
-
-        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
-        if (carriable == null) return false;
-
-        return station.GetRecipeIndexForMaterial(carriable.Material) != -1;
-    }
-
-    private bool CanBuildCurrentItemToConstruct(ConstructObject_SP construct)
-    {
-        if (construct == null) return false;
-        if (currentObj == null) return false;
-
-        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
-        if (carriable == null) return false;
-
-        return construct.CanBuildWith(carriable);
-    }
-
-    private IEnumerator HoldWorkRoutine()
-    {
-        WaitForSeconds wait = new WaitForSeconds(0.05f);
-
-        while (interactHeld)
-        {
-            if (!IsCarrying && TryGetCurrentTargetStation(out WorkStation_SP station))
-                station.RequestHoldWork();
-
-            yield return wait;
-        }
-
-        holdWorkRoutine = null;
-    }
-
-    private void StopHoldWorkRoutine()
-    {
-        if (holdWorkRoutine != null)
-        {
-            StopCoroutine(holdWorkRoutine);
-            holdWorkRoutine = null;
-        }
-    }
-
-    private void HandleInteractPressed()
-    {
-        if (IsCarrying)
-        {
-            if (TryGetCurrentTargetStation(out WorkStation_SP station))
-            {
-                PlaceToStation(station);
-                return;
-            }
-
-            if (currentTarget != null)
-            {
-                InteractWithTarget(currentTarget);
-                return;
-            }
-
-            Drop();
+            currentType = default;
             return;
         }
 
-        if (currentTarget != null)
-            InteractWithTarget(currentTarget);
+        currentType = currentInteractable.InteractableType;
+        currentInteractable.OnHoverOn();
     }
 
-    public IPickupable GetCurrentItem()
+    private void HandleInteract()
+    {
+        if (currentCarriable != null && currentInteractable == null)
+        {
+            currentCarriable.OnDrop();
+            return;
+        }
+
+        //Interactable Identified, Action now depends on the type of interactable.
+        switch (currentType)
+        {
+            case InteractableType.Grabbable:
+                if (isCarrying) return;
+                currentInteractable.OnInteract();
+                break;
+
+            case InteractableType.Station:
+                currentInteractable.OnInteract();
+                break;
+
+            case InteractableType.Constructor:
+                currentInteractable.OnInteract();
+                break;
+
+            case InteractableType.Shop:
+                currentInteractable.OnInteract();
+                break;
+        }
+    }
+    #region UTILITIES
+    private IInteractable FindForwardInteractable()
+    {
+        int count = Physics.SphereCastNonAlloc(
+            detectionOrigin.position,
+            forwardRadius,
+            detectionOrigin.forward,
+            hits,
+            forwardDistance,
+            interactableMask);
+
+        return GetClosestInteractable(count);
+    }
+
+    private IInteractable FindGroundInteractable()
+    {
+        Vector3 origin =
+            transform.position +
+            transform.forward * groundForwardOffset +
+            Vector3.up * groundHeight;
+
+        int count = Physics.SphereCastNonAlloc(
+            origin,
+            groundRadius,
+            Vector3.down,
+            hits,
+            groundDistance,
+            interactableMask);
+
+        return GetClosestInteractable(count);
+    }
+
+    private IInteractable GetClosestInteractable(int hitCount)
+    {
+        float closestDistance = float.MaxValue;
+        IInteractable closestInteractable = null;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = hits[i].collider;
+
+            if (hitCollider == null)
+                continue;
+
+            if (!hitCollider.TryGetComponent<IInteractable>(out var interactable))
+                continue;
+
+            if (hits[i].distance < closestDistance)
+            {
+                closestDistance = hits[i].distance;
+                closestInteractable = interactable;
+            }
+        }
+
+        return closestInteractable;
+    }
+    public Transform GetCarryTransform()
+    {
+        return carryTransform;
+    }
+
+    public bool IsCarrying()
+    {
+        return isCarrying;
+    }
+
+    public CarriableObject_SP GetCurrentCarriable()
     {
         return currentCarriable;
     }
 
-    private bool TryGetCurrentTargetStation(out WorkStation_SP station)
+    public CarriableType GetCurrentCarriableType()
     {
-        station = null;
-
-        if (currentTarget == null)
-            return false;
-
-        station = currentTarget.GetComponent<WorkStation_SP>();
-
-        if (station == null)
-            station = currentTarget.GetComponentInChildren<WorkStation_SP>(true);
-
-        return station != null;
+        return currentCarriableType;
     }
 
-    private void SetCurrentTarget(GameObject newTarget)
+    public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
-        if (currentTarget == newTarget)
-            return;
-
-        RestoreHighlight();
-
-        currentTarget = newTarget;
-
-        ApplyHighlight(currentTarget);
+        currentCarriable = carriable;
+        currentCarriableType = carriable.carriableType;
+        isCarrying = true;
     }
 
-    private void ClearCurrentTarget()
+    public void ClearCarriedObject()
     {
-        RestoreHighlight();
-        currentTarget = null;
-    }
-
-    private void ApplyHighlight(GameObject target)
-    {
-        if (target == null) return;
-
-        highlightedRenderer = target.GetComponent<Renderer>();
-
-        if (highlightedRenderer == null)
-            highlightedRenderer = target.GetComponentInChildren<Renderer>(true);
-
-        if (highlightedRenderer == null) return;
-
-        Material[] mats = highlightedRenderer.materials;
-        if (mats == null || mats.Length == 0) return;
-
-        highlightedMaterial = mats[0];
-        highlightedOriginalColor = highlightedMaterial.color;
-
-        highlightedMaterial.color = Color.Lerp(
-            highlightedOriginalColor,
-            Color.red,
-            highlightRedAmount
-        );
-    }
-
-    private void RestoreHighlight()
-    {
-        if (highlightedMaterial != null)
-            highlightedMaterial.color = highlightedOriginalColor;
-
-        highlightedRenderer = null;
-        highlightedMaterial = null;
-    }
-
-    private void Drop()
-    {
-        if (!IsCarrying) return;
-
-        if (currentCarriable != null)
-            currentCarriable.OnDrop();
-
-        if (carriedRb != null)
-            carriedRb.isKinematic = false;
-
-        SetHeldItemCollision(false);
-
-        ClearCurrentTarget();
-        ClearLocalCarryReferences();
-
-        lastDropTime = Time.time;
-
-        Debug.Log("Item býrakýldý");
-    }
-
-    private void Pickup(GameObject obj)
-    {
-        if (obj == null) return;
-
-        IPickupable item = obj.GetComponent<IPickupable>();
-        if (item == null) return;
-
-        Rigidbody itemRb = item.GetRigidbody();
-        if (itemRb == null) return;
-
-        ClearCurrentTarget();
-
-        currentCarriable = item;
-        currentObj = obj;
-        carriedRb = itemRb;
-        carriedCollider = carriedRb.GetComponent<Collider>();
-
-        carriedRb.transform.SetParent(null);
-
-        currentCarriable.OnPickUp();
-        carriedRb.isKinematic = true;
-
-        if (holdPoint != null)
-        {
-            carriedRb.transform.position = holdPoint.position;
-            carriedRb.transform.rotation = holdPoint.rotation;
-        }
-
-        SetHeldItemCollision(true);
-
-        Debug.Log("Item alýndý: " + obj.name);
-    }
-
-    private void PlaceToStation(WorkStation_SP station)
-    {
-        if (station == null) return;
-        if (currentObj == null) return;
-
-        CarriableObject_SP carriable = currentObj.GetComponent<CarriableObject_SP>();
-        if (carriable == null) return;
-
-        int recipeIndex = station.GetRecipeIndexForMaterial(carriable.Material);
-
-        if (recipeIndex == -1)
-        {
-            Debug.Log("Bu materyal burada kullanýlamaz");
-            return;
-        }
-
-        GameObject placedObj = currentObj;
-
-        SetHeldItemCollision(false);
-
-        ClearCurrentTarget();
-        ClearLocalCarryReferences();
-
-        station.PlaceItem(carriable, recipeIndex);
-
-        Debug.Log("Item WorkStation'a yerleþtirildi: " + placedObj.name);
-    }
-
-    private void InteractWithTarget(GameObject target)
-    {
-        if (target == null) return;
-
-        CarriableObject_SP pickup = target.GetComponent<CarriableObject_SP>();
-
-        if (pickup != null || target.CompareTag("Pickup"))
-        {
-            if (IsCarrying) return;
-
-            Pickup(target);
-            return;
-        }
-
-        ConstructObject_SP construct = target.GetComponentInParent<ConstructObject_SP>();
-
-        if (construct != null)
-        {
-            BuildConstruct(construct);
-            return;
-        }
-
-        IInteractable interactable = target.GetComponent<IInteractable>();
-        interactable?.Interact();
-    }
-
-    private void BuildConstruct(ConstructObject_SP construct)
-    {
-        if (construct == null) return;
-        if (!IsCarrying) return;
-        if (currentObj == null) return;
-
-        CarriableObject_SP carriedObj = currentObj.GetComponent<CarriableObject_SP>();
-        if (carriedObj == null) return;
-
-        bool built = construct.TryBuild(carriedObj);
-        if (!built) return;
-
-        GameObject destroyObj = currentObj;
-
-        SetHeldItemCollision(false);
-
-        ClearCurrentTarget();
-        ClearLocalCarryReferences();
-
-        if (destroyObj != null)
-            Destroy(destroyObj);
-
-        Debug.Log("Build tamamlandý");
-    }
-
-    private void SetHeldItemCollision(bool ignorePlayerCollision)
-    {
-        if (playerCollider == null)
-            playerCollider = GetComponentInParent<Collider>();
-
-        if (playerCollider == null || carriedCollider == null)
-            return;
-
-        Physics.IgnoreCollision(
-            playerCollider,
-            carriedCollider,
-            ignorePlayerCollision
-        );
-    }
-
-    private void ClearLocalCarryReferences()
-    {
-        carriedRb = null;
-        carriedCollider = null;
         currentCarriable = null;
-        currentObj = null;
+        currentCarriableType = default;
+        isCarrying = false;
     }
 
+    private void ResetInteractCooldown()
+    {
+        isInteractOnCooldown = false;
+    }
+    #endregion
+
+    #region DEBUG
     private void OnDrawGizmosSelected()
     {
-        Transform originTransform = detectionOrigin != null ? detectionOrigin : transform;
+        if (!DebugMode) return;
+
+        Transform origin = detectionOrigin == null ? transform : detectionOrigin;
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(
-            originTransform.position,
-            originTransform.position + originTransform.forward * forwardCheckDistance
-        );
+            origin.position,
+            origin.position + origin.forward * forwardDistance);
 
         Vector3 groundOrigin =
             transform.position +
-            transform.forward * groundCheckForwardOffset +
-            Vector3.up * groundCheckHeight;
+            transform.forward * groundForwardOffset +
+            Vector3.up * groundHeight;
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawLine(
             groundOrigin,
-            groundOrigin + Vector3.down * groundCheckDistance
-        );
+            groundOrigin + Vector3.down * groundDistance);
     }
+    #endregion
 }

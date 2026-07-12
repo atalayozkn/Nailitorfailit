@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class Generator_SP : MonoBehaviour, IInteractable
 {
+    [SerializeField] private InteractableType interactableType;
+    public InteractableType InteractableType => interactableType;
     [Header("Generator Settings")]
     [SerializeField] private float maxDuration = 300f;
     [SerializeField] private float tickRate = 0.1f;
@@ -30,14 +32,21 @@ public class Generator_SP : MonoBehaviour, IInteractable
         SetLightOff();
     }
 
-    public void Interact()
+    public void OnInteract()
     {
         if (!isRunning)
         {
             StartGenerator();
         }
     }
+    public void OnHoverOn()
+    {
 
+    }
+    public void OnHoverOff()
+    {
+
+    }
     private void StartGenerator()
     {
         if (isRunning) return;
