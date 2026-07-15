@@ -9,7 +9,7 @@ public class PlayerFaintedState_SP : PlayerBaseState_SP
     private float faintedDuration;
     private float standDuration;
 
-    public PlayerFaintedState_SP(PlayerStateMachine_SP stateMachine) : base(stateMachine) { }
+    public PlayerFaintedState_SP(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
         stateMachine.animator.CrossFadeInFixedTime(faintedHash, 0.1f);

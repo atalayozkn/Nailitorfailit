@@ -25,11 +25,11 @@ namespace ItemScript
 
         public InteractableType InteractableType => interactableType;
         private bool isBuilt = false;
-        private PlayerInteract_SP interactionHandler;
+        private PlayerInteractionHandler interactionHandler;
         private CarriableType currentCarriableType;
         private void Awake()
         {
-            interactionHandler = FindFirstObjectByType<PlayerInteract_SP>();
+            interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         }
         public void OnInteract()
         {

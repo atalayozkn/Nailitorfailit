@@ -1,4 +1,4 @@
-using Interactions;
+﻿using Interactions;
 using ItemScript;
 using System.Collections;
 using UnityEngine;
@@ -9,15 +9,13 @@ public class Station : MonoBehaviour, IInteractable
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
+    [SerializeField] private CarriableType acceptedCarriableType;
     [SerializeField] private Transform placementTransform;
     [SerializeField] private Transform spawnTransform;
     [SerializeField] private GameObject spawnedObjectPrefab;
-    [SerializeField] private Slider progressSlider;
-    [SerializeField] private Canvas progressCanvas;
+    [SerializeField] private InteractionProcessHelper processHelper;
 
-    [Header("Settings")]
-    [SerializeField] private float maxProcessAmount = 100;
-    [SerializeField] private float perProcessAmount = 25f;
+    [Header("Spawn Settings")]
     [SerializeField] private int spawnCount = 2;
     [SerializeField] private float spawnDelay = 1.0f;
 
@@ -25,40 +23,32 @@ public class Station : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onSpawnEvent;
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
-
     public InteractableType InteractableType => interactableType;
 
     private bool isObjectPlaced = false;
-    private float currentProcess = 0f;
     private CarriableObject_SP placedObject;
-    private PlayerInteract_SP interactionHandler;
+    private PlayerInteractionHandler interactionHandler;
 
     private void Awake()
     {
-        interactionHandler = FindFirstObjectByType<PlayerInteract_SP>();
-    }
-    private void OnEnable()
-    {
-        currentProcess = 0f;
-        progressSlider.maxValue = maxProcessAmount;
-        progressCanvas.enabled = false;
-        UpdateUI();
-    }
-
-    private void OnDisable()
-    {
-        currentProcess = 0f;
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
     }
 
     #region INTERACTABLE RELATED
     public void OnInteract()
     {
-        if (!isObjectPlaced)
+        if (!isObjectPlaced) //Obje henüz istasyona yerleştirilmedi ise yerleştir.
         {
-            isObjectPlaced = true;
             RegisterToStation();
+            return;
         }
-        Process();
+
+        processHelper.Process(); //Süreci ilerlet
+
+        if (processHelper.IsCompleted()) //Süreç tamamlandı ise yeni objeleri spawnla.
+        {
+            SpawnObjects();
+        }
     }
     public void OnHoverOn()
     {
@@ -68,13 +58,18 @@ public class Station : MonoBehaviour, IInteractable
     {
         onHoverOffEvent?.Invoke();
     }
-
     #endregion
 
+    #region UTILITIES
     private void RegisterToStation()
     {
+        if (interactionHandler.GetCurrentCarriableType() != acceptedCarriableType) return;
+
+        isObjectPlaced = true;
+
         CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
         placedObject = carriable;
+
         PlaceObject();
         interactionHandler.ClearCarriedObject();
     }
@@ -84,24 +79,10 @@ public class Station : MonoBehaviour, IInteractable
         placedObject.transform.SetParent(placementTransform);
         placedObject.transform.localPosition = Vector3.zero;
         placedObject.transform.localRotation = Quaternion.identity;
-        progressCanvas.enabled = true;
-    }
-    private void Process()
-    {
-        currentProcess += perProcessAmount;
-        UpdateUI();
-
-        if (currentProcess >= maxProcessAmount)
-        {
-            currentProcess = 0f;
-            UpdateUI();
-            SpawnObjects();
-        }
     }
     private void SpawnObjects()
     {
         placedObject?.OnConsume();
-        progressCanvas.enabled = false;
         StartCoroutine(SpawnRoutine());
     }
     private IEnumerator SpawnRoutine()
@@ -113,12 +94,6 @@ public class Station : MonoBehaviour, IInteractable
             onSpawnEvent?.Invoke();
             if (i < spawnCount - 1) yield return new WaitForSeconds(spawnDelay);
         }
-    }
-
-    #region UTILITIES
-    private void UpdateUI()
-    {
-        progressSlider.value = currentProcess;
     }
 
     #endregion

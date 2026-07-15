@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 6864701756267983804}
   - component: {fileID: 8897738294891637471}
   - component: {fileID: 4490502253620378599}
-  - component: {fileID: 2959993985404843063}
-  - component: {fileID: 6988979652523668749}
+  - component: {fileID: -6744296082192085357}
   m_Layer: 0
   m_Name: EnergyDrink
   m_TagString: Untagged
@@ -114,7 +113,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2959993985404843063
+--- !u!114 &-6744296082192085357
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -123,26 +122,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4802431371268048683}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a0cde2a276b485e48b6cbed439aaf891, type: 3}
+  m_Script: {fileID: 11500000, guid: 9abc73e1c2500e54c97aa0d5ee69e7c7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnergyDrink
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
---- !u!114 &6988979652523668749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4802431371268048683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
-  sceneId: 0
-  _assetId: 3687611929
-  serverOnly: 0
-  visibility: 0
-  hasSpawned: 0
+  m_EditorClassIdentifier: Assembly-CSharp::EnergyDrink_SP

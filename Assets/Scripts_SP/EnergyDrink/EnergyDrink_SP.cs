@@ -11,11 +11,11 @@ public class EnergyDrink_SP : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onConsumeEvent;
 
-    private PlayerStamina_SP playerStamina;
+    private PlayerStaminaHandler playerStamina;
 
     private void Awake()
     {
-        playerStamina = FindAnyObjectByType<PlayerStamina_SP>();
+        playerStamina = FindAnyObjectByType<PlayerStaminaHandler>();
     }
     public void Interact()
     {

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 using PlayerScripts;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(PlayerMove_SP))]
+[RequireComponent(typeof(PlayerMovement))]
 public class HazardBounceRespawn_SP : MonoBehaviour
 {
     [Header("Trap")]
@@ -30,7 +30,7 @@ public class HazardBounceRespawn_SP : MonoBehaviour
     [SerializeField] private float groundCheckInterval = 0.03f;
 
     private Rigidbody rb;
-    private PlayerMove_SP playerMove;
+    private PlayerMovement playerMove;
     private float lastHitTime = -999f;
     private Coroutine trapRoutine;
 
@@ -41,7 +41,7 @@ public class HazardBounceRespawn_SP : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        playerMove = GetComponent<PlayerMove_SP>();
+        playerMove = GetComponent<PlayerMovement>();
 
         if (playerCollider == null)
             playerCollider = GetComponent<Collider>();

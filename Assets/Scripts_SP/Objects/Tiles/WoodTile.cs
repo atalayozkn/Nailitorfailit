@@ -11,53 +11,32 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
-    [SerializeField] private ConstructObject_SP connectedConstructor;
-    [SerializeField] private Canvas tileCanvas;
-    [SerializeField] private Slider tileSlider;
-
-    [Header("Tile Settings")]
-    [SerializeField] private float maxProcessAmount = 100f;
-    [SerializeField] private float processPerInteract = 25f;
+    [SerializeField] private InteractionProcessHelper processHelper;
+    [SerializeField] private ObjectHealth objectHealth;
 
     [Header("Fire Settings")]
-    [SerializeField] private int maxHealth = 10;
-    [SerializeField] private int perFireHit = 1;
     [SerializeField] private float fireHitInterval = 1f;
 
     [Header("Events")]
-    [SerializeField] private UnityEvent onConstructionStarted;
-    [SerializeField] private UnityEvent onConstructionProgress;
-    [SerializeField] private UnityEvent onConstructionCompleted;
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
     [SerializeField] private UnityEvent onBurningStartEvent;
     [SerializeField] private UnityEvent onBurningStopEvent;
-    [SerializeField] private UnityEvent onFireHitEvent;
-    [SerializeField] private UnityEvent onDestroyEvent;
 
     public InteractableType InteractableType => interactableType;
+    private ConstructionPhase currentPhase;
 
-    private TilePhase currentPhase;
-    private float currentProcess;
-    private bool startedConstruction;
-    private int currentHealth;
     private Coroutine fireRoutine;
     private Coroutine waterRoutine;
+
     private bool isOnFire = false;
     private bool isWet = false;
 
     private void OnEnable()
     {
-        currentPhase = TilePhase.Construction;
+        currentPhase = ConstructionPhase.Construction;
         gameObject.layer = LayerMask.NameToLayer("Interaction");
-        currentProcess = 0f;
-        startedConstruction = false;
-        currentHealth = maxHealth;
-        tileCanvas.enabled = true;
-        tileSlider.maxValue = maxProcessAmount;
-        UpdateUI();
     }
-
     private void OnDisable()
     {
         StopAllCoroutines();
@@ -65,26 +44,17 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
         waterRoutine = null;
         isOnFire = false;
         isWet = false;
-        tileCanvas.enabled = false;
     }
 
     #region INTERACTABLE
     public void OnInteract()
     {
-        if (currentPhase == TilePhase.Complete)
+        if (currentPhase == ConstructionPhase.Complete)
             return;
 
-        if (!startedConstruction)
-        {
-            startedConstruction = true;
-            onConstructionStarted?.Invoke();
-        }
+        processHelper.Process();
 
-        currentProcess += processPerInteract;
-        UpdateUI();
-        onConstructionProgress?.Invoke();
-
-        if (currentProcess >= maxProcessAmount)
+        if (processHelper.IsCompleted())
         {
             CompleteConstruction();
         }
@@ -112,19 +82,8 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     {
         while (true)
         {
-            currentHealth -= perFireHit;
-            onFireHitEvent?.Invoke();
-
-            if (currentHealth <= 0)
-            {
-                currentHealth = 0;
-                isOnFire = false;
-                Demolish();
-                yield break;
-            }
-
+            objectHealth.DealDamage();
             yield return new WaitForSeconds(fireHitInterval);
-
             isOnFire = false;
         }
     }
@@ -156,27 +115,10 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     #region UTILITY
     private void CompleteConstruction()
     {
-        currentProcess = maxProcessAmount;
         gameObject.layer = LayerMask.NameToLayer("Ground");
-        UpdateUI();
-        currentPhase = TilePhase.Complete;
-        onConstructionCompleted?.Invoke();
-        tileCanvas.enabled = false;
+        currentPhase = ConstructionPhase.Complete;
     }
-    private void Demolish()
-    {
-        onDestroyEvent?.Invoke();
-        Invoke(nameof(DiscardObject), 1.0f);
-    }
-    private void DiscardObject()
-    {
-        connectedConstructor.RequestClosure(gameObject);
-    }
-    private void UpdateUI()
-    {
-        tileSlider.value = currentProcess;
-    }
-    public TilePhase GetCurrentPhase()
+    public ConstructionPhase GetCurrentPhase()
     {
         return currentPhase;
     }

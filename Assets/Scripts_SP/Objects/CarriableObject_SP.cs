@@ -1,5 +1,4 @@
 using PlayerScripts;
-using Mirror;
 using UnityEngine;
 using Interactions;
 using UnityEngine.Events;
@@ -32,11 +31,11 @@ namespace ItemScript
         [SerializeField] private UnityEvent onConsumeEvent;
         public InteractableType InteractableType => interactableType;
         private ObjectSpawner spawnerObject;
-        private PlayerInteract_SP playerInteraction;
+        private PlayerInteractionHandler playerInteraction;
 
         private void Awake()
         {
-            playerInteraction = FindFirstObjectByType<PlayerInteract_SP>();
+            playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
         }
         //Interactable Related
         #region Interactable
