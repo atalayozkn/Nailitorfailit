@@ -200,6 +200,8 @@ GameObject:
   - component: {fileID: 3794889449714605320}
   - component: {fileID: 8170036723875961871}
   - component: {fileID: 1055449415981703988}
+  - component: {fileID: 2994732837391265765}
+  - component: {fileID: 878603287883803129}
   m_Layer: 6
   m_Name: FloorTile_Wood
   m_TagString: Untagged
@@ -222,6 +224,7 @@ Transform:
   m_Children:
   - {fileID: 8125287123933736633}
   - {fileID: 7916155361114005442}
+  - {fileID: 875834546705482151}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5709191352512158900
@@ -238,8 +241,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WoodTile
   interactableType: 1
   processHelper: {fileID: 3794889449714605320}
-  objectHealth: {fileID: 8170036723875961871}
-  fireHitInterval: 1
+  fireHelper: {fileID: 2994732837391265765}
+  puddleHelper: {fileID: 878603287883803129}
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
@@ -270,12 +273,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  onBurningStartEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  onBurningStopEvent:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &8936307841734079148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -356,6 +353,43 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.9805777, y: 0.11673533, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2994732837391265765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58e2358bdc608dc4aa2e4974573bcc69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireHelper
+  objectHealth: {fileID: 8170036723875961871}
+  fireHitInterval: 1
+  onFireStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onFireStopped:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &878603287883803129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 103e352ccaea42d4990a66ec591a2f40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuddleHelper
+  lerpHelper: {fileID: 5718784439514405316}
+  triggerCollider: {fileID: 3831902566619932071}
+  puddleAppearDuration: 3
+  puddleRemainDuration: 0
+  puddleDisappearDuration: 0
 --- !u!1 &5344979551643064024
 GameObject:
   m_ObjectHideFlags: 0
@@ -688,3 +722,127 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1001 &7048609504154001411
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3984560722328644172}
+    m_Modifications:
+    - target: {fileID: 4490877295618975302, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8041415858489995170, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      propertyPath: m_Name
+      value: WaterPuddle
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4490877295618975302, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3831902566619932071}
+    - targetCorrespondingSourceObject: {fileID: 4490877295618975302, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3270324424056395551}
+  m_SourcePrefab: {fileID: 100100000, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+--- !u!4 &875834546705482151 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7923562507010040228, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+  m_PrefabInstance: {fileID: 7048609504154001411}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5718784439514405316 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3354201895660108231, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+  m_PrefabInstance: {fileID: 7048609504154001411}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6882483077930993221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e2d1aaf56bd2744a8f1d261bef9779b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaterialParameterLerpHelper
+--- !u!1 &6882483077930993221 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4490877295618975302, guid: 0523f2419f216784b939903c85764d4b, type: 3}
+  m_PrefabInstance: {fileID: 7048609504154001411}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &3831902566619932071
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6882483077930993221}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.3, y: 2.3, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3270324424056395551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6882483077930993221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b42690ba9148821469e875a9d2e50ed2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSlipHelper
+  slipperyMask:
+    serializedVersion: 2
+    m_Bits: 128

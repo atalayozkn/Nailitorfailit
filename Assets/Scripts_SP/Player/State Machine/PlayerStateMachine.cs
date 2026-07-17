@@ -5,6 +5,8 @@ public enum PlayerStates
 {
     Idle,
     Navigation,
+    Slipping,
+    Stunned,
     OnAir,
     Dead,
 }
@@ -17,6 +19,7 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
     [field: SerializeField] public Animator animator { get; private set; }
     [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
+    [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
 
     [Header("Movement Data")]
     [field: SerializeField] public bool isMoving { get; private set; }
@@ -28,6 +31,16 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public bool IsGrounded { get; private set; }
     [field: SerializeField] public LayerMask whatIsGround { get; private set; }
     [field: SerializeField] public float maxDistance { get; private set; }
+
+    [Header("Slip Settings")]
+    [field: SerializeField] public float slipCheckDistance { get; private set; }
+    [field: SerializeField] public float slipOffsetMultiplier { get; private set; }
+    [field: SerializeField] public float slipCheckRadius { get; private set; }
+    [field: SerializeField] public LayerMask slipperyMask { get; private set; }
+
+
+    [Header("Crash Settings")]
+    [field: SerializeField] public float crashVelocity { get; private set; }
 
     [field: SerializeField] public bool debugMode;
     
@@ -52,22 +65,20 @@ public class PlayerStateMachine : StateMachine_Player
     #region STATES
     public void ChangeToIdleState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
-        if (currentPlayerState == PlayerStates.Idle)
-            return;
+        if (currentPlayerState == PlayerStates.Dead)return;
+        if (currentPlayerState == PlayerStates.Idle) return;
+        if (currentPlayerState == PlayerStates.Slipping) return;
+        if (currentPlayerState == PlayerStates.Stunned) return;
 
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
     }
     public void ChangeToNavigationState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
-        if (currentPlayerState == PlayerStates.Navigation)
-            return;
+        if (currentPlayerState == PlayerStates.Dead) return;
+        if (currentPlayerState == PlayerStates.Navigation) return;
+        if (currentPlayerState == PlayerStates.Slipping) return;
+        if (currentPlayerState == PlayerStates.Stunned) return;
 
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
@@ -82,6 +93,26 @@ public class PlayerStateMachine : StateMachine_Player
 
         currentPlayerState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState(this));
+    }
+    public void ChangeToSlippingState()
+    {
+        if (currentPlayerState == PlayerStates.Dead)
+            return;
+
+        if (currentPlayerState == PlayerStates.OnAir)
+            return;
+
+        currentPlayerState = PlayerStates.Slipping;
+        SwitchState(new PlayerSlippingState(this));
+    }
+
+    public void ChangeToStunnedState()
+    {
+        if (currentPlayerState == PlayerStates.Dead)
+            return;
+
+        currentPlayerState = PlayerStates.Stunned;
+        SwitchState(new PlayerFaintState(this));
     }
     public void ChangeToDeadState()
     {
@@ -164,34 +195,35 @@ public class PlayerStateMachine : StateMachine_Player
         }
     }
 
-    public float GetAnimDuration(string clipName)
+    public bool ShouldRecoverFromSlip()
     {
-        if (animator == null)
-        {
-            Debug.LogWarning("Animator atanmadý!");
-            return 0f;
-        }
+        Vector3 point1 = transform.position + Vector3.up * slipOffsetMultiplier;
+        Vector3 point2 = point1 + Vector3.up * 0.01f; // Tiny capsule instead of a sphere
 
-        if (animator.runtimeAnimatorController == null)
-        {
-            Debug.LogWarning("Animator Controller atanmadý!");
-            return 0f;
-        }
+        bool hitSlippery = Physics.CapsuleCast(
+            point1,
+            point2,
+            slipCheckRadius,
+            Vector3.down,
+            out _,
+            slipCheckDistance,
+            slipperyMask,
+            QueryTriggerInteraction.Collide);
 
-        AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
-
-        for (int i = 0; i < clips.Length; i++)
-        {
-            if (clips[i] == null) continue;
-
-            if (clips[i].name == clipName)
-                return clips[i].length;
-        }
-
-        Debug.LogWarning("Animation clip bulunamadý: " + clipName);
-        return 0f;
+        // Recover only if we're no longer above a slippery surface.
+        return !hitSlippery;
     }
-
+    public void SetCrashActivity()
+    {
+        if (rb.linearVelocity.magnitude > crashVelocity)
+        {
+            crashHelper.SetActivity(true);
+        }
+        else
+        {
+            crashHelper.SetActivity(false);
+        }
+    }
     #endregion
 
     #region DEBUG
@@ -201,17 +233,28 @@ public class PlayerStateMachine : StateMachine_Player
             return;
         if (!debugMode) return;
 
-        Gizmos.color = Color.green;
+        // Slip capsule cast visualization
+        Gizmos.color = Color.cyan;
 
-        Gizmos.DrawLine(
-            detectionTransform.position,
-            detectionTransform.position + Vector3.down * maxDistance
-        );
+        Vector3 startPoint1 = transform.position + Vector3.up * slipOffsetMultiplier;
+        Vector3 startPoint2 = startPoint1 + Vector3.up * 0.01f;
 
-        Gizmos.DrawWireSphere(
-            detectionTransform.position + Vector3.down * maxDistance,
-            0.05f
-        );
+        Vector3 endPoint1 = startPoint1 + Vector3.down * slipCheckDistance;
+        Vector3 endPoint2 = startPoint2 + Vector3.down * slipCheckDistance;
+
+        // Start capsule
+        Gizmos.DrawWireSphere(startPoint1, slipCheckRadius);
+        Gizmos.DrawWireSphere(startPoint2, slipCheckRadius);
+
+        // End capsule
+        Gizmos.DrawWireSphere(endPoint1, slipCheckRadius);
+        Gizmos.DrawWireSphere(endPoint2, slipCheckRadius);
+
+        // Connect the capsules
+        Gizmos.DrawLine(startPoint1 + Vector3.right * slipCheckRadius, endPoint1 + Vector3.right * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 - Vector3.right * slipCheckRadius, endPoint1 - Vector3.right * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 + Vector3.forward * slipCheckRadius, endPoint1 + Vector3.forward * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 - Vector3.forward * slipCheckRadius, endPoint1 - Vector3.forward * slipCheckRadius);
     }
     #endregion
 

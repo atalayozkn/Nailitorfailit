@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Collections;
 
-public class BrickTile : MonoBehaviour, IInteractable
+public class GlassTile : MonoBehaviour, IInteractable
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;

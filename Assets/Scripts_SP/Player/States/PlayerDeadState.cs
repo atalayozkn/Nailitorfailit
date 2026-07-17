@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerDeadState : PlayerBaseState_SP
+public class PlayerDeadState : PlayerBaseState
 {
     public static readonly int deadHash = Animator.StringToHash("dead");
 

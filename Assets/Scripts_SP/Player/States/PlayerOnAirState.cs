@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerOnAirState : PlayerBaseState_SP
+public class PlayerOnAirState : PlayerBaseState
 {
     public static readonly int jumpStartHash = Animator.StringToHash("jumpStart");
     public static readonly int onAirHash = Animator.StringToHash("onAir");

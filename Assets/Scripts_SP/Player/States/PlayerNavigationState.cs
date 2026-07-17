@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerNavigationState : PlayerBaseState_SP
+public class PlayerNavigationState : PlayerBaseState
 {
     public PlayerNavigationState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 

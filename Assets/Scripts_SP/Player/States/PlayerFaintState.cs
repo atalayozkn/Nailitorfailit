@@ -1,18 +1,19 @@
 using UnityEngine;
 
-public class PlayerFaintedState_SP : PlayerBaseState_SP
+public class PlayerFaintState : PlayerBaseState
 {
-    public static readonly int faintedHash = Animator.StringToHash("faint");
-    public static readonly int standHash = Animator.StringToHash("stand");
+    public static readonly int faintedHash = Animator.StringToHash("Faint");
+    public static readonly int standHash = Animator.StringToHash("Stand");
 
     private float counterTime;
-    private float faintedDuration;
-    private float standDuration;
+    private float faintedDuration = 2.4f;
+    private float standDuration = 3.1f;
 
-    public PlayerFaintedState_SP(PlayerStateMachine stateMachine) : base(stateMachine) { }
+    public PlayerFaintState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
         stateMachine.animator.CrossFadeInFixedTime(faintedHash, 0.1f);
+        stateMachine.rb.linearVelocity = Vector3.zero;
         counterTime = 0;
     }
     public override void Tick(float deltaTime)
@@ -24,8 +25,7 @@ public class PlayerFaintedState_SP : PlayerBaseState_SP
         }
         if(counterTime > standDuration + faintedDuration)
         {
-            stateMachine.ChangeToIdleState();
-            counterTime = 0;
+            stateMachine.ForceSwitchToIdleState();
         }
     }
     public override void FixedTick(float fixedDeltaTime)

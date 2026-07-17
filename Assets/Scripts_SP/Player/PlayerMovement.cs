@@ -16,7 +16,10 @@ namespace PlayerScripts
         [SerializeField] private float baseSpeed = 10f;
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private float baseMovementCost = 1f;
+        [Header("Physics Movement")]
+        [SerializeField] private float baseMovementForce = 40f;
 
+        private float controlMultiplier = 1f;
         [Header("Jump Settings")]
         [SerializeField] private float jumpForce = 5f;
 
@@ -161,23 +164,34 @@ namespace PlayerScripts
 
             Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
 
-            if (inputDir.magnitude > 1f)
+            if (inputDir.sqrMagnitude > 1f)
                 inputDir.Normalize();
 
-            Vector3 targetVelocity = inputDir * CurrentSpeed;
-            targetVelocity.y = rb.linearVelocity.y;
+            // Apply movement force
+            if (inputDir.sqrMagnitude > 0.001f)
+            {
+                rb.AddForce(inputDir * baseMovementForce * movementMultiplier * controlMultiplier, ForceMode.Force);
+            }
 
-            Vector3 currentVelocity = rb.linearVelocity;
+            // Clamp horizontal velocity
+            Vector3 horizontalVelocity = new Vector3(
+                rb.linearVelocity.x,
+                0f,
+                rb.linearVelocity.z);
 
-            Vector3 newVelocity = Vector3.Lerp(
-                currentVelocity,
-                targetVelocity,
-                15f * Time.fixedDeltaTime);
+            float maxSpeed = CurrentSpeed;
 
-            newVelocity.y = rb.linearVelocity.y;
+            if (horizontalVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+            {
+                horizontalVelocity = horizontalVelocity.normalized * maxSpeed;
 
-            rb.linearVelocity = newVelocity;
+                rb.linearVelocity = new Vector3(
+                    horizontalVelocity.x,
+                    rb.linearVelocity.y,
+                    horizontalVelocity.z);
+            }
 
+            // Rotate towards movement
             if (inputDir.sqrMagnitude > 0.01f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(inputDir);
@@ -226,7 +240,7 @@ namespace PlayerScripts
         }
         public void SetSpeedModifier(float multiplier)
         {
-            externalSpeedModifier = Mathf.Clamp(multiplier, 0.2f, 1.0f);
+            externalSpeedModifier = multiplier;
         }
     }
 }
