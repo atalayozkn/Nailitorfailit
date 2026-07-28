@@ -198,10 +198,10 @@ GameObject:
   - component: {fileID: 5709191352512158900}
   - component: {fileID: 8936307841734079148}
   - component: {fileID: 3794889449714605320}
-  - component: {fileID: 8170036723875961871}
-  - component: {fileID: 1055449415981703988}
   - component: {fileID: 2994732837391265765}
   - component: {fileID: 878603287883803129}
+  - component: {fileID: 8170036723875961871}
+  - component: {fileID: 1055449415981703988}
   m_Layer: 6
   m_Name: FloorTile_Wood
   m_TagString: Untagged
@@ -311,6 +311,43 @@ MonoBehaviour:
   onConstructionCompleted:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2994732837391265765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58e2358bdc608dc4aa2e4974573bcc69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireHelper
+  objectHealth: {fileID: 8170036723875961871}
+  fireHitInterval: 1
+  onFireStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onFireStopped:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &878603287883803129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 103e352ccaea42d4990a66ec591a2f40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuddleHelper
+  lerpHelper: {fileID: 5718784439514405316}
+  triggerCollider: {fileID: 3831902566619932071}
+  puddleAppearDuration: 3
+  puddleRemainDuration: 0
+  puddleDisappearDuration: 0
 --- !u!114 &8170036723875961871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,43 +390,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.9805777, y: 0.11673533, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2994732837391265765
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2835028531961472917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58e2358bdc608dc4aa2e4974573bcc69, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FireHelper
-  objectHealth: {fileID: 8170036723875961871}
-  fireHitInterval: 1
-  onFireStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onFireStopped:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &878603287883803129
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2835028531961472917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 103e352ccaea42d4990a66ec591a2f40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PuddleHelper
-  lerpHelper: {fileID: 5718784439514405316}
-  triggerCollider: {fileID: 3831902566619932071}
-  puddleAppearDuration: 3
-  puddleRemainDuration: 0
-  puddleDisappearDuration: 0
 --- !u!1 &5344979551643064024
 GameObject:
   m_ObjectHideFlags: 0
