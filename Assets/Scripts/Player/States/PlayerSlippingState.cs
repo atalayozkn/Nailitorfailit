@@ -7,8 +7,11 @@ public class PlayerSlippingState : PlayerBaseState
     public override void Enter()
     {
         stateMachine.animator.CrossFadeInFixedTime(slipHash, 0.1f);
-        stateMachine.playerMove.SetSpeedModifier(1.5f);
+        stateMachine.movementHandler.SetSlipping(true);
         stateMachine.crashHelper.SetActivity(true);
+
+        var carriable = stateMachine.interactionHandler.GetCurrentCarriable();
+        if (carriable != null) carriable.OnDrop();
     }
     public override void Tick(float deltaTime)
     {
@@ -26,6 +29,6 @@ public class PlayerSlippingState : PlayerBaseState
     public override void Exit()
     {
         stateMachine.crashHelper.SetActivity(false);
-        stateMachine.playerMove.SetSpeedModifier(1.0f);
+        stateMachine.movementHandler.SetSlipping(false);
     }
 }

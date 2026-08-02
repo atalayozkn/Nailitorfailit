@@ -9,6 +9,8 @@ public class PlayerFaintState : PlayerBaseState
     private float faintedDuration = 2.4f;
     private float standDuration = 3.1f;
 
+    bool isFaintComplete = false;
+
     public PlayerFaintState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
@@ -19,13 +21,18 @@ public class PlayerFaintState : PlayerBaseState
     public override void Tick(float deltaTime)
     {
         counterTime += deltaTime;
-        if (counterTime > faintedDuration)
+
+        if (counterTime >= faintedDuration && !isFaintComplete)
         {
-            stateMachine.animator.CrossFadeInFixedTime(standHash, 0.1f);
+            stateMachine.animator.CrossFadeInFixedTime(standHash, 0f);
+            counterTime = 0;
+            isFaintComplete = true;
         }
-        if(counterTime > standDuration + faintedDuration)
+
+        if(counterTime >= standDuration)
         {
-            stateMachine.ForceSwitchToIdleState();
+            if (stateMachine.ShouldRecoverFromSlip()) stateMachine.ForceSwitchToIdleState();
+            else stateMachine.ChangeToSlippingState();
         }
     }
     public override void FixedTick(float fixedDeltaTime)

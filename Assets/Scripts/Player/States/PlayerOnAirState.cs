@@ -21,9 +21,6 @@ public class PlayerOnAirState : PlayerBaseState
     {
         counterTime = 0f;
         currentPhase = AirPhase.JumpStart;
-
-        stateMachine.SetJumping(true);
-
         stateMachine.animator.CrossFadeInFixedTime(jumpStartHash, 0.1f);
     }
 
@@ -46,49 +43,33 @@ public class PlayerOnAirState : PlayerBaseState
                 break;
         }
     }
-
     public override void FixedTick(float fixedDeltaTime)
     {
-        stateMachine.CheckGround();
+       
     }
 
     public override void Exit()
     {
-        stateMachine.SetJumping(false);
+        stateMachine.movementHandler.SetJumping(false);
     }
-
     private void HandleJumpStartPhase()
     {
-        if (counterTime < 0.15f)
-            return;
-
+        if (counterTime < 0.15f) return;
         counterTime = 0f;
         currentPhase = AirPhase.OnAir;
-
-        stateMachine.animator.CrossFadeInFixedTime(onAirHash, 0.1f);
+        stateMachine.animator.CrossFadeInFixedTime(onAirHash, 0f);
     }
-
     private void HandleOnAirPhase()
     {
-        if (!stateMachine.IsGrounded)
-            return;
-
+        if (!stateMachine.movementHandler.IsGrounded()) return;
         counterTime = 0f;
         currentPhase = AirPhase.Landing;
-
-        stateMachine.animator.CrossFadeInFixedTime(onLandHash, 0.1f);
+        stateMachine.animator.CrossFadeInFixedTime(onLandHash, 0f);
     }
-
     private void HandleLandingPhase()
     {
-        if (counterTime < 0.1f)
-            return;
-
-        stateMachine.SetJumping(false);
-
-        if (stateMachine.isMoving)
-            stateMachine.ForceSwitchToNavigationState();
-        else
-            stateMachine.ForceSwitchToIdleState();
+        if (counterTime < 0.1f) return;
+        if (stateMachine.movementHandler.IsMoving()) stateMachine.ForceSwitchToNavigationState();
+        else stateMachine.ForceSwitchToIdleState();
     }
 }

@@ -17,7 +17,6 @@ public class PlayerSlipHelper : MonoBehaviour
     {
         if (((1 << other.gameObject.layer) & slipperyMask) != 0)
         {
-            Debug.Log("Entered Trigger: Changing To Slip");
             stateMachine.ChangeToSlippingState();
         }
     }

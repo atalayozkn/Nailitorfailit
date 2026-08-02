@@ -1,15 +1,37 @@
+﻿using System;
 using Unity.Cinemachine;
 using UnityEngine;
+
 public class GameManager : MonoBehaviour
 {
+    [Serializable]
+    public class LevelSocketData
+    {
+        public LevelSocket levelSocket;
+
+        [Header("State")]
+        public bool isCompleted;
+        public bool isIndicated;
+    }
+
     public static GameManager Instance { get; private set; }
 
-    private GamePhase currentPhase;
+    [Header("Settings")]
+    [SerializeField] private int startCurrencyAmount = 250;
+    [SerializeField] private LevelSocketData[] levelSockets;
+
+    private GamePhase currentPhase = GamePhase.Menu;
+
+    // Scene References
     private CinemachineCamera inGameCamera;
     private CinemachineCamera inMenuCamera;
+    private MainMenu mainMenu;
+    private InGameOverlayUI inGameOverlayUI;
 
-    // Instanced
-    // Does not destroy OnLoad (1 per game)
+    private bool gameStarted;
+
+    #region Initialization
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -20,105 +42,186 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        ChangeToMenuPhase();
-        OnSceneLoad();
-
-    }
-    public void OnSceneLoad()
-    {
-        if (currentPhase == GamePhase.Menu)
-        {
-            GameObject inGameCameraObject = GameObject.FindGameObjectWithTag("InGame");
-            if (inGameCameraObject != null) inGameCamera = inGameCameraObject.GetComponent<CinemachineCamera>();
-            GameObject inMenuCameraObject = GameObject.FindGameObjectWithTag("InMenu");
-            if (inMenuCameraObject != null) inMenuCamera = inMenuCameraObject.GetComponent<CinemachineCamera>();
-        }
-        else if (currentPhase == GamePhase.InGame)
-        {
-            // Currently empty
-        }
-        else
-        {
-            // Currently empty
-        }
-    }
-    // Start from Menu Phase
-    #region MENU PHASE
-    public void ChangeToMenuPhase()
-    {
-        if (currentPhase == GamePhase.Menu) return; 
-        currentPhase = GamePhase.Menu;
+        ResetLevelSocketStates();
     }
 
-    //Called By Button
+    private void Start()
+    {
+        OnSceneLoaded();
+    }
+
+    #endregion
+
+    #region Scene
+
+    /// <summary>
+    /// Called by GameSceneManager whenever a new scene has finished loading.
+    /// </summary>
+    public void OnSceneLoaded()
+    {
+        CacheSceneReferences();
+
+        switch (currentPhase)
+        {
+            case GamePhase.Menu:
+                SetupMenuScene();
+                break;
+
+            case GamePhase.InGame:
+                SetupGameScene();
+                break;
+        }
+    }
+
+    private void CacheSceneReferences()
+    {
+        GameObject inGameCameraObject = GameObject.FindGameObjectWithTag("InGame");
+        if (inGameCameraObject != null) inGameCamera = inGameCameraObject.GetComponent<CinemachineCamera>();
+
+        GameObject inMenuCameraObject = GameObject.FindGameObjectWithTag("InMenu");
+        if (inMenuCameraObject != null) inMenuCamera = inMenuCameraObject.GetComponent<CinemachineCamera>();
+
+        mainMenu = FindAnyObjectByType<MainMenu>();
+        inGameOverlayUI = FindAnyObjectByType<InGameOverlayUI>();
+    }
+
+    #endregion
+
+    #region Menu
+
+    private void SetupMenuScene()
+    {
+        if (inMenuCamera != null) SwitchToMenuCamera();
+
+        if (mainMenu != null)
+        {
+            mainMenu.SetActivity(true);
+            mainMenu.SwitchToMenuTab();
+        }
+
+        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(false);
+    }
+
     public void ActivateCharacterSelection()
     {
-        //Close Menu
-        //Open Character Selection Tab
-        //Wait for selection
+        mainMenu.SwitchToCharacterTab();
     }
 
-    //Called By Button
-    public void StartGame(int index) //index here is the selected character element
+    public void StartGame(int characterIndex)
     {
-        //Alter the prefab of player depending on index
-        //Instantiate prefab on the scene
+        switch (characterIndex)
+        {
+            case 0:
+                // Spawn selected character later.
+                break;
+        }
+
         ChangeToGamePhase();
     }
 
     #endregion
 
-    #region GAME PHASE
+    #region Game
+
     public void ChangeToGamePhase()
     {
-        if (currentPhase == GamePhase.Menu)
+        currentPhase = GamePhase.InGame;
+
+        if (mainMenu != null) mainMenu.SetActivity(false);
+
+        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
+
+        if (inGameCamera != null) SwitchToInGameCamera();
+
+        if (!gameStarted)
         {
-            //Close Menu UI
-            //Enable InGame UI
-            //Shift Camera
-            //Reward Starting Money
+            CurrencyManager.Instance.GainCurrency(startCurrencyAmount);
+            gameStarted = true;
         }
-        else if (currentPhase == GamePhase.InLevel)
+
+        RefreshLevelSockets();
+    }
+
+    private void SetupGameScene()
+    {
+        if (mainMenu != null) mainMenu.SetActivity(false);
+
+        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
+
+        if (inGameCamera != null) SwitchToInGameCamera();
+
+        RefreshLevelSockets();
+    }
+
+    #endregion
+
+    #region Level
+
+    public void ChangeToLevelPhase(int levelIndex)
+    {
+        currentPhase = GamePhase.InLevel;
+
+        GameSceneManager.Instance.LoadLevel(levelIndex);
+    }
+    public void CompleteLevel(int levelIndex, bool success)
+    {
+        if (success)
         {
-            //Load MenuScene
-            //Close UI Elements
-            //Switch to InGame View
+            levelSockets[levelIndex].isCompleted = true;
+            // Leave isIndicated untouched.
         }
 
         currentPhase = GamePhase.InGame;
 
+        GameSceneManager.Instance.LoadMenu();
     }
-
     #endregion
 
-    #region LEVEL PHASE
-    public void ChangeToLevelPhase(int index)
+    #region LevelSockets
+
+    private void RefreshLevelSockets()
     {
-        //Darken Screen
-        //Switch Scene
-        //Load clicked Level Index
+        foreach (LevelSocketData socket in levelSockets)
+        {
+            if (socket.levelSocket == null) continue;
+            socket.levelSocket.Refresh(socket.isCompleted, socket.isIndicated);
+        }
     }
-
-    #endregion
-
-    //If player moving between Level - InGame Phases. We should store the player transform.position.
-
-    #region In-Level
-
-    public void CompleteLevel(bool condition)
+    private void ResetLevelSocketStates()
     {
-        //true means level successfully completed
-        //false means level is failed
-        //Currently we will not do anything
+        foreach (LevelSocketData socket in levelSockets)
+        {
+            socket.isCompleted = false;
+            socket.isIndicated = false;
+        }
     }
 
     #endregion
 
-    #region UTILITY
+    #region Utility
 
     public GamePhase GetCurrentPhase()
     {
         return currentPhase;
+    }
+    public LevelSocketData GetLevelData(int index)
+    {
+        return levelSockets[index];
+    }
+    public void MarkLevelIndicated(int levelIndex)
+    {
+        levelSockets[levelIndex].isIndicated = true;
+    }
+
+    private void SwitchToMenuCamera()
+    {
+        inMenuCamera.Priority = 1;
+        inGameCamera.Priority = 0;
+    }
+    private void SwitchToInGameCamera()
+    {
+        inMenuCamera.Priority = 0;
+        inGameCamera.Priority = 1;
     }
 
     #endregion

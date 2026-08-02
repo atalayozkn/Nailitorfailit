@@ -187,7 +187,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.Constructor
   roomController: {fileID: 0}
   bluePrintObject: {fileID: 2499015782262911686}
-  interactableType: 0
+  interactableType: 1
   interactionCollider: {fileID: 434870937798017280}
   woodObject: {fileID: 4476850867407786075}
   woodHealth: {fileID: 7501095192495221697}
@@ -262,7 +262,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 0.113382906, z: 1}
+  m_Size: {x: 1, y: 0.10152651, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1835484342467737550
 PrefabInstance:

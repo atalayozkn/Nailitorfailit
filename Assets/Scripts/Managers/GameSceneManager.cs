@@ -1,16 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using System.Collections;
 public class GameSceneManager : MonoBehaviour
 {
     public static GameSceneManager Instance { get; private set; }
-
-    //Instanced is not Destroyed on Load
-
     [SerializeField] private string[] scenes;
-    //scenes[0] will be Main Menu
-    //others will be levels
-
     private string activeScene;
 
     private void Awake()
@@ -26,36 +20,40 @@ public class GameSceneManager : MonoBehaviour
 
         activeScene = SceneManager.GetActiveScene().name;
     }
-
     private void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
     }
-
     public void LoadMenu()
     {
-        LoadScene(0);
+        StartCoroutine(LoadSceneRoutine(0));
     }
-
     public void LoadLevel(int index)
     {
-        LoadScene(index);
-    }
-
-    private void LoadScene(int index)
-    {
-        if (index < 0 || index >= scenes.Length)
-        {
-            Debug.LogError($"Scene index {index} is out of range.");
-            return;
-        }
-
-        SceneManager.LoadScene(scenes[index]);
-        activeScene = scenes[index];
+        StartCoroutine(LoadSceneRoutine(index));
     }
     public string GetActiveScene()
     {
         return activeScene;
+    }
+
+    private IEnumerator LoadSceneRoutine(int index)
+    {
+        // Fade Out
+        // Disable input
+        // Loading screen
+
+        AsyncOperation operation = SceneManager.LoadSceneAsync(scenes[index]);
+
+        while (!operation.isDone) yield return null;
+
+        activeScene = scenes[index];
+
+        // Tell every persistent manager that the scene is ready.
+        GameManager.Instance.OnSceneLoaded();
+
+        // Fade In
+        // Enable input
     }
 }

@@ -36,6 +36,10 @@ public class CurrencyManager : MonoBehaviour
         UpdateUI();
         onSpendEvent?.Invoke();
     }
+    public void SetCurrency(int amount)
+    {
+        currentValue = amount;
+    }
     public bool HasEnoughCurrency(int amount)
     {
         if (currentValue >= amount) return true;
@@ -43,6 +47,7 @@ public class CurrencyManager : MonoBehaviour
         onRejectionEvent?.Invoke();
         return false;
     }
+
     private void UpdateUI()
     {
         if (currencyText == null) return;

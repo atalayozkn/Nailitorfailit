@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,7 +10,6 @@ namespace PlayerScripts
     public class PlayerStaminaHandler : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private PlayerMovement playerMove;
         [SerializeField] private Slider staminaSlider;
         [SerializeField] private TextMeshProUGUI staminaText;
 
@@ -32,7 +32,6 @@ namespace PlayerScripts
         [SerializeField] private UnityEvent onEnergiseReversedEvent;
         [SerializeField] private UnityEvent onDrainedEvent;
         [SerializeField] private UnityEvent onDrainReversedEvent;
-
 
         private float currentEnergy;
         private Coroutine chargeRoutine;
@@ -112,11 +111,10 @@ namespace PlayerScripts
             CancelInvoke(nameof(ReverseDrained));
             Invoke(nameof(ReverseDrained), drainedDuration);
         }
-
         private void UpdateUI()
         {
             staminaSlider.value = currentEnergy;
-            staminaText.text = Mathf.FloorToInt(currentEnergy).ToString();
+            //staminaText.text = Mathf.FloorToInt(currentEnergy).ToString();
         }
 
         #region UTILITIES

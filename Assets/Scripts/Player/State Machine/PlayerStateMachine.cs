@@ -7,13 +7,14 @@ public enum PlayerStates
     Navigation,
     Slipping,
     Stunned,
+    Interacting,
     OnAir,
     Dead,
 }
 public class PlayerStateMachine : StateMachine_Player
 {
     [Header("References")]
-    [field: SerializeField] public PlayerMovement playerMove { get; private set; }
+    [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
     [field: SerializeField] public Transform detectionTransform { get; private set; }
     [field: SerializeField] public Rigidbody rb { get; private set; }
     [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
@@ -22,15 +23,7 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
 
     [Header("Movement Data")]
-    [field: SerializeField] public bool isMoving { get; private set; }
-    [field: SerializeField] public bool isRunning { get; private set; }
-    [field: SerializeField] public bool isJumping { get; private set; }
     [field: SerializeField] public bool isDead { get; private set; }
-
-    [Header("Ground Check")]
-    [field: SerializeField] public bool IsGrounded { get; private set; }
-    [field: SerializeField] public LayerMask whatIsGround { get; private set; }
-    [field: SerializeField] public float maxDistance { get; private set; }
 
     [Header("Slip Settings")]
     [field: SerializeField] public float slipCheckDistance { get; private set; }
@@ -38,28 +31,15 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public float slipCheckRadius { get; private set; }
     [field: SerializeField] public LayerMask slipperyMask { get; private set; }
 
-
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
 
     [field: SerializeField] public bool debugMode;
-    
-    private void Awake()
-    {
-        IsGrounded = true;
-    }
     private void OnEnable()
     {
         isDead = false;
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
-    }
-
-    private void OnDisable()
-    {
-        isMoving = false;
-        isRunning = false;
-        isJumping = false;
     }
 
     #region STATES
@@ -69,6 +49,7 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Idle) return;
         if (currentPlayerState == PlayerStates.Slipping) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
+        if (currentPlayerState == PlayerStates.OnAir) return;
 
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
@@ -79,46 +60,43 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Navigation) return;
         if (currentPlayerState == PlayerStates.Slipping) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
+        if (currentPlayerState == PlayerStates.OnAir) return;
 
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
     }
     public void ChangeToOnAirState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
-        if (currentPlayerState == PlayerStates.OnAir)
-            return;
-
+        if (currentPlayerState == PlayerStates.Dead) return;
+        if (currentPlayerState == PlayerStates.OnAir) return;
         currentPlayerState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState(this));
     }
     public void ChangeToSlippingState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
-        if (currentPlayerState == PlayerStates.OnAir)
-            return;
-
+        if (currentPlayerState == PlayerStates.Dead) return;
+        if (currentPlayerState == PlayerStates.OnAir) return;
         currentPlayerState = PlayerStates.Slipping;
         SwitchState(new PlayerSlippingState(this));
+    }
+    public void ChangeToInteractState()
+    {
+        if (currentPlayerState == PlayerStates.Interacting) return;
+        if (currentPlayerState == PlayerStates.Stunned) return;
+        if (currentPlayerState == PlayerStates.Dead) return;
+        currentPlayerState = PlayerStates.Interacting;
+        SwitchState(new PlayerInteractionState(this));
     }
 
     public void ChangeToStunnedState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
+        if (currentPlayerState == PlayerStates.Dead) return;
         currentPlayerState = PlayerStates.Stunned;
         SwitchState(new PlayerFaintState(this));
     }
     public void ChangeToDeadState()
     {
-        if (currentPlayerState == PlayerStates.Dead)
-            return;
-
+        if (currentPlayerState == PlayerStates.Dead) return;
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
     }
@@ -145,70 +123,16 @@ public class PlayerStateMachine : StateMachine_Player
     #endregion
 
     #region UTILITY
-    public void SetMoving(bool condition)
-    {
-        isMoving = condition;
-    }
-
-    public void SetRunning(bool condition)
-    {
-        isRunning = condition;
-    }
-
-    public void SetJumping(bool condition)
-    {
-        isJumping = condition;
-    }
-
     public void SetDead(bool condition)
     {
         isDead = condition;
     }
-
-    public bool IsCarrying()
-    {
-        return interactionHandler.IsCarrying();
-    }
-    private bool QueryIsGrounded()
-    {
-        return Physics.Raycast(
-            detectionTransform.position,
-            Vector3.down,
-            maxDistance,
-            whatIsGround,
-            QueryTriggerInteraction.Ignore
-        );
-    }
-    public void CheckGround()
-    {
-        bool wasGrounded = IsGrounded;
-
-        IsGrounded = QueryIsGrounded();
-
-        if (!wasGrounded && IsGrounded)
-        {
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-        }
-    }
-
     public bool ShouldRecoverFromSlip()
     {
         Vector3 point1 = transform.position + Vector3.up * slipOffsetMultiplier;
         Vector3 point2 = point1 + Vector3.up * 0.01f; // Tiny capsule instead of a sphere
 
-        bool hitSlippery = Physics.CapsuleCast(
-            point1,
-            point2,
-            slipCheckRadius,
-            Vector3.down,
-            out _,
-            slipCheckDistance,
-            slipperyMask,
-            QueryTriggerInteraction.Collide);
+        bool hitSlippery = Physics.CapsuleCast(point1, point2, slipCheckRadius, Vector3.down, out _, slipCheckDistance, slipperyMask, QueryTriggerInteraction.Collide);
 
         // Recover only if we're no longer above a slippery surface.
         return !hitSlippery;

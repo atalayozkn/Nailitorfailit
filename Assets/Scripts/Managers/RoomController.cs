@@ -13,6 +13,7 @@ public class RoomController : MonoBehaviour
     private void Awake()
     {
         totalRequiredItemCount = availableTiles.Length;
+        UpdateUI();
     }
     public void IncreaseCounter()
     {

@@ -29,32 +29,27 @@ public class InMenuPlayer : MonoBehaviour
         if (rb == null)
             rb = GetComponent<Rigidbody>();
     }
-
     private void OnEnable()
     {
         moveInputReference.action.Enable();
         interactInputReference.action.Enable();
     }
-
     private void OnDisable()
     {
         moveInputReference.action.Disable();
         interactInputReference.action.Disable();
     }
-
     private void Update()
     {
         moveInput = moveInputReference.action.ReadValue<Vector2>();
 
-        if (currentInteractable == null)
-            return;
+        if (currentInteractable == null) return;
 
         if (interactInputReference.action.WasPressedThisFrame())
         {
             currentInteractable.OnInteract();
         }
     }
-
     private void FixedUpdate()
     {
         rb.linearDamping = drag;
@@ -78,7 +73,6 @@ public class InMenuPlayer : MonoBehaviour
             );
         }
     }
-
     private void OnTriggerEnter(Collider other)
     {
         if (((1 << other.gameObject.layer) & interactableLayerMask) == 0)
@@ -90,7 +84,6 @@ public class InMenuPlayer : MonoBehaviour
             currentInteractable.SetActivity(true);
         }
     }
-
     private void OnTriggerExit(Collider other)
     {
         if (currentInteractable == null)
@@ -102,13 +95,8 @@ public class InMenuPlayer : MonoBehaviour
             currentInteractable = null;
         }
     }
-
     public bool IsGrounded()
     {
-        return Physics.Raycast(
-            transform.position + Vector3.up * 0.1f,
-            Vector3.down,
-            0.3f,
-            groundLayerMask);
+        return Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 0.3f, groundLayerMask);
     }
 }

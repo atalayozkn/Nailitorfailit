@@ -33,23 +33,36 @@ public class PlayerNavigationState : PlayerBaseState
     private void UpdateNavigationAnimation()
     {
         int targetHash;
-
-        bool isCarrying = stateMachine.IsCarrying();
+        bool isCarrying = stateMachine.interactionHandler.IsCarrying();
+        bool isRunning = stateMachine.movementHandler.IsRunning();
 
         if (isCarrying)
         {
-            targetHash = stateMachine.isRunning ? carryRunHash : carryWalkHash;
+            if (isRunning)
+            {
+                targetHash = carryRunHash;
+            }
+            else
+            {
+                targetHash = carryWalkHash;
+            }
         }
         else
         {
-            targetHash = stateMachine.isRunning ? runHash : walkHash;
+            if (isRunning)
+            {
+                targetHash = runHash;
+            }
+            else
+            {
+                targetHash = walkHash;
+            }
         }
 
-        if (currentAnimationHash == targetHash)
-            return;
-
-        currentAnimationHash = targetHash;
-
-        stateMachine.animator.CrossFadeInFixedTime(targetHash, 0.1f);
+        if (targetHash != currentAnimationHash)
+        {
+            currentAnimationHash = targetHash;
+            stateMachine.animator.CrossFadeInFixedTime(targetHash, 0.1f);
+        }
     }
 }

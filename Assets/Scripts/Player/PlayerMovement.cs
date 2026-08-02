@@ -1,246 +1,247 @@
-using System.Collections;
+﻿using PlayerScripts;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace PlayerScripts
+public class PlayerMovement : MonoBehaviour
 {
-    public class PlayerMovement : MonoBehaviour
+    [Header("References")]
+    [SerializeField] private PlayerStateMachine stateMachine;
+    [SerializeField] private PlayerStaminaHandler staminaHandler;
+    [SerializeField] private PlayerInteractionHandler interactHandler;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private Transform detectionTransform;
+
+    [Header("Input Settings")]
+    public InputActionReference move;
+    public InputActionReference jump;
+    public InputActionReference sprint;
+
+    [Header("Movement Settings")]
+    [SerializeField] private float moveForce = 5f;
+    [SerializeField] private float rotateForce = 5f;
+    [SerializeField] private float carryMultiplier = 0.5f;
+    [SerializeField] private float sprintMultiplier = 2.0f;
+    [SerializeField] private float maxAllowableVelocity = 7.5f;
+
+    [Header("Movement Cost Settings")]
+    [SerializeField] private float baseMoveCost = 1f;
+    [SerializeField] private float carryCostMultiplier = 5f;
+    [SerializeField] private float sprintCostMultiplier = 2.5f;
+
+    [Header("Jump Settings")]
+    [SerializeField] private float jumpForce = 5f;
+
+    [Header("Damping Settings")]
+    [SerializeField] private float defaultMoveDamping = 5f;
+    [SerializeField] private float slipperyMoveDamping = 5f;
+    [SerializeField] private float defaultRotationDamping = 0.05f;
+    [SerializeField] private float slipperyRotationDamping = 0.01f;
+    [SerializeField] private float onAirMoveDamping = 0.01f;
+    [SerializeField] private float onAirRotationDamping = 0.01f;
+
+    [Header("GroundCheck Settings")]
+    [SerializeField] private LayerMask whatIsGround;
+    [SerializeField] private float checkDistance;
+
+    private Vector2 moveInput;
+    private float maxSpeedSqr;
+    private float moveCost;
+    private bool isActive;
+    private bool isInputPresent;
+    private bool isSprinting;
+    private bool isJumping;
+    private bool isGrounded;
+    private void OnEnable()
     {
-        [Header("References")]
-        [SerializeField] private PlayerStaminaHandler stamina;
-        [SerializeField] private PlayerStateMachine stateMachine;
-        [SerializeField] private PlayerInteractionHandler playerInteract;
-        [SerializeField] private Rigidbody rb;
+        if (move.action != null) move.action.Enable();
+        if (jump.action != null) jump.action.Enable();
+        if (sprint.action != null) sprint.action.Enable();
 
-        [Header("Movement Settings")]
-        [SerializeField] private float baseSpeed = 10f;
-        [SerializeField] private float rotationSpeed = 10f;
-        [SerializeField] private float baseMovementCost = 1f;
-        [Header("Physics Movement")]
-        [SerializeField] private float baseMovementForce = 40f;
+        isActive = true;
+        isSprinting = false;
+        isJumping = false;
 
-        private float controlMultiplier = 1f;
-        [Header("Jump Settings")]
-        [SerializeField] private float jumpForce = 5f;
+        maxSpeedSqr = maxAllowableVelocity * maxAllowableVelocity;
 
-        [Header("Input")]
-        public InputActionReference move;
-        public InputActionReference jump;
-        public InputActionReference sprint;
+        rb.linearDamping = defaultMoveDamping;
+        rb.angularDamping = defaultRotationDamping;
 
-        [Header("Sprint Settings")]
-        [SerializeField] private float sprintMoveSpeedMultiplier = 2f;
-        [SerializeField] private float sprintMoveCostMultiplier = 1.25f;
-
-        [Header("Carrying Pickup")]
-        [SerializeField] private float carryMoveSpeedMultiplier = 0.5f;
-        [SerializeField] private float carryMoveCostMultiplier = 1.25f;
-
-        [Header("Movement Cost")]
-        [SerializeField] private float movementCostInterval = 0.05f;
-
-        private float movementMultiplier = 1f;
-        private float externalSpeedModifier = 1f;
-        private bool isCarryingObject;
-
-        private float currentMovementCost;
-        private Coroutine movementCostRoutine;
-
-        public float CurrentSpeed => baseSpeed * movementMultiplier * externalSpeedModifier;
-
-        private Vector2 moveInput;
-        private bool sprintHeld;
-
-        private void Awake()
+        moveCost = baseMoveCost;
+    }
+    private void OnDisable()
+    {
+        if (move.action != null) move.action.Disable();
+        if (jump.action != null) jump.action.Disable();
+        if (sprint.action != null) sprint.action.Disable();
+    }
+    private void Update()
+    {
+        CheckMovementInput();
+        CheckJumpInput();
+    }
+    private void FixedUpdate()
+    {
+        GroundCheck();
+        HandleMovement();
+        HandleRotation();
+    }
+    private void GroundCheck()
+    {
+        isGrounded = Physics.Raycast(detectionTransform.position, Vector3.down, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore);
+    }
+    private void CheckMovementInput()
+    {
+        if (move.action == null)
         {
-
+            moveInput = Vector2.zero;
+            isInputPresent = false;
+            isSprinting = false;
+            return;
         }
-        private void OnEnable()
+
+        moveInput = move.action.ReadValue<Vector2>();
+        isInputPresent = moveInput.sqrMagnitude > 0.01f;
+
+        if (!isInputPresent)
         {
-            if (move.action != null)
-                move.action.Enable();
-
-            if (jump.action != null)
-                jump.action.Enable();
-
-            if (sprint.action != null)
-                sprint.action.Enable();
+            isSprinting = false;
+            return;
         }
-        private void OnDisable()
+
+        if (sprint.action != null)
         {
-            if (move.action != null)
-                move.action.Disable();
-
-            if (jump.action != null)
-                jump.action.Disable();
-
-            if (sprint.action != null)
-                sprint.action.Disable();
-
-            StopMovementCostRoutine();
+            isSprinting = sprint.action.IsPressed();
+            moveCost *= sprintCostMultiplier;
         }
-        private void Update()
+        else
         {
-            HandleInput();
-            HandleJumpInput();
+            isSprinting = false;
+            moveCost = baseMoveCost;
         }
-        private void FixedUpdate()
+
+        if (interactHandler.IsCarrying()) moveCost *= carryCostMultiplier;
+    }
+    private void CheckJumpInput()
+    {
+        if (jump.action == null) return;
+        isJumping = jump.action.WasPressedThisFrame();
+
+        if (isJumping)
         {
-            HandleMovement();
-        }
-        private void HandleInput()
-        {
-            if (move.action != null)
-                moveInput = move.action.ReadValue<Vector2>();
-            else
-                moveInput = Vector2.zero;
-
-            if (sprint.action != null)
-                sprintHeld = sprint.action.IsPressed();
-            else
-                sprintHeld = false;
-
-            bool isMoving = moveInput.magnitude >= 0.1f;
-            isCarryingObject = playerInteract.IsCarrying();
-
-            stateMachine.SetMoving(isMoving);
-
-            bool shouldSprint =
-                sprintHeld &&
-                isMoving &&
-                stamina.HasEnoughEnergy(baseMovementCost * sprintMoveCostMultiplier);
-
-            movementMultiplier = 1f;
-
-            if (shouldSprint)
-                movementMultiplier *= sprintMoveSpeedMultiplier;
-
-            if (isCarryingObject)
-                movementMultiplier *= carryMoveSpeedMultiplier;
-
-            currentMovementCost = baseMovementCost;
-
-            if (shouldSprint)
-                currentMovementCost *= sprintMoveCostMultiplier;
-
-            if (isCarryingObject)
-                currentMovementCost *= carryMoveCostMultiplier;
-
-            if (isMoving)
-                StartMovementCostRoutine();
-            else
-                StopMovementCostRoutine();
-
-            stateMachine.SetRunning(shouldSprint);
-
-            UpdateGroundStateOnly(isMoving);
-        }
-        private void UpdateGroundStateOnly(bool isMoving)
-        {
-            if (isMoving)
-                stateMachine.ChangeToNavigationState();
-            else
-                stateMachine.ChangeToIdleState();
-        }
-        private void HandleJumpInput()
-        {
-            if (isCarryingObject)
-                return;
-
-            if (!jump.action.WasPressedThisFrame())
-                return;
-
-            if (!stateMachine.IsGrounded)
-                return;
-
-            Jump();
-
-            stateMachine.ChangeToOnAirState();
-        }
-        private void HandleMovement()
-        {
-            if (stateMachine.currentPlayerState == PlayerStates.Dead)
-                return;
-
-            Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
-
-            if (inputDir.sqrMagnitude > 1f)
-                inputDir.Normalize();
-
-            // Apply movement force
-            if (inputDir.sqrMagnitude > 0.001f)
-            {
-                rb.AddForce(inputDir * baseMovementForce * movementMultiplier * controlMultiplier, ForceMode.Force);
-            }
-
-            // Clamp horizontal velocity
-            Vector3 horizontalVelocity = new Vector3(
-                rb.linearVelocity.x,
-                0f,
-                rb.linearVelocity.z);
-
-            float maxSpeed = CurrentSpeed;
-
-            if (horizontalVelocity.sqrMagnitude > maxSpeed * maxSpeed)
-            {
-                horizontalVelocity = horizontalVelocity.normalized * maxSpeed;
-
-                rb.linearVelocity = new Vector3(
-                    horizontalVelocity.x,
-                    rb.linearVelocity.y,
-                    horizontalVelocity.z);
-            }
-
-            // Rotate towards movement
-            if (inputDir.sqrMagnitude > 0.01f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(inputDir);
-
-                rb.rotation = Quaternion.Slerp(
-                    rb.rotation,
-                    targetRotation,
-                    rotationSpeed * Time.fixedDeltaTime);
-            }
-        }
-        private void Jump()
-        {
-            if (rb == null)
-                return;
-
-            Vector3 velocity = rb.linearVelocity;
-            velocity.y = 0f;
-            rb.linearVelocity = velocity;
-
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
-        private void StartMovementCostRoutine()
-        {
-            if (movementCostRoutine != null)
-                return;
-
-            movementCostRoutine = StartCoroutine(MovementCostRoutine());
-        }
-        private void StopMovementCostRoutine()
-        {
-            if (movementCostRoutine == null)
-                return;
-
-            StopCoroutine(movementCostRoutine);
-            movementCostRoutine = null;
-        }
-        private IEnumerator MovementCostRoutine()
-        {
-            WaitForSeconds wait = new WaitForSeconds(movementCostInterval);
-
-            while (true)
-            {
-                stamina.ConsumeEnergy(currentMovementCost);
-                yield return wait;
-            }
-        }
-        public void SetSpeedModifier(float multiplier)
-        {
-            externalSpeedModifier = multiplier;
+            HandleJump();
         }
     }
+    private void HandleMovement()
+    {
+        if (!isActive) return;
+
+        if (!isInputPresent)
+        {
+            if (!interactHandler.IsInteracting())
+            {
+                stateMachine.ChangeToIdleState();
+            }
+            return;
+        }
+
+        if (!ShouldApplyForce()) return;
+
+        float force = moveForce;
+        moveCost = baseMoveCost;
+
+        if (isSprinting)
+        {
+            force *= sprintMultiplier;
+            moveCost *= sprintCostMultiplier;
+        }
+
+        if (interactHandler.IsCarrying())
+        {
+            force *= carryMultiplier;
+            moveCost *= carryCostMultiplier;
+        }
+
+        if (!staminaHandler.HasEnoughEnergy(moveCost)) return;
+
+        staminaHandler.ConsumeEnergy(moveCost);
+        rb.AddForce(transform.forward * force, ForceMode.Force);
+        stateMachine.ChangeToNavigationState();
+    }
+    private void HandleRotation()
+    {
+        if (!isActive) return;
+        if (!isInputPresent) return;
+
+        Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
+        Vector3 cross = Vector3.Cross(transform.forward, inputDirection);
+        rb.AddTorque(Vector3.up * cross.y * rotateForce, ForceMode.Acceleration);
+    }
+    private void HandleJump()
+    {
+        if (!isGrounded) return;
+        SetJumping(true);
+
+        Vector3 velocity = rb.linearVelocity;
+        velocity.y = 0f;
+        rb.linearVelocity = velocity;
+
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        isJumping = false;
+    }
+
+    #region UTILITIES
+    public bool IsRunning()
+    {
+        return isSprinting;
+    }
+    public bool IsMoving()
+    {
+        if (moveInput.magnitude == 0) return false;
+        else return true;
+    }
+    public bool IsGrounded()
+    {
+        return isGrounded;
+    }
+    public void SetActivity(bool condition)
+    {
+        isActive = condition;
+    }
+    public void SetSlipping(bool condition)
+    {
+        if (condition)
+        {
+            rb.linearDamping = slipperyMoveDamping;
+            rb.angularDamping = slipperyRotationDamping;
+        }
+        else
+        {
+            rb.linearDamping = defaultMoveDamping;
+            rb.angularDamping = defaultRotationDamping;
+        }
+    }
+    public void SetJumping(bool condition)
+    {
+        if (condition)
+        {
+            isJumping = true;
+            rb.linearDamping = onAirMoveDamping;
+            rb.angularDamping = onAirRotationDamping;
+            stateMachine.ChangeToOnAirState();
+        }
+        else
+        {
+            rb.linearDamping = defaultMoveDamping;
+            rb.angularDamping = defaultRotationDamping;
+        }
+    }
+    private bool ShouldApplyForce()
+    {
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        return horizontalVelocity.sqrMagnitude < maxSpeedSqr;
+    }
+    #endregion
+
 }
+

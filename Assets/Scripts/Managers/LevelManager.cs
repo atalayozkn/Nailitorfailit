@@ -1,9 +1,16 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class LevelManager : MonoBehaviour
 {
     [SerializeField] private int roomClearReward = 10;
+    [SerializeField] private int currentLevel = 1;
+
+    [SerializeField] private UnityEvent onVictoryEvent;
+    [SerializeField] private UnityEvent onDefeatEvent;
+
+
     private RoomController[] roomControllers;
     private int remainingRoomCount;
     public static LevelManager Instance { get; private set; }
@@ -27,7 +34,7 @@ public class LevelManager : MonoBehaviour
         CurrencyManager.Instance.GainCurrency(roomClearReward); //Currency Reward
         GameTimeManager.Instance.IncreaseRoundTime(); //Time Reward
 
-        if (IsLevelOver())
+        if (remainingRoomCount <= 0)
         {
             Victory();
         }
@@ -43,17 +50,15 @@ public class LevelManager : MonoBehaviour
     }
     private void Defeat()
     {
-        GameManager.Instance.CompleteLevel(false);
+        onDefeatEvent?.Invoke();
+        GameManager.Instance.CompleteLevel(currentLevel, false);
     }
     private void Victory()
     {
+        onVictoryEvent?.Invoke();
         int score = ScoreManager.Instance.CalculateScore();
         CurrencyManager.Instance.GainCurrency(score);
-        GameManager.Instance.CompleteLevel(true);
-    }
-    private bool IsLevelOver()
-    {
-        return remainingRoomCount <= 0;
+        GameManager.Instance.CompleteLevel(currentLevel, true);
     }
 
 }

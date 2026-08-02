@@ -131,6 +131,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (11)"
@@ -212,7 +220,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4619426574898395758, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.8
+      value: 3.78
       objectReference: {fileID: 0}
     - target: {fileID: 4619426574898395758, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
       propertyPath: m_LocalPosition.y
@@ -220,7 +228,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4619426574898395758, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.2
+      value: -3.01
       objectReference: {fileID: 0}
     - target: {fileID: 4619426574898395758, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
       propertyPath: m_LocalRotation.w
@@ -643,6 +651,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (31)"
@@ -812,6 +828,143 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7559842654472181205, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
   m_PrefabInstance: {fileID: 1768682221}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &64300652
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 64300653}
+  - component: {fileID: 64300655}
+  - component: {fileID: 64300654}
+  m_Layer: 5
+  m_Name: Text (TMP) (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &64300653
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64300652}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2085407507}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 150}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &64300654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64300652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: DEFEAT
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 75
+  m_fontSizeBase: 75
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &64300655
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64300652}
+  m_CullTransparentMesh: 1
 --- !u!1001 &67586803
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -824,6 +977,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (5)"
@@ -972,6 +1133,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (10)"
@@ -1394,8 +1563,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 567872725}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1930,7 +2099,7 @@ Transform:
   m_GameObject: {fileID: 173419352}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.049, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2135,6 +2304,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (10)"
@@ -2210,6 +2387,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (29)"
@@ -2375,7 +2560,7 @@ Transform:
   m_GameObject: {fileID: 219655430}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.049, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2391,118 +2576,6 @@ Transform:
   - {fileID: 578136353}
   m_Father: {fileID: 656844089}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &222715787
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 222715788}
-  - component: {fileID: 222715791}
-  - component: {fileID: 222715790}
-  - component: {fileID: 222715789}
-  m_Layer: 0
-  m_Name: Cube (11)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &222715788
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 222715787}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.0000023841858}
-  m_LocalPosition: {x: 0.5, y: 1.5, z: -11.400001}
-  m_LocalScale: {x: 30, y: 3, z: 2.5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 967054335}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
---- !u!65 &222715789
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 222715787}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &222715790
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 222715787}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &222715791
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 222715787}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &233868800
 Transform:
   m_ObjectHideFlags: 0
@@ -2530,6 +2603,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (5)"
@@ -2865,6 +2946,108 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4505486642224199176, guid: fe263a7111c88e842a7d7cec2d45936e, type: 3}
   m_PrefabInstance: {fileID: 285183142}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &286403137
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 286403138}
+  - component: {fileID: 286403141}
+  - component: {fileID: 286403140}
+  - component: {fileID: 286403139}
+  m_Layer: 5
+  m_Name: Canvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &286403138
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286403137}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 370893772}
+  m_Father: {fileID: 965141070}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0.649}
+  m_SizeDelta: {x: 500, y: 250}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &286403139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286403137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &286403140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286403137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 1
+--- !u!223 &286403141
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286403137}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &289268676
 GameObject:
   m_ObjectHideFlags: 0
@@ -2917,6 +3100,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (18)"
@@ -3199,6 +3390,145 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
+--- !u!1 &363155324
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 363155325}
+  - component: {fileID: 363155327}
+  - component: {fileID: 363155326}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &363155325
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 363155324}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1143873502}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 150}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &363155326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 363155324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 'VICTORY
+
+'
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 75
+  m_fontSizeBase: 75
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &363155327
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 363155324}
+  m_CullTransparentMesh: 1
 --- !u!1 &364633860
 GameObject:
   m_ObjectHideFlags: 0
@@ -3306,6 +3636,143 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7559842654472181205, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
   m_PrefabInstance: {fileID: 1938318070}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &370893771
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 370893772}
+  - component: {fileID: 370893774}
+  - component: {fileID: 370893773}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &370893772
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370893771}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 286403138}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 500, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &370893773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370893771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: KAYGAN YUZEY
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 100
+  m_fontSizeBase: 100
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &370893774
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370893771}
+  m_CullTransparentMesh: 1
 --- !u!1001 &393659116
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3651,118 +4118,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!1 &446663191
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 446663192}
-  - component: {fileID: 446663195}
-  - component: {fileID: 446663194}
-  - component: {fileID: 446663193}
-  m_Layer: 0
-  m_Name: Cube (3)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &446663192
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 446663191}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.0000023841858}
-  m_LocalPosition: {x: 0.5, y: 1.5, z: -4.8}
-  m_LocalScale: {x: 15, y: 3, z: 0.5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 967054335}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
---- !u!65 &446663193
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 446663191}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &446663194
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 446663191}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &446663195
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 446663191}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1001 &448747985
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3920,6 +4275,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (15)"
@@ -4287,6 +4650,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (15)"
@@ -4450,6 +4821,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (4)"
@@ -4520,6 +4899,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (12)"
@@ -4756,6 +5143,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (19)"
@@ -5063,7 +5458,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 60
+  field of view: 75
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -5090,7 +5485,7 @@ Transform:
   m_GameObject: {fileID: 618650655}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
-  m_LocalPosition: {x: 0, y: 9, z: -2.72}
+  m_LocalPosition: {x: 0, y: 5.664424, z: -2.6413639}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5291,7 +5686,7 @@ Transform:
   m_GameObject: {fileID: 637973126}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.049, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5304,6 +5699,54 @@ Transform:
   - {fileID: 872605206}
   - {fileID: 1935173257}
   m_Father: {fileID: 1204664161}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &638234072
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 638234074}
+  - component: {fileID: 638234073}
+  m_Layer: 7
+  m_Name: CameraFollowObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &638234073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638234072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4c7ef26e8ce26d40a73780df42cfce4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollower
+  followTarget: {fileID: 6763805584691729572}
+  followX: 0
+  followY: 0
+  followZ: 1
+--- !u!4 &638234074
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 638234072}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &639876719
 PrefabInstance:
@@ -5707,6 +6150,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (11)"
@@ -5850,6 +6301,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (6)"
@@ -6027,7 +6486,7 @@ RectTransform:
   m_Father: {fileID: 121240018}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -6086,6 +6545,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (28)"
@@ -6161,6 +6628,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (20)"
@@ -6322,6 +6797,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (12)"
@@ -6480,6 +6963,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (16)"
@@ -7029,6 +7520,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (14)"
@@ -7518,7 +8017,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!65 &965141067
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7606,10 +8105,11 @@ Transform:
   m_GameObject: {fileID: 965141066}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.72, y: -0.146, z: -2.786}
+  m_LocalPosition: {x: 4.49, y: -0.146, z: 0.79}
   m_LocalScale: {x: 2.7413, y: 0.6061837, z: 2.7413}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 286403138}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &965141071
@@ -7736,9 +8236,6 @@ Transform:
   m_Children:
   - {fileID: 1207560967}
   - {fileID: 1198547614}
-  - {fileID: 446663192}
-  - {fileID: 1851303436}
-  - {fileID: 222715788}
   - {fileID: 2045067052}
   - {fileID: 1594026133}
   - {fileID: 1575303878}
@@ -8208,6 +8705,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP"
@@ -8493,6 +8998,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (23)"
@@ -8742,6 +9255,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (9)"
@@ -8800,6 +9321,42 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
   m_PrefabInstance: {fileID: 1139525440}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1143873501
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1143873502}
+  m_Layer: 5
+  m_Name: Victory_Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &1143873502
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1143873501}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 363155325}
+  m_Father: {fileID: 1569371007}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 500, y: 500}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1145356530
 GameObject:
   m_ObjectHideFlags: 0
@@ -9021,7 +9578,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1197289808
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9265,6 +9822,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (14)"
@@ -9802,6 +10367,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (2)"
@@ -9872,6 +10445,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (10)"
@@ -10093,6 +10674,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (27)"
@@ -11317,6 +11906,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (8)"
@@ -11596,7 +12193,7 @@ Transform:
   m_GameObject: {fileID: 1416810570}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.049, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11704,6 +12301,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (1)"
@@ -12327,7 +12932,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1488247143}
   - component: {fileID: 1488247146}
-  - component: {fileID: 1488247144}
+  - component: {fileID: 1488247147}
   m_Layer: 7
   m_Name: TrackCamera
   m_TagString: Untagged
@@ -12344,46 +12949,12 @@ Transform:
   m_GameObject: {fileID: 1488247142}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
-  m_LocalPosition: {x: 0, y: 9, z: -2.72}
+  m_LocalPosition: {x: 0, y: 5.664424, z: -2.6413639}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 60, y: 0, z: 0}
---- !u!114 &1488247144
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1488247142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62d54399b04b4fa48a73e121d4937dd4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachinePanTilt
-  ReferenceFrame: 1
-  RecenterTarget: 0
-  PanAxis:
-    Value: 0
-    Center: 0
-    Range: {x: -360, y: 360}
-    Wrap: 1
-    Recentering:
-      Enabled: 0
-      Wait: 1
-      Time: 2
-    Restrictions: 0
-  TiltAxis:
-    Value: 60
-    Center: 0
-    Range: {x: -70, y: 90}
-    Wrap: 0
-    Recentering:
-      Enabled: 0
-      Wait: 1
-      Time: 2
-    Restrictions: 0
 --- !u!114 &1488247146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12404,11 +12975,11 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 0}
+    TrackingTarget: {fileID: 638234074}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60
+    FieldOfView: 75
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -12427,6 +12998,69 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
+--- !u!114 &1488247147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488247142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5d7c088409d9a40b7b09aa707777f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineOrbitalFollow
+  TargetOffset: {x: 0, y: 0, z: 0}
+  TrackerSettings:
+    BindingMode: 4
+    PositionDamping: {x: 1, y: 1, z: 1}
+    AngularDampingMode: 0
+    RotationDamping: {x: 1, y: 1, z: 1}
+    QuaternionDamping: 1
+  OrbitStyle: 0
+  Radius: 5
+  Orbits:
+    Top:
+      Radius: 2
+      Height: 5
+    Center:
+      Radius: 4
+      Height: 2.25
+    Bottom:
+      Radius: 2.5
+      Height: 0.1
+    SplineCurvature: 0.5
+  RecenteringTarget: 2
+  HorizontalAxis:
+    Value: 0
+    Center: 0
+    Range: {x: -180, y: 180}
+    Wrap: 1
+    Recentering:
+      Enabled: 0
+      Wait: 1
+      Time: 2
+    Restrictions: 0
+  VerticalAxis:
+    Value: 65
+    Center: 17.5
+    Range: {x: -10, y: 90}
+    Wrap: 0
+    Recentering:
+      Enabled: 0
+      Wait: 1
+      Time: 2
+    Restrictions: 0
+  RadialAxis:
+    Value: 1.25
+    Center: 1
+    Range: {x: 1, y: 10}
+    Wrap: 0
+    Recentering:
+      Enabled: 0
+      Wait: 1
+      Time: 2
+    Restrictions: 0
 --- !u!1001 &1493659485
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12795,6 +13429,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (10)"
@@ -13121,6 +13763,8 @@ RectTransform:
   - {fileID: 1569956984}
   - {fileID: 1500819457}
   - {fileID: 1760638667}
+  - {fileID: 1143873502}
+  - {fileID: 2085407507}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -13144,7 +13788,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1569956984
 RectTransform:
   m_ObjectHideFlags: 0
@@ -13154,7 +13798,7 @@ RectTransform:
   m_GameObject: {fileID: 1569956983}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7337, y: 1.7337, z: 1.7337}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 876982664}
@@ -13165,7 +13809,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: -187}
+  m_AnchoredPosition: {x: 20, y: -500}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1569956985
@@ -13231,6 +13875,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (13)"
@@ -13825,6 +14477,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (11)"
@@ -14042,6 +14702,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (32)"
@@ -14316,7 +14984,7 @@ TerrainCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1668510696}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 64c5abf2952862448a0c7803037f84af, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -14381,6 +15049,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1825181867}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (17)"
@@ -14566,6 +15242,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (13)"
@@ -14709,6 +15393,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 656844090}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (17)"
@@ -14870,7 +15562,7 @@ Transform:
   m_GameObject: {fileID: 1727037693}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.049, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -14978,6 +15670,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (25)"
@@ -15167,6 +15867,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1204664162}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (30)"
@@ -15388,6 +16096,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (7)"
@@ -15761,118 +16477,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7559842654472181205, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
   m_PrefabInstance: {fileID: 1200115228}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1851303435
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1851303436}
-  - component: {fileID: 1851303439}
-  - component: {fileID: 1851303438}
-  - component: {fileID: 1851303437}
-  m_Layer: 0
-  m_Name: Cube (4)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &1851303436
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1851303435}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.0000023841858}
-  m_LocalPosition: {x: 0.5, y: 1.5, z: -8.000001}
-  m_LocalScale: {x: 30, y: 3, z: 2.5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 967054335}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
---- !u!65 &1851303437
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1851303435}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &1851303438
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1851303435}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1851303439
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1851303435}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1865820549
 GameObject:
   m_ObjectHideFlags: 0
@@ -16234,6 +16838,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (21)"
@@ -16377,6 +16989,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (24)"
@@ -16465,6 +17085,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
   roomClearReward: 10
+  currentLevel: 1
+  onVictoryEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1143873501}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+  onDefeatEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2085407506}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!4 &1927222220
 Transform:
   m_ObjectHideFlags: 0
@@ -16512,6 +17163,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (22)"
@@ -16915,6 +17574,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 1965374825}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (3)"
@@ -17657,6 +18324,14 @@ PrefabInstance:
       propertyPath: roomController
       value: 
       objectReference: {fileID: 188033385}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3503028866216788416, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4505486642224199176, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
       propertyPath: m_Name
       value: "Tu\u011FlaDuvar_SP (26)"
@@ -18008,6 +18683,42 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4505486642224199176, guid: fe263a7111c88e842a7d7cec2d45936e, type: 3}
   m_PrefabInstance: {fileID: 2075013261}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2085407506
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2085407507}
+  m_Layer: 5
+  m_Name: Defeat_Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &2085407507
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2085407506}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 64300653}
+  m_Father: {fileID: 1569371007}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &2108276479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18428,7 +19139,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7779111349385810976}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 64c5abf2952862448a0c7803037f84af, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -18468,7 +19179,7 @@ Rigidbody:
   m_GameObject: {fileID: 7779111349385810976}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 5
+  m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -18483,8 +19194,8 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
-  m_Constraints: 112
+  m_Interpolate: 0
+  m_Constraints: 80
   m_CollisionDetection: 1
 --- !u!1 &3935249305075949711
 GameObject:
@@ -18502,36 +19213,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &4762063016181131098
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7779111349385810976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_NotificationBehavior: 0
-  m_UIInputModule: {fileID: 0}
-  m_DeviceLostEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_DeviceRegainedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ControlsChangedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  m_ActionEvents: []
-  m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
-  m_DefaultActionMap: Player
-  m_SplitScreenIndex: -1
-  m_Camera: {fileID: 0}
 --- !u!4 &6763805584691729572
 Transform:
   m_ObjectHideFlags: 0
@@ -18559,14 +19240,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6763805584691729572}
-  - component: {fileID: 1427883228262021065}
-  - component: {fileID: 365179044416171711}
-  - component: {fileID: 4762063016181131098}
   - component: {fileID: 7779111349385810980}
   - component: {fileID: 7779111349385810979}
   - component: {fileID: 7779111349385810978}
   - component: {fileID: 7779111349385810977}
   - component: {fileID: 7779111349385810981}
+  - component: {fileID: 365179044416171711}
+  - component: {fileID: 1427883228262021065}
   m_Layer: 7
   m_Name: Player_v02
   m_TagString: Player
@@ -18586,12 +19266,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 577e088d21002d641a8ebbfcf38c6130, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.PlayerStaminaHandler
-  playerMove: {fileID: 7779111349385810979}
   staminaSlider: {fileID: 1569956985}
   staminaText: {fileID: 1197289809}
-  maxEnergy: 100
+  maxEnergy: 10000
   rechargeDelay: 1
-  perChargeAmount: 1
+  perChargeAmount: 10
   chargeInterval: 0.1
   energisedDuration: 10
   drainedDuration: 5
@@ -18626,6 +19305,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcc8a7948a3e7b04886d77ee7bfbf8bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractionHandler
+  stateMachine: {fileID: 7779111349385810980}
   carryTransform: {fileID: 346335152547494255}
   DebugMode: 0
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -18653,23 +19333,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 760ff4ea040e95b42a07c3dc41fdda5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.PlayerMovement
-  stamina: {fileID: 7779111349385810977}
   stateMachine: {fileID: 7779111349385810980}
-  playerInteract: {fileID: 7779111349385810978}
+  staminaHandler: {fileID: 7779111349385810977}
+  interactHandler: {fileID: 7779111349385810978}
   rb: {fileID: 1427883228262021065}
-  baseSpeed: 1
-  rotationSpeed: 10
-  baseMovementCost: 0.1
-  baseMovementForce: 40
-  jumpForce: 7.5
+  detectionTransform: {fileID: 919035134924725580}
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   jump: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprint: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  sprintMoveSpeedMultiplier: 2
-  sprintMoveCostMultiplier: 1.25
-  carryMoveSpeedMultiplier: 0.5
-  carryMoveCostMultiplier: 1.25
-  movementCostInterval: 0.05
+  moveForce: 15
+  rotateForce: 7.5
+  carryMultiplier: 0.8
+  sprintMultiplier: 2
+  maxAllowableVelocity: 7.5
+  baseMoveCost: 1
+  carryCostMultiplier: 5
+  sprintCostMultiplier: 2.5
+  jumpForce: 22.5
+  defaultMoveDamping: 10
+  slipperyMoveDamping: 2.5
+  defaultRotationDamping: 10
+  slipperyRotationDamping: 1
+  onAirMoveDamping: 7.5
+  onAirRotationDamping: 0.5
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 256
+  checkDistance: 0.51
 --- !u!114 &7779111349385810980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18683,22 +19373,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMachine
   hasStateDebug: 0
-  <playerMove>k__BackingField: {fileID: 7779111349385810979}
+  <movementHandler>k__BackingField: {fileID: 7779111349385810979}
   <detectionTransform>k__BackingField: {fileID: 919035134924725580}
   <rb>k__BackingField: {fileID: 1427883228262021065}
   <currentPlayerState>k__BackingField: 0
   <animator>k__BackingField: {fileID: 1307613414}
   <interactionHandler>k__BackingField: {fileID: 7779111349385810978}
   <crashHelper>k__BackingField: {fileID: 7779111349385810981}
-  <isMoving>k__BackingField: 0
-  <isRunning>k__BackingField: 0
-  <isJumping>k__BackingField: 0
   <isDead>k__BackingField: 0
-  <IsGrounded>k__BackingField: 0
-  <whatIsGround>k__BackingField:
-    serializedVersion: 2
-    m_Bits: 256
-  <maxDistance>k__BackingField: 0.5
   <slipCheckDistance>k__BackingField: 1
   <slipOffsetMultiplier>k__BackingField: 1
   <slipCheckRadius>k__BackingField: 0.25
@@ -18761,6 +19443,7 @@ SceneRoots:
   - {fileID: 1145356531}
   - {fileID: 645530939}
   - {fileID: 1488247143}
+  - {fileID: 638234074}
   - {fileID: 6763805584691729572}
   - {fileID: 2012111523}
   - {fileID: 657086304}

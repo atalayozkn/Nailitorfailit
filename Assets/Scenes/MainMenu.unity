@@ -1426,6 +1426,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc8178603d2184d46ae20ad1e0d53416, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  startCurrencyAmount: 100
+  levelSockets:
+  - levelSocket: {fileID: 1473804424}
+    isCompleted: 0
+    isIndicated: 0
 --- !u!4 &1325913705
 Transform:
   m_ObjectHideFlags: 0
@@ -1570,7 +1575,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 5.015889
+  m_Radius: 10
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!65 &1330435395
 BoxCollider:
@@ -1923,8 +1928,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 455c985dd5404bf44815a2dfc29ecc7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelSocket
-  levelIndex: 0
+  levelIndex: 1
+  currencyCost: 50
   canvasObject: {fileID: 546905913}
+  textComponent: {fileID: 1170654519}
+  indicationDuration: 2
 --- !u!1 &1521122444
 GameObject:
   m_ObjectHideFlags: 0
@@ -2182,7 +2190,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1675208106}
   m_Layer: 5
-  m_Name: Panel_InLevel
+  m_Name: Panel_InGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2241,7 +2249,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 2
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -2577,8 +2585,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1824119856}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.633989, y: 0, z: 0, w: 0.77334213}
-  m_LocalPosition: {x: 19.7, y: 16.4, z: -50.5}
+  m_LocalRotation: {x: 0.087155536, y: 0, z: 0, w: 0.9961947}
+  m_LocalPosition: {x: 8, y: 25, z: -55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2659,7 +2667,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  CustomBlends: {fileID: 0}
+  CustomBlends: {fileID: 11400000, guid: ab4669dee254792409c551c0033740a0, type: 2}
 --- !u!1 &1826857827
 GameObject:
   m_ObjectHideFlags: 0
@@ -2673,6 +2681,7 @@ GameObject:
   - component: {fileID: 1826857829}
   - component: {fileID: 1826857828}
   - component: {fileID: 1826857832}
+  - component: {fileID: 1826857833}
   m_Layer: 5
   m_Name: Canvas_Overlay_Menu
   m_TagString: Untagged
@@ -2779,6 +2788,19 @@ MonoBehaviour:
   menuRoot: {fileID: 1967710253}
   menuTab: {fileID: 1234622942}
   characterTab: {fileID: 1741479011}
+--- !u!114 &1826857833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826857827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bd53071ced39c04e83b6754b98dbf62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InGameOverlayUI
+  overlayUIParent: {fileID: 1675208105}
 --- !u!1 &1926751207
 GameObject:
   m_ObjectHideFlags: 0
@@ -2810,9 +2832,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameSceneManager
   scenes:
   - MainMenu
-  - Level01
-  - Level02
-  - Level03
+  - ExampleScene
 --- !u!4 &1926751209
 Transform:
   m_ObjectHideFlags: 0

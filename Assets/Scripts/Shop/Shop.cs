@@ -135,16 +135,13 @@ public class Shop : MonoBehaviour, IInteractable
 
         if (playerStateMachine != null)
         {
-            playerStateMachine.SetMoving(false);
-            playerStateMachine.SetRunning(false);
+            playerStateMachine.movementHandler.SetActivity(false);
             playerStateMachine.ChangeToIdleState();
         }
 
-        if (playerMovement != null)
-            playerMovement.enabled = false;
+        if (playerMovement != null) playerMovement.enabled = false;
 
-        if (playerInteractionHandler != null)
-            playerInteractionHandler.enabled = false;
+        if (playerInteractionHandler != null) playerInteractionHandler.enabled = false;
     }
 
     private void UnlockPlayer()

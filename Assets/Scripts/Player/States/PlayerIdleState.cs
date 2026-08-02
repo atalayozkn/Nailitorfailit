@@ -12,31 +12,24 @@ public class PlayerIdleState : PlayerBaseState
     public override void Enter()
     {
         currentAnimationHash = 0;
-        UpdateIdleAnimation();
+        int targetHash = stateMachine.interactionHandler.IsCarrying() ? carryIdleHash : idleHash;
+        if (currentAnimationHash == targetHash) return;
+        currentAnimationHash = targetHash;
+        stateMachine.animator.CrossFadeInFixedTime(targetHash, 0.1f);
     }
 
     public override void Tick(float deltaTime)
     {
-        UpdateIdleAnimation();
+
     }
 
     public override void FixedTick(float fixedDeltaTime)
     {
+
     }
 
     public override void Exit()
     {
-    }
 
-    private void UpdateIdleAnimation()
-    {
-        int targetHash = stateMachine.IsCarrying() ? carryIdleHash : idleHash;
-
-        if (currentAnimationHash == targetHash)
-            return;
-
-        currentAnimationHash = targetHash;
-
-        stateMachine.animator.CrossFadeInFixedTime(targetHash, 0.1f);
     }
 }
