@@ -1,17 +1,13 @@
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class CurrencyManager : MonoBehaviour
 {
     public static CurrencyManager Instance { get; private set; }
 
-    [Header("Events")]
-    [SerializeField] private UnityEvent onGainEvent;
-    [SerializeField] private UnityEvent onSpendEvent;
-    [SerializeField] private UnityEvent onRejectionEvent;
-
     private CurrencyText currencyText;
     private int currentValue;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -21,30 +17,48 @@ public class CurrencyManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
 
-        currencyText = FindFirstObjectByType<CurrencyText>();
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        currencyText = FindFirstObjectByType<CurrencyText>();
+        UpdateUI();
+    }
+
     public void GainCurrency(int amount)
     {
         currentValue += amount;
         UpdateUI();
-        onGainEvent?.Invoke();
+        currencyText?.Gain();
     }
+
     public void SpendCurrency(int amount)
     {
         currentValue -= amount;
         UpdateUI();
-        onSpendEvent?.Invoke();
+        currencyText?.Spend();
     }
+
     public void SetCurrency(int amount)
     {
         currentValue = amount;
+        UpdateUI();
     }
+
     public bool HasEnoughCurrency(int amount)
     {
         if (currentValue >= amount) return true;
 
-        onRejectionEvent?.Invoke();
+        currencyText?.Reject();
         return false;
     }
 

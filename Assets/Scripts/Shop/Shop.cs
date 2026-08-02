@@ -10,9 +10,6 @@ public class Shop : MonoBehaviour, IInteractable
     [SerializeField] private InteractableType interactableType = InteractableType.Shop;
     public InteractableType InteractableType => interactableType;
 
-    [Header("Shop Menu")]
-    [SerializeField] private ShopMenu shopMenu;
-
     [Header("Player References")]
     [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private PlayerInteractionHandler playerInteractionHandler;
@@ -37,39 +34,30 @@ public class Shop : MonoBehaviour, IInteractable
     private void Awake()
     {
         ResolveReferences();
-
         MoveCameraTargetInstant(playerCameraPoint);
     }
 
     private void OnEnable()
     {
         ResolveReferences();
-
-        if (shopMenu != null)
-            shopMenu.OnShopClosed += HandleShopClosed;
+        ShopMenu.Instance.OnShopClosed += HandleShopClosed;
     }
 
     private void OnDisable()
     {
-        if (shopMenu != null)
-            shopMenu.OnShopClosed -= HandleShopClosed;
-
+        ShopMenu.Instance.OnShopClosed += HandleShopClosed;
         StopCameraMoveRoutine();
     }
 
     public void OnInteract()
     {
-        if (isShopOpen)
-            return;
-
+        if (isShopOpen) return;
         OpenShop();
     }
 
     public void OnHoverOn()
     {
-        if (isShopOpen)
-            return;
-
+        if (isShopOpen) return;
         onHoverOnEvent?.Invoke();
     }
 
@@ -80,14 +68,6 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void OpenShop()
     {
-        ResolveReferences();
-
-        if (shopMenu == null)
-        {
-            Debug.LogWarning("ShopMenu bulunamadý!");
-            return;
-        }
-
         if (cameraTarget == null)
         {
             Debug.LogWarning("CameraTarget atanmadý!");
@@ -106,22 +86,18 @@ public class Shop : MonoBehaviour, IInteractable
 
         MoveCameraTargetSmooth(shopCameraPoint);
 
-        shopMenu.OpenMenu();
+        ShopMenu.Instance.OpenMenu();
 
         onShopOpenedEvent?.Invoke();
     }
 
     private void HandleShopClosed()
     {
-        if (!isShopOpen)
-            return;
+        if (!isShopOpen) return;
 
         isShopOpen = false;
-
         MoveCameraTargetSmooth(playerCameraPoint);
-
         UnlockPlayer();
-
         onShopClosedEvent?.Invoke();
     }
 
@@ -135,7 +111,6 @@ public class Shop : MonoBehaviour, IInteractable
 
         if (playerStateMachine != null)
         {
-            playerStateMachine.movementHandler.SetActivity(false);
             playerStateMachine.ChangeToIdleState();
         }
 
@@ -146,20 +121,14 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void UnlockPlayer()
     {
-        if (playerMovement != null)
-            playerMovement.enabled = true;
-
-        if (playerInteractionHandler != null)
-            playerInteractionHandler.enabled = true;
+        if (playerMovement != null) playerMovement.enabled = true;
+        if (playerInteractionHandler != null) playerInteractionHandler.enabled = true;
     }
 
     private void MoveCameraTargetInstant(Transform targetPoint)
     {
-        if (cameraTarget == null)
-            return;
-
-        if (targetPoint == null)
-            return;
+        if (cameraTarget == null) return;
+        if (targetPoint == null) return;
 
         cameraTarget.position = targetPoint.position;
         cameraTarget.rotation = targetPoint.rotation;
@@ -167,14 +136,10 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void MoveCameraTargetSmooth(Transform targetPoint)
     {
-        if (cameraTarget == null)
-            return;
-
-        if (targetPoint == null)
-            return;
+        if (cameraTarget == null) return;
+        if (targetPoint == null) return;
 
         StopCameraMoveRoutine();
-
         cameraMoveRoutine = StartCoroutine(CameraMoveRoutine(targetPoint));
     }
 
@@ -209,8 +174,7 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void StopCameraMoveRoutine()
     {
-        if (cameraMoveRoutine == null)
-            return;
+        if (cameraMoveRoutine == null) return;
 
         StopCoroutine(cameraMoveRoutine);
         cameraMoveRoutine = null;
@@ -218,24 +182,12 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void ResolveReferences()
     {
-        if (shopMenu == null)
-        {
-            if (ShopMenu.Instance != null)
-                shopMenu = ShopMenu.Instance;
-            else
-                shopMenu = FindFirstObjectByType<ShopMenu>();
-        }
+        if (playerMovement == null) playerMovement = FindFirstObjectByType<PlayerMovement>();
 
-        if (playerMovement == null)
-            playerMovement = FindFirstObjectByType<PlayerMovement>();
+        if (playerInteractionHandler == null) playerInteractionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
 
-        if (playerInteractionHandler == null)
-            playerInteractionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+        if (playerStateMachine == null) playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
 
-        if (playerStateMachine == null)
-            playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-
-        if (playerRigidbody == null && playerMovement != null)
-            playerRigidbody = playerMovement.GetComponent<Rigidbody>();
+        if (playerRigidbody == null && playerMovement != null) playerRigidbody = playerMovement.GetComponent<Rigidbody>();
     }
 }

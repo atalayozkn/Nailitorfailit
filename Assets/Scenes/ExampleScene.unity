@@ -6080,59 +6080,6 @@ MonoBehaviour:
   - {fileID: 169263027}
   - {fileID: 1640904602}
   - {fileID: 962025009}
---- !u!1 &657086303
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 657086304}
-  - component: {fileID: 657086305}
-  m_Layer: 0
-  m_Name: TestCollider
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &657086304
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657086303}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &657086305
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657086303}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &672007637 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7559842654472181205, guid: b4e564e240316e747bb9664c16278bc8, type: 3}
@@ -7847,6 +7794,37 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4505486642224199176, guid: fe263a7111c88e842a7d7cec2d45936e, type: 3}
   m_PrefabInstance: {fileID: 930999640}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &935944061
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 935944062}
+  m_Layer: 0
+  m_Name: --------STUFF-------
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &935944062
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935944061}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &943083233
 Transform:
   m_ObjectHideFlags: 0
@@ -7974,15 +7952,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5804713b2b11864fa2f70385b56dcbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyManager
-  onGainEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  onSpendEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  onRejectionEvent:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &962050077
 Transform:
   m_ObjectHideFlags: 0
@@ -12656,6 +12625,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyText
   textComponent: {fileID: 1469823294}
+  onGainEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onSpendEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onRejectEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1469823294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19446,5 +19424,5 @@ SceneRoots:
   - {fileID: 638234074}
   - {fileID: 6763805584691729572}
   - {fileID: 2012111523}
-  - {fileID: 657086304}
   - {fileID: 965141070}
+  - {fileID: 935944062}
