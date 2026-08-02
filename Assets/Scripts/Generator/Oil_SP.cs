@@ -2,15 +2,9 @@ using UnityEngine;
 
 public class Oil_SP : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Fuel Settings")]
+    [SerializeField, Range(0f, 100f)]
+    private float fuelPercent = 20f;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public float FuelPercent => fuelPercent;
 }

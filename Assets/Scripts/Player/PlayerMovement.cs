@@ -1,5 +1,4 @@
 ﻿using PlayerScripts;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -47,52 +46,90 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveInput;
     private float maxSpeedSqr;
     private float moveCost;
+
     private bool isActive;
     private bool isInputPresent;
     private bool isSprinting;
     private bool isJumping;
     private bool isGrounded;
+
     private void OnEnable()
     {
-        if (move.action != null) move.action.Enable();
-        if (jump.action != null) jump.action.Enable();
-        if (sprint.action != null) sprint.action.Enable();
+        if (move != null && move.action != null)
+        {
+            move.action.Enable();
+        }
+
+        if (jump != null && jump.action != null)
+        {
+            jump.action.Enable();
+        }
+
+        if (sprint != null && sprint.action != null)
+        {
+            sprint.action.Enable();
+        }
 
         isActive = true;
         isSprinting = false;
         isJumping = false;
 
-        maxSpeedSqr = maxAllowableVelocity * maxAllowableVelocity;
+        maxSpeedSqr =
+            maxAllowableVelocity * maxAllowableVelocity;
 
         rb.linearDamping = defaultMoveDamping;
         rb.angularDamping = defaultRotationDamping;
 
         moveCost = baseMoveCost;
     }
+
     private void OnDisable()
     {
-        if (move.action != null) move.action.Disable();
-        if (jump.action != null) jump.action.Disable();
-        if (sprint.action != null) sprint.action.Disable();
+        if (move != null && move.action != null)
+        {
+            move.action.Disable();
+        }
+
+        if (jump != null && jump.action != null)
+        {
+            jump.action.Disable();
+        }
+
+        if (sprint != null && sprint.action != null)
+        {
+            sprint.action.Disable();
+        }
     }
+
     private void Update()
     {
+        if (!isActive) return;
+
         CheckMovementInput();
         CheckJumpInput();
     }
+
     private void FixedUpdate()
     {
         GroundCheck();
         HandleMovement();
         HandleRotation();
     }
+
     private void GroundCheck()
     {
-        isGrounded = Physics.Raycast(detectionTransform.position, Vector3.down, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore);
+        isGrounded = Physics.Raycast(
+            detectionTransform.position,
+            Vector3.down,
+            checkDistance,
+            whatIsGround,
+            QueryTriggerInteraction.Ignore
+        );
     }
+
     private void CheckMovementInput()
     {
-        if (move.action == null)
+        if (move == null || move.action == null)
         {
             moveInput = Vector2.zero;
             isInputPresent = false;
@@ -101,7 +138,9 @@ public class PlayerMovement : MonoBehaviour
         }
 
         moveInput = move.action.ReadValue<Vector2>();
-        isInputPresent = moveInput.sqrMagnitude > 0.01f;
+
+        isInputPresent =
+            moveInput.sqrMagnitude > 0.01f;
 
         if (!isInputPresent)
         {
@@ -109,29 +148,28 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (sprint.action != null)
-        {
-            isSprinting = sprint.action.IsPressed();
-            moveCost *= sprintCostMultiplier;
-        }
-        else
-        {
-            isSprinting = false;
-            moveCost = baseMoveCost;
-        }
-
-        if (interactHandler.IsCarrying()) moveCost *= carryCostMultiplier;
+        isSprinting =
+            sprint != null &&
+            sprint.action != null &&
+            sprint.action.IsPressed();
     }
+
     private void CheckJumpInput()
     {
-        if (jump.action == null) return;
-        isJumping = jump.action.WasPressedThisFrame();
+        if (jump == null || jump.action == null)
+        {
+            return;
+        }
+
+        isJumping =
+            jump.action.WasPressedThisFrame();
 
         if (isJumping)
         {
             HandleJump();
         }
     }
+
     private void HandleMovement()
     {
         if (!isActive) return;
@@ -142,6 +180,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 stateMachine.ChangeToIdleState();
             }
+
             return;
         }
 
@@ -162,52 +201,83 @@ public class PlayerMovement : MonoBehaviour
             moveCost *= carryCostMultiplier;
         }
 
-        if (!staminaHandler.HasEnoughEnergy(moveCost)) return;
+        if (!staminaHandler.HasEnoughEnergy(moveCost))
+        {
+            return;
+        }
 
         staminaHandler.ConsumeEnergy(moveCost);
-        rb.AddForce(transform.forward * force, ForceMode.Force);
+
+        rb.AddForce(
+            transform.forward * force,
+            ForceMode.Force
+        );
+
         stateMachine.ChangeToNavigationState();
     }
+
     private void HandleRotation()
     {
         if (!isActive) return;
         if (!isInputPresent) return;
 
-        Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
-        Vector3 cross = Vector3.Cross(transform.forward, inputDirection);
-        rb.AddTorque(Vector3.up * cross.y * rotateForce, ForceMode.Acceleration);
+        Vector3 inputDirection = new Vector3(
+            moveInput.x,
+            0f,
+            moveInput.y
+        ).normalized;
+
+        Vector3 cross = Vector3.Cross(
+            transform.forward,
+            inputDirection
+        );
+
+        rb.AddTorque(
+            Vector3.up * cross.y * rotateForce,
+            ForceMode.Acceleration
+        );
     }
+
     private void HandleJump()
     {
         if (!isGrounded) return;
+
         SetJumping(true);
 
         Vector3 velocity = rb.linearVelocity;
         velocity.y = 0f;
         rb.linearVelocity = velocity;
 
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        rb.AddForce(
+            Vector3.up * jumpForce,
+            ForceMode.Impulse
+        );
+
         isJumping = false;
     }
 
     #region UTILITIES
+
     public bool IsRunning()
     {
         return isSprinting;
     }
+
     public bool IsMoving()
     {
-        if (moveInput.magnitude == 0) return false;
-        else return true;
+        return moveInput.sqrMagnitude > 0.01f;
     }
+
     public bool IsGrounded()
     {
         return isGrounded;
     }
+
     public void SetActivity(bool condition)
     {
         isActive = condition;
     }
+
     public void SetSlipping(bool condition)
     {
         if (condition)
@@ -221,13 +291,16 @@ public class PlayerMovement : MonoBehaviour
             rb.angularDamping = defaultRotationDamping;
         }
     }
+
     public void SetJumping(bool condition)
     {
         if (condition)
         {
             isJumping = true;
+
             rb.linearDamping = onAirMoveDamping;
             rb.angularDamping = onAirRotationDamping;
+
             stateMachine.ChangeToOnAirState();
         }
         else
@@ -236,12 +309,17 @@ public class PlayerMovement : MonoBehaviour
             rb.angularDamping = defaultRotationDamping;
         }
     }
+
     private bool ShouldApplyForce()
     {
-        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        Vector3 horizontalVelocity = new Vector3(
+            rb.linearVelocity.x,
+            0f,
+            rb.linearVelocity.z
+        );
+
         return horizontalVelocity.sqrMagnitude < maxSpeedSqr;
     }
+
     #endregion
-
 }
-

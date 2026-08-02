@@ -3,7 +3,6 @@ using ItemScript;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 public class Station : MonoBehaviour, IInteractable
 {
@@ -14,6 +13,7 @@ public class Station : MonoBehaviour, IInteractable
     [SerializeField] private Transform spawnTransform;
     [SerializeField] private GameObject spawnedObjectPrefab;
     [SerializeField] private InteractionProcessHelper processHelper;
+    [SerializeField] private Generator_SP generator;
 
     [Header("Spawn Settings")]
     [SerializeField] private int spawnCount = 2;
@@ -23,77 +23,182 @@ public class Station : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onSpawnEvent;
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
-    public InteractableType InteractableType => interactableType;
 
-    private bool isObjectPlaced = false;
+    public InteractableType InteractableType =>
+        interactableType;
+
+    private bool isObjectPlaced;
+    private bool isSpawning;
+
     private CarriableObject_SP placedObject;
     private PlayerInteractionHandler interactionHandler;
 
     private void Awake()
     {
-        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+        interactionHandler =
+            FindFirstObjectByType<PlayerInteractionHandler>();
     }
 
-    #region INTERACTABLE RELATED
+    #region INTERACTABLE
+
     public void OnInteract()
     {
-        if (!isObjectPlaced) //Obje henüz istasyona yerleştirilmedi ise yerleştir.
+        if (isSpawning)
+        {
+            return;
+        }
+
+        if (!isObjectPlaced)
         {
             RegisterToStation();
             return;
         }
 
-        processHelper.Process(); //Süreci ilerlet
+        if (!CanStationOperate())
+        {
+            return;
+        }
 
-        if (processHelper.IsCompleted()) //Süreç tamamlandı ise yeni objeleri spawnla.
+        processHelper.Process();
+
+        if (processHelper.IsCompleted())
         {
             SpawnObjects();
         }
     }
+
     public void OnHoverOn()
     {
         onHoverOnEvent?.Invoke();
     }
+
     public void OnHoverOff()
     {
         onHoverOffEvent?.Invoke();
     }
+
     #endregion
 
-    #region UTILITIES
+    #region GENERATOR
+
+    private bool CanStationOperate()
+    {
+        if (generator == null)
+        {
+            Debug.LogWarning(
+                $"{name}: Station'a Generator referansı verilmemiş."
+            );
+
+            return false;
+        }
+
+        if (!generator.HasPower())
+        {
+            Debug.Log(
+                $"{name}: Jeneratörde enerji yok."
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    #endregion
+
+    #region STATION
+
     private void RegisterToStation()
     {
-        if (interactionHandler.GetCurrentCarriableType() != acceptedCarriableType) return;
+        CarriableObject_SP carriable =
+            interactionHandler.GetCurrentCarriable();
 
+        if (carriable == null)
+        {
+            return;
+        }
+
+        if (carriable.carriableType !=
+            acceptedCarriableType)
+        {
+            return;
+        }
+
+        placedObject = carriable;
         isObjectPlaced = true;
 
-        CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
-        placedObject = carriable;
-
         PlaceObject();
+
         interactionHandler.ClearCarriedObject();
+        processHelper.ResetProcess();
     }
+
     private void PlaceObject()
     {
-        if (placedObject == null) return;
-        placedObject.transform.SetParent(placementTransform);
-        placedObject.transform.localPosition = Vector3.zero;
-        placedObject.transform.localRotation = Quaternion.identity;
+        if (placedObject == null)
+        {
+            return;
+        }
+
+        placedObject.transform.SetParent(
+            placementTransform
+        );
+
+        placedObject.transform.localPosition =
+            Vector3.zero;
+
+        placedObject.transform.localRotation =
+            Quaternion.identity;
     }
+
     private void SpawnObjects()
     {
-        placedObject?.OnConsume();
+        if (isSpawning)
+        {
+            return;
+        }
+
+        if (placedObject == null)
+        {
+            isObjectPlaced = false;
+            return;
+        }
+
+        isSpawning = true;
+
+        CarriableObject_SP objectToConsume =
+            placedObject;
+
+        placedObject = null;
+        isObjectPlaced = false;
+
+        objectToConsume.OnConsume();
+
         StartCoroutine(SpawnRoutine());
     }
+
     private IEnumerator SpawnRoutine()
     {
+        WaitForSeconds wait =
+            new WaitForSeconds(spawnDelay);
+
         for (int i = 0; i < spawnCount; i++)
         {
-            Instantiate(spawnedObjectPrefab, spawnTransform.position, Quaternion.identity);
+            Instantiate(
+                spawnedObjectPrefab,
+                spawnTransform.position,
+                Quaternion.identity
+            );
 
             onSpawnEvent?.Invoke();
-            if (i < spawnCount - 1) yield return new WaitForSeconds(spawnDelay);
+
+            if (i < spawnCount - 1)
+            {
+                yield return wait;
+            }
         }
+
+        isSpawning = false;
     }
 
     #endregion

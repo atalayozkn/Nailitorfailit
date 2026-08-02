@@ -13,6 +13,7 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     [Header("Input")]
     [SerializeField] private InputActionReference interactAction;
+    [SerializeField] private InputActionReference useAction;
 
     [Header("Detection")]
     [SerializeField] private Transform detectionOrigin;
@@ -37,46 +38,101 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     private CarriableObject_SP currentCarriable;
     private CarriableType currentCarriableType;
+
     private bool isCarrying;
-    private bool isInteractOnCooldown = false;
+    private bool isInteractOnCooldown;
+    private bool isActive;
 
     private Coroutine detectionRoutine;
 
-    private readonly RaycastHit[] hits = new RaycastHit[12];
+    private readonly RaycastHit[] hits =
+        new RaycastHit[12];
 
     private void Awake()
     {
-        if (detectionOrigin == null) detectionOrigin = transform;
+        if (detectionOrigin == null)
+        {
+            detectionOrigin = transform;
+        }
     }
 
     private void OnEnable()
     {
-        if (interactAction != null) interactAction.action.Enable();
-        detectionRoutine = StartCoroutine(TargetDetectionRoutine());
+        if (interactAction != null &&
+            interactAction.action != null)
+        {
+            interactAction.action.Enable();
+        }
+
+        if (useAction != null &&
+            useAction.action != null)
+        {
+            useAction.action.Enable();
+        }
+
+        isActive = true;
+
+        detectionRoutine =
+            StartCoroutine(TargetDetectionRoutine());
     }
 
     private void OnDisable()
     {
-        if (interactAction != null) interactAction.action.Disable();
-        if (detectionRoutine != null) StopCoroutine(detectionRoutine);
+        if (interactAction != null &&
+            interactAction.action != null)
+        {
+            interactAction.action.Disable();
+        }
+
+        if (useAction != null &&
+            useAction.action != null)
+        {
+            useAction.action.Disable();
+        }
+
+        if (detectionRoutine != null)
+        {
+            StopCoroutine(detectionRoutine);
+            detectionRoutine = null;
+        }
+
         currentInteractable?.OnHoverOff();
     }
 
     private void Update()
     {
+        if (!isActive) return;
         if (isInteractOnCooldown) return;
 
-        if (interactAction.action.IsPressed())
+        if (useAction != null &&
+            useAction.action != null &&
+            useAction.action.IsPressed())
+        {
+            if (HandleUse())
+            {
+                return;
+            }
+        }
+
+        if (interactAction != null &&
+            interactAction.action != null &&
+            interactAction.action.IsPressed())
         {
             HandleInteract();
+
             isInteractOnCooldown = true;
-            Invoke(nameof(ResetInteractCooldown), interactCooldown);
+
+            Invoke(
+                nameof(ResetInteractCooldown),
+                interactCooldown
+            );
         }
     }
 
     private IEnumerator TargetDetectionRoutine()
     {
-        WaitForSeconds wait = new WaitForSeconds(detectionInterval);
+        WaitForSeconds wait =
+            new WaitForSeconds(detectionInterval);
 
         while (true)
         {
@@ -87,16 +143,27 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     private void RefreshTarget()
     {
-        IInteractable interactable = FindForwardInteractable();
-        if (interactable == null) interactable = FindGroundInteractable();
+        IInteractable interactable =
+            FindForwardInteractable();
+
+        if (interactable == null)
+        {
+            interactable = FindGroundInteractable();
+        }
+
         SetCurrentInteractable(interactable);
     }
-    private void SetCurrentInteractable(IInteractable interactable)
+
+    private void SetCurrentInteractable(
+        IInteractable interactable)
     {
         if (interactable == currentInteractable)
+        {
             return;
+        }
 
         currentInteractable?.OnHoverOff();
+
         currentInteractable = interactable;
 
         if (currentInteractable == null)
@@ -105,19 +172,30 @@ public class PlayerInteractionHandler : MonoBehaviour
             return;
         }
 
-        currentInteractableType = currentInteractable.InteractableType;
+        currentInteractableType =
+            currentInteractable.InteractableType;
+
         currentInteractable.OnHoverOn();
     }
 
     private void HandleInteract()
     {
-        if (currentCarriable == null && currentInteractable == null) return;
-        if (currentCarriable != null && currentInteractable == null)
+        if (currentCarriable == null &&
+            currentInteractable == null)
+        {
+            return;
+        }
+
+        if (currentCarriable != null &&
+            currentInteractable == null)
         {
             currentCarriable.OnDrop();
             return;
         }
-        if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
+
+        if (currentCarriable != null &&
+            currentInteractableType ==
+            InteractableType.Grabbable)
         {
             currentCarriable.OnDrop();
             return;
@@ -127,19 +205,62 @@ public class PlayerInteractionHandler : MonoBehaviour
         stateMachine.ChangeToInteractState();
     }
 
+    private bool HandleUse()
+    {
+        if (currentCarriable == null)
+        {
+            return false;
+        }
+
+        if (!currentCarriable.TryGetComponent<IUsable>(
+                out var usable))
+        {
+            return false;
+        }
+
+        stateMachine.ChangeToUseState();
+        usable.OnUse();
+
+        return true;
+    }
+
     #region UTILITIES
+
     private IInteractable FindForwardInteractable()
     {
-        int count = Physics.SphereCastNonAlloc(detectionOrigin.position, forwardRadius, detectionOrigin.forward, hits, forwardDistance, interactableMask);
+        int count = Physics.SphereCastNonAlloc(
+            detectionOrigin.position,
+            forwardRadius,
+            detectionOrigin.forward,
+            hits,
+            forwardDistance,
+            interactableMask
+        );
+
         return GetClosestInteractable(count);
     }
+
     private IInteractable FindGroundInteractable()
     {
-        Vector3 origin = transform.position + transform.forward * groundForwardOffset + Vector3.up * groundHeight;
-        int count = Physics.SphereCastNonAlloc(origin, groundRadius, Vector3.down, hits, groundDistance, interactableMask);
+        Vector3 origin =
+            transform.position +
+            transform.forward * groundForwardOffset +
+            Vector3.up * groundHeight;
+
+        int count = Physics.SphereCastNonAlloc(
+            origin,
+            groundRadius,
+            Vector3.down,
+            hits,
+            groundDistance,
+            interactableMask
+        );
+
         return GetClosestInteractable(count);
     }
-    private IInteractable GetClosestInteractable(int hitCount)
+
+    private IInteractable GetClosestInteractable(
+        int hitCount)
     {
         float closestDistance = float.MaxValue;
         IInteractable closestInteractable = null;
@@ -147,68 +268,124 @@ public class PlayerInteractionHandler : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             Collider hitCollider = hits[i].collider;
-            if (hitCollider == null) continue;
-            if (!hitCollider.TryGetComponent<IInteractable>(out var interactable)) continue;
-            if (hits[i].distance < closestDistance)
+
+            if (hitCollider == null)
             {
-                closestDistance = hits[i].distance;
-                closestInteractable = interactable;
+                continue;
             }
+
+            if (!hitCollider.TryGetComponent<IInteractable>(
+                    out var interactable))
+            {
+                continue;
+            }
+
+            if (hits[i].distance >= closestDistance)
+            {
+                continue;
+            }
+
+            closestDistance = hits[i].distance;
+            closestInteractable = interactable;
         }
+
         return closestInteractable;
     }
+
     public Transform GetCarryTransform()
     {
         return carryTransform;
     }
+
     public bool IsCarrying()
     {
         return isCarrying;
     }
+
     public CarriableObject_SP GetCurrentCarriable()
     {
         return currentCarriable;
     }
+
     public CarriableType GetCurrentCarriableType()
     {
         return currentCarriableType;
     }
+
     public bool IsInteracting()
     {
-        return interactAction.action.IsPressed();
+        return interactAction != null &&
+               interactAction.action != null &&
+               interactAction.action.IsPressed();
     }
-    public void RegisterCarriedObject(CarriableObject_SP carriable)
+
+    public void RegisterCarriedObject(
+        CarriableObject_SP carriable)
     {
         currentCarriable = carriable;
         currentCarriableType = carriable.carriableType;
         isCarrying = true;
+
         stateMachine.ForceSwitchToIdleState();
     }
-    public void ClearCarriedObject()
+
+    public void ClearCarriedObject(
+        bool forceIdleState = true)
     {
         currentCarriable = null;
         currentCarriableType = default;
         isCarrying = false;
-        stateMachine.ForceSwitchToIdleState();
+
+        if (forceIdleState)
+        {
+            stateMachine.ForceSwitchToIdleState();
+        }
     }
+
+    public void SetActivity(bool condition)
+    {
+        isActive = condition;
+    }
+
     private void ResetInteractCooldown()
     {
         isInteractOnCooldown = false;
     }
+
     #endregion
 
     #region DEBUG
+
     private void OnDrawGizmosSelected()
     {
         if (!DebugMode) return;
 
-        Transform origin = detectionOrigin == null ? transform : detectionOrigin;
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(origin.position, origin.position + origin.forward * forwardDistance);
+        Transform origin =
+            detectionOrigin == null
+                ? transform
+                : detectionOrigin;
 
-        Vector3 groundOrigin =transform.position + transform.forward * groundForwardOffset + Vector3.up * groundHeight;
+        Gizmos.color = Color.yellow;
+
+        Gizmos.DrawLine(
+            origin.position,
+            origin.position +
+            origin.forward * forwardDistance
+        );
+
+        Vector3 groundOrigin =
+            transform.position +
+            transform.forward * groundForwardOffset +
+            Vector3.up * groundHeight;
+
         Gizmos.color = Color.cyan;
-        Gizmos.DrawLine( groundOrigin, groundOrigin + Vector3.down * groundDistance);
+
+        Gizmos.DrawLine(
+            groundOrigin,
+            groundOrigin +
+            Vector3.down * groundDistance
+        );
     }
+
     #endregion
 }

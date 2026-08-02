@@ -1,25 +1,31 @@
-using PlayerScripts;
-using UnityEngine;
 using Interactions;
+using UnityEngine;
 using UnityEngine.Events;
+
 public enum CarriableType
 {
     Brick,
     Wood,
     Stone,
     Oil,
-    Glass
+    Glass,
+    EnergyDrink
 }
 
 namespace ItemScript
 {
-    public class CarriableObject_SP : MonoBehaviour, IInteractable, ISpawnable
+    public class CarriableObject_SP :
+        MonoBehaviour,
+        IInteractable,
+        ISpawnable
     {
         [Header("References")]
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Rigidbody rb;
         [SerializeField] private Collider col;
-        [SerializeField] public CarriableType carriableType;
+
+        [SerializeField]
+        public CarriableType carriableType;
 
         [Header("Settings")]
         [SerializeField] private float objectDiscardDelay = 3.0f;
@@ -29,63 +35,112 @@ namespace ItemScript
         [SerializeField] private UnityEvent onHoverOffEvent;
         [SerializeField] private UnityEvent onInteractEvent;
         [SerializeField] private UnityEvent onConsumeEvent;
-        public InteractableType InteractableType => interactableType;
+
+        public InteractableType InteractableType =>
+            interactableType;
+
         private ObjectSpawner spawnerObject;
         private PlayerInteractionHandler playerInteraction;
 
+        private bool isConsumed;
+
         private void Awake()
         {
-            playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
+            playerInteraction =
+                FindFirstObjectByType<PlayerInteractionHandler>();
         }
-        //Interactable Related
-        #region Interactable
+
+        #region INTERACTABLE
+
         public void OnInteract()
         {
+            if (isConsumed)
+            {
+                return;
+            }
+
             OnPickUp();
             onInteractEvent?.Invoke();
         }
+
         public void OnHoverOn()
         {
             onHoverOnEvent?.Invoke();
         }
+
         public void OnHoverOff()
         {
             onHoverOffEvent?.Invoke();
         }
+
         #endregion
 
-        //Spawnable Related
-        #region Spawnable
+        #region SPAWNABLE
+
         public void OnSpawn(GameObject spawner)
         {
-            spawnerObject = spawner.gameObject.GetComponent<ObjectSpawner>();
+            spawnerObject =
+                spawner.GetComponent<ObjectSpawner>();
         }
+
         #endregion
+
         private void OnPickUp()
         {
             col.enabled = false;
+
             rb.isKinematic = true;
             rb.Sleep();
 
-            Transform carryTransform = playerInteraction.GetCarryTransform();
+            Transform carryTransform =
+                playerInteraction.GetCarryTransform();
 
             transform.SetParent(carryTransform);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+
             playerInteraction.RegisterCarriedObject(this);
         }
+
         public void OnDrop()
         {
+            if (isConsumed)
+            {
+                return;
+            }
+
             rb.WakeUp();
             rb.isKinematic = false;
+
             transform.SetParent(null);
             col.enabled = true;
+
             playerInteraction.ClearCarriedObject();
         }
+
+        public void OnUsed()
+        {
+            if (isConsumed)
+            {
+                return;
+            }
+
+            playerInteraction.ClearCarriedObject(false);
+            OnConsume();
+        }
+
         public void OnConsume()
         {
+            if (isConsumed)
+            {
+                return;
+            }
+
+            isConsumed = true;
+
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
+
             Destroy(gameObject, objectDiscardDelay);
         }
     }

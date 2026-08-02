@@ -5,7 +5,7 @@
         Grabbable,
         Constructor,
         Station,
-        Shop
+        Shop,
     }
 
     public interface IInteractable

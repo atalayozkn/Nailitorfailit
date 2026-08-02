@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -37,41 +36,67 @@ namespace PlayerScripts
         private Coroutine chargeRoutine;
         private bool isEnergised;
         private float costMultiplier;
+
         private void OnEnable()
         {
             currentEnergy = maxEnergy;
             costMultiplier = 1.0f;
+
             staminaSlider.maxValue = maxEnergy;
+
             UpdateUI();
         }
+
         private void OnDisable()
         {
-            if (chargeRoutine != null) StopCoroutine(chargeRoutine);
+            if (chargeRoutine != null)
+            {
+                StopCoroutine(chargeRoutine);
+            }
+
             onChargeStopEvent?.Invoke();
         }
+
         public void ConsumeEnergy(float value)
         {
             if (isEnergised) return;
-            if (chargeRoutine != null) StopCoroutine(chargeRoutine);
+
+            if (chargeRoutine != null)
+            {
+                StopCoroutine(chargeRoutine);
+            }
 
             currentEnergy -= value;
 
-            if (currentEnergy <= 0)
+            if (currentEnergy <= 0f)
             {
                 currentEnergy = 0f;
                 BecomeDrained();
             }
 
             UpdateUI();
+
             CancelInvoke(nameof(StartCharge));
-            Invoke(nameof(StartCharge), rechargeDelay);
+
+            Invoke(
+                nameof(StartCharge),
+                rechargeDelay
+            );
         }
+
         public void GainEnergy(float value)
         {
             currentEnergy += value;
-            if (currentEnergy > maxEnergy) currentEnergy = maxEnergy;
+
+            if (currentEnergy > maxEnergy)
+            {
+                currentEnergy = maxEnergy;
+            }
+
+            UpdateUI();
             BecomeEnergised();
         }
+
         private void StartCharge()
         {
             if (chargeRoutine != null)
@@ -79,67 +104,95 @@ namespace PlayerScripts
                 StopCoroutine(chargeRoutine);
             }
 
-            chargeRoutine = StartCoroutine(ChargeRoutine());
+            chargeRoutine =
+                StartCoroutine(ChargeRoutine());
+
             onChargeStartEvent?.Invoke();
         }
+
         private IEnumerator ChargeRoutine()
         {
             while (true)
             {
-                currentEnergy += perChargeAmount * costMultiplier;
+                currentEnergy +=
+                    perChargeAmount * costMultiplier;
+
                 UpdateUI();
+
                 if (currentEnergy >= maxEnergy)
                 {
                     currentEnergy = maxEnergy;
+
+                    UpdateUI();
+
                     onChargeStopEvent?.Invoke();
+
+                    chargeRoutine = null;
                     yield break;
                 }
-                yield return new WaitForSeconds(chargeInterval);
+
+                yield return new WaitForSeconds(
+                    chargeInterval
+                );
             }
         }
+
         private void BecomeEnergised()
         {
             isEnergised = true;
+
             onEnergisedEvent?.Invoke();
+
             CancelInvoke(nameof(ReverseEnergised));
-            Invoke(nameof(ReverseEnergised), energisedDuration);
+
+            Invoke(
+                nameof(ReverseEnergised),
+                energisedDuration
+            );
         }
+
         private void BecomeDrained()
         {
             costMultiplier = drainedMultiplier;
+
             onDrainedEvent?.Invoke();
+
             CancelInvoke(nameof(ReverseDrained));
-            Invoke(nameof(ReverseDrained), drainedDuration);
+
+            Invoke(
+                nameof(ReverseDrained),
+                drainedDuration
+            );
         }
+
         private void UpdateUI()
         {
             staminaSlider.value = currentEnergy;
-            //staminaText.text = Mathf.FloorToInt(currentEnergy).ToString();
+
+            // staminaText.text =
+            //     Mathf.FloorToInt(currentEnergy).ToString();
         }
 
         #region UTILITIES
+
         private void ReverseEnergised()
         {
             isEnergised = false;
             onEnergiseReversedEvent?.Invoke();
         }
+
         private void ReverseDrained()
         {
             costMultiplier = 1.0f;
             onDrainReversedEvent?.Invoke();
         }
+
         public bool HasEnoughEnergy(float value)
         {
-            float dif = currentEnergy - value;
+            float difference =
+                currentEnergy - value;
 
-            if (dif > 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return difference > 0f;
         }
 
         #endregion

@@ -17,23 +17,45 @@ public class InteractionProcessHelper : MonoBehaviour
 
     private float currentProcess;
     private bool isCompleted;
+
     private void OnEnable()
     {
-        isCompleted = false;
-        canvasHelper.SetUIProperties(maxProcessAmount);
+        ResetProcess();
     }
+
     public void Process()
     {
+        if (isCompleted)
+        {
+            return;
+        }
+
         currentProcess += processPerInteract;
-        canvasHelper.UpdateUI(currentProcess);
 
         if (currentProcess >= maxProcessAmount)
         {
             currentProcess = maxProcessAmount;
             isCompleted = true;
+        }
+
+        canvasHelper.UpdateUI(currentProcess);
+
+        if (isCompleted)
+        {
             canvasHelper.SetActivity(false);
         }
     }
+
+    public void ResetProcess()
+    {
+        currentProcess = 0f;
+        isCompleted = false;
+
+        canvasHelper.SetUIProperties(maxProcessAmount);
+        canvasHelper.UpdateUI(0f);
+        canvasHelper.SetActivity(true);
+    }
+
     public bool IsCompleted()
     {
         return isCompleted;
