@@ -6,12 +6,10 @@ public class PlayerCrashHelper : MonoBehaviour
     [SerializeField] private PlayerStateMachine stateMachine;
 
     private bool isActive;
-
     private void OnEnable()
     {
         isActive = false;
     }
-
     private void OnCollisionEnter(Collision collision)
     {
         if (!isActive)
@@ -22,7 +20,6 @@ public class PlayerCrashHelper : MonoBehaviour
 
         stateMachine.ChangeToStunnedState();
     }
-
     public void SetActivity(bool condition)
     {
         isActive = condition;

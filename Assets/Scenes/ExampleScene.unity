@@ -5730,9 +5730,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollower
   followTarget: {fileID: 6763805584691729572}
-  followX: 0
+  followX: 1
+  xTrackFrequency: 0.1
   followY: 0
+  yTrackFrequency: 1
   followZ: 1
+  zTrackFrequency: 1
 --- !u!4 &638234074
 Transform:
   m_ObjectHideFlags: 0
@@ -19287,6 +19290,7 @@ MonoBehaviour:
   carryTransform: {fileID: 346335152547494255}
   DebugMode: 0
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  useAction: {fileID: 0}
   detectionOrigin: {fileID: 919035134924725580}
   interactableMask:
     serializedVersion: 2
@@ -19359,6 +19363,7 @@ MonoBehaviour:
   <interactionHandler>k__BackingField: {fileID: 7779111349385810978}
   <crashHelper>k__BackingField: {fileID: 7779111349385810981}
   <isDead>k__BackingField: 0
+  <useDuration>k__BackingField: 0
   <slipCheckDistance>k__BackingField: 1
   <slipOffsetMultiplier>k__BackingField: 1
   <slipCheckRadius>k__BackingField: 0.25
@@ -19367,6 +19372,7 @@ MonoBehaviour:
     m_Bits: 512
   <crashVelocity>k__BackingField: 1
   debugMode: 1
+  <currentReason>k__BackingField: 0
 --- !u!114 &7779111349385810981
 MonoBehaviour:
   m_ObjectHideFlags: 0

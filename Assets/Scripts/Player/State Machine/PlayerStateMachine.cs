@@ -16,60 +16,38 @@ public enum PlayerStates
 public class PlayerStateMachine : StateMachine_Player
 {
     [Header("References")]
-    [field: SerializeField]
-    public PlayerMovement movementHandler { get; private set; }
+    [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
+    [field: SerializeField] public Transform detectionTransform { get; private set; }
+    [field: SerializeField] public Rigidbody rb { get; private set; }
+    [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
+    [field: SerializeField] public Animator animator { get; private set; }
+    [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
+    [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
 
-    [field: SerializeField]
-    public Transform detectionTransform { get; private set; }
-
-    [field: SerializeField]
-    public Rigidbody rb { get; private set; }
-
-    [field: SerializeField]
-    public PlayerStates currentPlayerState { get; private set; }
-
-    [field: SerializeField]
-    public Animator animator { get; private set; }
-
-    [field: SerializeField]
-    public PlayerInteractionHandler interactionHandler { get; private set; }
-
-    [field: SerializeField]
-    public PlayerCrashHelper crashHelper { get; private set; }
-
-    [Header("Movement Data")]
-    [field: SerializeField]
-    public bool isDead { get; private set; }
+    [Header("Movement Data")] 
+    [field: SerializeField] public bool isDead { get; private set; }
 
     [Header("Use Settings")]
-    [field: SerializeField]
-    public float useDuration { get; private set; }
+    [field: SerializeField] public float useDuration { get; private set; }
 
     [Header("Slip Settings")]
-    [field: SerializeField]
-    public float slipCheckDistance { get; private set; }
-
-    [field: SerializeField]
-    public float slipOffsetMultiplier { get; private set; }
-
-    [field: SerializeField]
-    public float slipCheckRadius { get; private set; }
-
-    [field: SerializeField]
-    public LayerMask slipperyMask { get; private set; }
+    [field: SerializeField] public float slipCheckDistance { get; private set; }
+    [field: SerializeField] public float slipOffsetMultiplier { get; private set; }
+    [field: SerializeField] public float slipCheckRadius { get; private set; }
+    [field: SerializeField] public LayerMask slipperyMask { get; private set; }
 
     [Header("Crash Settings")]
-    [field: SerializeField]
-    public float crashVelocity { get; private set; }
+    [field: SerializeField] public float crashVelocity { get; private set; }
+    [field: SerializeField] public bool debugMode;
 
-    [field: SerializeField]
-    public bool debugMode;
+    [Header("Death Settings")]
+    [field: SerializeField] public DeathReason currentReason { get; private set; }
 
     private void OnEnable()
     {
         isDead = false;
+        currentReason = DeathReason.None;
         currentPlayerState = PlayerStates.Idle;
-
         SwitchState(new PlayerIdleState(this));
     }
 
@@ -175,7 +153,11 @@ public class PlayerStateMachine : StateMachine_Player
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
     }
-
+    public void SetDeathReason(DeathReason reason)
+    {
+        if (currentReason == reason) return;
+        currentReason = reason;
+    }
     #endregion
 
     #region UTILITY
@@ -187,38 +169,16 @@ public class PlayerStateMachine : StateMachine_Player
 
     public bool ShouldRecoverFromSlip()
     {
-        Vector3 point1 =
-            transform.position + Vector3.up * slipOffsetMultiplier;
-
-        Vector3 point2 =
-            point1 + Vector3.up * 0.01f;
-
-        bool hitSlippery = Physics.CapsuleCast(
-            point1,
-            point2,
-            slipCheckRadius,
-            Vector3.down,
-            out _,
-            slipCheckDistance,
-            slipperyMask,
-            QueryTriggerInteraction.Collide
-        );
-
+        Vector3 point1 = transform.position + Vector3.up * slipOffsetMultiplier;
+        Vector3 point2 = point1 + Vector3.up * 0.01f;
+        bool hitSlippery = Physics.CapsuleCast(point1, point2, slipCheckRadius, Vector3.down, out _, slipCheckDistance, slipperyMask, QueryTriggerInteraction.Collide);
         return !hitSlippery;
     }
-
     public void SetCrashActivity()
     {
-        if (rb.linearVelocity.magnitude > crashVelocity)
-        {
-            crashHelper.SetActivity(true);
-        }
-        else
-        {
-            crashHelper.SetActivity(false);
-        }
+        if (rb.linearVelocity.magnitude > crashVelocity) crashHelper.SetActivity(true);
+        else crashHelper.SetActivity(false);
     }
-
     #endregion
 
     #region DEBUG

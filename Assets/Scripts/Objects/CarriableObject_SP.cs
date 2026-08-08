@@ -1,7 +1,6 @@
 using Interactions;
 using UnityEngine;
 using UnityEngine.Events;
-
 public enum CarriableType
 {
     Brick,
@@ -14,10 +13,7 @@ public enum CarriableType
 
 namespace ItemScript
 {
-    public class CarriableObject_SP :
-        MonoBehaviour,
-        IInteractable,
-        ISpawnable
+    public class CarriableObject_SP :MonoBehaviour, IInteractable, ISpawnable
     {
         [Header("References")]
         [SerializeField] private InteractableType interactableType;
@@ -28,6 +24,7 @@ namespace ItemScript
         public CarriableType carriableType;
 
         [Header("Settings")]
+        [SerializeField] private float dropForce = 10f;
         [SerializeField] private float objectDiscardDelay = 3.0f;
 
         [Header("Events")]
@@ -36,8 +33,7 @@ namespace ItemScript
         [SerializeField] private UnityEvent onInteractEvent;
         [SerializeField] private UnityEvent onConsumeEvent;
 
-        public InteractableType InteractableType =>
-            interactableType;
+        public InteractableType InteractableType => interactableType;
 
         private ObjectSpawner spawnerObject;
         private PlayerInteractionHandler playerInteraction;
@@ -46,8 +42,7 @@ namespace ItemScript
 
         private void Awake()
         {
-            playerInteraction =
-                FindFirstObjectByType<PlayerInteractionHandler>();
+            playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
         }
 
         #region INTERACTABLE
@@ -62,12 +57,10 @@ namespace ItemScript
             OnPickUp();
             onInteractEvent?.Invoke();
         }
-
         public void OnHoverOn()
         {
             onHoverOnEvent?.Invoke();
         }
-
         public void OnHoverOff()
         {
             onHoverOffEvent?.Invoke();
@@ -79,8 +72,7 @@ namespace ItemScript
 
         public void OnSpawn(GameObject spawner)
         {
-            spawnerObject =
-                spawner.GetComponent<ObjectSpawner>();
+            spawnerObject = spawner.GetComponent<ObjectSpawner>();
         }
 
         #endregion
@@ -92,8 +84,7 @@ namespace ItemScript
             rb.isKinematic = true;
             rb.Sleep();
 
-            Transform carryTransform =
-                playerInteraction.GetCarryTransform();
+            Transform carryTransform = playerInteraction.GetCarryTransform();
 
             transform.SetParent(carryTransform);
             transform.localPosition = Vector3.zero;
@@ -102,22 +93,25 @@ namespace ItemScript
             playerInteraction.RegisterCarriedObject(this);
         }
 
-        public void OnDrop()
+        public void OnDrop(bool shouldThrow = false)
         {
-            if (isConsumed)
-            {
-                return;
-            }
+            if (isConsumed) return;
 
             rb.WakeUp();
             rb.isKinematic = false;
-
             transform.SetParent(null);
             col.enabled = true;
+            playerInteraction.ClearCarriedObject(false);
 
-            playerInteraction.ClearCarriedObject();
+            if (shouldThrow)
+            {
+                float angle = Random.Range(0f, 30f);
+                float rotation = Random.Range(0f, 360f);
+                Quaternion spread = Quaternion.Euler(angle,rotation,0f);
+                Vector3 direction = spread * Vector3.up;
+                rb.AddForce(direction * dropForce, ForceMode.Impulse);
+            }
         }
-
         public void OnUsed()
         {
             if (isConsumed)

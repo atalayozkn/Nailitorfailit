@@ -11,7 +11,7 @@ public class PlayerSlippingState : PlayerBaseState
         stateMachine.crashHelper.SetActivity(true);
 
         var carriable = stateMachine.interactionHandler.GetCurrentCarriable();
-        if (carriable != null) carriable.OnDrop();
+        if (carriable != null) carriable.OnDrop(true);
     }
     public override void Tick(float deltaTime)
     {

@@ -1,14 +1,15 @@
 using Interactions;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections;
+using Wettables;
 
-public class BrickTile : MonoBehaviour, IInteractable
+public class BrickTile : MonoBehaviour, IInteractable, IWettable
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private ObjectHealth objectHealth;
+    [SerializeField] private PuddleHelper puddleHelper;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
@@ -24,15 +25,11 @@ public class BrickTile : MonoBehaviour, IInteractable
     #region INTERACTABLE
     public void OnInteract()
     {
-        if (currentPhase == ConstructionPhase.Complete)
-            return;
+        if (currentPhase == ConstructionPhase.Complete) return;
 
         processHelper.Process();
 
-        if (processHelper.IsCompleted())
-        {
-            CompleteConstruction();
-        }
+        if (processHelper.IsCompleted()) CompleteConstruction();
     }
     public void OnHoverOn()
     {
@@ -42,6 +39,14 @@ public class BrickTile : MonoBehaviour, IInteractable
     {
         onHoverOffEvent?.Invoke();
     }
+    #endregion
+
+    #region Water Related
+    public void OnWaterContact()
+    {
+        puddleHelper.StartPuddleProcess();
+    }
+
     #endregion
 
     #region UTILITIES

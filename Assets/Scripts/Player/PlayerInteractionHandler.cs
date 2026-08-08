@@ -314,23 +314,18 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     public bool IsInteracting()
     {
-        return interactAction != null &&
-               interactAction.action != null &&
-               interactAction.action.IsPressed();
+        return interactAction != null && interactAction.action != null && interactAction.action.IsPressed();
     }
 
-    public void RegisterCarriedObject(
-        CarriableObject_SP carriable)
+    public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
         currentCarriable = carriable;
         currentCarriableType = carriable.carriableType;
         isCarrying = true;
-
         stateMachine.ForceSwitchToIdleState();
     }
 
-    public void ClearCarriedObject(
-        bool forceIdleState = true)
+    public void ClearCarriedObject(bool forceIdleState = true)
     {
         currentCarriable = null;
         currentCarriableType = default;
