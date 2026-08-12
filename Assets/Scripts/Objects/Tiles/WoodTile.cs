@@ -26,18 +26,12 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
         gameObject.layer = LayerMask.NameToLayer("Interaction");
     }
 
-    private void OnDisable()
-    {
-    }
-
     #region INTERACTABLE
 
     public void OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return;
-
         processHelper.Process();
-
         if (processHelper.IsCompleted()) CompleteConstruction();
     }
     public void OnHoverOn()
@@ -55,25 +49,30 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
 
     public void OnFireStart()
     {
+        if (currentPhase == ConstructionPhase.Construction) return;
         fireHelper.StartFire();
     }
 
     public void OnFireStop()
     {
+        if (currentPhase == ConstructionPhase.Construction) return;
         fireHelper.StopFire();
     }
 
     #endregion
 
     #region WATER
-
     public void OnWaterContact()
     {
+        if (currentPhase == ConstructionPhase.Construction) return;
         puddleHelper.StartPuddleProcess();
     }
-
+    public void OnElectrocute()
+    {
+        if (currentPhase == ConstructionPhase.Construction) return;
+        puddleHelper.ElectrocutePuddle();
+    }
     #endregion
-
     #region UTILITY
 
     private void CompleteConstruction()

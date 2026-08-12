@@ -42,7 +42,12 @@ public class PlayerStateMachine : StateMachine_Player
 
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
+    public RespawnManager respawnManager { get; private set; }
 
+    private void Awake()
+    {
+        respawnManager = FindAnyObjectByType<RespawnManager>();
+    }
     private void OnEnable()
     {
         isDead = false;
@@ -125,7 +130,6 @@ public class PlayerStateMachine : StateMachine_Player
     public void ChangeToDeadState()
     {
         if (currentPlayerState == PlayerStates.Dead) return;
-
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
     }
@@ -189,18 +193,10 @@ public class PlayerStateMachine : StateMachine_Player
         if (!debugMode) return;
 
         Gizmos.color = Color.cyan;
-
-        Vector3 startPoint1 =
-            transform.position + Vector3.up * slipOffsetMultiplier;
-
-        Vector3 startPoint2 =
-            startPoint1 + Vector3.up * 0.01f;
-
-        Vector3 endPoint1 =
-            startPoint1 + Vector3.down * slipCheckDistance;
-
-        Vector3 endPoint2 =
-            startPoint2 + Vector3.down * slipCheckDistance;
+        Vector3 startPoint1 = transform.position + Vector3.up * slipOffsetMultiplier;
+        Vector3 startPoint2 = startPoint1 + Vector3.up * 0.01f;
+        Vector3 endPoint1 = startPoint1 + Vector3.down * slipCheckDistance;
+        Vector3 endPoint2 = startPoint2 + Vector3.down * slipCheckDistance;
 
         Gizmos.DrawWireSphere(startPoint1, slipCheckRadius);
         Gizmos.DrawWireSphere(startPoint2, slipCheckRadius);
@@ -208,25 +204,10 @@ public class PlayerStateMachine : StateMachine_Player
         Gizmos.DrawWireSphere(endPoint1, slipCheckRadius);
         Gizmos.DrawWireSphere(endPoint2, slipCheckRadius);
 
-        Gizmos.DrawLine(
-            startPoint1 + Vector3.right * slipCheckRadius,
-            endPoint1 + Vector3.right * slipCheckRadius
-        );
-
-        Gizmos.DrawLine(
-            startPoint1 - Vector3.right * slipCheckRadius,
-            endPoint1 - Vector3.right * slipCheckRadius
-        );
-
-        Gizmos.DrawLine(
-            startPoint1 + Vector3.forward * slipCheckRadius,
-            endPoint1 + Vector3.forward * slipCheckRadius
-        );
-
-        Gizmos.DrawLine(
-            startPoint1 - Vector3.forward * slipCheckRadius,
-            endPoint1 - Vector3.forward * slipCheckRadius
-        );
+        Gizmos.DrawLine(startPoint1 + Vector3.right * slipCheckRadius, endPoint1 + Vector3.right * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 - Vector3.right * slipCheckRadius, endPoint1 - Vector3.right * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 + Vector3.forward * slipCheckRadius, endPoint1 + Vector3.forward * slipCheckRadius);
+        Gizmos.DrawLine(startPoint1 - Vector3.forward * slipCheckRadius, endPoint1 - Vector3.forward * slipCheckRadius);
     }
 
     #endregion

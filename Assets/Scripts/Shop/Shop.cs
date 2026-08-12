@@ -81,13 +81,9 @@ public class Shop : MonoBehaviour, IInteractable
         }
 
         isShopOpen = true;
-
         LockPlayer();
-
         MoveCameraTargetSmooth(shopCameraPoint);
-
         ShopMenu.Instance.OpenMenu();
-
         onShopOpenedEvent?.Invoke();
     }
 
@@ -103,20 +99,10 @@ public class Shop : MonoBehaviour, IInteractable
 
     private void LockPlayer()
     {
-        if (playerRigidbody != null)
-        {
-            playerRigidbody.linearVelocity = Vector3.zero;
-            playerRigidbody.angularVelocity = Vector3.zero;
-        }
-
         if (playerStateMachine != null)
         {
             playerStateMachine.ChangeToIdleState();
         }
-
-        if (playerMovement != null) playerMovement.enabled = false;
-
-        if (playerInteractionHandler != null) playerInteractionHandler.enabled = false;
     }
 
     private void UnlockPlayer()
@@ -183,11 +169,8 @@ public class Shop : MonoBehaviour, IInteractable
     private void ResolveReferences()
     {
         if (playerMovement == null) playerMovement = FindFirstObjectByType<PlayerMovement>();
-
         if (playerInteractionHandler == null) playerInteractionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
-
         if (playerStateMachine == null) playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-
         if (playerRigidbody == null && playerMovement != null) playerRigidbody = playerMovement.GetComponent<Rigidbody>();
     }
 }

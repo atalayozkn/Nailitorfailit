@@ -22,13 +22,9 @@ public class InteractionProcessHelper : MonoBehaviour
     {
         ResetProcess();
     }
-
     public void Process()
     {
-        if (isCompleted)
-        {
-            return;
-        }
+        if (isCompleted) return;
 
         currentProcess += processPerInteract;
 

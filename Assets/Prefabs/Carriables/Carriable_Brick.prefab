@@ -98,7 +98,10 @@ MonoBehaviour:
   interactableType: 0
   rb: {fileID: 8684526647547955195}
   col: {fileID: 4249530769672492423}
+  objectRenderer: {fileID: 4207018440184823588}
+  isRawMaterial: 1
   carriableType: 0
+  dropForce: 10
   objectDiscardDelay: 0.1
   onHoverOnEvent:
     m_PersistentCalls:

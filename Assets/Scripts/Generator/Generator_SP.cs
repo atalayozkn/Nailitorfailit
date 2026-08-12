@@ -41,8 +41,7 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
     public bool IsRunning => isRunning;
 
-    private float MaxDurationSeconds =>
-        generatorDurationMinutes * 60f;
+    private float MaxDurationSeconds => generatorDurationMinutes * 60f;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
@@ -51,10 +50,8 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
     private void Awake()
     {
-        interactionHandler =
-            FindFirstObjectByType<PlayerInteractionHandler>();
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
     }
-
     private void Start()
     {
         currentTime = MaxDurationSeconds;
@@ -82,11 +79,6 @@ public class Generator_SP : MonoBehaviour, IInteractable
         {
             SetLightOff();
         }
-
-        Debug.Log(
-            $"Generator %100 enerjiyle baþladý. Süre: " +
-            $"{generatorDurationMinutes:0.##} dakika."
-        );
     }
 
     #region INTERACTION
@@ -175,63 +167,31 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (currentTime >= maxDuration)
         {
-            Debug.Log(
-                "Generator zaten tamamen dolu."
-            );
-
+            Debug.Log("Generator zaten tamamen dolu.");
             return false;
         }
 
-        float clampedPercent =
-            Mathf.Clamp(fuelPercent, 0f, 100f);
+        float clampedPercent = Mathf.Clamp(fuelPercent, 0f, 100f);
 
-        float addedDuration =
-            maxDuration * (clampedPercent / 100f);
+        float addedDuration = maxDuration * (clampedPercent / 100f);
 
-        currentTime = Mathf.Min(
-            currentTime + addedDuration,
-            maxDuration
-        );
+        currentTime = Mathf.Min(currentTime + addedDuration, maxDuration);
 
-        if (!isRunning && currentTime > 0f)
-        {
-            StartGenerator();
-        }
-        else
-        {
-            UpdateUI(true);
-        }
-
-        Debug.Log(
-            $"Generator yakýt aldý. Kalan süre: " +
-            $"{FormatTime(currentTime)}"
-        );
+        if (!isRunning && currentTime > 0f) StartGenerator();
+        else UpdateUI();
 
         return true;
     }
 
     private void StartGenerator()
     {
-        if (isRunning)
-        {
-            return;
-        }
-
-        if (currentTime <= 0f)
-        {
-            return;
-        }
-
+        if (isRunning) return;
+        if (currentTime <= 0f) return;
         isRunning = true;
 
         StartTimerRoutine();
         StartLightRoutine();
-
         UpdateUI(true);
-
-        Debug.Log(
-            "Generator çalýþmaya baþladý."
-        );
     }
 
     private void StopGenerator()
@@ -244,17 +204,11 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         SetLightOff();
         UpdateUI(true);
-
-        Debug.Log(
-            "Generator enerjisi bitti."
-        );
     }
-
     public bool HasPower()
     {
         return isRunning && currentTime > 0f;
     }
-
     public float GetFuelPercent()
     {
         float maxDuration = MaxDurationSeconds;
@@ -266,7 +220,6 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         return currentTime / maxDuration;
     }
-
     #endregion
 
     #region TIMER
@@ -278,17 +231,14 @@ public class Generator_SP : MonoBehaviour, IInteractable
             return;
         }
 
-        timerRoutine =
-            StartCoroutine(TimerRoutine());
+        timerRoutine = StartCoroutine(TimerRoutine());
     }
 
     private IEnumerator TimerRoutine()
     {
-        float interval =
-            Mathf.Max(0.02f, tickRate);
+        float interval = Mathf.Max(0.02f, tickRate);
 
-        WaitForSeconds wait =
-            new WaitForSeconds(interval);
+        WaitForSeconds wait = new WaitForSeconds(interval);
 
         while (isRunning && currentTime > 0f)
         {
@@ -317,7 +267,6 @@ public class Generator_SP : MonoBehaviour, IInteractable
         {
             return;
         }
-
         StopCoroutine(timerRoutine);
         timerRoutine = null;
     }
@@ -325,18 +274,11 @@ public class Generator_SP : MonoBehaviour, IInteractable
     #endregion
 
     #region LIGHT
-
     private void StartLightRoutine()
     {
-        if (lightRoutine != null)
-        {
-            return;
-        }
-
-        lightRoutine =
-            StartCoroutine(LightRoutine());
+        if (lightRoutine != null) return;
+        lightRoutine = StartCoroutine(LightRoutine());
     }
-
     private IEnumerator LightRoutine()
     {
         if (generatorLight != null)
@@ -348,9 +290,7 @@ public class Generator_SP : MonoBehaviour, IInteractable
         {
             if (generatorLight != null)
             {
-                generatorLight.intensity =
-                    1.5f +
-                    Mathf.Sin(Time.time * blinkSpeed) * 0.5f;
+                generatorLight.intensity =1.5f + Mathf.Sin(Time.time * blinkSpeed) * 0.5f;
             }
 
             yield return null;
@@ -391,17 +331,14 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (progressSlider != null)
         {
-            progressSlider.value =
-                maxDuration > 0f
+            progressSlider.value = maxDuration > 0f
                     ? currentTime / maxDuration
                     : 0f;
         }
 
-        int totalSeconds =
-            Mathf.CeilToInt(currentTime);
+        int totalSeconds = Mathf.CeilToInt(currentTime);
 
-        if (!forceTextUpdate &&
-            totalSeconds == lastDisplayedSecond)
+        if (!forceTextUpdate && totalSeconds == lastDisplayedSecond)
         {
             return;
         }
@@ -410,15 +347,13 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (timerText != null)
         {
-            timerText.text =
-                FormatTime(totalSeconds);
+            timerText.text = FormatTime(totalSeconds);
         }
     }
 
     private string FormatTime(float time)
     {
-        int totalSeconds =
-            Mathf.Max(0, Mathf.CeilToInt(time));
+        int totalSeconds = Mathf.Max(0, Mathf.CeilToInt(time));
 
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;

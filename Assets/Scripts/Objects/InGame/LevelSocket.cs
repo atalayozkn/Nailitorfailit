@@ -88,6 +88,8 @@ public class LevelSocket : MonoBehaviour
     public void OnInteract()
     {
         if (currentPhase != SocketPhase.Available) return;
+        if (!CurrencyManager.Instance.HasEnoughCurrency(currencyCost)) return;
+        CurrencyManager.Instance.SpendCurrency(currencyCost);
         GameManager.Instance.ChangeToLevelPhase(levelIndex);
     }
     public void SetActivity(bool condition)

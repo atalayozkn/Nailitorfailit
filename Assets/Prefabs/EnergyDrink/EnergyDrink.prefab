@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4490502253620378599}
   - component: {fileID: -6744296082192085357}
   - component: {fileID: 2768673015821395568}
+  - component: {fileID: 3746698825378064229}
   m_Layer: 6
   m_Name: EnergyDrink
   m_TagString: Untagged
@@ -127,10 +128,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnergyDrink_SP
   energyRestoreAmount: 50
-  objectDestroyDelay: 3
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
+  carriableObject: {fileID: 3746698825378064229}
 --- !u!54 &2768673015821395568
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -158,3 +159,35 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &3746698825378064229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4802431371268048683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 934e20b9a6b09d1469dca42a2c737701, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
+  interactableType: 0
+  rb: {fileID: 0}
+  col: {fileID: 0}
+  objectRenderer: {fileID: 0}
+  isRawMaterial: 0
+  carriableType: 0
+  dropForce: 10
+  objectDiscardDelay: 3
+  onHoverOnEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onHoverOffEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onInteractEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onConsumeEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -74,12 +74,9 @@ public class PlayerMovement : MonoBehaviour
         isSprinting = false;
         isJumping = false;
 
-        maxSpeedSqr =
-            maxAllowableVelocity * maxAllowableVelocity;
-
+        maxSpeedSqr = maxAllowableVelocity * maxAllowableVelocity;
         rb.linearDamping = defaultMoveDamping;
         rb.angularDamping = defaultRotationDamping;
-
         moveCost = baseMoveCost;
     }
 
@@ -118,13 +115,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void GroundCheck()
     {
-        isGrounded = Physics.Raycast(
-            detectionTransform.position,
-            Vector3.down,
-            checkDistance,
-            whatIsGround,
-            QueryTriggerInteraction.Ignore
-        );
+        isGrounded = Physics.Raycast(detectionTransform.position, Vector3.down, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore);
     }
 
     private void CheckMovementInput()
@@ -138,9 +129,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         moveInput = move.action.ReadValue<Vector2>();
-
-        isInputPresent =
-            moveInput.sqrMagnitude > 0.01f;
+        isInputPresent = moveInput.sqrMagnitude > 0.01f;
 
         if (!isInputPresent)
         {
@@ -148,10 +137,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        isSprinting =
-            sprint != null &&
-            sprint.action != null &&
-            sprint.action.IsPressed();
+        isSprinting = sprint != null && sprint.action != null && sprint.action.IsPressed();
     }
 
     private void CheckJumpInput()
@@ -161,8 +147,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        isJumping =
-            jump.action.WasPressedThisFrame();
+        isJumping = jump.action.WasPressedThisFrame();
 
         if (isJumping)
         {
@@ -207,12 +192,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         staminaHandler.ConsumeEnergy(moveCost);
-
-        rb.AddForce(
-            transform.forward * force,
-            ForceMode.Force
-        );
-
+        rb.AddForce(transform.forward * force,ForceMode.Force);
         stateMachine.ChangeToNavigationState();
     }
 
@@ -221,21 +201,9 @@ public class PlayerMovement : MonoBehaviour
         if (!isActive) return;
         if (!isInputPresent) return;
 
-        Vector3 inputDirection = new Vector3(
-            moveInput.x,
-            0f,
-            moveInput.y
-        ).normalized;
-
-        Vector3 cross = Vector3.Cross(
-            transform.forward,
-            inputDirection
-        );
-
-        rb.AddTorque(
-            Vector3.up * cross.y * rotateForce,
-            ForceMode.Acceleration
-        );
+        Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
+        Vector3 cross = Vector3.Cross(transform.forward, inputDirection);
+        rb.AddTorque(Vector3.up * cross.y * rotateForce, ForceMode.Acceleration);
     }
 
     private void HandleJump()
@@ -248,11 +216,7 @@ public class PlayerMovement : MonoBehaviour
         velocity.y = 0f;
         rb.linearVelocity = velocity;
 
-        rb.AddForce(
-            Vector3.up * jumpForce,
-            ForceMode.Impulse
-        );
-
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         isJumping = false;
     }
 
@@ -262,22 +226,18 @@ public class PlayerMovement : MonoBehaviour
     {
         return isSprinting;
     }
-
     public bool IsMoving()
     {
         return moveInput.sqrMagnitude > 0.01f;
     }
-
     public bool IsGrounded()
     {
         return isGrounded;
     }
-
     public void SetActivity(bool condition)
     {
         isActive = condition;
     }
-
     public void SetSlipping(bool condition)
     {
         if (condition)
@@ -291,7 +251,6 @@ public class PlayerMovement : MonoBehaviour
             rb.angularDamping = defaultRotationDamping;
         }
     }
-
     public void SetJumping(bool condition)
     {
         if (condition)
@@ -309,7 +268,6 @@ public class PlayerMovement : MonoBehaviour
             rb.angularDamping = defaultRotationDamping;
         }
     }
-
     private bool ShouldApplyForce()
     {
         Vector3 horizontalVelocity = new Vector3(
@@ -320,6 +278,5 @@ public class PlayerMovement : MonoBehaviour
 
         return horizontalVelocity.sqrMagnitude < maxSpeedSqr;
     }
-
     #endregion
 }

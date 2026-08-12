@@ -17,6 +17,10 @@ public class PlayerFaintState : PlayerBaseState
         stateMachine.animator.CrossFadeInFixedTime(faintedHash, 0.1f);
         stateMachine.rb.linearVelocity = Vector3.zero;
         counterTime = 0;
+
+        //Stop Movement
+        stateMachine.movementHandler.SetActivity(false);
+        stateMachine.interactionHandler.SetActivity(false);
     }
     public override void Tick(float deltaTime)
     {
@@ -41,5 +45,8 @@ public class PlayerFaintState : PlayerBaseState
     }
     public override void Exit()
     {
+        //Unlock Movement
+        stateMachine.movementHandler.SetActivity(true);
+        stateMachine.interactionHandler.SetActivity(true);
     }
 }

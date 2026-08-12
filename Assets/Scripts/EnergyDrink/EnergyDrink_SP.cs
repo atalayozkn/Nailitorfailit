@@ -13,17 +13,13 @@ public class EnergyDrink_SP : MonoBehaviour, IUsable
     [SerializeField] private UnityEvent onConsumeEvent;
 
     private PlayerStaminaHandler playerStamina;
-    private CarriableObject_SP carriableObject;
+    [SerializeField] private CarriableObject_SP carriableObject;
 
     private bool isUsed;
 
     private void Awake()
     {
-        playerStamina =
-            FindAnyObjectByType<PlayerStaminaHandler>();
-
-        carriableObject =
-            GetComponent<CarriableObject_SP>();
+        playerStamina = FindFirstObjectByType<PlayerStaminaHandler>();
     }
 
     public void OnUse()
@@ -31,10 +27,8 @@ public class EnergyDrink_SP : MonoBehaviour, IUsable
         if (isUsed) return;
 
         isUsed = true;
-
         playerStamina?.GainEnergy(energyRestoreAmount);
         onConsumeEvent?.Invoke();
-
         carriableObject?.OnUsed();
     }
 }

@@ -1,15 +1,6 @@
 using Interactions;
 using UnityEngine;
 using UnityEngine.Events;
-public enum CarriableType
-{
-    Brick,
-    Wood,
-    Stone,
-    Oil,
-    Glass,
-    EnergyDrink
-}
 
 namespace ItemScript
 {
@@ -19,8 +10,8 @@ namespace ItemScript
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Rigidbody rb;
         [SerializeField] private Collider col;
-
-        [SerializeField]
+        [SerializeField] private MeshRenderer objectRenderer;
+        public bool isRawMaterial = false;
         public CarriableType carriableType;
 
         [Header("Settings")]
@@ -136,6 +127,12 @@ namespace ItemScript
             onConsumeEvent?.Invoke();
 
             Destroy(gameObject, objectDiscardDelay);
+        }
+
+        public void SetVisuals(bool condition)
+        {
+            if (condition == objectRenderer.enabled) return;
+            objectRenderer.enabled = condition;
         }
     }
 }

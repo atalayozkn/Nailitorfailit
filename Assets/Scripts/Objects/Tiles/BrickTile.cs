@@ -46,7 +46,10 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     {
         puddleHelper.StartPuddleProcess();
     }
-
+    public void OnElectrocute()
+    {
+        puddleHelper.ElectrocutePuddle();
+    }
     #endregion
 
     #region UTILITIES

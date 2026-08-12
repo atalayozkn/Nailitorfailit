@@ -59,12 +59,17 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     {
         puddleHelper.StartPuddleProcess();
     }
+    public void OnElectrocute()
+    {
+        puddleHelper.ElectrocutePuddle();
+    }
 
     #endregion
 
     #region Breakable
     public void OnPressureApply()
     {
+        if (currentPhase == ConstructionPhase.Construction) return;
         if (!canDealDamage) return;
         canDealDamage = false;
         objectHealth.DealDamage();
