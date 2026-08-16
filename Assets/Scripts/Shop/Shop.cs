@@ -1,6 +1,4 @@
-using System.Collections;
 using Interactions;
-using PlayerScripts;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,19 +6,15 @@ public class Shop : MonoBehaviour, IInteractable
 {
     [Header("Interactable")]
     [SerializeField] private InteractableType interactableType = InteractableType.Shop;
+
     public InteractableType InteractableType => interactableType;
 
-    [Header("Player References")]
-    [SerializeField] private PlayerMovement playerMovement;
-    [SerializeField] private PlayerInteractionHandler playerInteractionHandler;
+    [Header("References")]
     [SerializeField] private PlayerStateMachine playerStateMachine;
-    [SerializeField] private Rigidbody playerRigidbody;
+    [SerializeField] private ShopMenu shopMenu;
 
-    [Header("Camera Target Movement")]
-    [SerializeField] private Transform cameraTarget;
-    [SerializeField] private Transform playerCameraPoint;
-    [SerializeField] private Transform shopCameraPoint;
-    [SerializeField] private float cameraMoveDuration = 0.6f;
+    [Header("Shop Camera")]
+    [SerializeField] private GameObject shopCamera;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onShopOpenedEvent;
@@ -29,148 +23,176 @@ public class Shop : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onHoverOffEvent;
 
     private bool isShopOpen;
-    private Coroutine cameraMoveRoutine;
+    private bool isSubscribedToMenu;
 
+    #region UNITY
+
+    // Shop oluþturulduðunda çalýþýr.
+    // ResolveReferences() ile gerekli PlayerStateMachine ve ShopMenu referanslarýný hazýrlar.
     private void Awake()
     {
         ResolveReferences();
-        MoveCameraTargetInstant(playerCameraPoint);
     }
 
-    private void OnEnable()
-    {
-        ResolveReferences();
-        ShopMenu.Instance.OnShopClosed += HandleShopClosed;
-    }
-
+    // Shop objesi devre dýþý býrakýldýðýnda çalýþýr.
+    // ShopMenu event aboneliðini kaldýrýr ve Shop açýksa Player'ý Shop state'inden çýkarýr.
     private void OnDisable()
     {
-        ShopMenu.Instance.OnShopClosed += HandleShopClosed;
-        StopCameraMoveRoutine();
+        UnsubscribeFromShopMenu();
+
+        if (!isShopOpen) return;
+
+        isShopOpen = false;
+
+        if (playerStateMachine != null)
+        {
+            playerStateMachine.ExitShopState();
+        }
     }
 
+    #endregion
+
+    #region INTERACTION
+
+    // Player Shop ile etkileþime girdiðinde çalýþýr.
+    // Shop zaten açýk deðilse OpenShop() fonksiyonunu çaðýrýr.
     public void OnInteract()
     {
         if (isShopOpen) return;
+
         OpenShop();
     }
 
+    // Player Shop üzerine baktýðýnda veya hover baþladýðýnda çalýþýr.
+    // Shop açýk deðilse onHoverOnEvent eventini tetikler.
     public void OnHoverOn()
     {
         if (isShopOpen) return;
+
         onHoverOnEvent?.Invoke();
     }
 
+    // Player Shop üzerinden bakmayý býraktýðýnda veya hover sona erdiðinde çalýþýr.
+    // onHoverOffEvent eventini tetikler.
     public void OnHoverOff()
     {
         onHoverOffEvent?.Invoke();
     }
 
+    #endregion
+
+    #region SHOP
+
+    // Shop'u açmak için çalýþýr.
+    // Referanslarý kontrol eder, PlayerStateMachine'i Shop state'ine geçirir, ShopMenu eventine abone olur ve menüyü açar.
     private void OpenShop()
     {
-        if (cameraTarget == null)
-        {
-            Debug.LogWarning("CameraTarget atanmadý!");
-            return;
-        }
+        if (!ValidateReferences()) return;
 
-        if (shopCameraPoint == null)
-        {
-            Debug.LogWarning("ShopCameraPoint atanmadý!");
-            return;
-        }
+        bool enteredShop = playerStateMachine.ChangeToShopState(shopCamera);
+
+        if (!enteredShop) return;
 
         isShopOpen = true;
-        LockPlayer();
-        MoveCameraTargetSmooth(shopCameraPoint);
-        ShopMenu.Instance.OpenMenu();
+
+        SubscribeToShopMenu();
+        shopMenu.OpenMenu();
         onShopOpenedEvent?.Invoke();
     }
 
+    // ShopMenu kapandýðýnda çalýþýr.
+    // Event aboneliðini kaldýrýr, Player'ý Shop state'inden çýkarýr ve kapanýþ eventini tetikler.
     private void HandleShopClosed()
     {
         if (!isShopOpen) return;
 
         isShopOpen = false;
-        MoveCameraTargetSmooth(playerCameraPoint);
-        UnlockPlayer();
+
+        UnsubscribeFromShopMenu();
+
+        if (playerStateMachine != null)
+        {
+            playerStateMachine.ExitShopState();
+        }
+
         onShopClosedEvent?.Invoke();
     }
 
-    private void LockPlayer()
+    #endregion
+
+    #region EVENTS
+
+    // ShopMenu.OnShopClosed eventine abone olur.
+    // Daha önce abone olunmuþsa tekrar subscription oluþturmaz.
+    private void SubscribeToShopMenu()
     {
-        if (playerStateMachine != null)
+        if (shopMenu == null) return;
+        if (isSubscribedToMenu) return;
+
+        shopMenu.OnShopClosed += HandleShopClosed;
+        isSubscribedToMenu = true;
+    }
+
+    // ShopMenu.OnShopClosed event aboneliðini kaldýrýr.
+    // Subscription yoksa gereksiz iþlem yapmadan çýkar.
+    private void UnsubscribeFromShopMenu()
+    {
+        if (!isSubscribedToMenu) return;
+
+        if (shopMenu != null)
         {
-            playerStateMachine.ChangeToIdleState();
-        }
-    }
-
-    private void UnlockPlayer()
-    {
-        if (playerMovement != null) playerMovement.enabled = true;
-        if (playerInteractionHandler != null) playerInteractionHandler.enabled = true;
-    }
-
-    private void MoveCameraTargetInstant(Transform targetPoint)
-    {
-        if (cameraTarget == null) return;
-        if (targetPoint == null) return;
-
-        cameraTarget.position = targetPoint.position;
-        cameraTarget.rotation = targetPoint.rotation;
-    }
-
-    private void MoveCameraTargetSmooth(Transform targetPoint)
-    {
-        if (cameraTarget == null) return;
-        if (targetPoint == null) return;
-
-        StopCameraMoveRoutine();
-        cameraMoveRoutine = StartCoroutine(CameraMoveRoutine(targetPoint));
-    }
-
-    private IEnumerator CameraMoveRoutine(Transform targetPoint)
-    {
-        Vector3 startPosition = cameraTarget.position;
-        Quaternion startRotation = cameraTarget.rotation;
-
-        Vector3 targetPosition = targetPoint.position;
-        Quaternion targetRotation = targetPoint.rotation;
-
-        float timer = 0f;
-
-        while (timer < cameraMoveDuration)
-        {
-            timer += Time.unscaledDeltaTime;
-
-            float t = timer / cameraMoveDuration;
-            t = Mathf.SmoothStep(0f, 1f, t);
-
-            cameraTarget.position = Vector3.Lerp(startPosition, targetPosition, t);
-            cameraTarget.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
-
-            yield return null;
+            shopMenu.OnShopClosed -= HandleShopClosed;
         }
 
-        cameraTarget.position = targetPosition;
-        cameraTarget.rotation = targetRotation;
-
-        cameraMoveRoutine = null;
+        isSubscribedToMenu = false;
     }
 
-    private void StopCameraMoveRoutine()
-    {
-        if (cameraMoveRoutine == null) return;
+    #endregion
 
-        StopCoroutine(cameraMoveRoutine);
-        cameraMoveRoutine = null;
-    }
+    #region REFERENCES
 
+    // Shop'un ihtiyaç duyduðu referanslarý hazýrlar.
+    // PlayerStateMachine Inspector'dan atanmadýysa sahneden bulur, ShopMenu boþsa Instance üzerinden alýr.
     private void ResolveReferences()
     {
-        if (playerMovement == null) playerMovement = FindFirstObjectByType<PlayerMovement>();
-        if (playerInteractionHandler == null) playerInteractionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
-        if (playerStateMachine == null) playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
-        if (playerRigidbody == null && playerMovement != null) playerRigidbody = playerMovement.GetComponent<Rigidbody>();
+        if (playerStateMachine == null)
+        {
+            playerStateMachine = FindFirstObjectByType<PlayerStateMachine>();
+        }
+
+        if (shopMenu == null)
+        {
+            shopMenu = ShopMenu.Instance;
+        }
     }
+
+    private bool ValidateReferences()
+    {
+        if (shopMenu == null)
+        {
+            shopMenu = ShopMenu.Instance;
+        }
+
+        if (playerStateMachine == null)
+        {
+            Debug.LogWarning($"{name}: PlayerStateMachine atanmadý.");
+            return false;
+        }
+
+        if (shopMenu == null)
+        {
+            Debug.LogWarning($"{name}: ShopMenu bulunamadý.");
+            return false;
+        }
+
+        if (shopCamera == null)
+        {
+            Debug.LogWarning($"{name}: Shop Camera atanmadý.");
+            return false;
+        }
+
+        return true;
+    }
+
+    #endregion
 }
