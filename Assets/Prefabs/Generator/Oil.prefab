@@ -11,11 +11,10 @@ GameObject:
   - component: {fileID: 4600758815473215852}
   - component: {fileID: 112916290323860073}
   - component: {fileID: 8124965522380569797}
-  - component: {fileID: 8839579033836156022}
   - component: {fileID: 856642975684167946}
   m_Layer: 6
   m_Name: Oil
-  m_TagString: Interactable
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -84,19 +83,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &8839579033836156022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2988083282430940903}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a561c4c0cbb2a31449cd477a465b00ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Oil_SP
-  fuelPercent: 20
 --- !u!114 &856642975684167946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -112,7 +98,10 @@ MonoBehaviour:
   interactableType: 0
   rb: {fileID: 8124965522380569797}
   col: {fileID: 112916290323860073}
-  carriableType: 3
+  objectRenderer: {fileID: 5778013684983244654}
+  isRawMaterial: 0
+  carriableType: 2
+  dropForce: 10
   objectDiscardDelay: 0
   onHoverOnEvent:
     m_PersistentCalls:

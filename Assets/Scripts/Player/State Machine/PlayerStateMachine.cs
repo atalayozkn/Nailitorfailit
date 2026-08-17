@@ -1,4 +1,5 @@
 using PlayerScripts;
+using Unity.Cinemachine;
 using UnityEngine;
 
 public enum PlayerStates
@@ -29,23 +30,13 @@ public class PlayerStateMachine : StateMachine_Player
 
     #endregion
 
-    #region MOVEMENT DATA
-
     [Header("Movement Data")]
     [field: SerializeField] public bool isDead { get; private set; }
-
-    #endregion
 
     #region USE SETTINGS
 
     [Header("Use Settings")]
     [field: SerializeField] public float useDuration { get; private set; }
-
-    #endregion
-
-    #region SHOP
-
-    public GameObject currentShopCamera { get; private set; }
 
     #endregion
 
@@ -71,29 +62,23 @@ public class PlayerStateMachine : StateMachine_Player
 
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
-
     public RespawnManager respawnManager { get; private set; }
 
     #endregion
 
     #region UNITY
 
-    // PlayerStateMachine oluþturulduðunda çalýþýr.
-    // ResolveReferences() ile gerekli Player component ve manager referanslarýný hazýrlar.
-    private void Awake()
-    {
-        ResolveReferences();
-    }
-
     // PlayerStateMachine aktif olduðunda baþlangýç deðerlerini sýfýrlar.
     // Player'ý Idle olarak ayarlar ve SwitchState() ile PlayerIdleState'e geçirir.
+
+    private void Awake()
+    {
+        respawnManager = FindAnyObjectByType<RespawnManager>();
+    }
     private void OnEnable()
     {
-        isDead = false;
         currentReason = DeathReason.None;
-        currentShopCamera = null;
         currentPlayerState = PlayerStates.Idle;
-
         SwitchState(new PlayerIdleState(this));
     }
 
@@ -110,7 +95,6 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Slipping) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
@@ -125,7 +109,6 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Slipping) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
@@ -137,7 +120,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState(this));
@@ -149,7 +131,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.Slipping;
         SwitchState(new PlayerSlippingState(this));
@@ -162,7 +143,6 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Interacting) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
         if (currentPlayerState == PlayerStates.Dead) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.Interacting;
         SwitchState(new PlayerInteractionState(this));
@@ -174,7 +154,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Using) return;
-        if (IsShopStateActive()) return;
 
         currentPlayerState = PlayerStates.Using;
         SwitchState(new PlayerUseState(this));
@@ -185,35 +164,14 @@ public class PlayerStateMachine : StateMachine_Player
     public void ChangeToStunnedState()
     {
         if (currentPlayerState == PlayerStates.Dead) return;
-        if (IsShopStateActive()) return;
-
         currentPlayerState = PlayerStates.Stunned;
         SwitchState(new PlayerFaintState(this));
     }
 
-    public bool ChangeToShopState(GameObject shopCamera)
+    public void ChangeToShopState()
     {
-        if (shopCamera == null) return false;
-        if (!CanEnterShopState()) return false;
-
-        currentShopCamera = shopCamera;
         currentPlayerState = PlayerStates.ShopInspect;
-
         SwitchState(new PlayerShopState(this));
-
-        return true;
-    }
-
-    // Shop state'inden çýkmak için çalýþýr.
-    // Player'ý Idle state'ine geçirir ve PlayerShopState.Exit() tamamlandýktan sonra Shop Camera referansýný temizler.
-    public void ExitShopState()
-    {
-        if (!IsShopStateActive()) return;
-
-        currentPlayerState = PlayerStates.Idle;
-        SwitchState(new PlayerIdleState(this));
-
-        currentShopCamera = null;
     }
 
     // Player'ý Dead state'ine geçirmek için çalýþýr.
@@ -224,8 +182,6 @@ public class PlayerStateMachine : StateMachine_Player
 
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
-
-        currentShopCamera = null;
     }
 
     #endregion
@@ -238,8 +194,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
-
-        currentShopCamera = null;
     }
 
     // State geçiþ kurallarýný kontrol etmeden Player'ý zorla Navigation state'ine geçirir.
@@ -248,8 +202,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
-
-        currentShopCamera = null;
     }
 
     // State geçiþ kurallarýný kontrol etmeden Player'ý zorla OnAir state'ine geçirir.
@@ -258,8 +210,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         currentPlayerState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState(this));
-
-        currentShopCamera = null;
     }
 
     // State geçiþ kurallarýný kontrol etmeden Player'ý zorla Dead state'ine geçirir.
@@ -268,29 +218,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
-
-        currentShopCamera = null;
-    }
-
-    #endregion
-
-    #region STATE RULES
-
-    private bool IsShopStateActive()
-    {
-        return currentPlayerState == PlayerStates.ShopInspect;
-    }
-
-    private bool CanEnterShopState()
-    {
-        if (currentPlayerState == PlayerStates.Dead) return false;
-        if (currentPlayerState == PlayerStates.ShopInspect) return false;
-        if (currentPlayerState == PlayerStates.Slipping) return false;
-        if (currentPlayerState == PlayerStates.Stunned) return false;
-        if (currentPlayerState == PlayerStates.OnAir) return false;
-        if (currentPlayerState == PlayerStates.Using) return false;
-
-        return true;
     }
 
     #endregion
@@ -340,45 +267,6 @@ public class PlayerStateMachine : StateMachine_Player
         bool crashActive = rb.linearVelocity.sqrMagnitude > crashVelocitySqr;
 
         crashHelper.SetActivity(crashActive);
-    }
-
-    #endregion
-
-    #region REFERENCES
-
-    // PlayerStateMachine'in ihtiyaç duyduðu eksik referanslarý hazýrlar.
-    // GetComponent, GetComponentInChildren ve FindAnyObjectByType yalnýzca referans boþsa çalýþýr.
-    private void ResolveReferences()
-    {
-        if (movementHandler == null)
-        {
-            movementHandler = GetComponent<PlayerMovement>();
-        }
-
-        if (rb == null)
-        {
-            rb = GetComponent<Rigidbody>();
-        }
-
-        if (interactionHandler == null)
-        {
-            interactionHandler = GetComponent<PlayerInteractionHandler>();
-        }
-
-        if (crashHelper == null)
-        {
-            crashHelper = GetComponent<PlayerCrashHelper>();
-        }
-
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
-
-        if (respawnManager == null)
-        {
-            respawnManager = FindAnyObjectByType<RespawnManager>();
-        }
     }
 
     #endregion

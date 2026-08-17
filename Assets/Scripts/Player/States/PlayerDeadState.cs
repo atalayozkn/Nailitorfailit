@@ -7,6 +7,8 @@ public class PlayerDeadState : PlayerBaseState
     public PlayerDeadState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.SetDead(true);
+
         switch (stateMachine.currentReason)
         {
             case DeathReason.Car:
@@ -32,6 +34,6 @@ public class PlayerDeadState : PlayerBaseState
     }
     public override void Exit()
     {
-
+        stateMachine.SetDead(false);
     }
 }

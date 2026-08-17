@@ -91,6 +91,7 @@ public class PuddleHelper : MonoBehaviour
     #region Electricity Related
     public void ElectrocutePuddle()
     {
+        if (currentState != PuddleState.Active) return;
         electrocuteHelper.SetActivity(true);
     }
 

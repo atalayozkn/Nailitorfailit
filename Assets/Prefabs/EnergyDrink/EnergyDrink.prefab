@@ -128,10 +128,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnergyDrink_SP
   energyRestoreAmount: 50
+  carriableObject: {fileID: 3746698825378064229}
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
-  carriableObject: {fileID: 3746698825378064229}
 --- !u!54 &2768673015821395568
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -172,11 +172,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
-  rb: {fileID: 0}
-  col: {fileID: 0}
-  objectRenderer: {fileID: 0}
+  rb: {fileID: 2768673015821395568}
+  col: {fileID: 4490502253620378599}
+  objectRenderer: {fileID: 8897738294891637471}
   isRawMaterial: 0
-  carriableType: 0
+  carriableType: 4
   dropForce: 10
   objectDiscardDelay: 3
   onHoverOnEvent:

@@ -101,13 +101,13 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
-
         CheckMovementInput();
         CheckJumpInput();
     }
 
     private void FixedUpdate()
     {
+        if (!isActive) return;
         GroundCheck();
         HandleMovement();
         HandleRotation();
@@ -157,11 +157,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (!isActive) return;
-
         if (!isInputPresent)
         {
-            if (!interactHandler.IsInteracting())
+            if (!interactHandler.IsInteracting() && isActive)
             {
                 stateMachine.ChangeToIdleState();
             }
@@ -193,12 +191,12 @@ public class PlayerMovement : MonoBehaviour
 
         staminaHandler.ConsumeEnergy(moveCost);
         rb.AddForce(transform.forward * force,ForceMode.Force);
-        stateMachine.ChangeToNavigationState();
+
+        if (isActive) stateMachine.ChangeToNavigationState();
     }
 
     private void HandleRotation()
     {
-        if (!isActive) return;
         if (!isInputPresent) return;
 
         Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
@@ -270,12 +268,7 @@ public class PlayerMovement : MonoBehaviour
     }
     private bool ShouldApplyForce()
     {
-        Vector3 horizontalVelocity = new Vector3(
-            rb.linearVelocity.x,
-            0f,
-            rb.linearVelocity.z
-        );
-
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         return horizontalVelocity.sqrMagnitude < maxSpeedSqr;
     }
     #endregion
