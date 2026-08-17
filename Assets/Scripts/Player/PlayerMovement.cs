@@ -52,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isSprinting;
     private bool isJumping;
     private bool isGrounded;
+    private bool wasGrounded;
 
     private void OnEnable()
     {
@@ -73,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
         isActive = true;
         isSprinting = false;
         isJumping = false;
-
+        wasGrounded = true;
         maxSpeedSqr = maxAllowableVelocity * maxAllowableVelocity;
         rb.linearDamping = defaultMoveDamping;
         rb.angularDamping = defaultRotationDamping;
@@ -109,6 +110,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isActive) return;
         GroundCheck();
+        if (isJumping) return;
         HandleMovement();
         HandleRotation();
     }
@@ -116,6 +118,11 @@ public class PlayerMovement : MonoBehaviour
     private void GroundCheck()
     {
         isGrounded = Physics.Raycast(detectionTransform.position, Vector3.down, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore);
+
+        if (isGrounded == wasGrounded) return;
+        if (isGrounded) SetJumping(false);
+
+        wasGrounded = isGrounded;
     }
 
     private void CheckMovementInput()
@@ -147,17 +154,12 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        isJumping = jump.action.WasPressedThisFrame();
-
-        if (isJumping)
-        {
-            HandleJump();
-        }
+        if(jump.action.WasPressedThisFrame()) HandleJump();
     }
 
     private void HandleMovement()
     {
-        if (!isInputPresent)
+        if (moveInput.y < 0.01f)
         {
             if (!interactHandler.IsInteracting() && isActive)
             {
@@ -190,9 +192,10 @@ public class PlayerMovement : MonoBehaviour
         }
 
         staminaHandler.ConsumeEnergy(moveCost);
-        rb.AddForce(transform.forward * force,ForceMode.Force);
 
-        if (isActive) stateMachine.ChangeToNavigationState();
+        rb.AddForce(transform.forward * (force * moveInput.y), ForceMode.Force);
+
+        stateMachine.ChangeToNavigationState();
     }
 
     private void HandleRotation()
@@ -200,22 +203,17 @@ public class PlayerMovement : MonoBehaviour
         if (!isInputPresent) return;
 
         Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
-        Vector3 cross = Vector3.Cross(transform.forward, inputDirection);
-        rb.AddTorque(Vector3.up * cross.y * rotateForce, ForceMode.Acceleration);
+        Vector3 cross = Vector3.Cross(Vector3.forward, inputDirection);
+        rb.AddTorque(transform.up * cross.y * rotateForce, ForceMode.Acceleration);
     }
 
     private void HandleJump()
     {
         if (!isGrounded) return;
+        if (isJumping) return;
 
         SetJumping(true);
-
-        Vector3 velocity = rb.linearVelocity;
-        velocity.y = 0f;
-        rb.linearVelocity = velocity;
-
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        isJumping = false;
     }
 
     #region UTILITIES
@@ -257,11 +255,11 @@ public class PlayerMovement : MonoBehaviour
 
             rb.linearDamping = onAirMoveDamping;
             rb.angularDamping = onAirRotationDamping;
-
             stateMachine.ChangeToOnAirState();
         }
         else
         {
+            isJumping = false;
             rb.linearDamping = defaultMoveDamping;
             rb.angularDamping = defaultRotationDamping;
         }

@@ -261,12 +261,16 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (condition)
         {
+            movementHandler.SetActivity(false);
+            interactionHandler.SetActivity(false);
             ragdollParent.SetActive(true);
             playerRenderer.enabled = false;
             ragdollRb.linearVelocity = rb.linearVelocity * 3.0f;
         }
         else
         {
+            movementHandler.SetActivity(true);
+            interactionHandler.SetActivity(true);
             ragdollParent.SetActive(false);
             playerRenderer.enabled = true;
         }

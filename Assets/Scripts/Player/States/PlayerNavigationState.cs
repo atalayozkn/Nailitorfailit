@@ -19,17 +19,26 @@ public class PlayerNavigationState : PlayerBaseState
 
     public override void Tick(float deltaTime)
     {
-        UpdateNavigationAnimation();
+        if (stateMachine.movementHandler.IsRunning() && currentAnimationHash == walkHash)
+        {
+            UpdateNavigationAnimation();
+        }
+
+        if (stateMachine.movementHandler.IsRunning() && currentAnimationHash == runHash)
+        {
+            UpdateNavigationAnimation();
+        }
     }
 
     public override void FixedTick(float fixedDeltaTime)
     {
+
     }
 
     public override void Exit()
     {
-    }
 
+    }
     private void UpdateNavigationAnimation()
     {
         int targetHash;
