@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PlayerFaintState : PlayerBaseState
 {
-    public static readonly int faintedHash = Animator.StringToHash("Faint");
     public static readonly int standHash = Animator.StringToHash("Stand");
 
     private float counterTime;
@@ -14,8 +13,8 @@ public class PlayerFaintState : PlayerBaseState
     public PlayerFaintState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
-        stateMachine.animator.CrossFadeInFixedTime(faintedHash, 0.1f);
-        stateMachine.rb.linearVelocity = Vector3.zero;
+        stateMachine.SetRagdoll(true);
+        //.rb.linearVelocity = Vector3.zero;
         counterTime = 0;
 
         //Stop Movement
@@ -28,6 +27,7 @@ public class PlayerFaintState : PlayerBaseState
 
         if (counterTime >= faintedDuration && !isFaintComplete)
         {
+            stateMachine.SetRagdoll(false);
             stateMachine.animator.CrossFadeInFixedTime(standHash, 0f);
             counterTime = 0;
             isFaintComplete = true;

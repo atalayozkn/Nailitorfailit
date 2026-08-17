@@ -17,30 +17,24 @@ public enum PlayerStates
 
 public class PlayerStateMachine : StateMachine_Player
 {
-    #region REFERENCES
-
     [Header("References")]
     [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
     [field: SerializeField] public Transform detectionTransform { get; private set; }
     [field: SerializeField] public Rigidbody rb { get; private set; }
+    [field: SerializeField] public Rigidbody ragdollRb { get; private set; }
     [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
     [field: SerializeField] public Animator animator { get; private set; }
     [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
-
-    #endregion
+    [field: SerializeField] public CinemachineCamera playerCamera { get; private set; }
+    [field: SerializeField] public GameObject ragdollParent { get; private set; }
+    [field: SerializeField] public SkinnedMeshRenderer playerRenderer { get; private set; }
 
     [Header("Movement Data")]
     [field: SerializeField] public bool isDead { get; private set; }
 
-    #region USE SETTINGS
-
     [Header("Use Settings")]
     [field: SerializeField] public float useDuration { get; private set; }
-
-    #endregion
-
-    #region SLIP SETTINGS
 
     [Header("Slip Settings")]
     [field: SerializeField] public float slipCheckDistance { get; private set; }
@@ -48,32 +42,20 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public float slipCheckRadius { get; private set; }
     [field: SerializeField] public LayerMask slipperyMask { get; private set; }
 
-    #endregion
-
-    #region CRASH SETTINGS
-
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
     [field: SerializeField] public bool debugMode;
-
-    #endregion
-
-    #region DEATH SETTINGS
 
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
     public RespawnManager respawnManager { get; private set; }
 
-    #endregion
-
-    #region UNITY
-
-    // PlayerStateMachine aktif olduðunda baþlangýç deðerlerini sýfýrlar.
-    // Player'ý Idle olarak ayarlar ve SwitchState() ile PlayerIdleState'e geçirir.
-
+    private Transform initialTarget;
     private void Awake()
     {
         respawnManager = FindAnyObjectByType<RespawnManager>();
+        initialTarget = playerCamera.Follow;
+        SetRagdoll(false);
     }
     private void OnEnable()
     {
@@ -81,8 +63,6 @@ public class PlayerStateMachine : StateMachine_Player
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
     }
-
-    #endregion
 
     #region STATES
 
@@ -222,7 +202,7 @@ public class PlayerStateMachine : StateMachine_Player
 
     #endregion
 
-    #region DEATH
+    #region DEATH REASON
 
     // Player'ýn ölüm sebebini deðiþtirir.
     // Ayný deðer zaten kayýtlýysa gereksiz assignment yapmadan çýkar.
@@ -267,6 +247,29 @@ public class PlayerStateMachine : StateMachine_Player
         bool crashActive = rb.linearVelocity.sqrMagnitude > crashVelocitySqr;
 
         crashHelper.SetActivity(crashActive);
+    }
+    public void SetTrackTarget(Transform target)
+    {
+        playerCamera.Follow = target;
+        Invoke(nameof(ReverseTrack), 5.0f);
+    }
+    private void ReverseTrack()
+    {
+        playerCamera.Follow = initialTarget;
+    }
+    public void SetRagdoll(bool condition)
+    {
+        if (condition)
+        {
+            ragdollParent.SetActive(true);
+            playerRenderer.enabled = false;
+            ragdollRb.linearVelocity = rb.linearVelocity * 3.0f;
+        }
+        else
+        {
+            ragdollParent.SetActive(false);
+            playerRenderer.enabled = true;
+        }
     }
 
     #endregion

@@ -21,9 +21,15 @@ public class PlayerSlippingState : PlayerBaseState
     {
         stateMachine.SetCrashActivity();
 
-        if (stateMachine.ShouldRecoverFromSlip())
+        if (stateMachine.ShouldRecoverFromSlip() && !stateMachine.movementHandler.IsRunning())
         {
             stateMachine.ForceSwitchToIdleState();
+            return;
+        }
+
+        if (stateMachine.ShouldRecoverFromSlip() && stateMachine.movementHandler.IsRunning())
+        {
+            stateMachine.ChangeToStunnedState();
         }
     }
     public override void Exit()

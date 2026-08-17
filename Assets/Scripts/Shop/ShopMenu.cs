@@ -1,9 +1,6 @@
-using System;
-using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 public class ShopMenu : MonoBehaviour
 {
@@ -44,18 +41,19 @@ public class ShopMenu : MonoBehaviour
             currentIndex = 0;
             UpdateUI(currentIndex);
             EnableInput();
+            marker.SetVisual(true);
         }
         else
         {
             DisableInput();
             stateMachine.ChangeToIdleState();
+            marker.SetVisual(false);
         }
     }
 
     private void Update()
     {
         if (!isActive) return;
-
         ListenForInput();
     }
 

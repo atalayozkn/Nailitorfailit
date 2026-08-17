@@ -6,19 +6,21 @@ public class ShopMarker : MonoBehaviour
     [SerializeField] private float moveDuration = 0.2f;
     [SerializeField] private GameObject markerVisualObject;
 
-    private Coroutine moveRoutine;
-    private bool isMoving;
+    private bool isMoving = false;
 
+    private void OnEnable()
+    {
+        markerVisualObject.SetActive(false);
+        isMoving = false;
+    }
     public void MoveTo(Transform targetTransform)
     {
-        if (moveRoutine != null) StopCoroutine(moveRoutine);
-        moveRoutine = StartCoroutine(MoveRoutine(targetTransform));
+        if (isMoving) return;
+        isMoving = true;
+        StartCoroutine(MoveRoutine(targetTransform));
     }
     private IEnumerator MoveRoutine(Transform targetTransform)
     {
-        isMoving = true;
-        markerVisualObject.SetActive(true);
-
         Vector3 startPosition = transform.position;
         Vector3 targetPosition = targetTransform.position;
 
@@ -35,13 +37,10 @@ public class ShopMarker : MonoBehaviour
         }
 
         transform.position = targetPosition;
-
         isMoving = false;
-        markerVisualObject.SetActive(false);
-        moveRoutine = null;
     }
-    public bool IsMoving()
+    public void SetVisual(bool condition)
     {
-        return isMoving;
+        markerVisualObject.SetActive(condition);
     }
 }

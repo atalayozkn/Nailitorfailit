@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 public class MixerHandle : MonoBehaviour, IInteractable
 {
+    [SerializeField] private float mixDuration;
     [SerializeField] private InteractableType interactableType = InteractableType.Station;
     [SerializeField] private Mixer connectedMixer;
     [SerializeField] private UnityEvent onHoverOnEvent;

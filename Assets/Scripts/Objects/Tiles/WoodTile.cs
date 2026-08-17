@@ -11,6 +11,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private FireHelper fireHelper;
     [SerializeField] private PuddleHelper puddleHelper;
+    [SerializeField] private bool isFloorTile;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
@@ -64,11 +65,13 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     #region WATER
     public void OnWaterContact()
     {
+        if (!isFloorTile) return;
         if (currentPhase == ConstructionPhase.Construction) return;
         puddleHelper.StartPuddleProcess();
     }
     public void OnElectrocute()
     {
+        if (!isFloorTile) return;
         if (currentPhase == ConstructionPhase.Construction) return;
         puddleHelper.ElectrocutePuddle();
     }

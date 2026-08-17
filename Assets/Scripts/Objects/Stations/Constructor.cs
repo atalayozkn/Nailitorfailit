@@ -11,6 +11,7 @@ namespace ItemScript
         [SerializeField] private GameObject bluePrintObject;
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Collider interactionCollider;
+        [SerializeField] private CarriableType acceptedType;
 
         [Header("GameObject References")]
         [SerializeField] private GameObject woodObject;
@@ -37,8 +38,10 @@ namespace ItemScript
         public void OnInteract()
         {
             var carriable = interactionHandler.GetCurrentCarriable();
+            if (carriable == null) return;
             if (carriable.isRawMaterial) return;
             currentCarriableType = interactionHandler.GetCurrentCarriableType();
+            if (currentCarriableType != acceptedType) return;
             Construct(currentCarriableType);
             onInteractEvent.Invoke();
         }

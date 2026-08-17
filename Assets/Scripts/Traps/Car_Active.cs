@@ -42,17 +42,15 @@ public class Car_Active : MonoBehaviour
     {
         if (!canCrash) return;
         if ((whatIsPlayer.value & (1 << other.gameObject.layer)) == 0) return;
-
         Crash(other);
     }
-
     private void Crash(Collider other)
     {
         if (other.gameObject.TryGetComponent<PlayerStateMachine>(out var stateMachine))
         {
+            stateMachine.SetTrackTarget(transform);
             stateMachine.SetDeathReason(DeathReason.Car);
             stateMachine.ChangeToDeadState();
-
             mockPlayerObject.SetActive(true);
         }
     }

@@ -91,7 +91,7 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (!AddEnergy(oilEnergyAmount)) return false;
 
-        carriedObject.OnUsed();
+        carriedObject.OnConsume();
         return true;
     }
 

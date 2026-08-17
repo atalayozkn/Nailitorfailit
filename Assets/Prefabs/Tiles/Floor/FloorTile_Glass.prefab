@@ -168,6 +168,7 @@ MonoBehaviour:
   processHelper: {fileID: 8436504013798781889}
   puddleHelper: {fileID: 8876022540176167925}
   objectHealth: {fileID: 5445056546197578908}
+  isFloorTile: 0
   pressureDamageDelay: 1
   onHoverOnEvent:
     m_PersistentCalls:
@@ -203,7 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractionProcessHelper
   canvasHelper: {fileID: 7743103052411739974}
   maxProcessAmount: 100
-  processPerInteract: 25
+  processPerInteract: 100
   onConstructionStarted:
     m_PersistentCalls:
       m_Calls: []

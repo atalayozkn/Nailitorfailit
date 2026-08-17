@@ -42,7 +42,7 @@ public class Generator_Prototype : MonoBehaviour, IInteractable
         CarriableObject_SP currentCarriable = interactionHandler.GetCurrentCarriable();
         if (currentCarriable == null) return;
 
-        currentCarriable.OnUsed();
+        currentCarriable.OnConsume();
         GainEnergy(perOilGainAmount);
     }
     public void OnHoverOn()

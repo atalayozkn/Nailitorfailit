@@ -170,6 +170,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyText
   textComponent: {fileID: 497476729}
+  onGainEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onSpendEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onRejectEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &497476729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1962,15 +1971,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5804713b2b11864fa2f70385b56dcbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyManager
-  onGainEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  onSpendEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  onRejectionEvent:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &1521122446
 Transform:
   m_ObjectHideFlags: 0
@@ -2832,7 +2832,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameSceneManager
   scenes:
   - MainMenu
-  - ExampleScene
+  - Level_01_Arda
 --- !u!4 &1926751209
 Transform:
   m_ObjectHideFlags: 0

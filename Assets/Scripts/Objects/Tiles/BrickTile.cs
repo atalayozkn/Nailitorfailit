@@ -10,6 +10,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private ObjectHealth objectHealth;
     [SerializeField] private PuddleHelper puddleHelper;
+    [SerializeField] private bool isFloorTile;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
@@ -44,10 +45,12 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     #region Water Related
     public void OnWaterContact()
     {
+        if (!isFloorTile) return;
         puddleHelper.StartPuddleProcess();
     }
     public void OnElectrocute()
     {
+        if (!isFloorTile) return;
         puddleHelper.ElectrocutePuddle();
     }
     #endregion

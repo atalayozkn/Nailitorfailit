@@ -103,28 +103,15 @@ namespace ItemScript
                 rb.AddForce(direction * dropForce, ForceMode.Impulse);
             }
         }
-        public void OnUsed()
-        {
-            if (isConsumed)
-            {
-                return;
-            }
-
-            playerInteraction.ClearCarriedObject(false);
-            OnConsume();
-        }
 
         public void OnConsume()
         {
-            if (isConsumed)
-            {
-                return;
-            }
-
+            if (isConsumed) return;
             isConsumed = true;
 
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
+            playerInteraction.ClearCarriedObject(false);
 
             Destroy(gameObject, objectDiscardDelay);
         }

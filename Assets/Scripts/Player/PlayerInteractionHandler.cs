@@ -31,8 +31,9 @@ public class PlayerInteractionHandler : MonoBehaviour
     [SerializeField] private float groundDistance = 1.3f;
     [SerializeField] private float groundRadius = 0.35f;
 
-    [Header("Interaction")]
+    [Header("Duration Settings")]
     [SerializeField] private float interactCooldown = 1.0f;
+    [SerializeField] private float useCooldown = 1.0f;
 
     private IInteractable currentInteractable;
     private InteractableType currentInteractableType;
@@ -43,6 +44,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     private bool isCarrying;
     private bool isInteractOnCooldown;
     private bool isActive;
+    private bool isUseOnCooldown;
 
     private Coroutine detectionRoutine;
 
@@ -94,21 +96,16 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (!isActive) return;
         if (isInteractOnCooldown) return;
-
         if (useAction != null && useAction.action != null && useAction.action.IsPressed())
         {
-            if (HandleUse())
-            {
-                return;
-            }
+            HandleUse();
+            isUseOnCooldown = true;
+            Invoke(nameof(ReverseUseCooldown), useCooldown);
         }
-
         if (interactAction != null && interactAction.action != null && interactAction.action.IsPressed())
         {
             HandleInteract();
-
             isInteractOnCooldown = true;
-
             Invoke(nameof(ResetInteractCooldown), interactCooldown);
         }
     }
@@ -173,21 +170,13 @@ public class PlayerInteractionHandler : MonoBehaviour
         stateMachine.ChangeToInteractState();
     }
 
-    private bool HandleUse()
+    private void HandleUse()
     {
-        if (currentCarriable == null)
+        if (currentCarriable != null && currentCarriableType == CarriableType.EnergyDrink)
         {
-            return false;
+            IUsable usable = currentCarriable.gameObject.GetComponent<IUsable>();
+            if (usable != null) usable.OnUse();
         }
-
-        if (!currentCarriable.TryGetComponent<IUsable>(out var usable))
-        {
-            return false;
-        }
-
-        stateMachine.ChangeToUseState();
-        usable.OnUse();
-        return true;
     }
 
     #region UTILITIES
@@ -271,6 +260,11 @@ public class PlayerInteractionHandler : MonoBehaviour
     private void ResetInteractCooldown()
     {
         isInteractOnCooldown = false;
+    }
+
+    private void ReverseUseCooldown()
+    {
+        isUseOnCooldown = false;
     }
     #endregion
 

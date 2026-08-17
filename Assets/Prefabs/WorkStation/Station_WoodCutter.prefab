@@ -671,7 +671,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Station
   interactableType: 2
-  acceptedCarriableTypes: 
+  acceptedCarriableTypes: 000000000100000003000000
   placementTransform: {fileID: 3615973006135494468}
   spawnTransform: {fileID: 240593471097425971}
   processHelper: {fileID: 8685348541890431284}
@@ -679,7 +679,7 @@ MonoBehaviour:
   spawnCount: 2
   spawnDelay: 1
   woodProduct: {fileID: 6479617406932401784, guid: 4cf9bf6b5946a0345b0aed02ea5222fb, type: 3}
-  glassProduct: {fileID: 0}
+  glassProduct: {fileID: 2451140924364856572, guid: 0c3151d814f447049b6a51a03ec182ae, type: 3}
   brickProduct: {fileID: 6479617406932401784, guid: 3a69bfb3e9c6a504280f63b339b81471, type: 3}
   perProcessCost: 5
   onSpawnEvent:
@@ -729,7 +729,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractionProcessHelper
   canvasHelper: {fileID: 4456850146704909037}
   maxProcessAmount: 100
-  processPerInteract: 25
+  processPerInteract: 50
   onConstructionStarted:
     m_PersistentCalls:
       m_Calls: []
