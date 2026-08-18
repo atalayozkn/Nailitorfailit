@@ -6,7 +6,7 @@ public class PlayerFaintState : PlayerBaseState
 
     private float counterTime;
     private float faintedDuration = 2.4f;
-    private float standDuration = 3.1f;
+    private float standDuration = 2.0f;
 
     bool isFaintComplete = false;
 
@@ -48,5 +48,6 @@ public class PlayerFaintState : PlayerBaseState
         //Unlock Movement
         stateMachine.movementHandler.SetActivity(true);
         stateMachine.interactionHandler.SetActivity(true);
+        stateMachine.SetRagdoll(false);
     }
 }

@@ -2068,12 +2068,12 @@ MonoBehaviour:
   baseMoveCost: 1
   carryCostMultiplier: 3
   sprintCostMultiplier: 2
-  jumpForce: 13
+  jumpForce: 10
   defaultMoveDamping: 10
   slipperyMoveDamping: 2.5
   defaultRotationDamping: 10
   slipperyRotationDamping: 1
-  onAirMoveDamping: 1
+  onAirMoveDamping: 0.25
   onAirRotationDamping: 0.5
   whatIsGround:
     serializedVersion: 2

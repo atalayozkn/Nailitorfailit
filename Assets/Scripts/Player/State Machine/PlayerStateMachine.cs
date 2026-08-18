@@ -144,6 +144,7 @@ public class PlayerStateMachine : StateMachine_Player
     public void ChangeToStunnedState()
     {
         if (currentPlayerState == PlayerStates.Dead) return;
+        if (currentPlayerState == PlayerStates.Stunned) return;
         currentPlayerState = PlayerStates.Stunned;
         SwitchState(new PlayerFaintState(this));
     }

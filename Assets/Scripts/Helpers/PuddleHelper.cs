@@ -67,8 +67,8 @@ public class PuddleHelper : MonoBehaviour
         yield return StartCoroutine(PuddleAppearRoutine());
         SwitchState(PuddleState.Active);
         yield return StartCoroutine(PuddleRemainRoutine());
-        yield return StartCoroutine(PuddleDisappearRoutine());
         SwitchState(PuddleState.InActive);
+        yield return StartCoroutine(PuddleDisappearRoutine());
     }
     private IEnumerator PuddleAppearRoutine()
     {
