@@ -4,10 +4,8 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Pickup
-  - WallOrFloor
-  - Trap
-  - Interactable
+  - InMenu
+  - InGame
   layers:
   - Default
   - TransparentFX
@@ -17,8 +15,8 @@ TagManager:
   - UI
   - Interaction
   - Player
-  - groundLayer
-  - 
+  - Ground
+  - Slippery
   - 
   - 
   - 
