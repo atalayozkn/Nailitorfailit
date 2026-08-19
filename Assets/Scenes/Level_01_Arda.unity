@@ -17570,7 +17570,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 160400105}
   - {fileID: 1263461411}
@@ -21087,26 +21087,6 @@ PrefabInstance:
     - target: {fileID: 3219694094062422217, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: maxEnergy
-      value: 10000
-      objectReference: {fileID: 0}
-    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: rechargeDelay
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: drainedDuration
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: perChargeAmount
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: energisedDuration
-      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 6044505348918361584, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
       propertyPath: m_Name

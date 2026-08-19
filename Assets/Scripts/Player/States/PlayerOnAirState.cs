@@ -69,7 +69,7 @@ public class PlayerOnAirState : PlayerBaseState
     private void HandleLandingPhase()
     {
         if (counterTime < 0.1f) return;
-        if (stateMachine.movementHandler.IsMoving()) stateMachine.ForceSwitchToNavigationState();
-        else stateMachine.ForceSwitchToIdleState();
+        if (stateMachine.movementHandler.IsMoving()) stateMachine.ChangeToNavigationState();
+        else stateMachine.ChangeToIdleState();
     }
 }

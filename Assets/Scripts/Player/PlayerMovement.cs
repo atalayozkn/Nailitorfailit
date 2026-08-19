@@ -53,30 +53,21 @@ public class PlayerMovement : MonoBehaviour
     private bool isInputPresent;
     private bool isSprinting;
     private bool isJumping;
+    private bool isSlipping;
     private bool isGrounded;
     private bool wasGrounded;
 
     private void OnEnable()
     {
-        if (move != null && move.action != null)
-        {
-            move.action.Enable();
-        }
-
-        if (jump != null && jump.action != null)
-        {
-            jump.action.Enable();
-        }
-
-        if (sprint != null && sprint.action != null)
-        {
-            sprint.action.Enable();
-        }
+        if (move != null && move.action != null) move.action.Enable();
+        if (jump != null && jump.action != null) jump.action.Enable();
+        if (sprint != null && sprint.action != null) sprint.action.Enable();
 
         isActive = true;
         isSprinting = false;
         isJumping = false;
         wasGrounded = true;
+        isSlipping = false;
         maxSpeedSqr = maxAllowableVelocity * maxAllowableVelocity;
         rb.linearDamping = defaultMoveDamping;
         rb.angularDamping = defaultRotationDamping;
@@ -85,20 +76,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDisable()
     {
-        if (move != null && move.action != null)
-        {
-            move.action.Disable();
-        }
-
-        if (jump != null && jump.action != null)
-        {
-            jump.action.Disable();
-        }
-
-        if (sprint != null && sprint.action != null)
-        {
-            sprint.action.Disable();
-        }
+        if (move != null && move.action != null) move.action.Disable();
+        if (jump != null && jump.action != null) jump.action.Disable();
+        if (sprint != null && sprint.action != null) sprint.action.Disable();
     }
 
     private void Update()
@@ -163,7 +143,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isInputPresent)
         {
-            if (!interactHandler.IsInteracting() && isActive)
+            if (!interactHandler.IsInteracting() && isActive && !isSlipping)
             {
                 stateMachine.ChangeToIdleState();
             }
@@ -198,6 +178,8 @@ public class PlayerMovement : MonoBehaviour
         staminaHandler.ConsumeEnergy(moveCost);
 
         rb.AddForce(moveDirection * force, ForceMode.Force);
+
+        if (isSlipping) return;
         stateMachine.ChangeToNavigationState();
     }
 
@@ -254,11 +236,13 @@ public class PlayerMovement : MonoBehaviour
     {
         if (condition)
         {
+            isSlipping = true;
             rb.linearDamping = slipperyMoveDamping;
             rb.angularDamping = slipperyRotationDamping;
         }
         else
         {
+            isSlipping = false;
             rb.linearDamping = defaultMoveDamping;
             rb.angularDamping = defaultRotationDamping;
         }

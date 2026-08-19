@@ -56,7 +56,16 @@ public class PlayerStateMachine : StateMachine_Player
     {
         respawnManager = FindAnyObjectByType<RespawnManager>();
         initialTarget = playerCamera.Follow;
-        SetRagdoll(false);
+
+        //Disable of Ragdoll
+        foreach (var joint in ragdollJoints) joint.enableCollision = false;
+        foreach (var col in ragdollColliders) col.enabled = false;
+        foreach (var rb in ragdollRigidBodies)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.detectCollisions = false;
+            rb.useGravity = false;
+        }
     }
     private void OnEnable()
     {
@@ -73,10 +82,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Idle) return;
-        if (currentPlayerState == PlayerStates.Slipping) return;
-        if (currentPlayerState == PlayerStates.Stunned) return;
-        if (currentPlayerState == PlayerStates.OnAir) return;
-
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
     }
@@ -87,10 +92,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Navigation) return;
-        if (currentPlayerState == PlayerStates.Slipping) return;
-        if (currentPlayerState == PlayerStates.Stunned) return;
-        if (currentPlayerState == PlayerStates.OnAir) return;
-
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
     }
@@ -101,7 +102,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-
         currentPlayerState = PlayerStates.OnAir;
         SwitchState(new PlayerOnAirState(this));
     }
@@ -112,7 +112,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.OnAir) return;
-
         currentPlayerState = PlayerStates.Slipping;
         SwitchState(new PlayerSlippingState(this));
     }
@@ -122,9 +121,7 @@ public class PlayerStateMachine : StateMachine_Player
     public void ChangeToInteractState()
     {
         if (currentPlayerState == PlayerStates.Interacting) return;
-        if (currentPlayerState == PlayerStates.Stunned) return;
         if (currentPlayerState == PlayerStates.Dead) return;
-
         currentPlayerState = PlayerStates.Interacting;
         SwitchState(new PlayerInteractionState(this));
     }
@@ -135,7 +132,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Using) return;
-
         currentPlayerState = PlayerStates.Using;
         SwitchState(new PlayerUseState(this));
     }
@@ -149,7 +145,6 @@ public class PlayerStateMachine : StateMachine_Player
         currentPlayerState = PlayerStates.Stunned;
         SwitchState(new PlayerStunnedState(this));
     }
-
     public void ChangeToStandState()
     {
         if (currentPlayerState == PlayerStates.Stand) return;
@@ -159,6 +154,8 @@ public class PlayerStateMachine : StateMachine_Player
     }
     public void ChangeToShopState()
     {
+        if (currentPlayerState == PlayerStates.ShopInspect) return;
+        if (currentPlayerState == PlayerStates.Dead) return;
         currentPlayerState = PlayerStates.ShopInspect;
         SwitchState(new PlayerShopState(this));
     }
@@ -168,43 +165,6 @@ public class PlayerStateMachine : StateMachine_Player
     public void ChangeToDeadState()
     {
         if (currentPlayerState == PlayerStates.Dead) return;
-
-        currentPlayerState = PlayerStates.Dead;
-        SwitchState(new PlayerDeadState(this));
-    }
-
-    #endregion
-
-    #region FORCE STATES
-
-    // State geçiþ kurallarýný kontrol etmeden Player'ý zorla Idle state'ine geçirir.
-    // SwitchState() ile PlayerIdleState'e geçer ve Shop Camera referansýný temizler.
-    public void ForceSwitchToIdleState()
-    {
-        currentPlayerState = PlayerStates.Idle;
-        SwitchState(new PlayerIdleState(this));
-    }
-
-    // State geçiþ kurallarýný kontrol etmeden Player'ý zorla Navigation state'ine geçirir.
-    // SwitchState() ile PlayerNavigationState'e geçer ve Shop Camera referansýný temizler.
-    public void ForceSwitchToNavigationState()
-    {
-        currentPlayerState = PlayerStates.Navigation;
-        SwitchState(new PlayerNavigationState(this));
-    }
-
-    // State geçiþ kurallarýný kontrol etmeden Player'ý zorla OnAir state'ine geçirir.
-    // SwitchState() ile PlayerOnAirState'e geçer ve Shop Camera referansýný temizler.
-    public void ForceSwitchToOnAirState()
-    {
-        currentPlayerState = PlayerStates.OnAir;
-        SwitchState(new PlayerOnAirState(this));
-    }
-
-    // State geçiþ kurallarýný kontrol etmeden Player'ý zorla Dead state'ine geçirir.
-    // SwitchState() ile PlayerDeadState'e geçer ve Shop Camera referansýný temizler.
-    public void ForceSwitchToDeadState()
-    {
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
     }
@@ -218,7 +178,6 @@ public class PlayerStateMachine : StateMachine_Player
     public void SetDeathReason(DeathReason reason)
     {
         if (currentReason == reason) return;
-
         currentReason = reason;
     }
 
@@ -238,7 +197,6 @@ public class PlayerStateMachine : StateMachine_Player
         Vector3 point2 = point1 + Vector3.up * 0.01f;
 
         bool hitSlippery = Physics.CapsuleCast(point1, point2, slipCheckRadius, Vector3.down, out _, slipCheckDistance, slipperyMask, QueryTriggerInteraction.Collide);
-        Debug.Log(hitSlippery);
         return !hitSlippery;
     }
 
@@ -270,45 +228,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         playerCamera.Follow = initialTarget;
     }
-    public void SetRagdoll(bool condition)
-    {
-        if (condition)
-        {
-            //Stopping Inputs & Disabling Animator
-            movementHandler.SetActivity(false);
-            interactionHandler.SetActivity(false);
-            animator.enabled = false;
-
-            //Activation of Ragdoll
-            foreach (var joint in ragdollJoints) joint.enableCollision = true;
-            foreach (var col in ragdollColliders) col.enabled = true;
-            foreach (var rb in ragdollRigidBodies)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.detectCollisions = true;
-                rb.useGravity = true;
-                rb.AddForce(moveDirection * 15.0f, ForceMode.Force);
-            }
-            
-        }
-        else
-        {
-            animator.enabled = true;
-            movementHandler.SetActivity(true);
-            interactionHandler.SetActivity(true);
-
-            //Disable of Ragdoll
-            foreach (var joint in ragdollJoints) joint.enableCollision = false;
-            foreach (var col in ragdollColliders) col.enabled = false;
-            foreach (var rb in ragdollRigidBodies)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.detectCollisions = false;
-                rb.useGravity = false;
-            }
-        }
-    }
-
     #endregion
 
     #region DEBUG

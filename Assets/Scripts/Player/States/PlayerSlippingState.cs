@@ -22,7 +22,7 @@ public class PlayerSlippingState : PlayerBaseState
         if (!stateMachine.ShouldRecoverFromSlip()) return;
         if (!stateMachine.movementHandler.IsRunning())
         {
-            stateMachine.ForceSwitchToIdleState();
+            stateMachine.ChangeToIdleState();
             return;
         }
         if (stateMachine.movementHandler.IsRunning())

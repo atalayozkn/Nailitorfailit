@@ -19,7 +19,7 @@ public class PlayerStandState : PlayerBaseState
 
         if (counter >= standDuration)
         {
-            if (stateMachine.ShouldRecoverFromSlip()) stateMachine.ForceSwitchToIdleState();
+            if (stateMachine.ShouldRecoverFromSlip()) stateMachine.ChangeToIdleState();
             else stateMachine.ChangeToSlippingState();
         }
     }

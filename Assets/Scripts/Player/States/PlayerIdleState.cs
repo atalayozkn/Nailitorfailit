@@ -7,14 +7,9 @@ public class PlayerIdleState : PlayerBaseState
     public static readonly int idleHash = Animator.StringToHash("idle");
     public static readonly int carryIdleHash = Animator.StringToHash("carryIdle");
 
-    private int currentAnimationHash;
-
     public override void Enter()
     {
-        currentAnimationHash = 0;
         int targetHash = stateMachine.interactionHandler.IsCarrying() ? carryIdleHash : idleHash;
-        if (currentAnimationHash == targetHash) return;
-        currentAnimationHash = targetHash;
         stateMachine.animator.CrossFadeInFixedTime(targetHash, 0.1f);
     }
 

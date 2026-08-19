@@ -92,7 +92,7 @@ namespace ItemScript
             rb.isKinematic = false;
             transform.SetParent(null);
             col.enabled = true;
-            playerInteraction.ClearCarriedObject(false);
+            playerInteraction.ClearCarriedObject();
 
             if (shouldThrow)
             {
@@ -111,7 +111,7 @@ namespace ItemScript
 
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
-            playerInteraction.ClearCarriedObject(false);
+            playerInteraction.ClearCarriedObject();
 
             Destroy(gameObject, objectDiscardDelay);
         }
