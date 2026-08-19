@@ -1,7 +1,5 @@
-using PlayerScripts;
 using Unity.Cinemachine;
 using UnityEngine;
-
 public enum PlayerStates
 {
     Idle,
@@ -10,6 +8,7 @@ public enum PlayerStates
     Stunned,
     Interacting,
     Using,
+    Stand,
     ShopInspect,
     OnAir,
     Dead,
@@ -21,13 +20,14 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
     [field: SerializeField] public Transform detectionTransform { get; private set; }
     [field: SerializeField] public Rigidbody rb { get; private set; }
-    [field: SerializeField] public Rigidbody ragdollRb { get; private set; }
     [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
     [field: SerializeField] public Animator animator { get; private set; }
     [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
     [field: SerializeField] public CinemachineCamera playerCamera { get; private set; }
-    [field: SerializeField] public GameObject ragdollParent { get; private set; }
+    [field: SerializeField] public Rigidbody[] ragdollRigidBodies { get; private set; }
+    [field: SerializeField] public ConfigurableJoint[] ragdollJoints { get; private set; }
+    [field: SerializeField] public Collider[] ragdollColliders { get; private set; }
     [field: SerializeField] public SkinnedMeshRenderer playerRenderer { get; private set; }
 
     [Header("Movement Data")]
@@ -44,6 +44,7 @@ public class PlayerStateMachine : StateMachine_Player
 
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
+    [field: SerializeField] public Vector3 moveDirection { get; private set; }
     [field: SerializeField] public bool debugMode;
 
     [Header("Death Settings")]
@@ -146,9 +147,16 @@ public class PlayerStateMachine : StateMachine_Player
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Stunned) return;
         currentPlayerState = PlayerStates.Stunned;
-        SwitchState(new PlayerFaintState(this));
+        SwitchState(new PlayerStunnedState(this));
     }
 
+    public void ChangeToStandState()
+    {
+        if (currentPlayerState == PlayerStates.Stand) return;
+        if (currentPlayerState == PlayerStates.Dead) return;
+        currentPlayerState = PlayerStates.Stand;
+        SwitchState(new PlayerStandState(this));
+    }
     public void ChangeToShopState()
     {
         currentPlayerState = PlayerStates.ShopInspect;
@@ -230,7 +238,7 @@ public class PlayerStateMachine : StateMachine_Player
         Vector3 point2 = point1 + Vector3.up * 0.01f;
 
         bool hitSlippery = Physics.CapsuleCast(point1, point2, slipCheckRadius, Vector3.down, out _, slipCheckDistance, slipperyMask, QueryTriggerInteraction.Collide);
-
+        Debug.Log(hitSlippery);
         return !hitSlippery;
     }
 
@@ -249,6 +257,10 @@ public class PlayerStateMachine : StateMachine_Player
 
         crashHelper.SetActivity(crashActive);
     }
+    public void UpdateMoveDirection()
+    {
+        moveDirection = transform.forward;
+    }
     public void SetTrackTarget(Transform target)
     {
         playerCamera.Follow = target;
@@ -262,18 +274,38 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (condition)
         {
+            //Stopping Inputs & Disabling Animator
             movementHandler.SetActivity(false);
             interactionHandler.SetActivity(false);
-            ragdollParent.SetActive(true);
-            playerRenderer.enabled = false;
-            ragdollRb.linearVelocity = rb.linearVelocity * 3.0f;
+            animator.enabled = false;
+
+            //Activation of Ragdoll
+            foreach (var joint in ragdollJoints) joint.enableCollision = true;
+            foreach (var col in ragdollColliders) col.enabled = true;
+            foreach (var rb in ragdollRigidBodies)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.detectCollisions = true;
+                rb.useGravity = true;
+                rb.AddForce(moveDirection * 15.0f, ForceMode.Force);
+            }
+            
         }
         else
         {
+            animator.enabled = true;
             movementHandler.SetActivity(true);
             interactionHandler.SetActivity(true);
-            ragdollParent.SetActive(false);
-            playerRenderer.enabled = true;
+
+            //Disable of Ragdoll
+            foreach (var joint in ragdollJoints) joint.enableCollision = false;
+            foreach (var col in ragdollColliders) col.enabled = false;
+            foreach (var rb in ragdollRigidBodies)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.detectCollisions = false;
+                rb.useGravity = false;
+            }
         }
     }
 

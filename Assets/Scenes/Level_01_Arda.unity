@@ -10545,8 +10545,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameTimeManager
   timerText: {fileID: 1528144094004338059}
-  maxRoundTime: 240
-  perRewardTimeIncrease: 180
+  maxRoundTime: 300
+  perRewardTimeIncrease: 240
   onTimeIncreaseEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -21088,9 +21088,25 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4677001313390047052, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      propertyPath: m_Layer
-      value: 7
+    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+      propertyPath: maxEnergy
+      value: 10000
+      objectReference: {fileID: 0}
+    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+      propertyPath: rechargeDelay
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+      propertyPath: drainedDuration
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+      propertyPath: perChargeAmount
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 3746914620241467697, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+      propertyPath: energisedDuration
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 6044505348918361584, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
       propertyPath: m_Name

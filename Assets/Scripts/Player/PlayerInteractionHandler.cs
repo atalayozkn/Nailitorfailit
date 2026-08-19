@@ -49,46 +49,24 @@ public class PlayerInteractionHandler : MonoBehaviour
     private Coroutine detectionRoutine;
 
     private readonly RaycastHit[] hits = new RaycastHit[12];
-
-    private void Awake()
-    {
-        if (detectionOrigin == null)
-        {
-            detectionOrigin = transform;
-        }
-    }
-
     private void OnEnable()
     {
-        if (interactAction != null && interactAction.action != null)
-        {
-            interactAction.action.Enable();
-        }
-
-        if (useAction != null && useAction.action != null)
-        {
-            useAction.action.Enable();
-        }
-
+        interactAction.action.Enable();
+        useAction.action.Enable();
         isActive = true;
         detectionRoutine = StartCoroutine(TargetDetectionRoutine());
     }
-
     private void OnDisable()
     {
-        if (interactAction != null && interactAction.action != null)
-        {
-            interactAction.action.Disable();
-        }
-        if (useAction != null && useAction.action != null)
-        {
-            useAction.action.Disable();
-        }
+        interactAction.action.Disable();
+        useAction.action.Disable();
+
         if (detectionRoutine != null)
         {
             StopCoroutine(detectionRoutine);
             detectionRoutine = null;
         }
+
         currentInteractable?.OnHoverOff();
     }
 
@@ -96,13 +74,13 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (!isActive) return;
         if (isInteractOnCooldown) return;
-        if (useAction != null && useAction.action != null && useAction.action.IsPressed())
+        if (!isUseOnCooldown && useAction.action.IsPressed())
         {
             HandleUse();
             isUseOnCooldown = true;
             Invoke(nameof(ReverseUseCooldown), useCooldown);
         }
-        if (interactAction != null && interactAction.action != null && interactAction.action.IsPressed())
+        if (interactAction.action.IsPressed())
         {
             HandleInteract();
             isInteractOnCooldown = true;
@@ -163,6 +141,7 @@ public class PlayerInteractionHandler : MonoBehaviour
         if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
         {
             currentCarriable.OnDrop();
+            currentInteractable.OnInteract();
             return;
         }
 
@@ -261,7 +240,6 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         isInteractOnCooldown = false;
     }
-
     private void ReverseUseCooldown()
     {
         isUseOnCooldown = false;

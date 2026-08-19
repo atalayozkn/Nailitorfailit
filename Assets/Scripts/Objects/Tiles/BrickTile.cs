@@ -18,6 +18,12 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
 
     public InteractableType InteractableType => interactableType;
     private ConstructionPhase currentPhase;
+    private PlayerInteractionHandler interactionHandler;
+
+    private void Awake()
+    {
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+    }
     private void OnEnable()
     {
         currentPhase = ConstructionPhase.Construction;
@@ -27,7 +33,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     public void OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return;
-
+        if (interactionHandler.IsCarrying()) return;
         processHelper.Process();
 
         if (processHelper.IsCompleted()) CompleteConstruction();

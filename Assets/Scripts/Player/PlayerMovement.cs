@@ -10,6 +10,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private PlayerInteractionHandler interactHandler;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform detectionTransform;
+    [SerializeField] private Transform cameraTransform;
 
     [Header("Input Settings")]
     public InputActionReference move;
@@ -18,7 +19,8 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Movement Settings")]
     [SerializeField] private float moveForce = 5f;
-    [SerializeField] private float rotateForce = 5f;
+    [SerializeField] private float rotateForce = 3f;
+    [SerializeField] private float maxRotationMultiplier = 20f;
     [SerializeField] private float carryMultiplier = 0.5f;
     [SerializeField] private float sprintMultiplier = 2.0f;
     [SerializeField] private float maxAllowableVelocity = 7.5f;
@@ -159,7 +161,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (moveInput.y < 0.01f)
+        if (!isInputPresent)
         {
             if (!interactHandler.IsInteracting() && isActive)
             {
@@ -171,6 +173,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (!ShouldApplyForce()) return;
 
+        Vector3 moveDirection = GetMovementDirection();
         float force = moveForce;
         moveCost = baseMoveCost;
 
@@ -186,15 +189,15 @@ public class PlayerMovement : MonoBehaviour
             moveCost *= carryCostMultiplier;
         }
 
-        if (!staminaHandler.HasEnoughEnergy(moveCost))
+        if (!isSprinting && !interactHandler.IsCarrying())
         {
-            return;
+            moveCost = 0f;
         }
 
+        if (!staminaHandler.HasEnoughEnergy(moveCost)) return;
         staminaHandler.ConsumeEnergy(moveCost);
 
-        rb.AddForce(transform.forward * (force * moveInput.y), ForceMode.Force);
-
+        rb.AddForce(moveDirection * force, ForceMode.Force);
         stateMachine.ChangeToNavigationState();
     }
 
@@ -202,9 +205,22 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isInputPresent) return;
 
-        Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
-        Vector3 cross = Vector3.Cross(Vector3.forward, inputDirection);
-        rb.AddTorque(transform.up * cross.y * rotateForce, ForceMode.Acceleration);
+        Vector3 moveDirection = GetMovementDirection();
+
+        float angle = Vector3.Angle(transform.forward, moveDirection);
+
+        if (angle > 170f)
+        {
+            rb.AddTorque(transform.up * rotateForce * maxRotationMultiplier, ForceMode.Acceleration);
+            return;
+        }
+
+        Vector3 cross = Vector3.Cross(transform.forward, moveDirection);
+
+        float normalizedAngle = angle / 180f;
+        float rotationMultiplier = Mathf.Lerp(1f, maxRotationMultiplier, normalizedAngle * normalizedAngle);
+
+        rb.AddTorque(transform.up * cross.y * rotateForce * rotationMultiplier, ForceMode.Acceleration);
     }
 
     private void HandleJump()
@@ -268,6 +284,21 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         return horizontalVelocity.sqrMagnitude < maxSpeedSqr;
+    }
+    private Vector3 GetMovementDirection()
+    {
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+
+        // Ignore camera pitch.
+        forward.y = 0f;
+        right.y = 0f;
+
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 direction = forward * moveInput.y + right * moveInput.x;
+        return direction.normalized;
     }
     #endregion
 }

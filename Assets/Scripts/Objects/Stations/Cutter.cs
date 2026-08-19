@@ -55,6 +55,11 @@ public class Cutter : MonoBehaviour, IInteractable
             return;
         }
 
+        if (interactionHandler.IsCarrying())
+        {
+            return;
+        }
+
         if (!connectedGenerator.HasEnoughEnergy(perProcessCost))
         {
             Debug.Log("No Energy");

@@ -6,9 +6,9 @@ public class PlayerSlippingState : PlayerBaseState
     public PlayerSlippingState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
-        stateMachine.animator.CrossFadeInFixedTime(slipHash, 0.1f);
+        stateMachine.animator.CrossFadeInFixedTime(slipHash, 0f);
         stateMachine.movementHandler.SetSlipping(true);
-        stateMachine.crashHelper.SetActivity(true);
+        //stateMachine.crashHelper.SetActivity(true);
 
         var carriable = stateMachine.interactionHandler.GetCurrentCarriable();
         if (carriable != null) carriable.OnDrop(true);
@@ -19,22 +19,20 @@ public class PlayerSlippingState : PlayerBaseState
     }
     public override void FixedTick(float fixedDeltaTime)
     {
-        stateMachine.SetCrashActivity();
-
-        if (stateMachine.ShouldRecoverFromSlip() && !stateMachine.movementHandler.IsRunning())
+        if (!stateMachine.ShouldRecoverFromSlip()) return;
+        if (!stateMachine.movementHandler.IsRunning())
         {
             stateMachine.ForceSwitchToIdleState();
             return;
         }
-
-        if (stateMachine.ShouldRecoverFromSlip() && stateMachine.movementHandler.IsRunning())
+        if (stateMachine.movementHandler.IsRunning())
         {
             stateMachine.ChangeToStunnedState();
         }
     }
     public override void Exit()
     {
-        stateMachine.crashHelper.SetActivity(false);
+        //stateMachine.crashHelper.SetActivity(false);
         stateMachine.movementHandler.SetSlipping(false);
     }
 }

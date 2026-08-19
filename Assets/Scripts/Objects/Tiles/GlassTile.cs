@@ -24,6 +24,11 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     private ConstructionPhase currentPhase;
 
     private bool canDealDamage;
+    private PlayerInteractionHandler interactionHandler;
+    private void Awake()
+    {
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+    }
     private void OnEnable()
     {
         canDealDamage = true;
@@ -34,15 +39,10 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     #region INTERACTABLE
     public void OnInteract()
     {
-        if (currentPhase == ConstructionPhase.Complete)
-            return;
-
+        if (currentPhase == ConstructionPhase.Complete) return;
+        if (interactionHandler.IsCarrying()) return;
         processHelper.Process();
-
-        if (processHelper.IsCompleted())
-        {
-            CompleteConstruction();
-        }
+        if (processHelper.IsCompleted()) CompleteConstruction();
     }
     public void OnHoverOn()
     {
