@@ -4,5 +4,6 @@ public enum CarriableType
     Wood,
     Oil,
     Glass,
-    EnergyDrink
+    EnergyDrink,
+    PetFood
 }
