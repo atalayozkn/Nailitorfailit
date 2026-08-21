@@ -12,12 +12,8 @@ public class PlayerCrashHelper : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-        if (!isActive)
-            return;
-
-        if (((1 << collision.gameObject.layer) & whatIsCrashable) == 0)
-            return;
-
+        if (!isActive) return;
+        if (((1 << collision.gameObject.layer) & whatIsCrashable) == 0) return;
         stateMachine.ChangeToStunnedState();
     }
     public void SetActivity(bool condition)

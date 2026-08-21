@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 public class CurrencyManager : MonoBehaviour
 {
     public static CurrencyManager Instance { get; private set; }
-
     private CurrencyText currencyText;
     private int currentValue;
 

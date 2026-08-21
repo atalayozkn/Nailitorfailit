@@ -11,12 +11,11 @@ namespace ItemScript
         [SerializeField] private GameObject bluePrintObject;
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Collider interactionCollider;
+        [SerializeField] private CarriableType acceptedType;
 
         [Header("GameObject References")]
         [SerializeField] private GameObject woodObject;
         [SerializeField] private ObjectHealth woodHealth;
-        [SerializeField] private GameObject stoneObject;
-        [SerializeField] private ObjectHealth stoneHealth;
         [SerializeField] private GameObject brickObject;
         [SerializeField] private ObjectHealth brickHealth;
         [SerializeField] private GameObject glassObject;
@@ -38,7 +37,11 @@ namespace ItemScript
         }
         public void OnInteract()
         {
+            var carriable = interactionHandler.GetCurrentCarriable();
+            if (carriable == null) return;
+            if (carriable.isRawMaterial) return;
             currentCarriableType = interactionHandler.GetCurrentCarriableType();
+            if (currentCarriableType != acceptedType) return;
             Construct(currentCarriableType);
             onInteractEvent.Invoke();
         }
@@ -60,10 +63,6 @@ namespace ItemScript
                 case CarriableType.Wood:
                     woodObject.SetActive(true);
                     activeHealthComponent = woodHealth;
-                    break;
-                case CarriableType.Stone:
-                    stoneObject.SetActive(true);
-                    activeHealthComponent = stoneHealth;
                     break;
                 case CarriableType.Brick:
                     brickObject.SetActive(true);

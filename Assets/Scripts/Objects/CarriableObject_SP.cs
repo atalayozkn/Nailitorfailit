@@ -1,15 +1,6 @@
 using Interactions;
 using UnityEngine;
 using UnityEngine.Events;
-public enum CarriableType
-{
-    Brick,
-    Wood,
-    Stone,
-    Oil,
-    Glass,
-    EnergyDrink
-}
 
 namespace ItemScript
 {
@@ -19,8 +10,8 @@ namespace ItemScript
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Rigidbody rb;
         [SerializeField] private Collider col;
-
-        [SerializeField]
+        [SerializeField] private MeshRenderer objectRenderer;
+        public bool isRawMaterial = false;
         public CarriableType carriableType;
 
         [Header("Settings")]
@@ -32,17 +23,18 @@ namespace ItemScript
         [SerializeField] private UnityEvent onHoverOffEvent;
         [SerializeField] private UnityEvent onInteractEvent;
         [SerializeField] private UnityEvent onConsumeEvent;
-
         public InteractableType InteractableType => interactableType;
 
         private ObjectSpawner spawnerObject;
         private PlayerInteractionHandler playerInteraction;
-
+        private bool isOccupied = false;
         private bool isConsumed;
-
+        private Vector3 initialScale;
+        private Transform attachTransform;
         private void Awake()
         {
             playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
+            initialScale = transform.localScale;
         }
 
         #region INTERACTABLE
@@ -80,7 +72,7 @@ namespace ItemScript
         private void OnPickUp()
         {
             col.enabled = false;
-
+            isOccupied = true;
             rb.isKinematic = true;
             rb.Sleep();
 
@@ -92,6 +84,46 @@ namespace ItemScript
 
             playerInteraction.RegisterCarriedObject(this);
         }
+        public void PickUpByDog(Transform target)
+        {
+            isOccupied = true;
+            col.enabled = false;
+            rb.useGravity = false;
+            rb.detectCollisions = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.Sleep();
+
+            attachTransform = target;
+            transform.SetParent(attachTransform);
+            Invoke(nameof(AttachToTransform), 0.1f);
+        }
+        private void AttachToTransform()
+        {
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+        }
+        public void DropByDog(Transform target)
+        {
+            transform.SetParent(target);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+            transform.SetParent(null);
+
+            rb.detectCollisions = true;
+            rb.useGravity = true;
+            col.enabled = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+        }
+        public void DestroyedByDog()
+        {
+            spawnerObject?.ReduceCounter();
+            onConsumeEvent?.Invoke();
+            isOccupied = false;
+            Destroy(gameObject, objectDiscardDelay);
+        }
 
         public void OnDrop(bool shouldThrow = false)
         {
@@ -101,7 +133,8 @@ namespace ItemScript
             rb.isKinematic = false;
             transform.SetParent(null);
             col.enabled = true;
-            playerInteraction.ClearCarriedObject(false);
+            playerInteraction.ClearCarriedObject();
+            isOccupied = false;
 
             if (shouldThrow)
             {
@@ -112,30 +145,26 @@ namespace ItemScript
                 rb.AddForce(direction * dropForce, ForceMode.Impulse);
             }
         }
-        public void OnUsed()
-        {
-            if (isConsumed)
-            {
-                return;
-            }
-
-            playerInteraction.ClearCarriedObject(false);
-            OnConsume();
-        }
 
         public void OnConsume()
         {
-            if (isConsumed)
-            {
-                return;
-            }
-
+            if (isConsumed) return;
             isConsumed = true;
 
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
+            playerInteraction.ClearCarriedObject();
 
             Destroy(gameObject, objectDiscardDelay);
+        }
+        public bool IsOccupied()
+        {
+            return isOccupied;
+        }
+        public void SetVisuals(bool condition)
+        {
+            if (condition == objectRenderer.enabled) return;
+            objectRenderer.enabled = condition;
         }
     }
 }

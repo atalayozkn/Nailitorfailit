@@ -126,30 +126,22 @@ public class GameManager : MonoBehaviour
     public void ChangeToGamePhase()
     {
         currentPhase = GamePhase.InGame;
-
         if (mainMenu != null) mainMenu.SetActivity(false);
-
         if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
-
         if (inGameCamera != null) SwitchToInGameCamera();
-
         if (!gameStarted)
         {
             CurrencyManager.Instance.GainCurrency(startCurrencyAmount);
             gameStarted = true;
         }
-
         RefreshLevelSockets();
     }
 
     private void SetupGameScene()
     {
         if (mainMenu != null) mainMenu.SetActivity(false);
-
         if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
-
         if (inGameCamera != null) SwitchToInGameCamera();
-
         RefreshLevelSockets();
     }
 
@@ -160,7 +152,6 @@ public class GameManager : MonoBehaviour
     public void ChangeToLevelPhase(int levelIndex)
     {
         currentPhase = GamePhase.InLevel;
-
         GameSceneManager.Instance.LoadLevel(levelIndex);
     }
     public void CompleteLevel(int levelIndex, bool success)

@@ -9,6 +9,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     [Header("References")]
     [SerializeField] private PlayerStateMachine stateMachine;
     [SerializeField] private Transform carryTransform;
+    [SerializeField] private PlayerPressureHandler pressureHandler;
     [SerializeField] private bool DebugMode;
 
     [Header("Input")]
@@ -30,8 +31,9 @@ public class PlayerInteractionHandler : MonoBehaviour
     [SerializeField] private float groundDistance = 1.3f;
     [SerializeField] private float groundRadius = 0.35f;
 
-    [Header("Interaction")]
+    [Header("Duration Settings")]
     [SerializeField] private float interactCooldown = 1.0f;
+    [SerializeField] private float useCooldown = 1.0f;
 
     private IInteractable currentInteractable;
     private InteractableType currentInteractableType;
@@ -42,53 +44,22 @@ public class PlayerInteractionHandler : MonoBehaviour
     private bool isCarrying;
     private bool isInteractOnCooldown;
     private bool isActive;
+    private bool isUseOnCooldown;
 
     private Coroutine detectionRoutine;
 
-    private readonly RaycastHit[] hits =
-        new RaycastHit[12];
-
-    private void Awake()
-    {
-        if (detectionOrigin == null)
-        {
-            detectionOrigin = transform;
-        }
-    }
-
+    private readonly RaycastHit[] hits = new RaycastHit[12];
     private void OnEnable()
     {
-        if (interactAction != null &&
-            interactAction.action != null)
-        {
-            interactAction.action.Enable();
-        }
-
-        if (useAction != null &&
-            useAction.action != null)
-        {
-            useAction.action.Enable();
-        }
-
+        interactAction.action.Enable();
+        useAction.action.Enable();
         isActive = true;
-
-        detectionRoutine =
-            StartCoroutine(TargetDetectionRoutine());
+        detectionRoutine = StartCoroutine(TargetDetectionRoutine());
     }
-
     private void OnDisable()
     {
-        if (interactAction != null &&
-            interactAction.action != null)
-        {
-            interactAction.action.Disable();
-        }
-
-        if (useAction != null &&
-            useAction.action != null)
-        {
-            useAction.action.Disable();
-        }
+        interactAction.action.Disable();
+        useAction.action.Disable();
 
         if (detectionRoutine != null)
         {
@@ -103,36 +74,23 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (!isActive) return;
         if (isInteractOnCooldown) return;
-
-        if (useAction != null &&
-            useAction.action != null &&
-            useAction.action.IsPressed())
+        if (!isUseOnCooldown && useAction.action.IsPressed())
         {
-            if (HandleUse())
-            {
-                return;
-            }
+            HandleUse();
+            isUseOnCooldown = true;
+            Invoke(nameof(ReverseUseCooldown), useCooldown);
         }
-
-        if (interactAction != null &&
-            interactAction.action != null &&
-            interactAction.action.IsPressed())
+        if (interactAction.action.IsPressed())
         {
             HandleInteract();
-
             isInteractOnCooldown = true;
-
-            Invoke(
-                nameof(ResetInteractCooldown),
-                interactCooldown
-            );
+            Invoke(nameof(ResetInteractCooldown), interactCooldown);
         }
     }
 
     private IEnumerator TargetDetectionRoutine()
     {
-        WaitForSeconds wait =
-            new WaitForSeconds(detectionInterval);
+        WaitForSeconds wait = new WaitForSeconds(detectionInterval);
 
         while (true)
         {
@@ -143,8 +101,7 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     private void RefreshTarget()
     {
-        IInteractable interactable =
-            FindForwardInteractable();
+        IInteractable interactable = FindForwardInteractable();
 
         if (interactable == null)
         {
@@ -154,16 +111,11 @@ public class PlayerInteractionHandler : MonoBehaviour
         SetCurrentInteractable(interactable);
     }
 
-    private void SetCurrentInteractable(
-        IInteractable interactable)
+    private void SetCurrentInteractable(IInteractable interactable)
     {
-        if (interactable == currentInteractable)
-        {
-            return;
-        }
+        if (interactable == currentInteractable) return;
 
         currentInteractable?.OnHoverOff();
-
         currentInteractable = interactable;
 
         if (currentInteractable == null)
@@ -172,32 +124,24 @@ public class PlayerInteractionHandler : MonoBehaviour
             return;
         }
 
-        currentInteractableType =
-            currentInteractable.InteractableType;
-
+        currentInteractableType = currentInteractable.InteractableType;
         currentInteractable.OnHoverOn();
     }
 
     private void HandleInteract()
     {
-        if (currentCarriable == null &&
-            currentInteractable == null)
-        {
-            return;
-        }
+        if (currentCarriable == null && currentInteractable == null) return;
 
-        if (currentCarriable != null &&
-            currentInteractable == null)
+        if (currentCarriable != null && currentInteractable == null)
         {
             currentCarriable.OnDrop();
             return;
         }
 
-        if (currentCarriable != null &&
-            currentInteractableType ==
-            InteractableType.Grabbable)
+        if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
         {
             currentCarriable.OnDrop();
+            currentInteractable.OnInteract();
             return;
         }
 
@@ -205,62 +149,31 @@ public class PlayerInteractionHandler : MonoBehaviour
         stateMachine.ChangeToInteractState();
     }
 
-    private bool HandleUse()
+    private void HandleUse()
     {
-        if (currentCarriable == null)
+        if (currentCarriable != null && currentCarriableType == CarriableType.EnergyDrink)
         {
-            return false;
+            IUsable usable = currentCarriable.gameObject.GetComponent<IUsable>();
+            if (usable != null) usable.OnUse();
         }
-
-        if (!currentCarriable.TryGetComponent<IUsable>(
-                out var usable))
-        {
-            return false;
-        }
-
-        stateMachine.ChangeToUseState();
-        usable.OnUse();
-
-        return true;
     }
 
     #region UTILITIES
 
     private IInteractable FindForwardInteractable()
     {
-        int count = Physics.SphereCastNonAlloc(
-            detectionOrigin.position,
-            forwardRadius,
-            detectionOrigin.forward,
-            hits,
-            forwardDistance,
-            interactableMask
-        );
-
+        int count = Physics.SphereCastNonAlloc(detectionOrigin.position, forwardRadius, detectionOrigin.forward, hits, forwardDistance, interactableMask);
         return GetClosestInteractable(count);
     }
 
     private IInteractable FindGroundInteractable()
     {
-        Vector3 origin =
-            transform.position +
-            transform.forward * groundForwardOffset +
-            Vector3.up * groundHeight;
-
-        int count = Physics.SphereCastNonAlloc(
-            origin,
-            groundRadius,
-            Vector3.down,
-            hits,
-            groundDistance,
-            interactableMask
-        );
-
+        Vector3 origin = transform.position + transform.forward * groundForwardOffset + Vector3.up * groundHeight;
+        int count = Physics.SphereCastNonAlloc(origin, groundRadius, Vector3.down, hits, groundDistance, interactableMask);
         return GetClosestInteractable(count);
     }
 
-    private IInteractable GetClosestInteractable(
-        int hitCount)
+    private IInteractable GetClosestInteractable(int hitCount)
     {
         float closestDistance = float.MaxValue;
         IInteractable closestInteractable = null;
@@ -268,27 +181,12 @@ public class PlayerInteractionHandler : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             Collider hitCollider = hits[i].collider;
-
-            if (hitCollider == null)
-            {
-                continue;
-            }
-
-            if (!hitCollider.TryGetComponent<IInteractable>(
-                    out var interactable))
-            {
-                continue;
-            }
-
-            if (hits[i].distance >= closestDistance)
-            {
-                continue;
-            }
-
+            if (hitCollider == null) continue;
+            if (!hitCollider.TryGetComponent<IInteractable>(out var interactable)) continue;
+            if (hits[i].distance >= closestDistance) continue;
             closestDistance = hits[i].distance;
             closestInteractable = interactable;
         }
-
         return closestInteractable;
     }
 
@@ -296,57 +194,50 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         return carryTransform;
     }
-
     public bool IsCarrying()
     {
         return isCarrying;
     }
-
     public CarriableObject_SP GetCurrentCarriable()
     {
         return currentCarriable;
     }
-
     public CarriableType GetCurrentCarriableType()
     {
         return currentCarriableType;
     }
-
     public bool IsInteracting()
     {
         return interactAction != null && interactAction.action != null && interactAction.action.IsPressed();
     }
-
     public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
         currentCarriable = carriable;
         currentCarriableType = carriable.carriableType;
         isCarrying = true;
-        stateMachine.ForceSwitchToIdleState();
+        stateMachine.ChangeToIdleState();
+        pressureHandler.SetHeavy(true);
     }
-
-    public void ClearCarriedObject(bool forceIdleState = true)
+    public void ClearCarriedObject()
     {
         currentCarriable = null;
         currentCarriableType = default;
         isCarrying = false;
-
-        if (forceIdleState)
-        {
-            stateMachine.ForceSwitchToIdleState();
-        }
+        stateMachine.ChangeToIdleState();
+        pressureHandler.SetHeavy(false);
     }
-
     public void SetActivity(bool condition)
     {
         isActive = condition;
     }
-
     private void ResetInteractCooldown()
     {
         isInteractOnCooldown = false;
     }
-
+    private void ReverseUseCooldown()
+    {
+        isUseOnCooldown = false;
+    }
     #endregion
 
     #region DEBUG

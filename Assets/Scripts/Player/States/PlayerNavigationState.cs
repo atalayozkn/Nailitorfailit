@@ -24,12 +24,13 @@ public class PlayerNavigationState : PlayerBaseState
 
     public override void FixedTick(float fixedDeltaTime)
     {
+
     }
 
     public override void Exit()
     {
-    }
 
+    }
     private void UpdateNavigationAnimation()
     {
         int targetHash;

@@ -11,6 +11,7 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private PuddleHelper puddleHelper;
     [SerializeField] private ObjectHealth objectHealth;
+    [SerializeField] private bool isFloorTile;
 
     [Header("Settings")]
     [SerializeField] private float pressureDamageDelay = 1.0f;
@@ -23,6 +24,11 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     private ConstructionPhase currentPhase;
 
     private bool canDealDamage;
+    private PlayerInteractionHandler interactionHandler;
+    private void Awake()
+    {
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+    }
     private void OnEnable()
     {
         canDealDamage = true;
@@ -33,15 +39,10 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     #region INTERACTABLE
     public void OnInteract()
     {
-        if (currentPhase == ConstructionPhase.Complete)
-            return;
-
+        if (currentPhase == ConstructionPhase.Complete) return;
+        if (interactionHandler.IsCarrying()) return;
         processHelper.Process();
-
-        if (processHelper.IsCompleted())
-        {
-            CompleteConstruction();
-        }
+        if (processHelper.IsCompleted()) CompleteConstruction();
     }
     public void OnHoverOn()
     {
@@ -57,7 +58,13 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
 
     public void OnWaterContact()
     {
+        if (!isFloorTile) return;
         puddleHelper.StartPuddleProcess();
+    }
+    public void OnElectrocute()
+    {
+        if (!isFloorTile) return;
+        puddleHelper.ElectrocutePuddle();
     }
 
     #endregion
@@ -65,6 +72,8 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     #region Breakable
     public void OnPressureApply()
     {
+        if (!isFloorTile) return;
+        if (currentPhase == ConstructionPhase.Construction) return;
         if (!canDealDamage) return;
         canDealDamage = false;
         objectHealth.DealDamage();

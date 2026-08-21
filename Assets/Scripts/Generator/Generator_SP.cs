@@ -1,6 +1,6 @@
 using Interactions;
 using ItemScript;
-using System.Collections;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,428 +10,215 @@ public class Generator_SP : MonoBehaviour, IInteractable
 {
     [Header("Interaction")]
     [SerializeField] private InteractableType interactableType;
+    [SerializeField] private PlayerInteractionHandler interactionHandler;
 
-    public InteractableType InteractableType => interactableType;
+    [Header("Energy")]
+    [SerializeField, Min(1f)] private float maxEnergy = 100f;
+    [SerializeField, Range(0f, 100f)] private float startingEnergyPercent = 100f;
 
-    [Header("Generator Settings")]
-    [SerializeField, Min(0.1f)]
-    private float generatorDurationMinutes = 15f;
-
-    [SerializeField, Min(0.02f)]
-    private float tickRate = 0.1f;
+    [Header("Fuel")]
+    [SerializeField, Min(0f)] private float oilEnergyAmount = 20f;
 
     [Header("UI")]
-    [SerializeField] private Slider progressSlider;
-    [SerializeField] private TextMeshProUGUI timerText;
-    [SerializeField] private GameObject canvasObject;
-
-    [Header("Visual")]
-    [SerializeField] private Light generatorLight;
-    [SerializeField] private float blinkSpeed = 5f;
-
-    private PlayerInteractionHandler interactionHandler;
-
-    private float currentTime;
-    private bool isRunning;
-
-    private Coroutine timerRoutine;
-    private Coroutine lightRoutine;
-
-    private int lastDisplayedSecond = -1;
-
-    public bool IsRunning => isRunning;
-
-    private float MaxDurationSeconds =>
-        generatorDurationMinutes * 60f;
+    [SerializeField] private Slider energySlider;
+    [SerializeField] private TextMeshProUGUI energyText;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
     [SerializeField] private UnityEvent onInteractEvent;
 
+    private float currentEnergy;
+    private int lastDisplayedPercentage = -1;
+
+    public InteractableType InteractableType => interactableType;
+    public float CurrentEnergy => currentEnergy;
+    public float MaxEnergy => maxEnergy;
+    public bool HasPower => currentEnergy > 0f;
+
+    public event Action<bool> OnPowerStateChanged;
+
+    // Generator oluþturulduðunda çalýþýr.
+    // InitializeEnergy() ile baþlangýç enerjisini, InitializeUI() ile UI'ýn baþlangýç durumunu hazýrlar.
     private void Awake()
     {
-        interactionHandler =
-            FindFirstObjectByType<PlayerInteractionHandler>();
-    }
-
-    private void Start()
-    {
-        currentTime = MaxDurationSeconds;
-        isRunning = currentTime > 0f;
-
-        if (progressSlider != null)
-        {
-            progressSlider.minValue = 0f;
-            progressSlider.maxValue = 1f;
-        }
-
-        if (canvasObject != null)
-        {
-            canvasObject.SetActive(true);
-        }
-
-        UpdateUI(true);
-
-        if (isRunning)
-        {
-            StartTimerRoutine();
-            StartLightRoutine();
-        }
-        else
-        {
-            SetLightOff();
-        }
-
-        Debug.Log(
-            $"Generator %100 enerjiyle baþladý. Süre: " +
-            $"{generatorDurationMinutes:0.##} dakika."
-        );
+        InitializeEnergy();
+        InitializeUI();
     }
 
     #region INTERACTION
 
+    // Player Generator ile etkileþime girdiðinde çalýþýr.
+    // TryAddCarriedFuel() ile taþýnan yakýtý kontrol eder ve yakýt baþarýyla eklenirse onInteractEvent'i tetikler.
     public void OnInteract()
     {
-        TryAddCarriedFuel();
+        if (!TryAddCarriedFuel()) return;
+
+        onInteractEvent?.Invoke();
     }
 
+    // Player Generator üzerine baktýðýnda veya hover baþladýðýnda çalýþýr.
+    // onHoverOnEvent eventini tetikler.
     public void OnHoverOn()
     {
         onHoverOnEvent?.Invoke();
     }
 
+    // Player Generator üzerinden bakmayý býraktýðýnda veya hover sona erdiðinde çalýþýr.
+    // onHoverOffEvent eventini tetikler.
     public void OnHoverOff()
     {
         onHoverOffEvent?.Invoke();
     }
 
-    private void TryAddCarriedFuel()
+    private bool TryAddCarriedFuel()
     {
-        if (interactionHandler == null)
-        {
-            return;
-        }
+        if (!ResolveInteractionHandler()) return false;
 
-        CarriableObject_SP carriedObject =
-            interactionHandler.GetCurrentCarriable();
+        CarriableObject_SP carriedObject = interactionHandler.GetCurrentCarriable();
 
         if (carriedObject == null)
         {
-            Debug.Log(
-                "Generator için yakýt taþýman gerekiyor."
-            );
-
-            return;
+            Debug.Log("Generatorün yakýta ihtiyacý var.");
+            return false;
         }
 
         if (carriedObject.carriableType != CarriableType.Oil)
         {
-            Debug.Log(
-                "Bu obje Generator yakýtý deðil."
-            );
-
-            return;
-        }
-
-        if (!carriedObject.TryGetComponent<Oil_SP>(
-                out Oil_SP oil))
-        {
-            Debug.LogWarning(
-                "Oil olarak iþaretlenen objede Oil_SP bulunamadý."
-            );
-
-            return;
-        }
-
-        bool fuelAdded =
-            AddFuelPercent(oil.FuelPercent);
-
-        if (!fuelAdded)
-        {
-            return;
-        }
-
-        carriedObject.OnUsed();
-    }
-
-    #endregion
-
-    #region FUEL
-
-    public bool AddFuelPercent(float fuelPercent)
-    {
-        float maxDuration = MaxDurationSeconds;
-
-        if (fuelPercent <= 0f)
-        {
+            Debug.Log("Bu obje Generator yakýtý deðil.");
             return false;
         }
 
-        if (maxDuration <= 0f)
-        {
-            return false;
-        }
+        if (!AddEnergy(oilEnergyAmount)) return false;
 
-        if (currentTime >= maxDuration)
-        {
-            Debug.Log(
-                "Generator zaten tamamen dolu."
-            );
-
-            return false;
-        }
-
-        float clampedPercent =
-            Mathf.Clamp(fuelPercent, 0f, 100f);
-
-        float addedDuration =
-            maxDuration * (clampedPercent / 100f);
-
-        currentTime = Mathf.Min(
-            currentTime + addedDuration,
-            maxDuration
-        );
-
-        if (!isRunning && currentTime > 0f)
-        {
-            StartGenerator();
-        }
-        else
-        {
-            UpdateUI(true);
-        }
-
-        Debug.Log(
-            $"Generator yakýt aldý. Kalan süre: " +
-            $"{FormatTime(currentTime)}"
-        );
-
+        carriedObject.OnConsume();
         return true;
     }
 
-    private void StartGenerator()
-    {
-        if (isRunning)
-        {
-            return;
-        }
-
-        if (currentTime <= 0f)
-        {
-            return;
-        }
-
-        isRunning = true;
-
-        StartTimerRoutine();
-        StartLightRoutine();
-
-        UpdateUI(true);
-
-        Debug.Log(
-            "Generator çalýþmaya baþladý."
-        );
-    }
-
-    private void StopGenerator()
-    {
-        isRunning = false;
-        currentTime = 0f;
-
-        StopTimerRoutine();
-        StopLightRoutine();
-
-        SetLightOff();
-        UpdateUI(true);
-
-        Debug.Log(
-            "Generator enerjisi bitti."
-        );
-    }
-
-    public bool HasPower()
-    {
-        return isRunning && currentTime > 0f;
-    }
-
-    public float GetFuelPercent()
-    {
-        float maxDuration = MaxDurationSeconds;
-
-        if (maxDuration <= 0f)
-        {
-            return 0f;
-        }
-
-        return currentTime / maxDuration;
-    }
-
     #endregion
 
-    #region TIMER
+    #region ENERGY
 
-    private void StartTimerRoutine()
+    // Generator'ýn baþlangýç enerjisini ayarlar.
+    // startingEnergyPercent deðerini maxEnergy üzerinden hesaplayarak currentEnergy deðerine yazar.
+    private void InitializeEnergy()
     {
-        if (timerRoutine != null)
-        {
-            return;
-        }
-
-        timerRoutine =
-            StartCoroutine(TimerRoutine());
+        float normalizedStart = Mathf.Clamp01(startingEnergyPercent / 100f);
+        currentEnergy = maxEnergy * normalizedStart;
     }
 
-    private IEnumerator TimerRoutine()
+    public bool TryConsumeEnergy(float amount)
     {
-        float interval =
-            Mathf.Max(0.02f, tickRate);
+        if (amount <= 0f || currentEnergy < amount) return false;
 
-        WaitForSeconds wait =
-            new WaitForSeconds(interval);
+        bool previousPowerState = HasPower;
+        currentEnergy = Mathf.Max(currentEnergy - amount, 0f);
 
-        while (isRunning && currentTime > 0f)
-        {
-            yield return wait;
-
-            currentTime -= interval;
-
-            if (currentTime <= 0f)
-            {
-                currentTime = 0f;
-                timerRoutine = null;
-
-                StopGenerator();
-                yield break;
-            }
-
-            UpdateUI();
-        }
-
-        timerRoutine = null;
+        HandleEnergyChanged(previousPowerState);
+        return true;
     }
 
-    private void StopTimerRoutine()
+    public bool AddEnergy(float amount)
     {
-        if (timerRoutine == null)
+        if (amount <= 0f) return false;
+
+        if (currentEnergy >= maxEnergy)
         {
-            return;
+            Debug.Log("Generator zaten tamamen dolu.");
+            return false;
         }
 
-        StopCoroutine(timerRoutine);
-        timerRoutine = null;
+        bool previousPowerState = HasPower;
+        currentEnergy = Mathf.Min(currentEnergy + amount, maxEnergy);
+
+        HandleEnergyChanged(previousPowerState);
+        return true;
     }
 
-    #endregion
-
-    #region LIGHT
-
-    private void StartLightRoutine()
+    public bool HasEnoughEnergy(float amount)
     {
-        if (lightRoutine != null)
-        {
-            return;
-        }
-
-        lightRoutine =
-            StartCoroutine(LightRoutine());
+        return amount > 0f && currentEnergy >= amount;
     }
 
-    private IEnumerator LightRoutine()
+    public float GetEnergyNormalized()
     {
-        if (generatorLight != null)
-        {
-            generatorLight.enabled = true;
-        }
-
-        while (isRunning)
-        {
-            if (generatorLight != null)
-            {
-                generatorLight.intensity =
-                    1.5f +
-                    Mathf.Sin(Time.time * blinkSpeed) * 0.5f;
-            }
-
-            yield return null;
-        }
-
-        lightRoutine = null;
+        return maxEnergy > 0f ? Mathf.Clamp01(currentEnergy / maxEnergy) : 0f;
     }
 
-    private void StopLightRoutine()
+    public float GetEnergyPercent()
     {
-        if (lightRoutine == null)
-        {
-            return;
-        }
-
-        StopCoroutine(lightRoutine);
-        lightRoutine = null;
+        return GetEnergyNormalized() * 100f;
     }
 
-    private void SetLightOff()
+    // Generator'ýn enerjisi deðiþtiðinde çalýþýr.
+    // RefreshUI() ile UI'ý günceller ve güç durumu deðiþmiþse OnPowerStateChanged eventini tetikler.
+    private void HandleEnergyChanged(bool previousPowerState)
     {
-        if (generatorLight == null)
-        {
-            return;
-        }
+        RefreshUI();
 
-        generatorLight.enabled = false;
-        generatorLight.intensity = 0f;
+        bool currentPowerState = HasPower;
+
+        if (previousPowerState != currentPowerState)
+        {
+            OnPowerStateChanged?.Invoke(currentPowerState);
+        }
     }
 
     #endregion
 
     #region UI
 
-    private void UpdateUI(bool forceTextUpdate = false)
+    // Generator UI'ýný baþlangýç için hazýrlar.
+    // Slider'ýn minimum ve maksimum deðerlerini ayarlar ve RefreshUI() ile mevcut enerji deðerini ekrana yansýtýr.
+    private void InitializeUI()
     {
-        float maxDuration = MaxDurationSeconds;
-
-        if (progressSlider != null)
+        if (energySlider != null)
         {
-            progressSlider.value =
-                maxDuration > 0f
-                    ? currentTime / maxDuration
-                    : 0f;
+            energySlider.minValue = 0f;
+            energySlider.maxValue = 1f;
         }
 
-        int totalSeconds =
-            Mathf.CeilToInt(currentTime);
-
-        if (!forceTextUpdate &&
-            totalSeconds == lastDisplayedSecond)
-        {
-            return;
-        }
-
-        lastDisplayedSecond = totalSeconds;
-
-        if (timerText != null)
-        {
-            timerText.text =
-                FormatTime(totalSeconds);
-        }
+        RefreshUI();
     }
 
-    private string FormatTime(float time)
+    // Generator'ýn mevcut enerji deðerini Slider ve yüzde yazýsýna aktarýr.
+    // Görünen yüzde deðiþmediyse TextMeshPro yazýsýný tekrar güncellemez.
+    private void RefreshUI()
     {
-        int totalSeconds =
-            Mathf.Max(0, Mathf.CeilToInt(time));
+        float normalized = GetEnergyNormalized();
 
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
+        if (energySlider != null)
+        {
+            energySlider.SetValueWithoutNotify(normalized);
+        }
 
-        return $"{minutes:00}:{seconds:00}";
+        int percentage = Mathf.RoundToInt(normalized * 100f);
+
+        if (percentage == lastDisplayedPercentage) return;
+
+        lastDisplayedPercentage = percentage;
+
+        if (energyText != null)
+        {
+            energyText.SetText("{0}%", percentage);
+        }
     }
 
     #endregion
 
-    private void OnDisable()
+    #region REFERENCES
+
+    private bool ResolveInteractionHandler()
     {
-        StopTimerRoutine();
-        StopLightRoutine();
-        SetLightOff();
+        if (interactionHandler != null) return true;
+
+        interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+
+        if (interactionHandler != null) return true;
+
+        Debug.LogWarning($"{name}: PlayerInteractionHandler bulunamadý.");
+        return false;
     }
+
+    #endregion
 }

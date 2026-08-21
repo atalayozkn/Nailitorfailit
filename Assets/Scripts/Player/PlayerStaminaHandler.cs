@@ -41,20 +41,14 @@ namespace PlayerScripts
         {
             currentEnergy = maxEnergy;
             costMultiplier = 1.0f;
-
             staminaSlider.maxValue = maxEnergy;
-
             UpdateUI();
         }
 
         private void OnDisable()
         {
-            if (chargeRoutine != null)
-            {
-                StopCoroutine(chargeRoutine);
-            }
-
-            onChargeStopEvent?.Invoke();
+            CancelInvoke(nameof(StartCharge));
+            StopAllCoroutines();
         }
 
         public void ConsumeEnergy(float value)
@@ -77,11 +71,7 @@ namespace PlayerScripts
             UpdateUI();
 
             CancelInvoke(nameof(StartCharge));
-
-            Invoke(
-                nameof(StartCharge),
-                rechargeDelay
-            );
+            Invoke(nameof(StartCharge),rechargeDelay);
         }
 
         public void GainEnergy(float value)
@@ -104,9 +94,7 @@ namespace PlayerScripts
                 StopCoroutine(chargeRoutine);
             }
 
-            chargeRoutine =
-                StartCoroutine(ChargeRoutine());
-
+            chargeRoutine = StartCoroutine(ChargeRoutine());
             onChargeStartEvent?.Invoke();
         }
 
@@ -114,63 +102,43 @@ namespace PlayerScripts
         {
             while (true)
             {
-                currentEnergy +=
-                    perChargeAmount * costMultiplier;
+                currentEnergy += perChargeAmount * costMultiplier;
 
                 UpdateUI();
 
                 if (currentEnergy >= maxEnergy)
                 {
                     currentEnergy = maxEnergy;
-
                     UpdateUI();
-
                     onChargeStopEvent?.Invoke();
-
                     chargeRoutine = null;
                     yield break;
                 }
 
-                yield return new WaitForSeconds(
-                    chargeInterval
-                );
+                yield return new WaitForSeconds(chargeInterval);
             }
         }
 
         private void BecomeEnergised()
         {
             isEnergised = true;
-
             onEnergisedEvent?.Invoke();
-
             CancelInvoke(nameof(ReverseEnergised));
-
-            Invoke(
-                nameof(ReverseEnergised),
-                energisedDuration
-            );
+            Invoke(nameof(ReverseEnergised),energisedDuration);
         }
 
         private void BecomeDrained()
         {
             costMultiplier = drainedMultiplier;
-
             onDrainedEvent?.Invoke();
-
             CancelInvoke(nameof(ReverseDrained));
-
-            Invoke(
-                nameof(ReverseDrained),
-                drainedDuration
-            );
+            Invoke(nameof(ReverseDrained),drainedDuration);
         }
 
         private void UpdateUI()
         {
             staminaSlider.value = currentEnergy;
-
-            // staminaText.text =
-            //     Mathf.FloorToInt(currentEnergy).ToString();
+            // staminaText.text = Mathf.FloorToInt(currentEnergy).ToString();
         }
 
         #region UTILITIES
@@ -189,9 +157,7 @@ namespace PlayerScripts
 
         public bool HasEnoughEnergy(float value)
         {
-            float difference =
-                currentEnergy - value;
-
+            float difference = currentEnergy - value;
             return difference > 0f;
         }
 
