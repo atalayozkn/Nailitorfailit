@@ -21,15 +21,18 @@ public class DogInpectState : DogBaseState
 
         if (counter > animDuration)
         {
-            MailManController mailManController = stateMachine.presenceChecker.GetCurrentMailMan();
-            
-            if (mailManController != null)
+            if (stateMachine.favorController.GetPercentFavor() < 30)
             {
-                stateMachine.SetChaseTarget(mailManController.transform);
-                stateMachine.ChangeToChaseState();
-                return;
-            }
+                MailManController mailManController = stateMachine.presenceChecker.GetCurrentMailMan();
 
+                if (mailManController != null)
+                {
+                    stateMachine.SetChaseTarget(mailManController.transform);
+                    stateMachine.ChangeToChaseState();
+                    return;
+                }
+            }
+            
             if (stateMachine.presenceChecker.GetCurrentCarriable())
             {
                 stateMachine.ChangeToPlayState();

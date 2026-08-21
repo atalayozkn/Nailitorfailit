@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-
 public class SatietyController : MonoBehaviour
 {
     [Header("References")]
@@ -13,7 +12,6 @@ public class SatietyController : MonoBehaviour
     private float currentSatiety;
     private float hungerInterval = 2.0f;
     private Coroutine hungerRoutine;
-
     private void OnEnable()
     {
         currentSatiety = maxSatiety;
