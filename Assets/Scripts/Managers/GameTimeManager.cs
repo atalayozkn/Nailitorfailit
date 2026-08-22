@@ -11,7 +11,6 @@ public class GameTimeManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float maxRoundTime;
-    [SerializeField] private float perRewardTimeIncrease;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onTimeIncreaseEvent;
@@ -73,9 +72,9 @@ public class GameTimeManager : MonoBehaviour
     {
         isActive = condition;
     }
-    public void IncreaseRoundTime()
+    public void IncreaseRoundTime(float amount)
     {
-        currentTime += perRewardTimeIncrease;
+        currentTime += amount;
         UpdateUI();
         onTimeIncreaseEvent?.Invoke();
     }

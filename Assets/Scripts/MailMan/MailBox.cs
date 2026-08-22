@@ -5,6 +5,7 @@ using UnityEngine.Events;
 public class MailBox : MonoBehaviour, IInteractable
 {
     [SerializeField] private InteractableType interactableType;
+    [SerializeField] private float timeRewardAmount;
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
     [SerializeField] private UnityEvent onTriggerEvent;
@@ -15,7 +16,9 @@ public class MailBox : MonoBehaviour, IInteractable
     #region Interactable
     public void OnInteract()
     {
-
+        if (!isMailPresent) return;
+        isMailPresent = false;
+        GameTimeManager.Instance.IncreaseRoundTime(timeRewardAmount);
     }
     public void OnHoverOn()
     {

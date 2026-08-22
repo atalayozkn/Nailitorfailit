@@ -4,7 +4,9 @@ using UnityEngine.Events;
 
 public class LevelManager : MonoBehaviour
 {
-    [SerializeField] private int roomClearReward = 10;
+
+    [SerializeField] private int roomCurrencyReward = 10;
+    [SerializeField] private int roomTimeReward = 60;
     [SerializeField] private int currentLevel = 1;
 
     [SerializeField] private UnityEvent onVictoryEvent;
@@ -31,8 +33,8 @@ public class LevelManager : MonoBehaviour
     {
         remainingRoomCount--;
 
-        CurrencyManager.Instance.GainCurrency(roomClearReward); //Currency Reward
-        GameTimeManager.Instance.IncreaseRoundTime(); //Time Reward
+        CurrencyManager.Instance.GainCurrency(roomCurrencyReward); //Currency Reward
+        GameTimeManager.Instance.IncreaseRoundTime(roomTimeReward); //Time Reward
 
         if (remainingRoomCount <= 0)
         {

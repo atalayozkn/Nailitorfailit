@@ -1,8 +1,9 @@
+using Breakables;
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
-using Breakables;
 
 public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
 {
@@ -11,6 +12,7 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private PuddleHelper puddleHelper;
     [SerializeField] private ObjectHealth objectHealth;
+    [SerializeField] private Constructor connectedConstructor;
     [SerializeField] private bool isFloorTile;
 
     [Header("Settings")]
@@ -92,6 +94,7 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable
     {
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
+        connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()
     {

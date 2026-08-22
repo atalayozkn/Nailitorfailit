@@ -16,7 +16,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!224 &6502017593883367702
 RectTransform:
@@ -610,6 +610,7 @@ GameObject:
   - component: {fileID: 8992195561631379633}
   - component: {fileID: 8685348541890431284}
   - component: {fileID: 4456850146704909037}
+  - component: {fileID: 5843646271384453989}
   m_Layer: 6
   m_Name: Station_WoodCutter
   m_TagString: Untagged
@@ -753,6 +754,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractionCanvasHelper
   canvasComponent: {fileID: 3297610658935567282}
   sliderComponent: {fileID: 8740422798127690198}
+--- !u!208 &5843646271384453989
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7313507888434762851}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.5, y: 0.5, z: 0.5}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &9132837691654836453
 GameObject:
   m_ObjectHideFlags: 0
@@ -778,7 +795,7 @@ Transform:
   m_GameObject: {fileID: 9132837691654836453}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.014000058, z: -1.275}
+  m_LocalPosition: {x: 1, y: 0.014000058, z: -0.27499998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -882,6 +899,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4619426574898395758}
     m_Modifications:
+    - target: {fileID: 182592988878373129, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 187236929590463479, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: sliderHelper
       value: 
@@ -889,6 +910,22 @@ PrefabInstance:
     - target: {fileID: 426159887146463963, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1242361226063498750, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1643701164789914365, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 2319916249338254882, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 2620513976071910601, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 3676466552961158558, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_AnchorMax.x
@@ -898,13 +935,25 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5915745794428707400, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 7355891482755630254, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_Name
       value: Generator_Prototype
       objectReference: {fileID: 0}
+    - target: {fileID: 7355891482755630254, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 8396080789107151048, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 8610352859265100930, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.9200003
+      value: -1.0799997
       objectReference: {fileID: 0}
     - target: {fileID: 8610352859265100930, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_LocalPosition.y

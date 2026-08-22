@@ -191,6 +191,7 @@ MonoBehaviour:
   bluePrintObject: {fileID: 2499015782262911686}
   interactableType: 1
   interactionCollider: {fileID: 434870937798017280}
+  acceptedType: 0
   woodObject: {fileID: 4476850867407786075}
   woodHealth: {fileID: 7501095192495221697}
   brickObject: {fileID: 3169865256209081991}
@@ -320,6 +321,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4037142739123387108, guid: e1b388a6a0630604787a00b8e25e8886, type: 3}
+      propertyPath: connectedConstructor
+      value: 
+      objectReference: {fileID: 3927039132535552457}
     - target: {fileID: 6075135711157930537, guid: e1b388a6a0630604787a00b8e25e8886, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -422,6 +427,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5709191352512158900, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
+      propertyPath: connectedConstructor
+      value: 
+      objectReference: {fileID: 3927039132535552457}
     - target: {fileID: 8125287123933736633, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0.098
@@ -535,6 +544,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7805146663333680621, guid: 553ee7a7d696f1343b8e6f5d1544184e, type: 3}
+      propertyPath: connectedConstructor
+      value: 
+      objectReference: {fileID: 3927039132535552457}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
