@@ -17,6 +17,7 @@ public enum PlayerStates
 public class PlayerStateMachine : StateMachine_Player
 {
     [Header("References")]
+    [field: SerializeField] public bool debugMode { get; private set; }
     [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
     [field: SerializeField] public Transform detectionTransform { get; private set; }
     [field: SerializeField] public Rigidbody rb { get; private set; }
@@ -25,6 +26,7 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
     [field: SerializeField] public CinemachineCamera playerCamera { get; private set; }
+    [field: SerializeField] public CinemachineCamera levelStartCamera { get; private set; }
     [field: SerializeField] public Rigidbody[] ragdollRigidBodies { get; private set; }
     [field: SerializeField] public ConfigurableJoint[] ragdollJoints { get; private set; }
     [field: SerializeField] public Collider[] ragdollColliders { get; private set; }
@@ -45,8 +47,7 @@ public class PlayerStateMachine : StateMachine_Player
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
     [field: SerializeField] public Vector3 moveDirection { get; private set; }
-    [field: SerializeField] public bool debugMode;
-
+    
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
     public RespawnManager respawnManager { get; private set; }
@@ -56,6 +57,10 @@ public class PlayerStateMachine : StateMachine_Player
     {
         respawnManager = FindAnyObjectByType<RespawnManager>();
         initialTarget = playerCamera.Follow;
+        movementHandler.SetActivity(false);
+        interactionHandler.SetActivity(false);
+        Invoke(nameof(SwitchToPlayerCamera), 1f);
+        Invoke(nameof(EnablePlayerInputs), 6f);
 
         //Disable of Ragdoll
         foreach (var joint in ragdollJoints) joint.enableCollision = false;
@@ -232,6 +237,15 @@ public class PlayerStateMachine : StateMachine_Player
     private void ReverseTrack()
     {
         playerCamera.Follow = initialTarget;
+    }
+    private void EnablePlayerInputs()
+    {
+        movementHandler.SetActivity(true);
+        interactionHandler.SetActivity(true);
+    }
+    private void SwitchToPlayerCamera()
+    {
+        levelStartCamera.Priority = 0;
     }
     #endregion
 

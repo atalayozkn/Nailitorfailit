@@ -11,6 +11,7 @@ public class GameTimeManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float maxRoundTime;
+    [SerializeField] private float roundStartTimer = 5f;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onTimeIncreaseEvent;
@@ -30,7 +31,7 @@ public class GameTimeManager : MonoBehaviour
 
         currentTime = maxRoundTime;
 
-        SetActivity(true);
+        Invoke(nameof(ActivateCounter), roundStartTimer);
     }
     private void OnDestroy()
     {
@@ -41,6 +42,10 @@ public class GameTimeManager : MonoBehaviour
         if (!isActive) return;
 
         ProgressTime();
+    }
+    private void ActivateCounter()
+    {
+        SetActivity(true);
     }
     private void ProgressTime()
     {
