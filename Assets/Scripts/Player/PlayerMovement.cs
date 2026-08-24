@@ -1,5 +1,6 @@
 ﻿using PlayerScripts;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
@@ -11,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform detectionTransform;
     [SerializeField] private Transform cameraTransform;
+    [SerializeField] private PlayerCameraFOVHelper fovHelper;
 
     [Header("Input Settings")]
     public InputActionReference move;
@@ -44,10 +46,20 @@ public class PlayerMovement : MonoBehaviour
     [Header("GroundCheck Settings")]
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] private float checkDistance;
+    [SerializeField] private float walkStepDuration = 0.5f;
+    [SerializeField] private float runStepDuration = 0.25f;
+
+    [Header("Unity")]
+    [SerializeField] private UnityEvent onWoodStepEvent;
+    [SerializeField] private UnityEvent onWaterStepEvent;
+    [SerializeField] private UnityEvent onJumpEvent;
+    [SerializeField] private UnityEvent onLandEvent;
 
     private Vector2 moveInput;
     private float maxSpeedSqr;
     private float moveCost;
+    private float stepCounter;
+    private float currentStepDuration;
 
     private bool isActive;
     private bool isInputPresent;
@@ -84,6 +96,7 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
+        stepCounter += Time.deltaTime;
         CheckMovementInput();
         CheckJumpInput();
     }
@@ -99,10 +112,39 @@ public class PlayerMovement : MonoBehaviour
 
     private void GroundCheck()
     {
-        isGrounded = Physics.Raycast(detectionTransform.position, Vector3.down, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore);
+        if (Physics.Raycast(detectionTransform.position, Vector3.down, out RaycastHit hit, checkDistance, whatIsGround, QueryTriggerInteraction.Ignore))
+        {
+            isGrounded = true;
+
+            if (isSprinting) currentStepDuration = runStepDuration;
+            else currentStepDuration = walkStepDuration;
+
+            if (stepCounter >= currentStepDuration && isInputPresent)
+            {
+                stepCounter = 0f;
+
+                if (hit.collider.CompareTag("Wood"))
+                {
+                    onWoodStepEvent?.Invoke();
+                }
+                else if (hit.collider.CompareTag("Water"))
+                {
+                    onWaterStepEvent?.Invoke();
+                }
+            }
+        }
+        else
+        {
+            isGrounded = false;
+        }
 
         if (isGrounded == wasGrounded) return;
-        if (isGrounded) SetJumping(false);
+
+        if (isGrounded)
+        {
+            SetJumping(false);
+            onLandEvent?.Invoke();
+        }
 
         wasGrounded = isGrounded;
     }
@@ -114,6 +156,7 @@ public class PlayerMovement : MonoBehaviour
             moveInput = Vector2.zero;
             isInputPresent = false;
             isSprinting = false;
+            fovHelper.SetTargetFOV(60);
             return;
         }
 
@@ -123,10 +166,20 @@ public class PlayerMovement : MonoBehaviour
         if (!isInputPresent)
         {
             isSprinting = false;
+            fovHelper.SetTargetFOV(60);
             return;
         }
 
-        isSprinting = sprint != null && sprint.action != null && sprint.action.IsPressed();
+        if (sprint.action.IsPressed())
+        {
+            isSprinting = true;
+            fovHelper.SetTargetFOV(75);
+        }
+        else
+        {
+            isSprinting = false;
+            fovHelper.SetTargetFOV(60);
+        }
     }
 
     private void CheckJumpInput()
@@ -136,7 +189,8 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if(jump.action.WasPressedThisFrame()) HandleJump();
+        if (jump.action.WasPressedThisFrame()) HandleJump();
+
     }
 
     private void HandleMovement()
@@ -209,7 +263,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isGrounded) return;
         if (isJumping) return;
-
+        onJumpEvent?.Invoke();
         SetJumping(true);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }

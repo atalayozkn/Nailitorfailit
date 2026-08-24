@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Car_Active : MonoBehaviour
 {
@@ -48,6 +49,7 @@ public class Car_Active : MonoBehaviour
     {
         if (other.gameObject.TryGetComponent<PlayerStateMachine>(out var stateMachine))
         {
+            if (stateMachine.isDead) return;
             stateMachine.SetTrackTarget(transform);
             stateMachine.SetDeathReason(DeathReason.Car);
             stateMachine.ChangeToDeadState();

@@ -8,6 +8,7 @@ public class PlayerStunnedState : PlayerBaseState
     public PlayerStunnedState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.onStunStartEvent?.Invoke();
         stateMachine.UpdateMoveDirection();
 
         //Stopping Inputs & Disabling Animator
@@ -43,6 +44,8 @@ public class PlayerStunnedState : PlayerBaseState
     }
     public override void Exit()
     {
+        stateMachine.onStunEndEvent?.Invoke();
+
         //Disable of Ragdoll
         foreach (var joint in stateMachine.ragdollJoints) joint.enableCollision = false;
         foreach (var col in stateMachine.ragdollColliders) col.enabled = false;

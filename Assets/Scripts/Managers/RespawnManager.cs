@@ -5,12 +5,11 @@ public class RespawnManager : MonoBehaviour
 {
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float spawnDuration;
-    public void RespawnPlayer(GameObject playerObj)
+    public void RespawnPlayer(PlayerStateMachine playerStateMachine)
     {
-        playerObj.SetActive(false);
-        StartCoroutine(SpawnRoutine(playerObj));
+        StartCoroutine(SpawnRoutine(playerStateMachine));
     }
-    private IEnumerator SpawnRoutine(GameObject playerObj)
+    private IEnumerator SpawnRoutine(PlayerStateMachine playerStateMachine)
     {
         float elapsedTime = 0f;
 
@@ -20,7 +19,7 @@ public class RespawnManager : MonoBehaviour
             yield return null;
         }
 
-        playerObj.transform.position = spawnPoint.position;
-        playerObj.SetActive(true);
+        playerStateMachine.transform.position = spawnPoint.position;
+        playerStateMachine.ForceUpdateIdle();
     }
 }

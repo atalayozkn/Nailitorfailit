@@ -1,5 +1,6 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Events;
 public enum PlayerStates
 {
     Idle,
@@ -47,10 +48,19 @@ public class PlayerStateMachine : StateMachine_Player
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
     [field: SerializeField] public Vector3 moveDirection { get; private set; }
-    
+
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
     public RespawnManager respawnManager { get; private set; }
+
+    [Header("Events")]
+    [field: SerializeField] public UnityEvent carDeathEvent { get; private set; }
+    [field: SerializeField] public UnityEvent electricityDeathEvent { get; private set; }
+    [field: SerializeField] public UnityEvent fireDeathEvent { get; private set; }
+    [field: SerializeField] public UnityEvent startSlipEvent { get; private set; }
+    [field: SerializeField] public UnityEvent stopSlipEvent { get; private set; }
+    [field: SerializeField] public UnityEvent onStunStartEvent { get; private set; }
+    [field: SerializeField] public UnityEvent onStunEndEvent { get; private set; }
 
     private Transform initialTarget;
     private void Awake()
@@ -115,8 +125,7 @@ public class PlayerStateMachine : StateMachine_Player
     // Uygun durumdaysa SwitchState() ile PlayerSlippingState'e geçer.
     public void ChangeToSlippingState()
     {
-        if (currentPlayerState == PlayerStates.Dead) return;
-        if (currentPlayerState == PlayerStates.OnAir) return;
+        if (currentPlayerState == PlayerStates.Dead || currentPlayerState == PlayerStates.OnAir || currentPlayerState == PlayerStates.Stunned || currentPlayerState == PlayerStates.Stand) return;
         currentPlayerState = PlayerStates.Slipping;
         SwitchState(new PlayerSlippingState(this));
     }

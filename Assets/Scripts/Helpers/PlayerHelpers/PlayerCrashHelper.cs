@@ -4,7 +4,6 @@ public class PlayerCrashHelper : MonoBehaviour
 {
     [SerializeField] private LayerMask whatIsCrashable;
     [SerializeField] private PlayerStateMachine stateMachine;
-
     private bool isActive;
     private void OnEnable()
     {

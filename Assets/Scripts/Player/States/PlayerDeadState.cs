@@ -7,20 +7,27 @@ public class PlayerDeadState : PlayerBaseState
     public PlayerDeadState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.playerRenderer.enabled = false;
+        stateMachine.movementHandler.enabled = false;
+        stateMachine.interactionHandler.enabled = false;
+
         stateMachine.SetDead(true);
 
         switch (stateMachine.currentReason)
         {
             case DeathReason.Car:
-                stateMachine.respawnManager.RespawnPlayer(stateMachine.gameObject);
+                stateMachine.carDeathEvent?.Invoke();
+                stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;
             case DeathReason.Fire:
+                stateMachine.fireDeathEvent?.Invoke();
                 stateMachine.animator.CrossFadeInFixedTime(FireDeathHash, 0f);
-                stateMachine.respawnManager.RespawnPlayer(stateMachine.gameObject);
+                stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;
             case DeathReason.Electricty:
+                stateMachine.electricityDeathEvent?.Invoke();
                 stateMachine.animator.CrossFadeInFixedTime(ElectricityDeathHash, 0f);
-                stateMachine.respawnManager.RespawnPlayer(stateMachine.gameObject);
+                stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;
         }
     }
@@ -34,6 +41,9 @@ public class PlayerDeadState : PlayerBaseState
     }
     public override void Exit()
     {
+        stateMachine.playerRenderer.enabled = true;
+        stateMachine.movementHandler.enabled = true;
+        stateMachine.interactionHandler.enabled = true;
         stateMachine.SetDead(false);
     }
 }
