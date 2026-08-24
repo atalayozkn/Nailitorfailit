@@ -6,7 +6,7 @@ public class DogChaseState : DogBaseState
     public DogChaseState(DogStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
-        stateMachine.movementHandler.SetTarget(stateMachine.moveTarget);
+        stateMachine.movementHandler.SetTarget(stateMachine.chaseTarget);
         stateMachine.movementHandler.SetBreakDistance(stateMachine.chaseBreakDistance);
         stateMachine.movementHandler.SetRunning(true);
         stateMachine.movementHandler.MoveTowardsTarget();
@@ -14,7 +14,7 @@ public class DogChaseState : DogBaseState
     }
     public override void Tick(float deltaTime)
     {
-
+        
     }
     public override void FixedTick(float fixedDeltaTime)
     {
@@ -23,6 +23,6 @@ public class DogChaseState : DogBaseState
     }
     public override void Exit()
     {
-        stateMachine.movementHandler.SetRunning(false);
+
     }
 }

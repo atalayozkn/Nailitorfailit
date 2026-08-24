@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -51,7 +50,7 @@ public class DogMovementHandler : MonoBehaviour
         StopAllMovement();
     }
 
-    private void StopAllMovement()
+    public void StopAllMovement()
     {
         if (moveRoutine != null)
         {
@@ -105,7 +104,7 @@ public class DogMovementHandler : MonoBehaviour
 
     public void MoveTowardsTarget()
     {
-        if (virtualTarget == null || isMoving) return;
+        if (virtualTarget == null && isMoving) return;
 
         if (moveRoutine != null)
         {
@@ -142,9 +141,12 @@ public class DogMovementHandler : MonoBehaviour
     {
         isMoving = true;
         agent.isStopped = false;
+        Vector3 position = virtualTarget.position;
 
-        while (agent.pathPending || agent.remainingDistance > agent.stoppingDistance)
+        while ((agent.pathPending || agent.remainingDistance > agent.stoppingDistance) && virtualTarget != null)
         {
+            position = virtualTarget.position;
+            agent.SetDestination(position);
             yield return null;
         }
 

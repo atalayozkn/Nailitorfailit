@@ -5,6 +5,8 @@ public class MailManController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private MailManMovementHandler movementHandler;
+    [SerializeField] private DogStateMachine stateMachine;
+
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 2f;
@@ -64,6 +66,7 @@ public class MailManController : MonoBehaviour
     }
     private void HandlePathComplete()
     {
+        stateMachine.StopChase();
         gameObject.SetActive(false);
     }
     private void HandleObjective()
@@ -80,11 +83,12 @@ public class MailManController : MonoBehaviour
     {
         CancelInvoke(nameof(CompleteObjective));
         animator.CrossFadeInFixedTime(scaredHash, 0f);
+        movementHandler.StopMovement();
         Invoke(nameof(RunToLastIndex), 2.0f);
     }
     private void RunToLastIndex()
     {
-        currentPathIndex = path.Length;
+        currentPathIndex = path.Length - 1;
         SetRunning(true);
         movementHandler.MoveToTransform(path[currentPathIndex]);
     }

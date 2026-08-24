@@ -168,6 +168,11 @@ public class PlayerStateMachine : StateMachine_Player
         currentPlayerState = PlayerStates.Dead;
         SwitchState(new PlayerDeadState(this));
     }
+    public void ForceUpdateIdle()
+    {
+        currentPlayerState = PlayerStates.Idle;
+        SwitchState(new PlayerIdleState(this));
+    }
 
     #endregion
 

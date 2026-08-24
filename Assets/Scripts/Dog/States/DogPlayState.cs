@@ -1,5 +1,4 @@
 using ItemScript;
-using Unity.Multiplayer.Tools.NetStatsMonitor;
 using UnityEngine;
 
 public class DogPlayState : DogBaseState
@@ -13,7 +12,7 @@ public class DogPlayState : DogBaseState
 
     public override void Enter()
     {
-        currentCarriable = stateMachine.presenceChecker.GetCurrentCarriable();
+        currentCarriable = stateMachine.playTarget.GetComponent<CarriableObject_SP>();
 
         if (currentCarriable == null)
         {
@@ -47,9 +46,9 @@ public class DogPlayState : DogBaseState
 
         if (counter > playTime)
         {
-            float favorPercent = stateMachine.favorController.GetPercentFavor();
-            if (favorPercent <= 50)
+            if (stateMachine.favorController.GetPercentFavor() <= 50)
             {
+                stateMachine.SetCurrentCarriable(currentCarriable);
                 stateMachine.ChangeToAggresiveState();
             }
             else

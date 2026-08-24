@@ -223,7 +223,10 @@ public class PlayerInteractionHandler : MonoBehaviour
         currentCarriable = null;
         currentCarriableType = default;
         isCarrying = false;
-        stateMachine.ChangeToIdleState();
+
+        if (stateMachine.currentPlayerState != PlayerStates.Idle) stateMachine.ChangeToIdleState();
+        else stateMachine.ForceUpdateIdle();
+
         pressureHandler.SetHeavy(false);
     }
     public void SetActivity(bool condition)

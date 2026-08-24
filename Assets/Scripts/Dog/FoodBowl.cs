@@ -5,39 +5,26 @@ using UnityEngine.Events;
 
 public class FoodBowl : MonoBehaviour, IInteractable
 {
+    [Header("References")]
     [SerializeField] private InteractableType interactableType;
+    [SerializeField] private UIImageFillHelper imageFiller;
+
+    [Header("Settings")]
     [SerializeField] private int maxFood;
     [SerializeField] private int perFillAmount;
-    [SerializeField] private float decayInterval;
+
+    [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
+    [SerializeField] private UnityEvent inSufficientFoodEvent;
 
     public InteractableType InteractableType => interactableType;
     private PlayerInteractionHandler interactionHandler;
     private int currentFood;
-
-    private Coroutine foodDecayRoutine; 
-
-
     private void Awake()
     {
         interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
-
         currentFood = maxFood;
-
-        if (foodDecayRoutine != null)
-        {
-            StopCoroutine(foodDecayRoutine);
-            foodDecayRoutine = null;
-        }
-
-        foodDecayRoutine = StartCoroutine(FoodDecayTick());
-    }
-    private void OnDisable()
-    {
-        if (foodDecayRoutine == null) return;
-        StopCoroutine(foodDecayRoutine);
-        foodDecayRoutine= null;
     }
     public void OnInteract()
     {
@@ -62,22 +49,22 @@ public class FoodBowl : MonoBehaviour, IInteractable
     {
         currentFood += amount;
         if (currentFood > maxFood) currentFood = maxFood;
+        UpdateUI();
     }
     public bool HasEnoughFood(int amount)
     {
         if (currentFood - amount > 0f) return true;
+        inSufficientFoodEvent?.Invoke();
         return false;
     }
     public void ConsumeFood(int amount)
     {
         currentFood -= amount;
+        UpdateUI();
     }
-    private IEnumerator FoodDecayTick()
+    private void UpdateUI()
     {
-        while (true)
-        {
-            currentFood--;
-            yield return new WaitForSeconds(decayInterval);
-        }
+        float foodPercent = (float)currentFood / (float)maxFood;
+        imageFiller.UpdateUI(foodPercent);
     }
 }

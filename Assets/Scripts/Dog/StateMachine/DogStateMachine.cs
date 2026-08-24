@@ -1,4 +1,4 @@
-using System.Collections;
+using ItemScript;
 using UnityEngine;
 public class DogStateMachine : StateMachine_Dog
 {
@@ -26,6 +26,9 @@ public class DogStateMachine : StateMachine_Dog
     [field: SerializeField] public Transform carryTransform { get; private set; }
     [field: SerializeField] public FoodBowl foodBowl { get; private set; }
     [field: SerializeField] public Collider[] patrolBoundaries { get; private set; }
+    [field: SerializeField] public MailManController mailmanController { get; private set; }
+    [field: SerializeField] public CarriableObject_SP currentCarriable { get; private set; }
+
 
     //SETTINGS
     [field: SerializeField] public int perEatConsumption { get; private set; }
@@ -113,20 +116,22 @@ public class DogStateMachine : StateMachine_Dog
     {
         moveTarget = target;
     }
+    public void SetPlayTarget(Transform target)
+    {
+        playTarget = target;
+    }
     public void SetChaseTarget(Transform target)
     {
         chaseTarget = target;
     }
-    public void RandomizePlayTarget()
+    public void SetCurrentCarriable(CarriableObject_SP obj)
     {
-        if (patrolBoundaries == null || patrolBoundaries.Length == 0) return;
-        Collider selectedBoundary = patrolBoundaries[Random.Range(0, patrolBoundaries.Length)];
-
-        if (selectedBoundary is not BoxCollider box) return;
-        Vector3 localPoint = new Vector3(Random.Range(-box.size.x * 0.5f, box.size.x * 0.5f), 0f, Random.Range(-box.size.z * 0.5f, box.size.z * 0.5f));
-        Vector3 worldPoint = box.transform.TransformPoint(localPoint + box.center);
-        worldPoint.y = transform.position.y;
-        playTarget.position = worldPoint;
+        currentCarriable = obj;
+    }
+    public void StopChase()
+    {
+        chaseTarget = null;
+        ChangeToPatrolState();
     }
     public void RandomizePatrolTarget()
     {
@@ -144,11 +149,6 @@ public class DogStateMachine : StateMachine_Dog
     {
         if (chaseTarget != null || movementHandler.CheckDistanceToBed() <= maxChaseDistance) return true;
         else return false;
-    }
-    public void InspectEnvironment()
-    {
-        playTarget = presenceChecker.SearchForMailMan();
-        if (playTarget == null) playTarget = presenceChecker.SearchForCarriable();
     }
 
 }

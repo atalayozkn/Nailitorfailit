@@ -1,4 +1,3 @@
-using Unity.Multiplayer.Tools.NetStatsMonitor;
 using UnityEngine;
 
 public class DogAffectionState : DogBaseState
@@ -10,7 +9,9 @@ public class DogAffectionState : DogBaseState
     public override void Enter()
     {
         counter = 0;
+        stateMachine.animator.CrossFadeInFixedTime(affectionHash,0f);
         stateMachine.favorController.GainFavor(stateMachine.perPetFavorGain);
+        stateMachine.movementHandler.StopAllMovement();
     }
     public override void Tick(float deltaTime)
     {

@@ -72,7 +72,6 @@ namespace ItemScript
         private void OnPickUp()
         {
             col.enabled = false;
-            isOccupied = true;
             rb.isKinematic = true;
             rb.Sleep();
 
@@ -86,6 +85,7 @@ namespace ItemScript
         }
         public void PickUpByDog(Transform target)
         {
+            //Phyics & Occupation
             isOccupied = true;
             col.enabled = false;
             rb.useGravity = false;
@@ -94,6 +94,13 @@ namespace ItemScript
             rb.angularVelocity = Vector3.zero;
             rb.Sleep();
 
+            //Clear from player if Player is holding this.
+            if (playerInteraction.GetCurrentCarriable() == this)
+            {
+                playerInteraction.ClearCarriedObject();
+            }
+
+            //Attach to new target.
             attachTransform = target;
             transform.SetParent(attachTransform);
             Invoke(nameof(AttachToTransform), 0.1f);
@@ -113,6 +120,7 @@ namespace ItemScript
             rb.detectCollisions = true;
             rb.useGravity = true;
             col.enabled = true;
+            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
@@ -129,12 +137,14 @@ namespace ItemScript
         {
             if (isConsumed) return;
 
-            rb.WakeUp();
             rb.isKinematic = false;
             transform.SetParent(null);
             col.enabled = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+
             playerInteraction.ClearCarriedObject();
-            isOccupied = false;
 
             if (shouldThrow)
             {
