@@ -18,8 +18,10 @@ public class DogMovementHandler : MonoBehaviour
 
     private bool isMoving;
     private bool shouldRun;
-
     private Coroutine moveRoutine;
+
+    public static readonly int runHash = Animator.StringToHash("Run");
+    public static readonly int walkHash = Animator.StringToHash("Walk");
     private void Awake()
     {
         InitializePosition();
@@ -101,7 +103,6 @@ public class DogMovementHandler : MonoBehaviour
 
         return difference.magnitude;
     }
-
     public void MoveTowardsTarget()
     {
         if (virtualTarget == null && isMoving) return;
@@ -116,12 +117,10 @@ public class DogMovementHandler : MonoBehaviour
 
         moveRoutine = StartCoroutine(MovementRoutine());
     }
-
     public bool IsMoving()
     {
         return isMoving;
     }
-
     public void SetRunning(bool condition)
     {
         shouldRun = condition;
@@ -131,12 +130,10 @@ public class DogMovementHandler : MonoBehaviour
             agent.speed = shouldRun ? runSpeed : walkSpeed;
         }
     }
-
     public void SetBreakDistance(float amount)
     {
         agent.stoppingDistance = amount;
     }
-
     private IEnumerator MovementRoutine()
     {
         isMoving = true;

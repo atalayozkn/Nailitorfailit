@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -15,6 +14,11 @@ public class MailManMovementHandler : MonoBehaviour
     public void OnEnable()
     {
         isMoving = false;
+
+        if (movementCoroutine != null)
+        {
+            StopCoroutine(movementCoroutine);
+        }
     }
     public void MoveToTransform(Transform target)
     {
@@ -29,6 +33,10 @@ public class MailManMovementHandler : MonoBehaviour
         agent.isStopped = false;
         agent.SetDestination(target.position);
         movementCoroutine = StartCoroutine(MovementRoutine());
+    }
+    public void WarpTo(Vector3 position)
+    {
+        bool result = agent.Warp(position);
     }
     private IEnumerator MovementRoutine()
     {

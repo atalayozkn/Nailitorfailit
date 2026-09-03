@@ -30,7 +30,7 @@ public class GameTimeManager : MonoBehaviour
         Instance = this;
 
         currentTime = maxRoundTime;
-
+        UpdateUI();
         Invoke(nameof(ActivateCounter), roundStartTimer);
     }
     private void OnDestroy()

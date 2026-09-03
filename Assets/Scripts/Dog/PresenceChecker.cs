@@ -52,7 +52,15 @@ public class PresenceChecker : MonoBehaviour
         {
             if (col.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
             {
-                trackedCarriable = carriable;
+                if (!carriable.IsOccupied())
+                {
+                    trackedCarriable = carriable;
+                }
+                else
+                {
+                    trackedCarriable = null;
+                }
+
                 return;
             }
         }
@@ -74,7 +82,16 @@ public class PresenceChecker : MonoBehaviour
         {
             if (col.TryGetComponent<PlayerInteractionHandler>(out PlayerInteractionHandler interactionHandler))
             {
-                trackedCarriable = interactionHandler.GetCurrentCarriable();
+                var carriable = interactionHandler.GetCurrentCarriable();
+                if (carriable != null && !carriable.IsOccupied())
+                {
+                    trackedCarriable = carriable;
+                }
+                else
+                {
+                    trackedCarriable = null;
+                }
+
                 return;
             }
         }

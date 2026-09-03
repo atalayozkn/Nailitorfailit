@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Net;
 using Interactions;
 using ItemScript;
 using UnityEngine;
@@ -224,9 +225,7 @@ public class PlayerInteractionHandler : MonoBehaviour
         currentCarriableType = default;
         isCarrying = false;
 
-        if (stateMachine.currentPlayerState != PlayerStates.Idle) stateMachine.ChangeToIdleState();
-        else stateMachine.ForceUpdateIdle();
-
+        if (stateMachine.currentPlayerState != PlayerStates.Slipping) stateMachine.ForceUpdateIdle();
         pressureHandler.SetHeavy(false);
     }
     public void SetActivity(bool condition)

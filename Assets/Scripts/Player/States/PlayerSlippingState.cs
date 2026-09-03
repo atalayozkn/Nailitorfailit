@@ -20,11 +20,13 @@ public class PlayerSlippingState : PlayerBaseState
     public override void FixedTick(float fixedDeltaTime)
     {
         if (!stateMachine.ShouldRecoverFromSlip()) return;
+
         if (!stateMachine.movementHandler.IsRunning())
         {
             stateMachine.ChangeToIdleState();
             return;
         }
+
         if (stateMachine.movementHandler.IsRunning())
         {
             stateMachine.ChangeToStunnedState();
