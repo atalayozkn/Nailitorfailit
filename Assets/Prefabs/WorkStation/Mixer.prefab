@@ -113,6 +113,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 2988292460894869}
   - component: {fileID: 1582111774536549170}
   - component: {fileID: 1167712443447303244}
   - component: {fileID: 8966553741645507315}
@@ -564,6 +565,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 3962130747629637}
   - component: {fileID: 8644694931191523752}
   - component: {fileID: 1847822336778164101}
   - component: {fileID: 3566541419855203880}
@@ -977,3 +979,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8610352859265100930, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
   m_PrefabInstance: {fileID: 85482681294737385}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3962130747629637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8281490736221988614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+--- !u!114 &2988292460894869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1358346539118601054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30edf439fe5841cbbd7ad4f96dc0f0ed, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MixerHandle_MP

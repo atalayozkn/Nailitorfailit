@@ -1,22 +1,15 @@
-// ============================================================
-// File: LobbyAuthenticator.cs
-// Author: Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for authenticating lobby connections
-// ============================================================
 
 using Mirror;
 using UnityEngine;
 
 public class LobbyAuthenticator : NetworkAuthenticator
 {
-    [HideInInspector] public string serverPassword; // set by host
-    [HideInInspector] public string clientPassword; // set before joining
+    [HideInInspector] public string serverPassword;
+    [HideInInspector] public string clientPassword;
 
     struct AuthRequest  : NetworkMessage { public string password; }
     struct AuthResponse : NetworkMessage { public bool ok; public string reason; }
 
-    // ---------- SERVER ----------
     public override void OnStartServer() =>
         NetworkServer.RegisterHandler<AuthRequest>(OnAuthRequest, false);
 
@@ -36,7 +29,6 @@ public class LobbyAuthenticator : NetworkAuthenticator
         }
     }
 
-    // ---------- CLIENT ----------
     public override void OnStartClient() =>
         NetworkClient.RegisterHandler<AuthResponse>(OnAuthResponse, false);
 

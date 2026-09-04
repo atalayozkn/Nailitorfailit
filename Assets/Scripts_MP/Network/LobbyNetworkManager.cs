@@ -1,9 +1,3 @@
-// ============================================================
-// File:    LobbyNetworkManager.cs
-// Author:  Murad
-// Created: 29-Jun-2026
-// Purpose: Utility class for managing lobby networking in a multiplayer game using Mirror
-// ============================================================
 
 using Mirror;
 using UnityEngine;
@@ -95,41 +89,12 @@ public class LobbyNetworkManager : NetworkManager
             NetworkServer.ReplacePlayerForConnection(conn, gamePlayer, ReplacePlayerOptions.Destroy);
     }
 
-
     public void StartGame()
     {
         if (gameStarted) return;
         gameStarted = true;
 
         ServerChangeScene("GameScene");
-    } 
+    }
 
-    // public void StartGame()
-    // {
-    //     if (gameStarted) return;
-    //     gameStarted = true;
-
-    //     Debug.Log($"StartGame çağrıldı. Bağlı oyuncu sayısı: {NetworkServer.connections.Count}");
-
-    //     foreach (var conn in NetworkServer.connections.Values)
-    //     {
-    //         Debug.Log($"conn {conn.connectionId} — identity null mu: {conn.identity == null}");
-
-    //         if (conn.identity == null) continue;
-
-    //         Debug.Log($"gamePlayerPrefab null mu: {gamePlayerPrefab == null}");
-
-    //         Transform spawnPoint = GetStartPosition();
-    //         GameObject gamePlayer = Instantiate(
-    //             gamePlayerPrefab,
-    //             spawnPoint != null ? spawnPoint.position : Vector3.zero,
-    //             spawnPoint != null ? spawnPoint.rotation : Quaternion.identity
-    //         );
-
-    //         Debug.Log($"gamePlayer oluşturuldu: {gamePlayer.name}, conn {conn.connectionId} için replace ediliyor");
-    //         NetworkServer.ReplacePlayerForConnection(conn, gamePlayer, ReplacePlayerOptions.Destroy);
-    //     }
-
-    //     ServerChangeScene("GameScene");
-    // }
 }

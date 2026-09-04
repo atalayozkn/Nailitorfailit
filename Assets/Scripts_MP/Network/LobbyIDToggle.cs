@@ -1,9 +1,3 @@
-// ============================================================
-// File:    LobbyIDToggle.cs
-// Author:  Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for toggling the visibility of the lobby ID
-// ============================================================
 
 using TMPro;
 using UnityEngine;

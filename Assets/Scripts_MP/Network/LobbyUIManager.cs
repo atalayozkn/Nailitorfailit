@@ -1,9 +1,3 @@
-// ============================================================
-// File: LobbyUIManager.cs
-// Author: Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for managing the lobby UI
-// ============================================================
 
 using Mirror;
 using UnityEngine;
@@ -30,7 +24,6 @@ public class LobbyUIManager : MonoBehaviour
         startGameButtonComponent.onClick.AddListener(OnStartGame);
     }
 
-    // Adds a new player row to the lobby UI and sets up the buttons for the local player
     public PlayerListEntryUI AddPlayerRow(LobbyPlayer player)
     {
         PlayerListEntryUI row = Instantiate(playerEntryPrefab, playerListContent);
@@ -55,7 +48,6 @@ public class LobbyUIManager : MonoBehaviour
         if (row != null) Destroy(row.gameObject);
     }
 
-    // Updates the color of a player row in the lobby UI
     void OnStartGame()
     {
         startGameButtonComponent.interactable = false;

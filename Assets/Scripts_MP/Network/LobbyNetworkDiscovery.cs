@@ -1,9 +1,3 @@
-// ============================================================
-// File:    LobbyNetworkDiscovery.cs
-// Author:  Murad
-// Created: 30-Jun-2026
-// Purpose: Utility script for discovering lobbies in a multiplayer game using Mirror networking
-// ============================================================
 
 using System;
 using System.Net;

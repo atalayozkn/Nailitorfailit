@@ -1,109 +1,107 @@
+
+using System.Collections;
+using ItemScript;
 using Mirror;
 using UnityEngine;
-using Interactions;
-using PlayerScripts;
 
-namespace ItemScript
+public class CarriableObject_MP : NetworkBehaviour
 {
-    public class CarriableObject_MP : NetworkBehaviour, IPickupable, IInteractable
+    private Rigidbody rb;
+    private Collider col;
+    private CarriableObject_SP carriableSp;
+
+    private void Awake()
     {
-        [Header("Item Properties")]
-        [SerializeField] private string itemType = "CarriableItem";
+        rb = GetComponent<Rigidbody>();
+        col = GetComponent<Collider>();
+        carriableSp = GetComponent<CarriableObject_SP>();
+    }
 
-        [Header("Interaction Data")]
-        [SerializeField] private MaterialType materialType = MaterialType.None;
-        [SerializeField] private float itemWeight;
-        [SerializeField] private Tools toolType = Tools.None;
+    public void NotifyPickedUp(PlayerInteractionHandler interactor)
+    {
+        NetworkIdentity carrierIdentity = interactor.GetComponent<NetworkIdentity>();
+        if (carrierIdentity == null) return;
 
-        public string ItemType => itemType;
-        public float Weight => itemWeight;
-        public MaterialType Material => materialType;
-        public Tools Tool => toolType;
+        if (isServer) RpcApplyPickup(carrierIdentity);
+        else CmdRequestPickup(carrierIdentity);
+    }
 
-        private Rigidbody rb;
-        private float defaultLinearDamping;
-        private float defaultAngularDamping;
-        private bool defaultUseGravity;
-        private RigidbodyConstraints defaultConstraints;
+    public void NotifyDropped(PlayerInteractionHandler interactor)
+    {
+        NetworkIdentity carrierIdentity = interactor.GetComponent<NetworkIdentity>();
+        if (carrierIdentity == null) return;
 
-        private void Awake()
+        if (isServer) RpcApplyDrop(carrierIdentity);
+        else CmdRequestDrop(carrierIdentity);
+    }
+
+    public void NotifyConsumed(float delay)
+    {
+        if (isServer) StartCoroutine(ServerDestroyAfterDelay(delay));
+        else CmdRequestConsume(delay);
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdRequestPickup(NetworkIdentity carrierIdentity) => RpcApplyPickup(carrierIdentity);
+
+    [Command(requiresAuthority = false)]
+    private void CmdRequestDrop(NetworkIdentity carrierIdentity) => RpcApplyDrop(carrierIdentity);
+
+    [Command(requiresAuthority = false)]
+    private void CmdRequestConsume(float delay) => StartCoroutine(ServerDestroyAfterDelay(delay));
+
+    [ClientRpc]
+    private void RpcApplyPickup(NetworkIdentity carrierIdentity) => ApplyPickupLocally(carrierIdentity);
+
+    [ClientRpc]
+    private void RpcApplyDrop(NetworkIdentity carrierIdentity) => ApplyDropLocally(carrierIdentity);
+
+    private void ApplyPickupLocally(NetworkIdentity carrierIdentity)
+    {
+        if (carrierIdentity == null) return;
+
+        PlayerInteractionHandler carrierInteraction = carrierIdentity.GetComponent<PlayerInteractionHandler>();
+        if (carrierInteraction == null) return;
+
+        Transform carryTransform = carrierInteraction.GetCarryTransform();
+
+        if (col != null) col.enabled = false;
+
+        if (rb != null)
         {
-            rb = GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                defaultLinearDamping = rb.linearDamping;
-                defaultAngularDamping = rb.angularDamping;
-                defaultUseGravity = rb.useGravity;
-                defaultConstraints = rb.constraints;
-            }
-            itemWeight = materialType.GetWeight();
+            rb.isKinematic = true;
+            rb.Sleep();
         }
 
-        public void Interact() => Debug.Log("Item alindi");
+        transform.SetParent(carryTransform);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
 
-        public void InitializeObject(MaterialType typeOfMaterial)
+        if (carriableSp != null) carrierInteraction.RegisterCarriedObject(carriableSp);
+    }
+
+    private void ApplyDropLocally(NetworkIdentity carrierIdentity)
+    {
+        if (rb != null)
         {
-            materialType = typeOfMaterial;
-            itemWeight = materialType.GetWeight();
-        }
-
-        // --- IPickupable ---
-
-        public void OnPickUp()
-        {
-            ApplyPickupPhysics(); // lokal anlık tepki
-            if (isServer) RpcSyncPickup();
-            else CmdRequestPickup();
-        }
-
-        public void OnDrop()
-        {
-            ApplyDropPhysics();
-            if (isServer) RpcSyncDrop();
-            else CmdRequestDrop();
-        }
-
-        // --- Command zinciri: client → server → tüm clientlar ---
-
-        // requiresAuthority = false: player bu item'ın sahibi olmasa da çağırabilir
-        [Command(requiresAuthority = false)]
-        private void CmdRequestPickup() => RpcSyncPickup();
-
-        [Command(requiresAuthority = false)]
-        private void CmdRequestDrop() => RpcSyncDrop();
-
-        [ClientRpc]
-        private void RpcSyncPickup() => ApplyPickupPhysics();
-
-        [ClientRpc]
-        private void RpcSyncDrop() => ApplyDropPhysics();
-
-        // --- Fizik değişiklikleri ---
-
-        private void ApplyPickupPhysics()
-        {
-            if (rb == null) return;
-            rb.useGravity = false;
-            rb.linearDamping = 10f;
-            rb.angularDamping = 10f;
-            rb.freezeRotation = true;
             rb.WakeUp();
+            rb.isKinematic = false;
         }
 
-        private void ApplyDropPhysics()
-        {
-            if (rb == null) return;
-            rb.useGravity = defaultUseGravity;
-            rb.linearDamping = defaultLinearDamping;
-            rb.angularDamping = defaultAngularDamping;
-            rb.constraints = defaultConstraints;
-            rb.WakeUp();
-        }
+        transform.SetParent(null);
 
-        // --- Yardımcılar ---
+        if (col != null) col.enabled = true;
 
-        public Rigidbody GetRigidbody() => rb;
-        public bool IsTool(Tools requiredTool) => toolType == requiredTool;
-        public bool IsMaterial(MaterialType requiredMaterial) => materialType == requiredMaterial;
+        PlayerInteractionHandler carrierInteraction = carrierIdentity != null ? carrierIdentity.GetComponent<PlayerInteractionHandler>() : null;
+        carrierInteraction?.ClearCarriedObject();
+    }
+
+    [Server]
+    private IEnumerator ServerDestroyAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (gameObject != null)
+            NetworkServer.Destroy(gameObject);
     }
 }

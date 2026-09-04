@@ -1,9 +1,3 @@
-// ============================================================
-// File: LobbyPlayer.cs
-// Author: Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for managing player information in the lobby
-// ============================================================
 
 using Mirror;
 
@@ -24,6 +18,9 @@ public class LobbyPlayer : NetworkBehaviour
     {
         if (LobbyUIManager.Instance != null)
             uiRow = LobbyUIManager.Instance.AddPlayerRow(this);
+
+        if (isOwned && GameManager.Instance != null)
+            GameManager.Instance.ShowLobbyMenu();
     }
 
     public override void OnStopClient()
@@ -36,7 +33,6 @@ public class LobbyPlayer : NetworkBehaviour
     void OnReadyChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(isHost, newVal);
     void OnHostChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(newVal, isReady);
 
-    // Command to set the player's ready status (sycnhronized across the network)
     [Command]
     public void CmdSetReady(bool ready)
     {

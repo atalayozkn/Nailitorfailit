@@ -8,6 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 2291675226413078}
+  - component: {fileID: 4404804380088150}
+  - component: {fileID: 5686888069513753}
   - component: {fileID: 4112026753085899963}
   - component: {fileID: 2849726115554323900}
   - component: {fileID: 558372330420327357}
@@ -276,3 +279,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
   targetRenderer: {fileID: 7131936121395262526}
   targetColor: {r: 0, g: 1, b: 0.93155813, a: 0}
+--- !u!114 &2291675226413078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2451140924364856572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+--- !u!114 &4404804380088150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2451140924364856572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 637ec44bb06d70e34a87088c098a11bc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CarriableObject_MP
+--- !u!114 &5686888069513753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2451140924364856572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cde4593dd5fd41fe807225f7bd460648, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkSpawnSelf_MP

@@ -1,9 +1,3 @@
-// ============================================================
-// File:    JoinLobbyUI.cs
-// Author:  Murad
-// Created: 30-Jun-2026
-// Purpose: Utility script for joining a lobby in a multiplayer game using Mirror networking
-// ============================================================
 
 using Mirror;
 using TMPro;
@@ -12,7 +6,7 @@ using UnityEngine.UI;
 
 public class JoinLobbyUI : MonoBehaviour
 {
-    [SerializeField] TMP_InputField lobbyIdInput;   // Edgegap session ID girilir
+    [SerializeField] TMP_InputField lobbyIdInput;
     [SerializeField] TMP_InputField passwordInput;
     [SerializeField] Button joinButton;
     [SerializeField] TMP_Text statusText;

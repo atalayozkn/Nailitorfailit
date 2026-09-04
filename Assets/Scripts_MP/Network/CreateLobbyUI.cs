@@ -1,9 +1,3 @@
-// ============================================================
-// File: CreateLobbyUI.cs
-// Author: Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for returning the lobby password from the UI
-// ============================================================
 
 using Mirror;
 using TMPro;
@@ -13,6 +7,7 @@ using UnityEngine.UI;
 public class CreateLobbyUI : MonoBehaviour
 {
     [SerializeField] TMP_InputField passwordInput;
+    [SerializeField] TMP_InputField maxPlayersInput;
     [SerializeField] Button createButton;
     [SerializeField] TMP_Text statusText;
 
@@ -27,6 +22,9 @@ public class CreateLobbyUI : MonoBehaviour
             if (statusText != null) statusText.text = "Şifre gerekli";
             return;
         }
+
+        if (maxPlayersInput != null && int.TryParse(maxPlayersInput.text, out int maxPlayers) && maxPlayers > 0)
+            NetworkManager.singleton.maxConnections = maxPlayers;
 
         createButton.interactable = false;
         if (statusText != null) statusText.text = "Relay oluşturuluyor...";

@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -117,6 +118,43 @@ public class GameManager : MonoBehaviour
         }
 
         ChangeToGamePhase();
+    }
+
+    #endregion
+
+    #region Multiplayer
+
+    [Header("Multiplayer Panels")]
+    [SerializeField] private GameObject mpMainMenuPanel;
+    [SerializeField] private GameObject mpMultiplayerMenuPanel;
+    [SerializeField] private GameObject mpCreateLobbyPanel;
+    [SerializeField] private GameObject mpJoinLobbyPanel;
+    [SerializeField] private GameObject mpLobbyMenuPanel;
+    [SerializeField] private TMP_Text mpLobbyIdLabel;
+    [SerializeField] private TMP_Text mpLobbyPasswordLabel;
+
+    public void ShowMultiplayerMenu() => SetActiveMultiplayerPanel(mpMultiplayerMenuPanel);
+    public void ShowCreateLobby() => SetActiveMultiplayerPanel(mpCreateLobbyPanel);
+    public void ShowJoinLobby() => SetActiveMultiplayerPanel(mpJoinLobbyPanel);
+
+    public void ShowLobbyMenu()
+    {
+        SetActiveMultiplayerPanel(mpLobbyMenuPanel);
+
+        LobbyNetworkManager manager = LobbyNetworkManager.singleton as LobbyNetworkManager;
+        if (manager == null) return;
+
+        if (mpLobbyIdLabel != null) mpLobbyIdLabel.text = manager.LobbyID;
+        if (mpLobbyPasswordLabel != null) mpLobbyPasswordLabel.text = manager.LobbyPassword;
+    }
+
+    private void SetActiveMultiplayerPanel(GameObject panel)
+    {
+        if (mpMainMenuPanel != null) mpMainMenuPanel.SetActive(panel == mpMainMenuPanel);
+        if (mpMultiplayerMenuPanel != null) mpMultiplayerMenuPanel.SetActive(panel == mpMultiplayerMenuPanel);
+        if (mpCreateLobbyPanel != null) mpCreateLobbyPanel.SetActive(panel == mpCreateLobbyPanel);
+        if (mpJoinLobbyPanel != null) mpJoinLobbyPanel.SetActive(panel == mpJoinLobbyPanel);
+        if (mpLobbyMenuPanel != null) mpLobbyMenuPanel.SetActive(panel == mpLobbyMenuPanel);
     }
 
     #endregion

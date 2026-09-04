@@ -40,7 +40,7 @@ public class EdgegapRelayManager : MonoBehaviour
 
     private IEnumerator CreateSessionRoutine(int maxPlayers, Action<string> onSuccess, Action onFail)
     {
-        // Önce public IP'yi çek
+
         string publicIp = null;
         using (UnityWebRequest ipReq = UnityWebRequest.Get("https://api.ipify.org"))
         {
@@ -53,7 +53,6 @@ public class EdgegapRelayManager : MonoBehaviour
 
         Debug.Log("Public IP: " + publicIp);
 
-        // Sadece host kullanıcısı ile başla — diğerleri join olduğunda eklenir
         string body = $"{{\"relay_profile_slug\": \"{relayProfileSlug}\", \"users\": [{{\"ip\": \"{publicIp}\"}}]}}";
 
         using UnityWebRequest req = new UnityWebRequest(ApiBase, "POST");
@@ -89,7 +88,7 @@ public class EdgegapRelayManager : MonoBehaviour
 
     private IEnumerator JoinSessionRoutine(string sessionId, Action onSuccess, Action onFail)
     {
-        // Önce public IP'yi çek
+
         string publicIp = null;
         using (UnityWebRequest ipReq = UnityWebRequest.Get("https://api.ipify.org"))
         {
@@ -99,7 +98,6 @@ public class EdgegapRelayManager : MonoBehaviour
                 : "0.0.0.0";
         }
 
-        // Doğru endpoint: sessions:authorize-user
         string url = $"{ApiBase}:authorize-user";
         string body = $"{{\"session_id\": \"{sessionId}\", \"user_ip\": \"{publicIp}\"}}";
 
@@ -118,10 +116,9 @@ public class EdgegapRelayManager : MonoBehaviour
             yield break;
         }
 
-        // Authorize sonrası session bilgilerini çek
         yield return WaitForRelayReady(sessionId, (readyData) =>
         {
-            // Client için kendi index'ini bul
+
             int userIndex = readyData.session_users.Length - 1;
 
             edgegapTransport.relayAddress = readyData.relay.ip;

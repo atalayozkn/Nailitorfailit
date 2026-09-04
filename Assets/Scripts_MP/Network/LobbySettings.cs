@@ -1,9 +1,3 @@
-// ============================================================
-// File:    LobbySettings.cs
-// Author:  Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for syncing the lobby ID across the network
-// ============================================================
 
 using Mirror;
 

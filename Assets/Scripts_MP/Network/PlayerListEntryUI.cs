@@ -1,9 +1,3 @@
-// ============================================================
-// File: PlayerListEntryUI.cs
-// Author: Murad
-// Created: 30-Jun-2026
-// Purpose: Utility methods for displaying player information in the lobby
-// ============================================================
 
 using TMPro;
 using UnityEngine;
