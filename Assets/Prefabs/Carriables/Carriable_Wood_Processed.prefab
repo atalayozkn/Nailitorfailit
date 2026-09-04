@@ -101,7 +101,7 @@ MonoBehaviour:
   objectRenderer: {fileID: 8928317281644742507}
   isRawMaterial: 0
   carriableType: 1
-  dropForce: 10
+  dropForce: 0.025
   objectDiscardDelay: 3
   onHoverOnEvent:
     m_PersistentCalls:
@@ -255,4 +255,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
   targetRenderer: {fileID: 8928317281644742507}
+  skinnedRenderer: {fileID: 0}
+  isSkinnedMesh: 0
   targetColor: {r: 0.43867922, g: 1, b: 0.99482137, a: 0}

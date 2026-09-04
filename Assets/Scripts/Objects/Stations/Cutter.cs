@@ -49,22 +49,15 @@ public class Cutter : MonoBehaviour, IInteractable
     {
         if (isSpawning) return;
 
+        if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return;
+
         if (!isObjectPlaced)
         {
             RegisterToStation();
             return;
         }
 
-        if (interactionHandler.IsCarrying())
-        {
-            return;
-        }
-
-        if (!connectedGenerator.HasEnoughEnergy(perProcessCost))
-        {
-            Debug.Log("No Energy");
-            return;
-        }
+        if (interactionHandler.IsCarrying()) return;
 
         connectedGenerator.ConsumeEnergy(perProcessCost);
 
@@ -98,6 +91,7 @@ public class Cutter : MonoBehaviour, IInteractable
         if (!IsCarriableTypeAccepted(carriable.carriableType)) return;
 
         placedObject = carriable;
+        carriable.SetOccupied();
         isObjectPlaced = true;
         PlaceObject();
         interactionHandler.ClearCarriedObject();

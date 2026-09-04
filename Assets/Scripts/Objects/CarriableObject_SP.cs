@@ -15,7 +15,7 @@ namespace ItemScript
         public CarriableType carriableType;
 
         [Header("Settings")]
-        [SerializeField] private float dropForce = 10f;
+        [SerializeField] private float dropForce = 1f;
         [SerializeField] private float objectDiscardDelay = 3.0f;
 
         [Header("Events")]
@@ -69,6 +69,7 @@ namespace ItemScript
 
         #endregion
 
+        #region PLAYER INTERACTION
         private void OnPickUp()
         {
             col.enabled = false;
@@ -83,6 +84,41 @@ namespace ItemScript
 
             playerInteraction.RegisterCarriedObject(this);
         }
+        public void OnDrop(bool shouldThrow = false)
+        {
+            if (isConsumed) return;
+            transform.SetParent(null);
+            rb.isKinematic = false;
+            col.enabled = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+
+            if (shouldThrow)
+            {
+                float angle = Random.Range(0f, 30f);
+                float rotation = Random.Range(0f, 360f);
+                Quaternion spread = Quaternion.Euler(angle, rotation, 0f);
+                Vector3 direction = spread * Vector3.up;
+                rb.AddForce(direction * dropForce, ForceMode.Impulse);
+            }
+
+            playerInteraction.ClearCarriedObject();
+        }
+        public void OnConsume()
+        {
+            if (isConsumed) return;
+            isConsumed = true;
+
+            spawnerObject?.ReduceCounter();
+            onConsumeEvent?.Invoke();
+            playerInteraction.ClearCarriedObject();
+
+            Destroy(gameObject, objectDiscardDelay);
+        }
+        #endregion
+
+        #region DOG INTERACTION
         public void PickUpByDog(Transform target)
         {
             //Phyics & Occupation
@@ -133,40 +169,13 @@ namespace ItemScript
             Destroy(gameObject, objectDiscardDelay);
         }
 
-        public void OnDrop(bool shouldThrow = false)
+        #endregion
+
+        public void SetOccupied()
         {
-            if (isConsumed) return;
-
-            rb.isKinematic = false;
-            transform.SetParent(null);
-            col.enabled = true;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.WakeUp();
-
-            playerInteraction.ClearCarriedObject();
-
-            if (shouldThrow)
-            {
-                float angle = Random.Range(0f, 30f);
-                float rotation = Random.Range(0f, 360f);
-                Quaternion spread = Quaternion.Euler(angle,rotation,0f);
-                Vector3 direction = spread * Vector3.up;
-                rb.AddForce(direction * dropForce, ForceMode.Impulse);
-            }
+            isOccupied = true;
         }
-
-        public void OnConsume()
-        {
-            if (isConsumed) return;
-            isConsumed = true;
-
-            spawnerObject?.ReduceCounter();
-            onConsumeEvent?.Invoke();
-            playerInteraction.ClearCarriedObject();
-
-            Destroy(gameObject, objectDiscardDelay);
-        }
+       
         public bool IsOccupied()
         {
             return isOccupied;

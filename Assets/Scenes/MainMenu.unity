@@ -1711,8 +1711,8 @@ GameObject:
   - component: {fileID: 1384886797}
   - component: {fileID: 1384886796}
   - component: {fileID: 1384886795}
-  - component: {fileID: 1384886794}
   - component: {fileID: 1384886793}
+  - component: {fileID: 1384886798}
   m_Layer: 5
   m_Name: Button_CharacterSelection
   m_TagString: Untagged
@@ -1754,63 +1754,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImageMaterialChangeHelper
   image: {fileID: 1384886796}
   targetColor: {r: 0, g: 1, b: 0.99020815, a: 0}
---- !u!114 &1384886794
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1384886791}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca462a83db223a64ea1c018709bacd8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CustomButton
-  onPointerEnterEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1384886793}
-        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onPointerExitEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1384886793}
-        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
-        m_MethodName: RevertToOriginalColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onPointerClickEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1325913704}
-        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: StartGame
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!114 &1384886795
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1893,6 +1836,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1384886791}
   m_CullTransparentMesh: 1
+--- !u!114 &1384886798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384886791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4afcc1e946905484981962ccd3ba6658, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectButton
+  characterIndex: 0
+  onPointerEnterEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1384886793}
+        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
+        m_MethodName: ChangeToColor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onPointerExitEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1384886793}
+        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
+        m_MethodName: RevertToOriginalColor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onPointerClickEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1384886793}
+        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
+        m_MethodName: RevertToOriginalColor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1459523260
 GameObject:
   m_ObjectHideFlags: 0
@@ -2306,8 +2307,8 @@ GameObject:
   - component: {fileID: 1608985335}
   - component: {fileID: 1608985334}
   - component: {fileID: 1608985333}
-  - component: {fileID: 1608985337}
   - component: {fileID: 1608985336}
+  - component: {fileID: 1608985337}
   m_Layer: 5
   m_Name: Button_StartGame
   m_TagString: Untagged
@@ -2440,9 +2441,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1608985331}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca462a83db223a64ea1c018709bacd8e, type: 3}
+  m_Script: {fileID: 11500000, guid: f12a34e8e9b7e194089f81aa0cf7539f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CustomButton
+  m_EditorClassIdentifier: Assembly-CSharp::StartButton
   onPointerEnterEvent:
     m_PersistentCalls:
       m_Calls:
@@ -2476,9 +2477,9 @@ MonoBehaviour:
   onPointerClickEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1325913704}
-        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: ActivateCharacterSelection
+      - m_Target: {fileID: 1608985336}
+        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
+        m_MethodName: RevertToOriginalColor
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -123,6 +123,7 @@ MonoBehaviour:
   source: {fileID: 5928135879881170981}
   clips:
   - {fileID: 8300000, guid: 5b873d057a31b4f44bf92bb0b7cbca4e, type: 3}
+  - {fileID: 8300000, guid: 52d528d6cc245e844ad3652ebaebb157, type: 3}
 --- !u!82 &5928135879881170981
 AudioSource:
   m_ObjectHideFlags: 0
@@ -145,7 +146,7 @@ AudioSource:
   Priority: 1
   DopplerLevel: 1
   MinDistance: 4
-  MaxDistance: 9
+  MaxDistance: 15
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -1100,7 +1101,7 @@ AudioSource:
   Priority: 1
   DopplerLevel: 1
   MinDistance: 4
-  MaxDistance: 9
+  MaxDistance: 15
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -1218,7 +1219,7 @@ GameObject:
   - component: {fileID: 9024314289590810009}
   - component: {fileID: 5870101108906743381}
   - component: {fileID: 8222399677542035742}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: MailBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1254,7 +1255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MailBox
   interactableType: 2
-  timeRewardAmount: 0
+  timeRewardAmount: 20
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
@@ -1778,7 +1779,7 @@ Transform:
   m_GameObject: {fileID: 1808766301094260211}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -1}
+  m_LocalPosition: {x: -1, y: 0, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1788,6 +1789,7 @@ Transform:
   - {fileID: 2946978707354438809}
   - {fileID: 2591702604275188247}
   - {fileID: 5453723045263007982}
+  - {fileID: 7704406649515489681}
   m_Father: {fileID: 7211310655956579314}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1908127740480891952
@@ -1932,7 +1934,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: a1938466a65272443a2ea636ef82d1e2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2052,10 +2054,10 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10.221755, y: 1, z: 7.6846867}
-  m_Center: {x: -2.9139228, y: 0, z: -0.265347}
+  m_Size: {x: 13.53381, y: 1, z: 7.7878118}
+  m_Center: {x: -0.01597023, y: 0, z: 1.8224599}
 --- !u!1 &2401084540157163059
 GameObject:
   m_ObjectHideFlags: 0
@@ -2435,6 +2437,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImageMaterialChangeHelper
   image: {fileID: 275192446946896424}
   targetColor: {r: 0, g: 1, b: 0.8893428, a: 0}
+--- !u!1 &2486548028503093817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3519791434771608916}
+  - component: {fileID: 7230733450659676491}
+  m_Layer: 0
+  m_Name: PatrolBoundary (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3519791434771608916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2486548028503093817}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.46, z: -1.52}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2946978707354438809}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7230733450659676491
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2486548028503093817}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.139304, y: 1, z: 7.7878118}
+  m_Center: {x: 2.1812825, y: 0, z: 1.8224599}
 --- !u!1 &2610038339801339325
 GameObject:
   m_ObjectHideFlags: 0
@@ -3667,59 +3722,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIImageFillHelper
   imageComponent: {fileID: 1469881408240146542}
---- !u!1 &4803936087879657929
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2067143421188820088}
-  - component: {fileID: 6709280145808407989}
-  m_Layer: 0
-  m_Name: PatrolBoundary (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2067143421188820088
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4803936087879657929}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7071066, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -8.000001, y: 0.46, z: 1.9799955}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2946978707354438809}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
---- !u!65 &6709280145808407989
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4803936087879657929}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 10.221755, y: 1, z: 3.684691}
-  m_Center: {x: -2.9139776, y: 0, z: 1.7346562}
 --- !u!1 &4831025983931472420
 GameObject:
   m_ObjectHideFlags: 0
@@ -3970,7 +3972,7 @@ AudioSource:
   Priority: 1
   DopplerLevel: 1
   MinDistance: 4
-  MaxDistance: 9
+  MaxDistance: 15
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -4406,13 +4408,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5875407159438186155}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.46, z: -1.52}
+  m_LocalRotation: {x: -0, y: -0.70710665, z: -0, w: 0.70710695}
+  m_LocalPosition: {x: -4.75, y: 0.46, z: 7.4799995}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2946978707354438809}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!65 &8471304664243593826
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4430,10 +4432,10 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10.221755, y: 1, z: 2.6846867}
-  m_Center: {x: 0.08607721, y: 0, z: -2.765347}
+  m_Size: {x: 16.176296, y: 1, z: 3.9215097}
+  m_Center: {x: -2.9772725, y: 0, z: 5.684342e-14}
 --- !u!1 &5946833295829791911
 GameObject:
   m_ObjectHideFlags: 0
@@ -5094,7 +5096,7 @@ Transform:
   m_GameObject: {fileID: 6440649670476563057}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.367, y: 0.04, z: -8.095}
+  m_LocalPosition: {x: 8.04, y: 0, z: -7.88}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -5252,9 +5254,13 @@ MonoBehaviour:
   <patrolBoundaries>k__BackingField:
   - {fileID: 3330534863530506676}
   - {fileID: 8471304664243593826}
-  - {fileID: 6709280145808407989}
+  - {fileID: 7230733450659676491}
   <mailmanController>k__BackingField: {fileID: 4322730173313289396}
   <currentCarriable>k__BackingField: {fileID: 0}
+  <possibleDrops>k__BackingField:
+  - {fileID: 6479617406932401784, guid: 4cf9bf6b5946a0345b0aed02ea5222fb, type: 3}
+  <dropTransform>k__BackingField: {fileID: 9075466640299138306}
+  <itemDropTransfom>k__BackingField: {fileID: 7704406649515489681}
   <perEatConsumption>k__BackingField: 25
   <perEatGain>k__BackingField: 30
   <perPetFavorGain>k__BackingField: 10
@@ -5263,7 +5269,7 @@ MonoBehaviour:
   <patrolBreakDistance>k__BackingField: 0.25
   <perSleepGain>k__BackingField: 75
   <currentDogState>k__BackingField: 0
-  <dropTransform>k__BackingField: {fileID: 9075466640299138306}
+  <patrolCounter>k__BackingField: 0
   <moveTarget>k__BackingField: {fileID: 0}
   <patrolTarget>k__BackingField: {fileID: 2591702604275188247}
   <chaseTarget>k__BackingField: {fileID: 0}
@@ -5300,7 +5306,7 @@ MonoBehaviour:
   stateMachine: {fileID: 2429684298596722257}
   fillHelper: {fileID: 172737914237926290}
   maxSatiety: 100
-  hungerInterval: 3.5
+  hungerInterval: 2.25
 --- !u!114 &8607017784168212365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5315,7 +5321,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FavorController
   fillHelper: {fileID: 631906667600161392}
   maxFavor: 100
-  hungerInterval: 2
+  hungerInterval: 6
 --- !u!114 &1938121636896440840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5330,7 +5336,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DogEnergyController
   fillHelper: {fileID: 3563880805871205242}
   maxEnergy: 100
-  decayInterval: 4
+  decayInterval: 6
   onDepletedEvent:
     m_PersistentCalls:
       m_Calls:
@@ -5627,12 +5633,12 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 8238223864513817884}
         m_TargetAssemblyTypeName: SoundController, Assembly-CSharp
-        m_MethodName: PlayAudio
+        m_MethodName: PlayLoopedAudio
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 3
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -5648,6 +5654,48 @@ MonoBehaviour:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  <onStunStartEvent>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8238223864513817884}
+        m_TargetAssemblyTypeName: SoundController, Assembly-CSharp
+        m_MethodName: ReversePitch
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 8238223864513817884}
+        m_TargetAssemblyTypeName: SoundController, Assembly-CSharp
+        m_MethodName: PlayLoopedAudio
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  <onStunEndEvent>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8238223864513817884}
+        m_TargetAssemblyTypeName: SoundController, Assembly-CSharp
+        m_MethodName: StopAudio
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -5692,7 +5740,7 @@ MonoBehaviour:
   onAirRotationDamping: 0.5
   whatIsGround:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 320
   checkDistance: 0.51
   walkStepDuration: 0.5
   runStepDuration: 0.25
@@ -6609,6 +6657,7 @@ GameObject:
   - component: {fileID: 8483430666563448544}
   - component: {fileID: 8388344131471236744}
   - component: {fileID: 6087075584656509050}
+  - component: {fileID: 5470291513634504621}
   m_Layer: 7
   m_Name: InLevelCamera
   m_TagString: Untagged
@@ -6736,6 +6785,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineConfiner3D
   BoundingVolume: {fileID: 70361913947930141}
   SlowingDistance: 0
+--- !u!114 &5470291513634504621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7527700715997915950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f718f455252b51c4da005cef0c443635, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraDitherHelper
+  mainCamera: {fileID: 477448370840736542}
+  playerTransform: {fileID: 41748521517250956}
+  castRadius: 0.01
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 65
 --- !u!1 &7538380396530980167
 GameObject:
   m_ObjectHideFlags: 0
@@ -6965,6 +7032,37 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &8298045817626642057
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7704406649515489681}
+  m_Layer: 0
+  m_Name: ItemDropTransform
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7704406649515489681
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8298045817626642057}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.48, y: 0.326, z: 3.23}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1820632485963155131}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8312028510002943139
 GameObject:
   m_ObjectHideFlags: 0
@@ -7285,7 +7383,7 @@ Transform:
   m_GameObject: {fileID: 8717050827203050031}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.3, y: 0.125, z: -4.6}
+  m_LocalPosition: {x: 2.3, y: 0.125, z: -3.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7347,8 +7445,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2643942733321031523}
+  - {fileID: 3519791434771608916}
   - {fileID: 4950250185383494891}
-  - {fileID: 2067143421188820088}
   m_Father: {fileID: 1820632485963155131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8803231310783451296
@@ -9038,6 +9136,22 @@ PrefabInstance:
     - target: {fileID: -5480977901411583989, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 21.277925
+      objectReference: {fileID: 0}
+    - target: {fileID: -5477749408508380018, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -5477749408508380018, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -5477749408508380018, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -5477749408508380018, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -3746190272939815206, guid: f3f313b61c64d8145a8077f7eda7b0f9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

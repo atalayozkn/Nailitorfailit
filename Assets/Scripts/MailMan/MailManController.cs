@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class MailManController : MonoBehaviour
 {
@@ -6,7 +7,6 @@ public class MailManController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private MailManMovementHandler movementHandler;
     [SerializeField] private DogStateMachine stateMachine;
-
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 2f;
@@ -16,6 +16,7 @@ public class MailManController : MonoBehaviour
     [SerializeField] private Transform[] path;
     [SerializeField] private Transform objectiveTransform;
 
+    private Vector3 spawnPosition;
     private int currentPathIndex;
     private MailBox mailBox;
     //Animation References
@@ -27,11 +28,13 @@ public class MailManController : MonoBehaviour
     private void Awake()
     {
         mailBox = FindFirstObjectByType<MailBox>();
+        spawnPosition = transform.position;
     }
     private void OnEnable()
     {
         if (path == null || path.Length == 0) return;
         currentPathIndex = 0;
+        movementHandler.WarpTo(spawnPosition);
         MoveToCurrentPoint();
     }
     private void MoveToCurrentPoint()

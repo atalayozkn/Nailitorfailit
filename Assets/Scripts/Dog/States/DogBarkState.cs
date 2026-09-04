@@ -19,8 +19,6 @@ public class DogBarkState : DogBaseState
         {
             stateMachine.ChangeToChaseState();
         }
-
-
     }
     public override void FixedTick(float fixedDeltaTime)
     {

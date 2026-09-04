@@ -53,12 +53,27 @@ public class LevelManager : MonoBehaviour
     private void Defeat()
     {
         onDefeatEvent?.Invoke();
-        GameManager.Instance.CompleteLevel(currentLevel, false);
+
+        if (!CurrencyManager.Instance.HasEnoughCurrency(50))
+        {
+            //Play Backrupcy
+            //Delay
+            //Return to Menu scene as Menu Mode
+            GameManager.Instance.CompleteLevel(currentLevel, false);
+        }
+        else
+        {
+            GameManager.Instance.ReturnToGameMenu();
+            //Return to Menu scene as GameMode
+        }
     }
     private void Victory()
     {
         onVictoryEvent?.Invoke();
         int score = ScoreManager.Instance.CalculateScore();
+
+        //Probably delay will be added here
+
         CurrencyManager.Instance.GainCurrency(score);
         GameManager.Instance.CompleteLevel(currentLevel, true);
     }

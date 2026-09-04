@@ -256,6 +256,12 @@ public class PlayerStateMachine : StateMachine_Player
     {
         levelStartCamera.Priority = 0;
     }
+    public void Bump(Vector3 hitPosition)
+    {
+        var direction = (transform.position - hitPosition).normalized;
+        float adjustedForce = 15f;
+        rb.AddForce(direction * adjustedForce, ForceMode.Force);
+    }
     #endregion
 
     #region DEBUG

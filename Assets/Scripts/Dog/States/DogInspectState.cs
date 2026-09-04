@@ -20,6 +20,15 @@ public class DogInpectState : DogBaseState
     public override void Enter()
     {
         counter = 0f;
+        stateMachine.movementHandler.StopAllMovement();
+
+        if (stateMachine.favorController.GetPercentFavor() > 80f && stateMachine.patrolCounter >= 4)
+        {
+            stateMachine.TriggerPatrolCounter(false);
+            stateMachine.ChangeToAidState();
+            return;
+        }
+
         currentResult = ResultType.Empty;
         stateMachine.animator.CrossFadeInFixedTime(inspectHash, 0.1f);
 
