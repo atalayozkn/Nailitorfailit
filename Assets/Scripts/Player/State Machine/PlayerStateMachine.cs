@@ -12,6 +12,7 @@ public enum PlayerStates
     Stand,
     ShopInspect,
     OnAir,
+    Emote,
     Dead,
 }
 
@@ -20,11 +21,14 @@ public class PlayerStateMachine : StateMachine_Player
     [Header("References")]
     [field: SerializeField] public bool debugMode { get; private set; }
     [field: SerializeField] public PlayerMovement movementHandler { get; private set; }
+    [field: SerializeField] public PlayerUseHandler useHandler { get; private set; }
+    [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
     [field: SerializeField] public Transform detectionTransform { get; private set; }
+    [field: SerializeField] public Transform rHandTransform { get; private set; }
+    [field: SerializeField] public Transform lHandTransform { get; private set; }
     [field: SerializeField] public Rigidbody rb { get; private set; }
     [field: SerializeField] public PlayerStates currentPlayerState { get; private set; }
     [field: SerializeField] public Animator animator { get; private set; }
-    [field: SerializeField] public PlayerInteractionHandler interactionHandler { get; private set; }
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
     [field: SerializeField] public CinemachineCamera playerCamera { get; private set; }
     [field: SerializeField] public CinemachineCamera levelStartCamera { get; private set; }
@@ -32,7 +36,6 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public ConfigurableJoint[] ragdollJoints { get; private set; }
     [field: SerializeField] public Collider[] ragdollColliders { get; private set; }
     [field: SerializeField] public SkinnedMeshRenderer playerRenderer { get; private set; }
-
     [Header("Movement Data")]
     [field: SerializeField] public bool isDead { get; private set; }
 
@@ -48,10 +51,17 @@ public class PlayerStateMachine : StateMachine_Player
     [Header("Crash Settings")]
     [field: SerializeField] public float crashVelocity { get; private set; }
     [field: SerializeField] public Vector3 moveDirection { get; private set; }
+    [field: SerializeField] public Vector3 leftHandLocalPosition { get; private set; }
+    [field: SerializeField] public Quaternion leftHandLocalRotation { get; private set; }
+    [field: SerializeField] public Vector3 rightHandLocalPosition { get; private set; }
+    [field: SerializeField] public Quaternion rightHandLocalRotation { get; private set; }
 
     [Header("Death Settings")]
     [field: SerializeField] public DeathReason currentReason { get; private set; }
     public RespawnManager respawnManager { get; private set; }
+
+    [Header("Emote Settings")]
+    public int activeEmoteIndex { get; private set; }
 
     [Header("Events")]
     [field: SerializeField] public UnityEvent carDeathEvent { get; private set; }
@@ -62,9 +72,16 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public UnityEvent onStunStartEvent { get; private set; }
     [field: SerializeField] public UnityEvent onStunEndEvent { get; private set; }
 
+
+
     private Transform initialTarget;
     private void Awake()
     {
+        leftHandLocalPosition = lHandTransform.localPosition;
+        leftHandLocalRotation = lHandTransform.localRotation;
+        rightHandLocalPosition = rHandTransform.localPosition;
+        rightHandLocalRotation = rHandTransform.localRotation;
+
         respawnManager = FindAnyObjectByType<RespawnManager>();
         initialTarget = playerCamera.Follow;
         movementHandler.SetActivity(false);
@@ -80,6 +97,7 @@ public class PlayerStateMachine : StateMachine_Player
             rb.linearVelocity = Vector3.zero;
             rb.detectCollisions = false;
             rb.useGravity = false;
+            rb.isKinematic = true;
         }
     }
     private void OnEnable()
@@ -97,6 +115,7 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Idle) return;
+        if (currentPlayerState == PlayerStates.Using) return;
         currentPlayerState = PlayerStates.Idle;
         SwitchState(new PlayerIdleState(this));
     }
@@ -107,6 +126,7 @@ public class PlayerStateMachine : StateMachine_Player
     {
         if (currentPlayerState == PlayerStates.Dead) return;
         if (currentPlayerState == PlayerStates.Navigation) return;
+        if (currentPlayerState == PlayerStates.Using) return;
         currentPlayerState = PlayerStates.Navigation;
         SwitchState(new PlayerNavigationState(this));
     }
@@ -125,7 +145,7 @@ public class PlayerStateMachine : StateMachine_Player
     // Uygun durumdaysa SwitchState() ile PlayerSlippingState'e geçer.
     public void ChangeToSlippingState()
     {
-        if (currentPlayerState == PlayerStates.Dead || currentPlayerState == PlayerStates.OnAir || currentPlayerState == PlayerStates.Stunned || currentPlayerState == PlayerStates.Stand) return;
+        if (currentPlayerState == PlayerStates.Dead || currentPlayerState == PlayerStates.Stunned || currentPlayerState == PlayerStates.Stand) return;
         currentPlayerState = PlayerStates.Slipping;
         SwitchState(new PlayerSlippingState(this));
     }
@@ -173,9 +193,16 @@ public class PlayerStateMachine : StateMachine_Player
         currentPlayerState = PlayerStates.ShopInspect;
         SwitchState(new PlayerShopState(this));
     }
+    public void ChangeToEmoteState(int index)
+    {
+        if (currentPlayerState == PlayerStates.Emote) return;
+        if (currentPlayerState == PlayerStates.Dead) return;
 
-    // Player'ý Dead state'ine geçirmek için çalýþýr.
-    // SwitchState() ile PlayerDeadState'e geçer ve Shop Camera referansýný temizler.
+        activeEmoteIndex = index;
+
+        currentPlayerState = PlayerStates.Emote;
+        SwitchState(new PlayerEmoteState(this));
+    }
     public void ChangeToDeadState()
     {
         if (currentPlayerState == PlayerStates.Dead) return;

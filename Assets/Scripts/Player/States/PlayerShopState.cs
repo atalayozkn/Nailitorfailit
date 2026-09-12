@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class PlayerShopState : PlayerBaseState
 {
     public PlayerShopState(PlayerStateMachine stateMachine) : base(stateMachine)  { }
@@ -7,7 +5,6 @@ public class PlayerShopState : PlayerBaseState
     {
         stateMachine.movementHandler.enabled = false;
         stateMachine.interactionHandler.enabled = false;
-        Debug.Log("Entering ShopState");
     }
     public override void Tick(float deltaTime)
     {
@@ -21,6 +18,5 @@ public class PlayerShopState : PlayerBaseState
     {
         stateMachine.movementHandler.enabled = true;
         stateMachine.interactionHandler.enabled= true;
-        Debug.Log("Exiting ShopState");
     }
 }

@@ -8,9 +8,7 @@ public class Shop : MonoBehaviour, IInteractable
     [Header("References")]
     [SerializeField] private InteractableType interactableType = InteractableType.Shop;
     [SerializeField] private Transform spawnTransform;
-
     public InteractableType InteractableType => interactableType;
-
     [Header("Settings")]
     [SerializeField] private GameObject objectPrefab;
     [SerializeField] private int cost;
@@ -31,7 +29,6 @@ public class Shop : MonoBehaviour, IInteractable
     public void OnInteract()
     {
         if (!CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
-        
         if (interactionHandler != null && !interactionHandler.IsCarrying())
         {
             var obj = Instantiate(objectPrefab,spawnTransform.position,spawnTransform.rotation);
@@ -40,7 +37,7 @@ public class Shop : MonoBehaviour, IInteractable
 
             if (obj.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
             {
-                carriable.OnInteract();   
+                carriable.SnapToRightHand();   
             }
         }
     }

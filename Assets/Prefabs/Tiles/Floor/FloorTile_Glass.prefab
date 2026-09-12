@@ -146,7 +146,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7423041328258984944}
+  - {fileID: 6476119162694754141}
   - {fileID: 6364512109478778752}
   - {fileID: 2404739457009293961}
   - {fileID: 6340729133711676772}
@@ -174,7 +174,7 @@ MonoBehaviour:
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2728715316192096963}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
         m_MethodName: ChangeToColor
         m_Mode: 1
@@ -189,7 +189,7 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2728715316192096963}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
         m_MethodName: ReverseToInitialColor
         m_Mode: 1
@@ -813,7 +813,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b42690ba9148821469e875a9d2e50ed2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSlipHelper
---- !u!1001 &6956172184898685979
+--- !u!1001 &6797468321336277174
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -821,86 +821,57 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2086023003812644668}
     m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.02
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalRotation.y
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
+    - target: {fileID: 919132149155446097, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_Name
-      value: tahta zemin
+      value: zemin yeni
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2728715316192096963}
-  m_SourcePrefab: {fileID: 100100000, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
---- !u!4 &7423041328258984944 stripped
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
+--- !u!4 &6476119162694754141 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
-  m_PrefabInstance: {fileID: 6956172184898685979}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &7802522014616121674 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
-  m_PrefabInstance: {fileID: 6956172184898685979}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2728715316192096963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7802522014616121674}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 8595361914537922719}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetColor: {r: 0, g: 0.99058723, b: 1, a: 0}
---- !u!23 &8595361914537922719 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 97347adb2cd1dc14893e81faa576efce, type: 3}
-  m_PrefabInstance: {fileID: 6956172184898685979}
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
+  m_PrefabInstance: {fileID: 6797468321336277174}
   m_PrefabAsset: {fileID: 0}
