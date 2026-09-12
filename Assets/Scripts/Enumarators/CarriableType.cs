@@ -5,5 +5,6 @@ public enum CarriableType
     Oil,
     Glass,
     EnergyDrink,
-    PetFood
+    PetFood,
+    Usable
 }

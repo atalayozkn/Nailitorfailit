@@ -6,7 +6,8 @@ public class PlayerInteractionState : PlayerBaseState
     private static readonly int interactionAnimHash = Animator.StringToHash("Interact");
     public override void Enter()
     {
-        stateMachine.animator.CrossFadeInFixedTime(interactionAnimHash, 0.1f);
+        stateMachine.animator.CrossFadeInFixedTime(interactionAnimHash, 0f);
+        stateMachine.movementHandler.SetActivity(false);
     }
     public override void Tick(float deltaTime)
     {
@@ -28,5 +29,6 @@ public class PlayerInteractionState : PlayerBaseState
     }
     public override void Exit()
     {
+        stateMachine.movementHandler.SetActivity(true);
     }
 }

@@ -26,15 +26,13 @@ namespace ItemScript
         public InteractableType InteractableType => interactableType;
 
         private ObjectSpawner spawnerObject;
-        private PlayerInteractionHandler playerInteraction;
+        private PlayerInteractionHandler interactionHandler;
         private bool isOccupied = false;
         private bool isConsumed;
-        private Vector3 initialScale;
         private Transform attachTransform;
         private void Awake()
         {
-            playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
-            initialScale = transform.localScale;
+            interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         }
 
         #region INTERACTABLE
@@ -46,7 +44,7 @@ namespace ItemScript
                 return;
             }
 
-            OnPickUp();
+            SnapToCarryTransform();
             onInteractEvent?.Invoke();
         }
         public void OnHoverOn()
@@ -70,19 +68,33 @@ namespace ItemScript
         #endregion
 
         #region PLAYER INTERACTION
-        private void OnPickUp()
+        private void SnapToCarryTransform()
         {
             col.enabled = false;
             rb.isKinematic = true;
             rb.Sleep();
 
-            Transform carryTransform = playerInteraction.GetCarryTransform();
+            Transform carryTransform = interactionHandler.GetCarryTransform();
 
             transform.SetParent(carryTransform);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
 
-            playerInteraction.RegisterCarriedObject(this);
+            interactionHandler.RegisterCarriedObject(this);
+        }
+        public void SnapToRightHand()
+        {
+            col.enabled = false;
+            rb.isKinematic = true;
+            rb.Sleep();
+
+            Transform rightHandTransform = interactionHandler.GetRightHandTransform();
+
+            transform.SetParent(rightHandTransform);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+
+            interactionHandler.RegisterCarriedObject(this);
         }
         public void OnDrop(bool shouldThrow = false)
         {
@@ -103,7 +115,21 @@ namespace ItemScript
                 rb.AddForce(direction * dropForce, ForceMode.Impulse);
             }
 
-            playerInteraction.ClearCarriedObject();
+            interactionHandler.ClearCarriedObject();
+        }
+        public void OnThrow(float force)
+        {
+            if (isConsumed) return;
+            transform.SetParent(null);
+            rb.isKinematic = false;
+            col.enabled = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+
+            Vector3 direction = interactionHandler.transform.forward;
+            rb.AddForce(direction * force, ForceMode.Impulse);
+            interactionHandler.ClearCarriedObject();
         }
         public void OnConsume()
         {
@@ -112,7 +138,7 @@ namespace ItemScript
 
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
-            playerInteraction.ClearCarriedObject();
+            interactionHandler.ClearCarriedObject();
 
             Destroy(gameObject, objectDiscardDelay);
         }
@@ -131,9 +157,9 @@ namespace ItemScript
             rb.Sleep();
 
             //Clear from player if Player is holding this.
-            if (playerInteraction.GetCurrentCarriable() == this)
+            if (interactionHandler.GetCurrentCarriable() == this)
             {
-                playerInteraction.ClearCarriedObject();
+                interactionHandler.ClearCarriedObject();
             }
 
             //Attach to new target.
@@ -168,14 +194,13 @@ namespace ItemScript
             isOccupied = false;
             Destroy(gameObject, objectDiscardDelay);
         }
-
         #endregion
 
+        #region UTILITIES
         public void SetOccupied()
         {
             isOccupied = true;
-        }
-       
+        }    
         public bool IsOccupied()
         {
             return isOccupied;
@@ -186,4 +211,6 @@ namespace ItemScript
             objectRenderer.enabled = condition;
         }
     }
+
+        #endregion
 }

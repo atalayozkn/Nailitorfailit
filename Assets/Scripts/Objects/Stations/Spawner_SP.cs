@@ -1,4 +1,5 @@
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,7 +9,7 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     public InteractableType InteractableType => interactableType;
     [Header("Settings")]
     [SerializeField] private GameObject objectPrefab;
-    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private float interactCooldown;
 
     [Header("Safety")]
     [SerializeField] private int maxCount = 15;
@@ -19,10 +20,18 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onInteractEvent;
 
     private int spawnedObjectCount = 0;
+    private bool isOnCooldown = false;
     public void OnInteract()
     {
+        if (isOnCooldown) return;
+        isOnCooldown = true;
         onInteractEvent?.Invoke();
         SpawnObject();
+        Invoke(nameof(ReverseCooldown), interactCooldown);
+    }
+    private void ReverseCooldown()
+    {
+        isOnCooldown = false;
     }
     public void OnHoverOn()
     {
@@ -50,17 +59,14 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     }
     private void SpawnObject()
     {
-        if (objectPrefab == null)
+        if (objectPrefab == null || spawnedObjectCount >= maxCount) return;
+
+        var instantiatedObject = Instantiate(objectPrefab, null);
+        if (instantiatedObject != null && instantiatedObject.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
         {
-            Debug.LogError("Spawner Prefab Missing");
-            return;
+            carriable.OnInteract();
         }
 
-        if (spawnedObjectCount >= maxCount) return;
-
-        Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
-        Quaternion rot = spawnPoint != null ? spawnPoint.rotation : transform.rotation;
-        var instantiatedObject = Instantiate(objectPrefab, pos, rot);
         IncrementCounter();
 
         if (instantiatedObject.TryGetComponent<ISpawnable>(out var spawnable))

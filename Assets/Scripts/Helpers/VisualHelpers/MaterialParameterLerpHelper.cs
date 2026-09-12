@@ -6,6 +6,8 @@ public class MaterialParameterLerpHelper : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float appearLerpDuration = 1f;
     [SerializeField] private float fadeOutLerpDuration = 1f;
+    [SerializeField] private float targetLerp = 1f;
+    [SerializeField] private float startLerp = 0f;
 
     [Header("References")]
     [SerializeField] private MeshRenderer mRenderer;
@@ -20,6 +22,7 @@ public class MaterialParameterLerpHelper : MonoBehaviour
     private void Awake()
     {
         mat = mRenderer.material;
+        mat.SetFloat(parameterName, startLerp);
         currentLerpAmount = mat.GetFloat(parameterName);
     }
     private void OnEnable()
@@ -34,17 +37,13 @@ public class MaterialParameterLerpHelper : MonoBehaviour
     }
     public void StartLerping()
     {
-        if (lerpRoutine != null)
-            StopCoroutine(lerpRoutine);
-
-        lerpRoutine = StartCoroutine(ChangeLerpRoutine(1f, appearLerpDuration));
+        if (lerpRoutine != null) StopCoroutine(lerpRoutine);
+        lerpRoutine = StartCoroutine(ChangeLerpRoutine(targetLerp, appearLerpDuration));
     }
     public void ReverseLerping()
     {
-        if (lerpRoutine != null)
-            StopCoroutine(lerpRoutine);
-
-        lerpRoutine = StartCoroutine(ChangeLerpRoutine(0f, fadeOutLerpDuration));
+        if (lerpRoutine != null) StopCoroutine(lerpRoutine);
+        lerpRoutine = StartCoroutine(ChangeLerpRoutine(startLerp, fadeOutLerpDuration));
     }
     private IEnumerator ChangeLerpRoutine(float targetValue, float duration)
     {
