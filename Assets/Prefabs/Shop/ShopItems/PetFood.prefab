@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 9188190159770805050}
   - component: {fileID: 6567541047170998714}
   - component: {fileID: 6564582845372548155}
+  - component: {fileID: 294062853626727563}
   m_Layer: 6
   m_Name: PetFood
   m_TagString: Untagged
@@ -97,24 +98,65 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
   rb: {fileID: 6567541047170998714}
-  col: {fileID: 9188190159770805050}
+  cols:
+  - {fileID: 9188190159770805050}
   objectRenderer: {fileID: 8670325351230963741}
   isRawMaterial: 0
   carriableType: 5
   dropForce: 0.01
+  throwMultiplier: 0.175
   objectDiscardDelay: 3
   onHoverOnEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 294062853626727563}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onHoverOffEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 294062853626727563}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &294062853626727563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3102230931233940229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 8670325351230963741}
+  isMeshRenderer: 1
 --- !u!1001 &8039694279587470489
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -174,32 +216,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9a2334b1903e94f4cbb12c9591165933, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7523767983802870095}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a2334b1903e94f4cbb12c9591165933, type: 3}
---- !u!1 &7157295714404409800 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9a2334b1903e94f4cbb12c9591165933, type: 3}
-  m_PrefabInstance: {fileID: 8039694279587470489}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &7523767983802870095
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7157295714404409800}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 8670325351230963741}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetColor: {r: 0, g: 1, b: 0.9687028, a: 0}
 --- !u!4 &7500747535631285106 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9a2334b1903e94f4cbb12c9591165933, type: 3}

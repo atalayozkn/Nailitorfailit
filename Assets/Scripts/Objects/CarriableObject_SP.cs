@@ -9,13 +9,14 @@ namespace ItemScript
         [Header("References")]
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Rigidbody rb;
-        [SerializeField] private Collider col;
+        [SerializeField] private Collider[] cols;
         [SerializeField] private MeshRenderer objectRenderer;
         public bool isRawMaterial = false;
         public CarriableType carriableType;
 
         [Header("Settings")]
         [SerializeField] private float dropForce = 1f;
+        [SerializeField] private float throwMultiplier = 0.1f;
         [SerializeField] private float objectDiscardDelay = 3.0f;
 
         [Header("Events")]
@@ -70,7 +71,7 @@ namespace ItemScript
         #region PLAYER INTERACTION
         private void SnapToCarryTransform()
         {
-            col.enabled = false;
+            SetCollusion(false);
             rb.isKinematic = true;
             rb.Sleep();
 
@@ -84,7 +85,7 @@ namespace ItemScript
         }
         public void SnapToRightHand()
         {
-            col.enabled = false;
+            SetCollusion(false);
             rb.isKinematic = true;
             rb.Sleep();
 
@@ -101,7 +102,7 @@ namespace ItemScript
             if (isConsumed) return;
             transform.SetParent(null);
             rb.isKinematic = false;
-            col.enabled = true;
+            SetCollusion(true);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
@@ -122,13 +123,14 @@ namespace ItemScript
             if (isConsumed) return;
             transform.SetParent(null);
             rb.isKinematic = false;
-            col.enabled = true;
+            SetCollusion(true);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
 
+            float adjustedForce = force * throwMultiplier;
             Vector3 direction = interactionHandler.transform.forward;
-            rb.AddForce(direction * force, ForceMode.Impulse);
+            rb.AddForce(direction * adjustedForce, ForceMode.Impulse);
             interactionHandler.ClearCarriedObject();
         }
         public void OnConsume()
@@ -149,7 +151,7 @@ namespace ItemScript
         {
             //Phyics & Occupation
             isOccupied = true;
-            col.enabled = false;
+            SetCollusion(false);
             rb.useGravity = false;
             rb.detectCollisions = false;
             rb.linearVelocity = Vector3.zero;
@@ -181,7 +183,7 @@ namespace ItemScript
 
             rb.detectCollisions = true;
             rb.useGravity = true;
-            col.enabled = true;
+            SetCollusion(true);
             rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
@@ -197,6 +199,13 @@ namespace ItemScript
         #endregion
 
         #region UTILITIES
+        private void SetCollusion(bool condition)
+        {
+            foreach (var col in cols)
+            {
+                col.enabled = condition;
+            }
+        }
         public void SetOccupied()
         {
             isOccupied = true;

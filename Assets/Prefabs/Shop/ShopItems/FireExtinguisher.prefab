@@ -42,8 +42,11 @@ GameObject:
   - component: {fileID: 3356155989741739406}
   - component: {fileID: 8109822053647297104}
   - component: {fileID: 2184336945821555656}
+  - component: {fileID: 6845998193945474029}
   - component: {fileID: 2472881048654666246}
   - component: {fileID: 2306054280953705781}
+  - component: {fileID: 6151667854307319394}
+  - component: {fileID: 6785963908086540080}
   m_Layer: 6
   m_Name: FireExtinguisher
   m_TagString: Untagged
@@ -119,18 +122,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
   rb: {fileID: 2472881048654666246}
-  col: {fileID: 2306054280953705781}
+  cols:
+  - {fileID: 2306054280953705781}
+  - {fileID: 6151667854307319394}
+  - {fileID: 6785963908086540080}
   objectRenderer: {fileID: 4810255577573059296}
   isRawMaterial: 0
   carriableType: 6
   dropForce: 1
+  throwMultiplier: 4
   objectDiscardDelay: 0
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1863296551468352288}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 6845998193945474029}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -143,9 +150,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1863296551468352288}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 6845998193945474029}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -157,22 +164,25 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1863296551468352288}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6845998193945474029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3824065476443724467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 4810255577573059296}
+  isMeshRenderer: 1
 --- !u!54 &2472881048654666246
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -181,7 +191,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3824065476443724467}
   serializedVersion: 5
-  m_Mass: 0.1
+  m_Mass: 0.5
   m_LinearDamping: 0.1
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -219,10 +229,52 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.10271355
-  m_Height: 0.60856724
+  m_Radius: 0.09711221
+  m_Height: 0.4627667
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: -0.0058794245}
+  m_Center: {x: -0.0018671155, y: -0.029251486, z: -0.0058794245}
+--- !u!65 &6151667854307319394
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3824065476443724467}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.17458057, y: 0.1784541, z: 0.18412876}
+  m_Center: {x: 0, y: 0.26386115, z: 0}
+--- !u!65 &6785963908086540080
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3824065476443724467}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.2229375, y: 0.1784541, z: 0.22665586}
+  m_Center: {x: -0.0028995723, y: -0.22, z: -0.00773219}
 --- !u!1 &7274119365526787691
 GameObject:
   m_ObjectHideFlags: 0
@@ -5176,10 +5228,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3cbe0742953bdfc4b836d0cf166a222c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1863296551468352288}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3cbe0742953bdfc4b836d0cf166a222c, type: 3}
 --- !u!23 &4810255577573059296 stripped
 MeshRenderer:
@@ -5191,25 +5240,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3cbe0742953bdfc4b836d0cf166a222c, type: 3}
   m_PrefabInstance: {fileID: 6125142160019289700}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &6467601750424210229 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3cbe0742953bdfc4b836d0cf166a222c, type: 3}
-  m_PrefabInstance: {fileID: 6125142160019289700}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1863296551468352288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6467601750424210229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 4810255577573059296}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetParameter: 
-  targetColor: {r: 0, g: 1, b: 1, a: 0}

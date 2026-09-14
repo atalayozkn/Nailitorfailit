@@ -1,3 +1,4 @@
+using ItemScript;
 using UnityEngine;
 public class PlayerEmoteState : PlayerBaseState
 {
@@ -25,6 +26,14 @@ public class PlayerEmoteState : PlayerBaseState
                 stateMachine.animator.CrossFadeInFixedTime(throwHash, 0f);
                 actionTimer = 1.15f;
                 animationTimer = 3.3f;
+
+                var carriable = stateMachine.interactionHandler.GetCurrentCarriable();
+                if (carriable != null) 
+                {
+                    carriable.transform.SetParent(stateMachine.rHandTransform);
+                    carriable.transform.localPosition = Vector3.zero;
+                    carriable.transform.localRotation = Quaternion.identity;
+                }
                 break;
             case 1: //Dance Index
                 stateMachine.animator.CrossFadeInFixedTime(danceHash, 0f);

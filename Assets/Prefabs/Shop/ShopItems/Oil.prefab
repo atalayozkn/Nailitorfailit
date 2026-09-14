@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 112916290323860073}
   - component: {fileID: 8124965522380569797}
   - component: {fileID: 856642975684167946}
+  - component: {fileID: 7263786322860713616}
   m_Layer: 6
   m_Name: Oil
   m_TagString: Untagged
@@ -64,7 +65,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2988083282430940903}
   serializedVersion: 5
-  m_Mass: 1
+  m_Mass: 0.01
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -97,18 +98,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
   rb: {fileID: 8124965522380569797}
-  col: {fileID: 112916290323860073}
+  cols:
+  - {fileID: 112916290323860073}
   objectRenderer: {fileID: 2661834946028396854}
   isRawMaterial: 0
   carriableType: 2
   dropForce: 10
+  throwMultiplier: 0.175
   objectDiscardDelay: 0
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 490636540246166451}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 7263786322860713616}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -121,9 +124,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 490636540246166451}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 7263786322860713616}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -139,6 +142,21 @@ MonoBehaviour:
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7263786322860713616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2988083282430940903}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 2661834946028396854}
+  isMeshRenderer: 1
 --- !u!1001 &3688775088294657458
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -214,10 +232,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 490636540246166451}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
 --- !u!23 &2661834946028396854 stripped
 MeshRenderer:
@@ -229,24 +244,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
   m_PrefabInstance: {fileID: 3688775088294657458}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &4607253577785786595 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
-  m_PrefabInstance: {fileID: 3688775088294657458}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &490636540246166451
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4607253577785786595}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 2661834946028396854}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetColor: {r: 1, g: 1, b: 1, a: 0}
