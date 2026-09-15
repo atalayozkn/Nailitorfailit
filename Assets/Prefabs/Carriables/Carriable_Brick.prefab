@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4249530769672492423}
   - component: {fileID: 8684526647547955195}
   - component: {fileID: 3922757148679590780}
+  - component: {fileID: 6607223535352835464}
   m_Layer: 6
   m_Name: Carriable_Brick
   m_TagString: Untagged
@@ -97,18 +98,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
   rb: {fileID: 8684526647547955195}
-  col: {fileID: 4249530769672492423}
+  cols:
+  - {fileID: 4249530769672492423}
   objectRenderer: {fileID: 4207018440184823588}
   isRawMaterial: 1
   carriableType: 0
   dropForce: 0.025
+  throwMultiplier: 0.175
   objectDiscardDelay: 0.1
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5656281667143807839}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 6607223535352835464}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -121,9 +124,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5656281667143807839}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 6607223535352835464}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -151,6 +154,21 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &6607223535352835464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6479617406932401784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 4207018440184823588}
+  isMeshRenderer: 1
 --- !u!1 &7064255788318713893
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,7 +180,6 @@ GameObject:
   - component: {fileID: 6457347107618928022}
   - component: {fileID: 8475064175731269025}
   - component: {fileID: 4207018440184823588}
-  - component: {fileID: 5656281667143807839}
   m_Layer: 0
   m_Name: Mesh
   m_TagString: Untagged
@@ -242,19 +259,3 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &5656281667143807839
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7064255788318713893}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 4207018440184823588}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetColor: {r: 0.45376468, g: 0.9716981, b: 0.92522454, a: 0}

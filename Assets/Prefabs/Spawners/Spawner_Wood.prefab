@@ -250,6 +250,7 @@ GameObject:
   - component: {fileID: 4619426574898395758}
   - component: {fileID: 3954178054040668355}
   - component: {fileID: 265452741569917803}
+  - component: {fileID: 3307866932930886243}
   m_Layer: 6
   m_Name: Spawner_Wood
   m_TagString: Untagged
@@ -315,9 +316,9 @@ MonoBehaviour:
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 3307866932930886243}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -330,9 +331,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 3307866932930886243}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -345,6 +346,21 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3307866932930886243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7313507888434762851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 7132922627675645798}
+  isMeshRenderer: 1
 --- !u!1 &9132837691654836453
 GameObject:
   m_ObjectHideFlags: 0
@@ -451,35 +467,15 @@ PrefabInstance:
     - {fileID: -6733177361254619370, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
     - {fileID: 8513859187771203891, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3110942079832229144}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
 --- !u!4 &1270726417137412595 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
   m_PrefabInstance: {fileID: 1596595942232116760}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1939176072102703945 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
+--- !u!23 &7132922627675645798 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -804731622281664130, guid: 6db5d6a1778a5ea4da58eed0cc0ca10c, type: 3}
   m_PrefabInstance: {fileID: 1596595942232116760}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3110942079832229144
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1939176072102703945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 0}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetParameter: _BaseColor
-  targetColor: {r: 0, g: 0, b: 0, a: 0}

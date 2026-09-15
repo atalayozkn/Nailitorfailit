@@ -263,6 +263,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isGrounded) return;
         if (isJumping) return;
+        if (interactHandler.IsCarrying()) return;
         onJumpEvent?.Invoke();
         SetJumping(true);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);

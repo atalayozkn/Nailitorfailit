@@ -9,10 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 91109786304711866}
-  - component: {fileID: 4490502253620378599}
-  - component: {fileID: 2768673015821395568}
   - component: {fileID: -6744296082192085357}
   - component: {fileID: 3746698825378064229}
+  - component: {fileID: 5883566922174199171}
+  - component: {fileID: 4490502253620378599}
+  - component: {fileID: 2768673015821395568}
   m_Layer: 6
   m_Name: EnergyDrink
   m_TagString: Untagged
@@ -36,54 +37,6 @@ Transform:
   - {fileID: 6858314879601420315}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &4490502253620378599
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4802431371268048683}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.16368672, y: 0.28223047, z: 0.15449497}
-  m_Center: {x: 0, y: -0.018248362, z: 0}
---- !u!54 &2768673015821395568
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4802431371268048683}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!114 &-6744296082192085357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,18 +92,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.CarriableObject_SP
   interactableType: 0
   rb: {fileID: 2768673015821395568}
-  col: {fileID: 4490502253620378599}
+  cols:
+  - {fileID: 4490502253620378599}
   objectRenderer: {fileID: 5721416332796547956}
   isRawMaterial: 0
   carriableType: 4
   dropForce: 10
+  throwMultiplier: 0.175
   objectDiscardDelay: 3
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3056104283629822774}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 5883566922174199171}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -163,9 +118,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3056104283629822774}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 5883566922174199171}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -181,6 +136,69 @@ MonoBehaviour:
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5883566922174199171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4802431371268048683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 5721416332796547956}
+  isMeshRenderer: 1
+--- !u!65 &4490502253620378599
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4802431371268048683}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.16368672, y: 0.28223047, z: 0.15449497}
+  m_Center: {x: 0, y: -0.018248362, z: 0}
+--- !u!54 &2768673015821395568
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4802431371268048683}
+  serializedVersion: 5
+  m_Mass: 0.01
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &6388101494533935088
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -256,38 +274,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e80e55813cb5df3469a75e44febc3757, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3056104283629822774}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e80e55813cb5df3469a75e44febc3757, type: 3}
 --- !u!23 &5721416332796547956 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: e80e55813cb5df3469a75e44febc3757, type: 3}
   m_PrefabInstance: {fileID: 6388101494533935088}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &6081673310341132961 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e80e55813cb5df3469a75e44febc3757, type: 3}
-  m_PrefabInstance: {fileID: 6388101494533935088}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &3056104283629822774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6081673310341132961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 5721416332796547956}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetParameter: _BaseColor
-  targetColor: {r: 1, g: 1, b: 1, a: 0}
 --- !u!4 &6858314879601420315 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e80e55813cb5df3469a75e44febc3757, type: 3}
