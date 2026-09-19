@@ -13,21 +13,30 @@ public class CreateLobbyUI : MonoBehaviour
 
     void Awake() => createButton.onClick.AddListener(OnCreate);
 
+    void OnEnable()
+    {
+        if (createButton != null) createButton.interactable = true;
+        if (statusText != null) statusText.text = string.Empty;
+    }
+
     void OnCreate()
     {
         string pw = passwordInput.text;
 
         if (string.IsNullOrWhiteSpace(pw))
         {
-            if (statusText != null) statusText.text = "Şifre gerekli";
+            if (statusText != null) statusText.text = "Password required";
             return;
         }
 
-        if (maxPlayersInput != null && int.TryParse(maxPlayersInput.text, out int maxPlayers) && maxPlayers > 0)
-            NetworkManager.singleton.maxConnections = maxPlayers;
+        int maxPlayers = LobbyNetworkManager.MaxPlayers;
+        if (maxPlayersInput != null && int.TryParse(maxPlayersInput.text, out int typed))
+            maxPlayers = Mathf.Clamp(typed, LobbyNetworkManager.MinPlayers, LobbyNetworkManager.MaxPlayers);
+
+        NetworkManager.singleton.maxConnections = maxPlayers;
 
         createButton.interactable = false;
-        if (statusText != null) statusText.text = "Relay oluşturuluyor...";
+        if (statusText != null) statusText.text = "Creating relay...";
 
         ((LobbyNetworkManager)NetworkManager.singleton).HostLobby(pw);
     }

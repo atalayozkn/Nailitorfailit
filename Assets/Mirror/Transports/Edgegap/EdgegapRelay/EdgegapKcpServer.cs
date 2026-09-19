@@ -27,6 +27,11 @@ namespace Edgegap
         // custom 'active'. while connected to relay
         bool relayActive;
 
+        // TESHIS: kac ping gonderildi / kac reply alindi
+        public int pingSentCount;
+        public int pingReplyCount;
+        public bool RelayActive => relayActive;
+
         public EdgegapKcpServer(
             Action<int, IPEndPoint> OnConnected,
             Action<int, ArraySegment<byte>, KcpChannel> OnData,
@@ -104,6 +109,7 @@ namespace Edgegap
                             {
                                 // parse state
                                 if (reader.Remaining < 1) return false;
+                                pingReplyCount++;
                                 ConnectionState last = state;
                                 state = (ConnectionState)reader.ReadByte();
 
@@ -166,6 +172,7 @@ namespace Edgegap
 
         void SendPing()
         {
+            pingSentCount++;
             using (NetworkWriterPooled writer = NetworkWriterPool.Get())
             {
                 writer.WriteUInt(userId);

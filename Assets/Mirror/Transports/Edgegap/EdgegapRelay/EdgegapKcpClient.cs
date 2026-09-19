@@ -125,7 +125,15 @@ namespace Edgegap
 
         public override void TickOutgoing()
         {
-            if (connected)
+            // ONEMLI (Edgegap relay duzeltmesi):
+            // Relay, bir peer'i 'Valid' sayana kadar HICBIR paketi iletmez.
+            // 'Valid' olmak icin ise peer'in relay'e PING gondermesi gerekir.
+            // Eski kod ping'i yalnizca 'connected' (KCP el sikismasi tamamlanmis) iken
+            // gonderiyordu; bu da deadlock yaratiyordu:
+            //    ping yok -> relay Valid saymiyor -> paket iletilmiyor ->
+            //    el sikismasi tamamlanmiyor -> connected=false -> ping yok
+            // Bu yuzden artik socket aktif oldugu surece (bagli olmasa da) ping gonderiyoruz.
+            if (socket != null)
             {
                 // ping every interval for keepalive & handshake
                 if (NetworkTime.localTime >= lastPingTime + Protocol.PingInterval)

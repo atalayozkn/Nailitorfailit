@@ -59,6 +59,8 @@ public class GameTimeManager : MonoBehaviour
     }
     private void UpdateUI()
     {
+        if (timerText == null) return;
+
         int minutes = Mathf.FloorToInt(currentTime / 60f);
         int seconds = Mathf.FloorToInt(currentTime % 60f);
 

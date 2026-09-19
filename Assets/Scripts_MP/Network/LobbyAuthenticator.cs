@@ -7,7 +7,9 @@ public class LobbyAuthenticator : NetworkAuthenticator
     [HideInInspector] public string serverPassword;
     [HideInInspector] public string clientPassword;
 
-    struct AuthRequest  : NetworkMessage { public string password; }
+    [HideInInspector] public string clientName;
+
+    struct AuthRequest  : NetworkMessage { public string password; public string playerName; }
     struct AuthResponse : NetworkMessage { public bool ok; public string reason; }
 
     public override void OnStartServer() =>
@@ -19,6 +21,8 @@ public class LobbyAuthenticator : NetworkAuthenticator
     {
         if (msg.password == serverPassword)
         {
+            conn.authenticationData = msg.playerName;
+
             conn.Send(new AuthResponse { ok = true });
             ServerAccept(conn);
         }
@@ -33,7 +37,7 @@ public class LobbyAuthenticator : NetworkAuthenticator
         NetworkClient.RegisterHandler<AuthResponse>(OnAuthResponse, false);
 
     public override void OnClientAuthenticate() =>
-        NetworkClient.Send(new AuthRequest { password = clientPassword });
+        NetworkClient.Send(new AuthRequest { password = clientPassword, playerName = clientName });
 
     void OnAuthResponse(AuthResponse msg)
     {

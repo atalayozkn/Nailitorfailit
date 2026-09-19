@@ -130,12 +130,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject mpCreateLobbyPanel;
     [SerializeField] private GameObject mpJoinLobbyPanel;
     [SerializeField] private GameObject mpLobbyMenuPanel;
+    [SerializeField] private GameObject mpCharacterSelectionPanel;
     [SerializeField] private TMP_Text mpLobbyIdLabel;
     [SerializeField] private TMP_Text mpLobbyPasswordLabel;
 
     public void ShowMultiplayerMenu() => SetActiveMultiplayerPanel(mpMultiplayerMenuPanel);
     public void ShowCreateLobby() => SetActiveMultiplayerPanel(mpCreateLobbyPanel);
     public void ShowJoinLobby() => SetActiveMultiplayerPanel(mpJoinLobbyPanel);
+
+    /// <summary>Returns to the main menu (the Button_SP / Button_MP screen).</summary>
+    public void ShowMainMenu() => SetActiveMultiplayerPanel(mpMainMenuPanel);
 
     public void ShowLobbyMenu()
     {
@@ -155,6 +159,7 @@ public class GameManager : MonoBehaviour
         if (mpCreateLobbyPanel != null) mpCreateLobbyPanel.SetActive(panel == mpCreateLobbyPanel);
         if (mpJoinLobbyPanel != null) mpJoinLobbyPanel.SetActive(panel == mpJoinLobbyPanel);
         if (mpLobbyMenuPanel != null) mpLobbyMenuPanel.SetActive(panel == mpLobbyMenuPanel);
+        if (mpCharacterSelectionPanel != null) mpCharacterSelectionPanel.SetActive(panel == mpCharacterSelectionPanel);
     }
 
     #endregion
@@ -173,6 +178,17 @@ public class GameManager : MonoBehaviour
             gameStarted = true;
         }
         RefreshLevelSockets();
+    }
+
+    /// <summary>
+    /// MP path: called by LobbyNetworkManager once Mirror has loaded the game scene.
+    /// The SP path relies on GameSceneManager.LoadSceneRoutine calling OnSceneLoaded(),
+    /// but MP uses ServerChangeScene, so without this the phase stayed on Menu.
+    /// </summary>
+    public void EnterGamePhase()
+    {
+        currentPhase = GamePhase.InGame;
+        OnSceneLoaded();
     }
 
     private void SetupGameScene()
