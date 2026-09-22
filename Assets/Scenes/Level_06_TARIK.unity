@@ -25807,37 +25807,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8432191317896762596, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1981379211}
-    - targetCorrespondingSourceObject: {fileID: 4405902616354292255, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4099731006368485970}
   m_SourcePrefab: {fileID: 100100000, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
---- !u!1 &4099731006368485968 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4405902616354292255, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-  m_PrefabInstance: {fileID: 4099731006368485967}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &4099731006368485969 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 269253903587045947, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
-  m_PrefabInstance: {fileID: 4099731006368485967}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &4099731006368485970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4099731006368485968}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 4099731006368485969}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetParameter: 
-  targetColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2869021349418540006
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4017657498172416586}
+  m_Layer: 0
+  m_Name: "Sokak_Lambas\u0131"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &4017657498172416586
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2869021349418540006}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6942294959892204227}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &7484214050195336488
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4017657498172416586}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.7000008
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.7
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.7000008
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.2030001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.013999909
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_Name
+      value: "sokak lambas\u0131 uzun yeni"
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 5148817236446094103, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 8513859187771203891, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+--- !u!4 &6942294959892204227 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc5edb51a8034d24a88062ff4b228c63, type: 3}
+  m_PrefabInstance: {fileID: 7484214050195336488}
+  m_PrefabAsset: {fileID: 0}
