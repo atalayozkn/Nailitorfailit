@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7476845355904853532
+--- !u!1 &6414184085435523758
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,7 +8,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3298992916014824327}
+  - component: {fileID: 2155882691111903859}
   m_Layer: 0
   m_Name: trafik konisi
   m_TagString: Untagged
@@ -16,29 +16,29 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
---- !u!4 &3298992916014824327
+--- !u!4 &2155882691111903859
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7476845355904853532}
+  m_GameObject: {fileID: 6414184085435523758}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -31.06173, y: 0.662, z: 18.629745}
+  m_LocalPosition: {x: -28.2, y: 0.616, z: 24.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7105218467312461596}
+  - {fileID: 3596375068672292252}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &7282452472097472759
+--- !u!1001 &3918797359000392311
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 3298992916014824327}
+    m_TransformParent: {fileID: 2155882691111903859}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
       propertyPath: m_LocalPosition.x
@@ -58,7 +58,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
       propertyPath: m_LocalRotation.y
@@ -84,46 +84,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: trafik konisi
       objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1150729663301643962}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
---- !u!4 &7105218467312461596 stripped
+--- !u!4 &3596375068672292252 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
-  m_PrefabInstance: {fileID: 7282452472097472759}
+  m_PrefabInstance: {fileID: 3918797359000392311}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7624908773630688678 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 08b1d9b6c2b814147b91d80f57a05166, type: 3}
-  m_PrefabInstance: {fileID: 7282452472097472759}
-  m_PrefabAsset: {fileID: 0}
---- !u!65 &1150729663301643962
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7624908773630688678}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.8015194, y: 0.9812018, z: 0.80151945}
-  m_Center: {x: 0.000000044703484, y: -0.07244322, z: 0.17118225}
