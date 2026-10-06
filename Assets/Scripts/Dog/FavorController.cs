@@ -1,10 +1,11 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FavorController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private UIImageFillHelper fillHelper;
+    [SerializeField] private Slider slider;
 
     [Header("Settings")]
     [SerializeField] private int maxFavor = 100;
@@ -16,6 +17,7 @@ public class FavorController : MonoBehaviour
     {
         currentFavor = maxFavor;
         UpdateUI();
+        slider.maxValue = maxFavor;
 
         if (loveHungerRoutine != null)
         {
@@ -41,8 +43,7 @@ public class FavorController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        float percent = (float)currentFavor / maxFavor;
-        fillHelper.UpdateUI(percent);
+        slider.value = currentFavor;
     }
     public void GainFavor(int amount)
     {

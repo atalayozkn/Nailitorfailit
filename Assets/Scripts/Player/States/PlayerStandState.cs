@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerStandState : PlayerBaseState
 {
     public static readonly int standHash = Animator.StringToHash("Stand");
-    private float standDuration = 2.0f;
+    private float standDuration = 5.0f;
     private float counter;
     public PlayerStandState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()

@@ -21,8 +21,18 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
 
     private int spawnedObjectCount = 0;
     private bool isOnCooldown = false;
+    private PlayerInteractionHandler interactionHandler;
+    private void Awake()
+    {
+        interactionHandler = FindAnyObjectByType<PlayerInteractionHandler>();
+    }
     public void OnInteract()
     {
+        if (interactionHandler.IsCarrying())
+        {
+            //Request Impossible Action SFX
+            return;
+        }
         if (isOnCooldown) return;
         isOnCooldown = true;
         onInteractEvent?.Invoke();

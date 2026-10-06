@@ -1,10 +1,11 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 public class SatietyController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private DogStateMachine stateMachine;
-    [SerializeField] private UIImageFillHelper fillHelper;
+    [SerializeField] private Slider slider;
 
     [Header("Settings")]
     [SerializeField] private float maxSatiety = 100f;
@@ -16,7 +17,7 @@ public class SatietyController : MonoBehaviour
     {
         currentSatiety = maxSatiety;
         UpdateUI();
-
+        slider.maxValue = maxSatiety;
         if (hungerRoutine != null)
         {
             StopCoroutine(hungerRoutine);
@@ -47,8 +48,7 @@ public class SatietyController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        float percent = (currentSatiety / maxSatiety);
-        fillHelper.UpdateUI(percent);
+        slider.value = currentSatiety;
     }
     public void GainSatiety(int amount)
     {

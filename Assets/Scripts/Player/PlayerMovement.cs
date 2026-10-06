@@ -105,7 +105,11 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isActive) return;
         GroundCheck();
-        if (isJumping) return;
+        if (isJumping)
+        {
+            rb.angularVelocity = Vector3.zero;
+            return;
+        }
         HandleMovement();
         HandleRotation();
     }

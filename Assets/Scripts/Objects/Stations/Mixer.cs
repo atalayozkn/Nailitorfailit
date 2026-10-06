@@ -204,7 +204,8 @@ public class Mixer : MonoBehaviour, IInteractable
         // Make the object visible again.
         carriable.SetVisuals(true);
         // Detach from mixer.
-        carriable.transform.SetParent(null);
+        carriable.OnDrop();
+        
     }
 
     private void ClearSlots()

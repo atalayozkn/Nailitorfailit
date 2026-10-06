@@ -9,8 +9,15 @@ public class HighlightHelper : MonoBehaviour
     private Material mat;
     private void Awake()
     {
-        if (isMeshRenderer) mat = meshRenderer.sharedMaterial;
-        else mat = skinnedMeshRenderer.sharedMaterial;
+        if (isMeshRenderer) mat = meshRenderer.material;
+        else mat = skinnedMeshRenderer.material;
+    }
+    private void Start()
+    {
+        if (mat != null)
+        {
+            ReverseHighlight();
+        }
     }
     public void HighlightMaterial()
     {
