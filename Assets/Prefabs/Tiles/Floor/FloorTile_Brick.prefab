@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 120946064739212791}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.02, z: 0}
   m_LocalScale: {x: 1, y: 0.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -104,7 +104,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
   targetRenderer: {fileID: 935131198953310698}
-  targetColor: {r: 0, g: 0, b: 0, a: 0}
+  skinnedRenderer: {fileID: 0}
+  isSkinnedMesh: 0
+  targetColor: {r: 0.0141509175, g: 1, b: 1, a: 0}
 --- !u!1 &304471373831443858
 GameObject:
   m_ObjectHideFlags: 0
@@ -497,6 +499,7 @@ MonoBehaviour:
   processHelper: {fileID: 2485439435971705678}
   objectHealth: {fileID: 4616531861886626115}
   puddleHelper: {fileID: 8126764855258698004}
+  connectedConstructor: {fileID: 0}
   isFloorTile: 0
   onHoverOnEvent:
     m_PersistentCalls:

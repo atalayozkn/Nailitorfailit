@@ -9,13 +9,14 @@ namespace ItemScript
         [Header("References")]
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Rigidbody rb;
-        [SerializeField] private Collider col;
+        [SerializeField] private Collider[] cols;
         [SerializeField] private MeshRenderer objectRenderer;
         public bool isRawMaterial = false;
         public CarriableType carriableType;
 
         [Header("Settings")]
-        [SerializeField] private float dropForce = 10f;
+        [SerializeField] private float dropForce = 1f;
+        [SerializeField] private float throwMultiplier = 0.1f;
         [SerializeField] private float objectDiscardDelay = 3.0f;
 
         [Header("Events")]
@@ -26,15 +27,13 @@ namespace ItemScript
         public InteractableType InteractableType => interactableType;
 
         private ObjectSpawner spawnerObject;
-        private PlayerInteractionHandler playerInteraction;
+        private PlayerInteractionHandler interactionHandler;
         private bool isOccupied = false;
         private bool isConsumed;
-        private Vector3 initialScale;
         private Transform attachTransform;
         private void Awake()
         {
-            playerInteraction = FindFirstObjectByType<PlayerInteractionHandler>();
-            initialScale = transform.localScale;
+            interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         }
 
         #region INTERACTABLE
@@ -46,7 +45,7 @@ namespace ItemScript
                 return;
             }
 
-            OnPickUp();
+            SnapToCarryTransform();
             onInteractEvent?.Invoke();
         }
         public void OnHoverOn()
@@ -69,31 +68,103 @@ namespace ItemScript
 
         #endregion
 
-        private void OnPickUp()
+        #region PLAYER INTERACTION
+        private void SnapToCarryTransform()
         {
-            col.enabled = false;
-            isOccupied = true;
+            SetCollusion(false);
             rb.isKinematic = true;
             rb.Sleep();
 
-            Transform carryTransform = playerInteraction.GetCarryTransform();
+            Transform carryTransform = interactionHandler.GetCarryTransform();
 
             transform.SetParent(carryTransform);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
 
-            playerInteraction.RegisterCarriedObject(this);
+            interactionHandler.RegisterCarriedObject(this);
         }
+        public void SnapToRightHand()
+        {
+            SetCollusion(false);
+            rb.isKinematic = true;
+            rb.Sleep();
+
+            Transform rightHandTransform = interactionHandler.GetRightHandTransform();
+
+            transform.SetParent(rightHandTransform);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+
+            interactionHandler.RegisterCarriedObject(this);
+        }
+        public void OnDrop(bool shouldThrow = false)
+        {
+            if (isConsumed) return;
+            transform.SetParent(null);
+            rb.isKinematic = false;
+            SetCollusion(true);
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+
+            if (shouldThrow)
+            {
+                float angle = Random.Range(0f, 30f);
+                float rotation = Random.Range(0f, 360f);
+                Quaternion spread = Quaternion.Euler(angle, rotation, 0f);
+                Vector3 direction = spread * Vector3.up;
+                rb.AddForce(direction * dropForce, ForceMode.Impulse);
+            }
+
+            interactionHandler.ClearCarriedObject();
+        }
+        public void OnThrow(float force)
+        {
+            if (isConsumed) return;
+            transform.SetParent(null);
+            rb.isKinematic = false;
+            SetCollusion(true);
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
+
+            float adjustedForce = force * throwMultiplier;
+            Vector3 direction = interactionHandler.transform.forward;
+            rb.AddForce(direction * adjustedForce, ForceMode.Impulse);
+            interactionHandler.ClearCarriedObject();
+        }
+        public void OnConsume()
+        {
+            if (isConsumed) return;
+            isConsumed = true;
+
+            spawnerObject?.ReduceCounter();
+            onConsumeEvent?.Invoke();
+            interactionHandler.ClearCarriedObject();
+
+            Destroy(gameObject, objectDiscardDelay);
+        }
+        #endregion
+
+        #region DOG INTERACTION
         public void PickUpByDog(Transform target)
         {
+            //Phyics & Occupation
             isOccupied = true;
-            col.enabled = false;
+            SetCollusion(false);
             rb.useGravity = false;
             rb.detectCollisions = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.Sleep();
 
+            //Clear from player if Player is holding this.
+            if (interactionHandler.GetCurrentCarriable() == this)
+            {
+                interactionHandler.ClearCarriedObject();
+            }
+
+            //Attach to new target.
             attachTransform = target;
             transform.SetParent(attachTransform);
             Invoke(nameof(AttachToTransform), 0.1f);
@@ -112,7 +183,8 @@ namespace ItemScript
 
             rb.detectCollisions = true;
             rb.useGravity = true;
-            col.enabled = true;
+            SetCollusion(true);
+            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
@@ -124,39 +196,20 @@ namespace ItemScript
             isOccupied = false;
             Destroy(gameObject, objectDiscardDelay);
         }
+        #endregion
 
-        public void OnDrop(bool shouldThrow = false)
+        #region UTILITIES
+        private void SetCollusion(bool condition)
         {
-            if (isConsumed) return;
-
-            rb.WakeUp();
-            rb.isKinematic = false;
-            transform.SetParent(null);
-            col.enabled = true;
-            playerInteraction.ClearCarriedObject();
-            isOccupied = false;
-
-            if (shouldThrow)
+            foreach (var col in cols)
             {
-                float angle = Random.Range(0f, 30f);
-                float rotation = Random.Range(0f, 360f);
-                Quaternion spread = Quaternion.Euler(angle,rotation,0f);
-                Vector3 direction = spread * Vector3.up;
-                rb.AddForce(direction * dropForce, ForceMode.Impulse);
+                col.enabled = condition;
             }
         }
-
-        public void OnConsume()
+        public void SetOccupied()
         {
-            if (isConsumed) return;
-            isConsumed = true;
-
-            spawnerObject?.ReduceCounter();
-            onConsumeEvent?.Invoke();
-            playerInteraction.ClearCarriedObject();
-
-            Destroy(gameObject, objectDiscardDelay);
-        }
+            isOccupied = true;
+        }    
         public bool IsOccupied()
         {
             return isOccupied;
@@ -167,4 +220,6 @@ namespace ItemScript
             objectRenderer.enabled = condition;
         }
     }
+
+        #endregion
 }

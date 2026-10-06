@@ -5,6 +5,7 @@ public class RoomController : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI roomText;
     [SerializeField] private GameObject[] availableTiles;
+    [SerializeField] private GameObject wallStructure;
 
     private int completedItemCount;
     private int totalRequiredItemCount;
@@ -14,6 +15,7 @@ public class RoomController : MonoBehaviour
     {
         totalRequiredItemCount = availableTiles.Length;
         UpdateUI();
+        wallStructure.SetActive(false);
     }
     public void IncreaseCounter()
     {
@@ -31,6 +33,7 @@ public class RoomController : MonoBehaviour
         if (completedItemCount >= totalRequiredItemCount && !isCompleted)
         {
             isCompleted = true;
+            wallStructure.SetActive(true);
             NotifyLevelManager();
         }
     }

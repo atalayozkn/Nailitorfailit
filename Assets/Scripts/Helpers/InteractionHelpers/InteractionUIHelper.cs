@@ -8,8 +8,8 @@ public class InteractionUIHelper : MonoBehaviour
     [SerializeField] private Slider sliderComponent;
     private void OnEnable()
     {
-        SetActivity(true);
         UpdateUI(0f);
+        SetActivity(false);
     }
     private void OnDisable()
     {

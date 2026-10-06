@@ -1,5 +1,6 @@
-using System.Collections;
+using ItemScript;
 using UnityEngine;
+using UnityEngine.AI;
 public class DogStateMachine : StateMachine_Dog
 {
     public enum DogState
@@ -14,9 +15,10 @@ public class DogStateMachine : StateMachine_Dog
         Aggresive,
         Play,
         Eat,
+        Aid
     }
-    
-    //RFERENCES
+
+    [field: Header("References")]
     [field: SerializeField] public Animator animator { get; private set; }
     [field: SerializeField] public SatietyController satietyController { get; private set; }
     [field: SerializeField] public FavorController favorController { get; private set; }
@@ -26,8 +28,13 @@ public class DogStateMachine : StateMachine_Dog
     [field: SerializeField] public Transform carryTransform { get; private set; }
     [field: SerializeField] public FoodBowl foodBowl { get; private set; }
     [field: SerializeField] public Collider[] patrolBoundaries { get; private set; }
+    [field: SerializeField] public MailManController mailmanController { get; private set; }
+    [field: SerializeField] public CarriableObject_SP currentCarriable { get; private set; }
+    [field: SerializeField] public GameObject[] possibleDrops { get; private set; }
+    [field: SerializeField] public Transform dropTransform { get; private set; }
+    [field: SerializeField] public Transform itemDropTransfom { get; private set; }
 
-    //SETTINGS
+    [field: Header("Settings")]
     [field: SerializeField] public int perEatConsumption { get; private set; }
     [field: SerializeField] public int perEatGain { get; private set; }
     [field: SerializeField] public int perPetFavorGain { get; private set; }
@@ -36,17 +43,17 @@ public class DogStateMachine : StateMachine_Dog
     [field: SerializeField] public float patrolBreakDistance { get; private set; }
     [field: SerializeField] public float perSleepGain { get; private set; }
     [field: SerializeField] public DogState currentDogState { get; private set; }
+    [field: SerializeField] public int patrolCounter { get; private set; }
 
-    //TRACKED TARGETS
-    [field: SerializeField] public Transform dropTransform { get; private set; }
+    [field: Header("Tracked Targets")]
     [field: SerializeField] public Transform moveTarget { get; private set; }
     [field: SerializeField] public Transform patrolTarget { get; private set; }
     [field: SerializeField] public Transform chaseTarget { get; private set; }
     [field: SerializeField] public Transform playTarget { get; private set; }
-
     private void OnEnable()
     {
         currentDogState = DogState.Play;
+        patrolCounter = 0;
         ChangeToIdleState();
     }
     public void ChangeToIdleState()
@@ -103,6 +110,12 @@ public class DogStateMachine : StateMachine_Dog
         currentDogState = DogState.Affection;
         SwitchState(new DogAffectionState(this));
     }
+    public void ChangeToAidState()
+    {
+        if (currentDogState == DogState.Aid) return;
+        currentDogState = DogState.Aid;
+        SwitchState(new DogAidState(this));
+    }
     public void ChangeToSleepState()
     {
         if (currentDogState == DogState.Sleep) return;
@@ -113,20 +126,27 @@ public class DogStateMachine : StateMachine_Dog
     {
         moveTarget = target;
     }
+    public void SetPlayTarget(Transform target)
+    {
+        playTarget = target;
+    }
     public void SetChaseTarget(Transform target)
     {
         chaseTarget = target;
     }
-    public void RandomizePlayTarget()
+    public void SetCurrentCarriable(CarriableObject_SP obj)
     {
-        if (patrolBoundaries == null || patrolBoundaries.Length == 0) return;
-        Collider selectedBoundary = patrolBoundaries[Random.Range(0, patrolBoundaries.Length)];
-
-        if (selectedBoundary is not BoxCollider box) return;
-        Vector3 localPoint = new Vector3(Random.Range(-box.size.x * 0.5f, box.size.x * 0.5f), 0f, Random.Range(-box.size.z * 0.5f, box.size.z * 0.5f));
-        Vector3 worldPoint = box.transform.TransformPoint(localPoint + box.center);
-        worldPoint.y = transform.position.y;
-        playTarget.position = worldPoint;
+        currentCarriable = obj;
+    }
+    public void StopChase()
+    {
+        chaseTarget = null;
+        ChangeToPatrolState();
+    }
+    public void TriggerPatrolCounter(bool condition)
+    {
+        if (condition) patrolCounter++;
+        else patrolCounter = 0;
     }
     public void RandomizePatrolTarget()
     {
@@ -135,20 +155,51 @@ public class DogStateMachine : StateMachine_Dog
         Collider selectedBoundary = patrolBoundaries[Random.Range(0, patrolBoundaries.Length)];
 
         Bounds bounds = selectedBoundary.bounds;
-        float randomX = Random.Range(bounds.min.x, bounds.max.x);
-        float randomZ = Random.Range(bounds.min.z, bounds.max.z);
 
-        patrolTarget.position = new Vector3(randomX, transform.position.y, randomZ);
+        for (int i = 0; i < 10; i++)
+        {
+            float randomX = Random.Range(bounds.min.x, bounds.max.x);
+            float randomZ = Random.Range(bounds.min.z, bounds.max.z);
+
+            Vector3 randomPoint = new Vector3(
+                randomX,
+                transform.position.y,
+                randomZ
+            );
+
+            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1f, NavMesh.AllAreas))
+            {
+                patrolTarget.position = hit.position;
+                return;
+            }
+        }
     }
     public bool ShouldContinueChase()
     {
         if (chaseTarget != null || movementHandler.CheckDistanceToBed() <= maxChaseDistance) return true;
         else return false;
     }
-    public void InspectEnvironment()
+    public void SpawnObject()
     {
-        playTarget = presenceChecker.SearchForMailMan();
-        if (playTarget == null) playTarget = presenceChecker.SearchForCarriable();
+        // Pick random index
+        int randomIndex = Random.Range(0, possibleDrops.Length);
+
+        // Select prefab
+        GameObject selectedObj = possibleDrops[randomIndex];
+
+        // Instantiate under carryTransform
+        GameObject obj = Instantiate(selectedObj,dropTransform.position,dropTransform.rotation);
+
+        if (obj.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
+        {
+            currentCarriable = carriable;
+            carriable.PickUpByDog(carryTransform);
+        }
+        else
+        {
+            currentCarriable = null;
+            ChangeToIdleState();
+        }
     }
 
 }

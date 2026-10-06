@@ -29,20 +29,14 @@ public class FireHelper : MonoBehaviour
     }
     public void StartFire()
     {
-        if (isBurning)
-            return;
-
+        if (isBurning) return;
         isBurning = true;
-
         onFireStarted?.Invoke();
-
         fireRoutine = StartCoroutine(FireRoutine());
     }
-
     public void StopFire()
     {
-        if (!isBurning)
-            return;
+        if (!isBurning) return;
 
         isBurning = false;
 
@@ -54,7 +48,6 @@ public class FireHelper : MonoBehaviour
 
         onFireStopped?.Invoke();
     }
-
     private IEnumerator FireRoutine()
     {
         while (true)
@@ -63,7 +56,6 @@ public class FireHelper : MonoBehaviour
             yield return new WaitForSeconds(fireHitInterval);
         }
     }
-
     public bool IsBurning()
     {
         return isBurning;

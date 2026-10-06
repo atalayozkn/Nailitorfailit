@@ -89,7 +89,10 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Menu
-
+    public void SwitchToMenuPhase()
+    {
+        currentPhase = GamePhase.Menu;
+    }
     private void SetupMenuScene()
     {
         if (inMenuCamera != null) SwitchToMenuCamera();
@@ -174,7 +177,7 @@ public class GameManager : MonoBehaviour
         if (inGameCamera != null) SwitchToInGameCamera();
         if (!gameStarted)
         {
-            CurrencyManager.Instance.GainCurrency(startCurrencyAmount);
+            CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
             gameStarted = true;
         }
         RefreshLevelSockets();
@@ -213,11 +216,24 @@ public class GameManager : MonoBehaviour
         if (success)
         {
             levelSockets[levelIndex].isCompleted = true;
-            // Leave isIndicated untouched.
+
+            currentPhase = GamePhase.InGame;
+            GameSceneManager.Instance.LoadMenu();
+            return;
         }
 
-        currentPhase = GamePhase.InGame;
+        // Reset the run data immediately.
+        ResetLevelSocketStates();
+        CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
+        gameStarted = false;
 
+        // Return to the main menu as a completely fresh game.
+        currentPhase = GamePhase.Menu;
+        GameSceneManager.Instance.LoadMenu();
+    }
+    public void ReturnToGameMenu()
+    {
+        currentPhase = GamePhase.InGame;
         GameSceneManager.Instance.LoadMenu();
     }
     #endregion
@@ -244,7 +260,6 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Utility
-
     public GamePhase GetCurrentPhase()
     {
         return currentPhase;
@@ -257,7 +272,6 @@ public class GameManager : MonoBehaviour
     {
         levelSockets[levelIndex].isIndicated = true;
     }
-
     private void SwitchToMenuCamera()
     {
         inMenuCamera.Priority = 1;

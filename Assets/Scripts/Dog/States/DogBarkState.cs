@@ -10,6 +10,7 @@ public class DogBarkState : DogBaseState
     {
         counter = 0f;
         stateMachine.animator.CrossFadeInFixedTime(barkHash, 0.1f);
+        stateMachine.mailmanController.Scare();
     }
     public override void Tick(float deltaTime)
     {
@@ -17,11 +18,6 @@ public class DogBarkState : DogBaseState
         if (counter >= animDuration && stateMachine.ShouldContinueChase())
         {
             stateMachine.ChangeToChaseState();
-        }
-        else
-        {
-            counter = 0f;
-            stateMachine.animator.CrossFadeInFixedTime(barkHash, 0.1f);
         }
     }
     public override void FixedTick(float fixedDeltaTime)

@@ -1,5 +1,6 @@
 using Flammables;
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
@@ -11,6 +12,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private FireHelper fireHelper;
     [SerializeField] private PuddleHelper puddleHelper;
+    [SerializeField] private Constructor connectedConstructor;
     [SerializeField] private bool isFloorTile;
 
     [Header("Events")]
@@ -53,7 +55,6 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     #endregion
 
     #region FIRE
-
     public void OnFireStart()
     {
         if (currentPhase == ConstructionPhase.Construction) return;
@@ -65,7 +66,6 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
         if (currentPhase == ConstructionPhase.Construction) return;
         fireHelper.StopFire();
     }
-
     #endregion
 
     #region WATER
@@ -82,12 +82,13 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
         puddleHelper.ElectrocutePuddle();
     }
     #endregion
-    #region UTILITY
 
+    #region UTILITY
     private void CompleteConstruction()
     {
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
+        connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()
     {

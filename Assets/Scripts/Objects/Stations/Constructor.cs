@@ -79,10 +79,12 @@ namespace ItemScript
 
             CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
             carriable.OnConsume();
-            roomController.IncreaseCounter();
             Invoke(nameof(NotifyInteractionHandler), 0.05f);
         }
-
+        public void ReportCompletion()
+        {
+            roomController.IncreaseCounter();
+        }
         private void NotifyInteractionHandler()
         {
             interactionHandler.ClearCarriedObject();

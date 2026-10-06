@@ -16,6 +16,7 @@ public class DogAggresiveState : DogBaseState
     public override void Tick(float deltaTime)
     {
         counter += deltaTime;
+
         if (counter > animDuration)
         {
             var carriable = stateMachine.presenceChecker.GetCurrentCarriable();

@@ -1,5 +1,4 @@
 using ItemScript;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PresenceChecker : MonoBehaviour
@@ -7,6 +6,7 @@ public class PresenceChecker : MonoBehaviour
     // Carriable Settings
     [Header("Carriable Settings")]
     [SerializeField] private LayerMask carriableLayer;
+    [SerializeField] private LayerMask playerLayer;
     [SerializeField] private float carriableSearchRadius;
 
     // Mail-Man Settings
@@ -17,14 +17,14 @@ public class PresenceChecker : MonoBehaviour
 
     private CarriableObject_SP trackedCarriable;
     private MailManController trackedMailMan;
-    public Transform SearchForMailMan()
+    public void SearchForMailMan()
     {
         Collider[] cols = Physics.OverlapSphere(transform.position, mailManSearchRadius, mailManLayer);
 
         if (cols.Length == 0)
         {
             trackedMailMan = null;
-            return null;
+            return;
         }
 
         foreach (Collider col in cols)
@@ -32,34 +32,71 @@ public class PresenceChecker : MonoBehaviour
             if (col.TryGetComponent<MailManController>(out MailManController mailMan))
             {
                 trackedMailMan = mailMan;
-                return mailMan.transform;
+                return;
             }
         }
 
         trackedMailMan = null;
-        return null;
     }
-    public Transform SearchForCarriable()
+    public void SearchForCarriable()
     {
         Collider[] cols = Physics.OverlapSphere(transform.position, carriableSearchRadius, carriableLayer);
 
         if (cols.Length == 0)
         {
             trackedCarriable = null;
-            return null;
+            return;
         }
 
         foreach (Collider col in cols)
         {
             if (col.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
             {
-                trackedCarriable = carriable;
-                return carriable.transform;
+                if (!carriable.IsOccupied())
+                {
+                    trackedCarriable = carriable;
+                }
+                else
+                {
+                    trackedCarriable = null;
+                }
+
+                return;
             }
         }
 
         trackedCarriable = null;
-        return null;
+    }
+
+    public void SearchForPlayer()
+    {
+        Collider[] cols = Physics.OverlapSphere(transform.position, carriableSearchRadius, playerLayer);
+
+        if (cols.Length == 0)
+        {
+            trackedCarriable = null;
+            return;
+        }
+
+        foreach (Collider col in cols)
+        {
+            if (col.TryGetComponent<PlayerInteractionHandler>(out PlayerInteractionHandler interactionHandler))
+            {
+                var carriable = interactionHandler.GetCurrentCarriable();
+                if (carriable != null && !carriable.IsOccupied())
+                {
+                    trackedCarriable = carriable;
+                }
+                else
+                {
+                    trackedCarriable = null;
+                }
+
+                return;
+            }
+        }
+
+        trackedCarriable = null;
     }
     public CarriableObject_SP GetCurrentCarriable()
     {

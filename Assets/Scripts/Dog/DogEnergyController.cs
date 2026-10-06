@@ -49,8 +49,6 @@ public class DogEnergyController : MonoBehaviour
     private void UpdateUI()
     {
         float percent = (float)currentEnergy / maxEnergy;
-
-        Debug.Log(percent);
         fillHelper.UpdateUI(percent);
     }
     public void GainEnergy(float amount)

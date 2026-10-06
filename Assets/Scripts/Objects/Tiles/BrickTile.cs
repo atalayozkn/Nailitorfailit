@@ -1,4 +1,5 @@
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
@@ -10,6 +11,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private ObjectHealth objectHealth;
     [SerializeField] private PuddleHelper puddleHelper;
+    [SerializeField] private Constructor connectedConstructor;
     [SerializeField] private bool isFloorTile;
 
     [Header("Events")]
@@ -66,6 +68,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     {
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
+        connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()
     {

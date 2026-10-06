@@ -7,19 +7,17 @@ using UnityEngine.Events;
 public class EnergyDrink_SP : MonoBehaviour, IUsable
 {
     [Header("Settings")]
-    [SerializeField, Min(0f)]
-    private float energyRestoreAmount = 500f;
+    [SerializeField, Min(0f)] private float energyRestoreAmount = 500f;
 
     [Header("References")]
-    [SerializeField]
-    private CarriableObject_SP carriableObject;
+    [SerializeField] private CarriableObject_SP carriableObject;
+    public UseType UseType => UseType.EnergyDrink;
 
     [Header("Events")]
-    [SerializeField]
-    private UnityEvent onUseEvent;
+    [SerializeField] private UnityEvent onUseEvent;
 
+    
     private PlayerStaminaHandler playerStamina;
-
     private bool isUsed;
 
     private void Awake()

@@ -4,6 +4,9 @@ public class MaterialColorChangeHelper : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private MeshRenderer targetRenderer;
+    [SerializeField] private SkinnedMeshRenderer skinnedRenderer;
+    [SerializeField] private bool isSkinnedMesh = false;
+    [SerializeField] private string targetParameter = "_BaseColor";
 
     [Header("Settings")]
     [SerializeField] private Color targetColor;
@@ -13,15 +16,28 @@ public class MaterialColorChangeHelper : MonoBehaviour
 
     private void Awake()
     {
-        material = targetRenderer.material;
-        initialColor = material.color;
+        material = isSkinnedMesh ? skinnedRenderer.material : targetRenderer.material;
+
+        if (!material.HasProperty(targetParameter))
+        {
+            Debug.LogError($"Material {material.name} does not have a color property called '{targetParameter}'.", this);
+            return;
+        }
+
+        initialColor = material.GetColor(targetParameter);
     }
+
     public void ChangeToColor()
     {
-        material.color = targetColor;
+        if (!material.HasProperty(targetParameter)) return;
+
+        material.SetColor(targetParameter, targetColor);
     }
+
     public void ReverseToInitialColor()
     {
-        material.color = initialColor;
+        if (!material.HasProperty(targetParameter)) return;
+
+        material.SetColor(targetParameter, initialColor);
     }
 }

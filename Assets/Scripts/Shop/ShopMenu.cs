@@ -67,7 +67,9 @@ public class ShopMenu : MonoBehaviour
 
     private void NextIndex()
     {
-        if (shopIndexes.Length == 0) return; currentIndex++;
+        if (shopIndexes.Length == 0) return; 
+        currentIndex++;
+
         if (currentIndex >= shopIndexes.Length) currentIndex = 0;
         UpdateUI(currentIndex);
     }

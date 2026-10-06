@@ -8,9 +8,8 @@ public class FavorController : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private int maxFavor = 100;
-
+    [SerializeField] private float hungerInterval = 2.5f;
     private int currentFavor;
-    private float hungerInterval = 2.5f;
     private Coroutine loveHungerRoutine;
 
     private void OnEnable()

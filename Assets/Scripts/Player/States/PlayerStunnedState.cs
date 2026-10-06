@@ -1,3 +1,4 @@
+using ItemScript;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -8,6 +9,7 @@ public class PlayerStunnedState : PlayerBaseState
     public PlayerStunnedState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.onStunStartEvent?.Invoke();
         stateMachine.UpdateMoveDirection();
 
         //Stopping Inputs & Disabling Animator
@@ -20,10 +22,10 @@ public class PlayerStunnedState : PlayerBaseState
         foreach (var col in stateMachine.ragdollColliders) col.enabled = true;
         foreach (var rb in stateMachine.ragdollRigidBodies)
         {
+            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.detectCollisions = true;
             rb.useGravity = true;
-            rb.AddForce(stateMachine.moveDirection * 15.0f, ForceMode.Force);
         }
 
         counterTime = 0;
@@ -43,17 +45,39 @@ public class PlayerStunnedState : PlayerBaseState
     }
     public override void Exit()
     {
-        //Disable of Ragdoll
-        foreach (var joint in stateMachine.ragdollJoints) joint.enableCollision = false;
-        foreach (var col in stateMachine.ragdollColliders) col.enabled = false;
+        stateMachine.onStunEndEvent?.Invoke();
+
+        foreach (var col in stateMachine.ragdollColliders)
+        {
+            col.enabled = false;
+        }
+
+        foreach (var joint in stateMachine.ragdollJoints)
+        {
+            joint.enableCollision = false;
+        }
+
+        // Stop ragdoll physics
         foreach (var rb in stateMachine.ragdollRigidBodies)
         {
             rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
             rb.detectCollisions = false;
             rb.useGravity = false;
         }
 
+        stateMachine.rHandTransform.localPosition = stateMachine.rightHandLocalPosition;
+        stateMachine.rHandTransform.localRotation = stateMachine.rightHandLocalRotation;
+
+        stateMachine.lHandTransform.localPosition = stateMachine.leftHandLocalPosition;
+        stateMachine.lHandTransform.localRotation = stateMachine.leftHandLocalRotation;
+
+        // Restore animation
         stateMachine.animator.enabled = true;
+        stateMachine.animator.Rebind();
+        stateMachine.animator.Update(0f);
+
         stateMachine.movementHandler.SetActivity(true);
         stateMachine.interactionHandler.SetActivity(true);
     }
