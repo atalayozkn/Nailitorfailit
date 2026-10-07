@@ -194,13 +194,15 @@ MonoBehaviour:
   bluePrintObject: {fileID: 2499015782262911686}
   interactableType: 1
   interactionCollider: {fileID: 434870937798017280}
-  acceptedType: 0
+  acceptedType: 1
   woodObject: {fileID: 4476850867407786075}
   woodHealth: {fileID: 7501095192495221697}
   brickObject: {fileID: 3169865256209081991}
   brickHealth: {fileID: 6381461452340120709}
   glassObject: {fileID: 199960617188397408}
   glassHealth: {fileID: 8253062913174798527}
+  isTutorial: 1
+  objective: {fileID: 0}
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
@@ -267,7 +269,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 0.1, z: 1}
-  m_Center: {x: 0, y: -0.05, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8364791134234437012
 GameObject:
   m_ObjectHideFlags: 0
@@ -482,11 +484,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 458361698920831004, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 458361698920831004, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 878603287883803129, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
       propertyPath: slipHelper
@@ -550,6 +552,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5344979551643064024, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5709191352512158900, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}
+      propertyPath: isTutorial
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5709191352512158900, guid: 1ceb2ad800c59f5429a85eb0b401fb95, type: 3}

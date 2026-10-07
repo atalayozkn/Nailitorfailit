@@ -77,4 +77,13 @@ public class Car_Active : MonoBehaviour
             onCrashEvent?.Invoke();
         }
     }
+    public float GetElapsedLifeTime()
+    {
+        return counter;
+    }
+
+    public float GetRemainingLifeTime()
+    {
+        return Mathf.Max(0f, maxLifeTime - counter);
+    }
 }

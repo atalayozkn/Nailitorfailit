@@ -43,6 +43,14 @@ public class PlayerUseState : PlayerBaseState
             isTransitionComplete = true;
             IUsable usable = stateMachine.useHandler.GetCurrentUsable();
             if (usable != null) usable.OnUse();
+            if (currentUseType == UseType.EnergyDrink)
+            {
+                stateMachine.onDrink?.Invoke();
+            }
+            else if (currentUseType == UseType.FireExtinguisher)
+            {
+                stateMachine.onUseFE?.Invoke();
+            }
             stateMachine.ForceUpdateIdle();
             return;
         }

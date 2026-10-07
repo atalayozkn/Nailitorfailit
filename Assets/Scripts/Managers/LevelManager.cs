@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -59,11 +58,11 @@ public class LevelManager : MonoBehaviour
             //Play Backrupcy
             //Delay
             //Return to Menu scene as Menu Mode
-            GameManager.Instance.CompleteLevel(currentLevel, false);
+            //GameManager.Instance.CompleteLevel(currentLevel, false);
         }
         else
         {
-            GameManager.Instance.ReturnToGameMenu();
+            //GameManager.Instance.ReturnToGameMenu();
             //Return to Menu scene as GameMode
         }
     }
@@ -75,7 +74,7 @@ public class LevelManager : MonoBehaviour
         //Probably delay will be added here
 
         CurrencyManager.Instance.GainCurrency(score);
-        GameManager.Instance.CompleteLevel(currentLevel, true);
+        //GameManager.Instance.CompleteLevel(currentLevel, true);
     }
 
 }

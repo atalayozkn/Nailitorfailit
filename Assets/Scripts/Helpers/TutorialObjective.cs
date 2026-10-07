@@ -8,6 +8,8 @@ public class TutorialObjective : MonoBehaviour
     [SerializeField] private LayerMask playerLayer;
     [SerializeField] private InputActionReference objectiveInput;
     [SerializeField] private int completionIndex;
+    [SerializeField] private ParticleSystem particle;
+    private bool isActive = false;
     private void OnEnable()
     {
         SetupObjective(objectiveType);
@@ -24,10 +26,17 @@ public class TutorialObjective : MonoBehaviour
             case ObjectiveTypes.ObjectCondition:
                 break;
         }
+
+        ActivateObjective();
+    }
+    public void ActivateObjective()
+    {
+        isActive = true;
+        particle.Play();
     }
     private void Update()
     {
-        if (objectiveType != ObjectiveTypes.Input || objectiveInput == null) return;
+        if (objectiveType != ObjectiveTypes.Input || objectiveInput == null || !isActive) return;
         if (objectiveInput.action.WasPressedThisFrame())
         {
             NotifyCompletion();
@@ -35,17 +44,19 @@ public class TutorialObjective : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        if (objectiveType != ObjectiveTypes.Navigation) return;
+        if (objectiveType != ObjectiveTypes.Navigation || !isActive) return;
         if ((playerLayer.value & (1 << other.gameObject.layer)) == 0) return;
         NotifyCompletion();
     }
     private void NotifyCompletion()
     {
         TutorialManager.Instance.CompleteObjective(completionIndex);
+        isActive = false;
+        particle.Stop();
     }
     public void CompleteCondition()
     {
-        if (objectiveType != ObjectiveTypes.ObjectCondition) return;
+        if (objectiveType != ObjectiveTypes.ObjectCondition || !isActive) return;
         NotifyCompletion();
     }
     private void OnDisable()

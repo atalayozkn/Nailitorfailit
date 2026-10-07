@@ -14,7 +14,9 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     [SerializeField] private PuddleHelper puddleHelper;
     [SerializeField] private Constructor connectedConstructor;
     [SerializeField] private bool isFloorTile;
-
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorial = false;
+    [SerializeField] private TutorialObjective objective;
     [Header("Events")]
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
@@ -33,9 +35,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
         currentPhase = ConstructionPhase.Construction;
         gameObject.layer = LayerMask.NameToLayer("Interaction");
     }
-
     #region INTERACTABLE
-
     public void OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return;
@@ -86,6 +86,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable
     #region UTILITY
     private void CompleteConstruction()
     {
+        if (isTutorial) objective?.CompleteCondition();
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
         connectedConstructor.ReportCompletion();

@@ -233,6 +233,7 @@ GameObject:
   - component: {fileID: 2994732837391265765}
   - component: {fileID: 878603287883803129}
   - component: {fileID: 8170036723875961871}
+  - component: {fileID: 1471740856514523208}
   - component: {fileID: 1055449415981703988}
   m_Layer: 6
   m_Name: FloorTile_Wood
@@ -277,13 +278,13 @@ MonoBehaviour:
   fireHelper: {fileID: 2994732837391265765}
   puddleHelper: {fileID: 878603287883803129}
   connectedConstructor: {fileID: 0}
-  isFloorTile: 0
+  isFloorTile: 1
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 1471740856514523208}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -296,9 +297,9 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 1471740856514523208}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -418,6 +419,21 @@ MonoBehaviour:
   onDiscardEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1471740856514523208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 9187347345860718906}
+  isMeshRenderer: 1
 --- !u!65 &1055449415981703988
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -680,15 +696,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8722653818339683199, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.12056
+      value: -0.070559986
       objectReference: {fileID: 0}
     - target: {fileID: 8722653818339683199, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.050759997
+      value: 1.05076
       objectReference: {fileID: 0}
     - target: {fileID: 8722653818339683199, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.19979
+      value: -1.1997901
       objectReference: {fileID: 0}
     - target: {fileID: 8722653818339683199, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -889,6 +905,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1f23f13a171409b438392e508205a47c, type: 2}
     - target: {fileID: 919132149155446097, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
       propertyPath: m_Name
       value: zemin yeni
@@ -901,5 +921,10 @@ PrefabInstance:
 --- !u!4 &8055584450768538197 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
+  m_PrefabInstance: {fileID: 7512450708227321278}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &9187347345860718906 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
   m_PrefabInstance: {fileID: 7512450708227321278}
   m_PrefabAsset: {fileID: 0}

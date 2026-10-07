@@ -21,6 +21,10 @@ namespace ItemScript
         [SerializeField] private GameObject glassObject;
         [SerializeField] private ObjectHealth glassHealth;
 
+        [Header("Tutorial Settings")]
+        [SerializeField] private bool isTutorial = false;
+        [SerializeField] private TutorialObjective objective;
+
         [Header("Events")]
         [SerializeField] private UnityEvent onHoverOnEvent;
         [SerializeField] private UnityEvent onHoverOffEvent;
@@ -57,6 +61,8 @@ namespace ItemScript
         {
             if (isBuilt) return;
             isBuilt = true;
+
+            if (isTutorial) objective?.CompleteCondition();
 
             switch (type)
             {

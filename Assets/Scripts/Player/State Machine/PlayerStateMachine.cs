@@ -71,6 +71,8 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public UnityEvent stopSlipEvent { get; private set; }
     [field: SerializeField] public UnityEvent onStunStartEvent { get; private set; }
     [field: SerializeField] public UnityEvent onStunEndEvent { get; private set; }
+    [field: SerializeField] public UnityEvent onDrink { get; private set; }
+    [field: SerializeField] public UnityEvent onUseFE { get; private set; }
 
 
 
@@ -99,6 +101,8 @@ public class PlayerStateMachine : StateMachine_Player
             rb.useGravity = false;
             rb.isKinematic = true;
         }
+
+        CloseCursor();
     }
     private void OnEnable()
     {
@@ -290,6 +294,17 @@ public class PlayerStateMachine : StateMachine_Player
         rb.AddForce(direction * adjustedForce, ForceMode.Force);
     }
     #endregion
+
+    public void OpenCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+    public void CloseCursor()
+    {
+        Cursor.lockState &= CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 
     #region DEBUG
 

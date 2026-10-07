@@ -54,6 +54,7 @@ public class DogEatState : DogBaseState
         else
         {
             stateMachine.animator.CrossFadeInFixedTime(unHappyHash, 0.1f);
+            stateMachine.onSadness?.Invoke();
         }
     }
 }

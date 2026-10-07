@@ -4,6 +4,6 @@ public class ReturnMenuHelper : MonoBehaviour
 {
     public void RequestReturnToMenu()
     {
-        GameManager.Instance.ReturnToGameMenu();
+        GameSceneManager.Instance.LoadMenu();
     }
 }

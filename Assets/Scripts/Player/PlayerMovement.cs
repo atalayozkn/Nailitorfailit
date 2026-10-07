@@ -127,13 +127,14 @@ public class PlayerMovement : MonoBehaviour
             {
                 stepCounter = 0f;
 
-                if (hit.collider.CompareTag("Wood"))
-                {
-                    onWoodStepEvent?.Invoke();
-                }
-                else if (hit.collider.CompareTag("Water"))
+                if (hit.collider.CompareTag("Water"))
                 {
                     onWaterStepEvent?.Invoke();
+                    
+                }
+                else
+                {
+                    onWoodStepEvent?.Invoke();
                 }
             }
         }
@@ -146,8 +147,11 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded)
         {
+            bool landedFromJump = isJumping;
+
             SetJumping(false);
-            onLandEvent?.Invoke();
+
+            if (landedFromJump) onLandEvent?.Invoke();
         }
 
         wasGrounded = isGrounded;
