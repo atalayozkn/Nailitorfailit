@@ -30,11 +30,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _1st_ShadeMap:
-        m_Texture: {fileID: 2800000, guid: d577bdabda82751479edee3533a50fd3, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _2nd_ShadeMap:
-        m_Texture: {fileID: 2800000, guid: d577bdabda82751479edee3533a50fd3, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AO_r_metalic_g:
@@ -331,14 +331,14 @@ Material:
     m_Floats:
     - Backface_Normal_Mode: 0
     - EFFECT_EXTRA_TEX: 1
-    - _1st2nd_Shades_Feather: 0.0001
+    - _1st2nd_Shades_Feather: 0.433
     - _1stTo2nd_ShadeFeather: 0.902
     - _1stTo2nd_ShadeStart: 0.159
-    - _1st_ShadeColor_Feather: 0.902
-    - _1st_ShadeColor_Step: 0.159
+    - _1st_ShadeColor_Feather: 0.3
+    - _1st_ShadeColor_Step: 0.6
     - _2DLightStrength: 1
-    - _2nd_ShadeColor_Feather: 0.0001
-    - _2nd_ShadeColor_Step: 0
+    - _2nd_ShadeColor_Feather: 0.433
+    - _2nd_ShadeColor_Step: 0.4
     - _AORemapMax: 1
     - _AORemapMin: 0
     - _ARSampler_AlphaOn: 0
@@ -370,8 +370,8 @@ Material:
     - _BacklightTransmittance: 1
     - _BaseColorOverridden: 0
     - _BaseColorVisible: 1
-    - _BaseColor_Step: 0.159
-    - _BaseShade_Feather: 0.902
+    - _BaseColor_Step: 0.6
+    - _BaseShade_Feather: 0.3
     - _BaseTo1st_ShadeFeather: 0.902
     - _BaseTo1st_ShadeStart: 0.159
     - _Base_Speed: 0
@@ -542,7 +542,7 @@ Material:
     - _OutlineWidth: 0
     - _Outline_BaseColorBlend: 0.5
     - _Outline_LightColorBlend: 0.5
-    - _Outline_Width: 0
+    - _Outline_Width: 5
     - _PPDLodThreshold: 5
     - _PPDMaxSamples: 15
     - _PPDMinSamples: 5
@@ -578,7 +578,7 @@ Material:
     - _SecondaryTextureSpeedFactor: 0
     - _SecondaryTextureStrength: 0
     - _Set_SystemShadowsToBase: 1
-    - _ShadeColor_Step: 0
+    - _ShadeColor_Step: 0.4
     - _Shades: 0.49
     - _ShadowBlur: 1
     - _ShadowMixMode: 0
@@ -683,7 +683,7 @@ Material:
     - _UseVertexColors: 0
     - _UseVertexOffset: 0
     - _Use_1stAs2nd: 0
-    - _Use_BaseAs1st: 0
+    - _Use_BaseAs1st: 1
     - _Variation: 0.762
     - _VertexOffsetFrequency: 2
     - _VertexOffsetMagnitude: 0.05
@@ -711,8 +711,8 @@ Material:
     - _simpleUI: 0
     - _utsTechnique: 0
     m_Colors:
-    - _1st_ShadeColor: {r: 0.6981132, g: 0.35804883, b: 0, a: 1}
-    - _2nd_ShadeColor: {r: 0.509434, g: 0.24454248, b: 0, a: 1}
+    - _1st_ShadeColor: {r: 0.3584906, g: 0.3584906, b: 0.3584906, a: 1}
+    - _2nd_ShadeColor: {r: 0, g: 0, b: 0, a: 1}
     - _AngelRingMaskColor: {r: 0, g: 1, b: 0, a: 1}
     - _AngelRing_Color: {r: 1, g: 1, b: 1, a: 1}
     - _Ap_RimLightColor: {r: 1, g: 1, b: 1, a: 1}
@@ -752,7 +752,7 @@ Material:
     - _OutlineOffset2: {r: 0, g: 0, b: 0, a: 0}
     - _OutlineOffset3: {r: 0, g: 0, b: 0, a: 0}
     - _OutlineUVSpeed: {r: 0, g: 0, b: 0, a: 0}
-    - _Outline_Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _Outline_Color: {r: 0, g: 0, b: 0, a: 1}
     - _OverlayTex_Scroll: {r: 0.1, g: 0.1, b: 1, a: 1}
     - _RampDark: {r: 0.34905657, g: 0.34905657, b: 0.34905657, a: 0}
     - _RampLight: {r: 1, g: 1, b: 1, a: 0}

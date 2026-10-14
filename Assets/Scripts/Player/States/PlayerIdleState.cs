@@ -4,8 +4,8 @@ public class PlayerIdleState : PlayerBaseState
 {
     public PlayerIdleState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-    public static readonly int idleHash = Animator.StringToHash("idle");
-    public static readonly int carryIdleHash = Animator.StringToHash("carryIdle");
+    public static readonly int idleHash = Animator.StringToHash("Idle");
+    public static readonly int carryIdleHash = Animator.StringToHash("CarryIdle");
 
     public override void Enter()
     {

@@ -1,11 +1,12 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class DogEnergyController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private UIImageFillHelper fillHelper;
+    [SerializeField] private Slider slider;
 
     [Header("Settings")]
     [SerializeField] private float maxEnergy;
@@ -19,7 +20,7 @@ public class DogEnergyController : MonoBehaviour
     {
         currentEnergy = maxEnergy;
         UpdateUI();
-
+        slider.maxValue = maxEnergy;
         if (energyDecayRoutine != null)
         {
             StopCoroutine(energyDecayRoutine);
@@ -48,8 +49,7 @@ public class DogEnergyController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        float percent = (float)currentEnergy / maxEnergy;
-        fillHelper.UpdateUI(percent);
+        slider.value = currentEnergy;
     }
     public void GainEnergy(float amount)
     {

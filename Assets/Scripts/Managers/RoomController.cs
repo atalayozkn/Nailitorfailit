@@ -6,7 +6,9 @@ public class RoomController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI roomText;
     [SerializeField] private GameObject[] availableTiles;
     [SerializeField] private GameObject wallStructure;
-
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorial = false;
+    [SerializeField] private TutorialObjective objective;
     private int completedItemCount;
     private int totalRequiredItemCount;
 
@@ -40,11 +42,16 @@ public class RoomController : MonoBehaviour
     private void UpdateUI()
     {
         int diff = totalRequiredItemCount - completedItemCount;
+        if (roomText == null) return;
         roomText.text = diff.ToString();
     }
     private void NotifyLevelManager()
     {
-        LevelManager.Instance.CompleteRoom();
+        if (isTutorial) objective.CompleteCondition();
+        else
+        {
+            LevelManager.Instance.CompleteRoom();
+        }
     }
     public bool IsCompleted()
     {

@@ -61,6 +61,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 9e5c2501cc427b34daa59f785d2892c2, type: 2}
@@ -77,13 +81,25 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: -2507806918564812868, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2507806918564812868, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 9e5c2501cc427b34daa59f785d2892c2, type: 2}
     - target: {fileID: -2078742438007466072, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2078742438007466072, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 9e5c2501cc427b34daa59f785d2892c2, type: 2}
+    - target: {fileID: 674938765544902076, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 674938765544902076, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -103,6 +119,10 @@ PrefabInstance:
     - target: {fileID: 6934353858395036436, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210965267280825274, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 9210965267280825274, guid: ddae4734f30aef14f89e7635cc5d153c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

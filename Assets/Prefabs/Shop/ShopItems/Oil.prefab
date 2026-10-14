@@ -30,8 +30,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.375672, y: 0.742, z: -0.922}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3799789157943974489}
   m_Father: {fileID: 0}
@@ -191,7 +191,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.99999964
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalRotation.x
@@ -199,11 +199,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.0008726948
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -211,7 +211,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -224,7 +224,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 35a0958011cc47041b8b1dbb2a53d67b, type: 2}
+      objectReference: {fileID: 2100000, guid: 1f23f13a171409b438392e508205a47c, type: 2}
     - target: {fileID: 919132149155446097, guid: d6e1e4876475b8c40b598d9cb5709bde, type: 3}
       propertyPath: m_Name
       value: benzin

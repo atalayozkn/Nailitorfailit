@@ -10,6 +10,8 @@ public class MixerUIHelper : MonoBehaviour
     [SerializeField] private Sprite woodSprite;
     [SerializeField] private Sprite brickSprite;
     [SerializeField] private Sprite glassSprite;
+    [SerializeField] private Sprite cementSprite;
+
 
     private void OnEnable()
     {
@@ -30,6 +32,9 @@ public class MixerUIHelper : MonoBehaviour
                 break;
             case CarriableType.Glass:
                 selectedSprite = glassSprite;
+                break;
+            case CarriableType.Cement:
+                selectedSprite = cementSprite;
                 break;
         }
 
