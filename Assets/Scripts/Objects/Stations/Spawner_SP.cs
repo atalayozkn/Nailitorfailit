@@ -11,6 +11,10 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     [SerializeField] private GameObject objectPrefab;
     [SerializeField] private float interactCooldown;
 
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorial = false;
+    [SerializeField] private TutorialObjective objective;
+
     [Header("Safety")]
     [SerializeField] private int maxCount = 15;
 
@@ -21,9 +25,21 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
 
     private int spawnedObjectCount = 0;
     private bool isOnCooldown = false;
+    private PlayerInteractionHandler interactionHandler;
+    private void Awake()
+    {
+        interactionHandler = FindAnyObjectByType<PlayerInteractionHandler>();
+    }
     public void OnInteract()
     {
-        if (isOnCooldown) return;
+        if (isTutorial) objective.CompleteCondition();
+
+        if (interactionHandler.IsCarrying() || isOnCooldown)
+        {
+            //Request Impossible Action SFX
+            return;
+        }
+
         isOnCooldown = true;
         onInteractEvent?.Invoke();
         SpawnObject();

@@ -4,21 +4,10 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [Serializable]
-    public class LevelSocketData
-    {
-        public LevelSocket levelSocket;
-
-        [Header("State")]
-        public bool isCompleted;
-        public bool isIndicated;
-    }
-
     public static GameManager Instance { get; private set; }
 
     [Header("Settings")]
     [SerializeField] private int startCurrencyAmount = 250;
-    [SerializeField] private LevelSocketData[] levelSockets;
 
     private GamePhase currentPhase = GamePhase.Menu;
 
@@ -42,7 +31,6 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        ResetLevelSocketStates();
     }
 
     private void Start()
@@ -84,7 +72,6 @@ public class GameManager : MonoBehaviour
         mainMenu = FindAnyObjectByType<MainMenu>();
         inGameOverlayUI = FindAnyObjectByType<InGameOverlayUI>();
     }
-
     #endregion
 
     #region Menu
@@ -137,7 +124,6 @@ public class GameManager : MonoBehaviour
             CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
             gameStarted = true;
         }
-        RefreshLevelSockets();
     }
 
     private void SetupGameScene()
@@ -145,7 +131,6 @@ public class GameManager : MonoBehaviour
         if (mainMenu != null) mainMenu.SetActivity(false);
         if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
         if (inGameCamera != null) SwitchToInGameCamera();
-        RefreshLevelSockets();
     }
 
     #endregion
@@ -155,13 +140,14 @@ public class GameManager : MonoBehaviour
     public void ChangeToLevelPhase(int levelIndex)
     {
         currentPhase = GamePhase.InLevel;
+        CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
         GameSceneManager.Instance.LoadLevel(levelIndex);
     }
     public void CompleteLevel(int levelIndex, bool success)
     {
         if (success)
         {
-            levelSockets[levelIndex].isCompleted = true;
+            //levelSockets[levelIndex].isCompleted = true;
 
             currentPhase = GamePhase.InGame;
             GameSceneManager.Instance.LoadMenu();
@@ -169,7 +155,6 @@ public class GameManager : MonoBehaviour
         }
 
         // Reset the run data immediately.
-        ResetLevelSocketStates();
         CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
         gameStarted = false;
 
@@ -186,22 +171,7 @@ public class GameManager : MonoBehaviour
 
     #region LevelSockets
 
-    private void RefreshLevelSockets()
-    {
-        foreach (LevelSocketData socket in levelSockets)
-        {
-            if (socket.levelSocket == null) continue;
-            socket.levelSocket.Refresh(socket.isCompleted, socket.isIndicated);
-        }
-    }
-    private void ResetLevelSocketStates()
-    {
-        foreach (LevelSocketData socket in levelSockets)
-        {
-            socket.isCompleted = false;
-            socket.isIndicated = false;
-        }
-    }
+    
 
     #endregion
 
@@ -209,14 +179,6 @@ public class GameManager : MonoBehaviour
     public GamePhase GetCurrentPhase()
     {
         return currentPhase;
-    }
-    public LevelSocketData GetLevelData(int index)
-    {
-        return levelSockets[index];
-    }
-    public void MarkLevelIndicated(int levelIndex)
-    {
-        levelSockets[levelIndex].isIndicated = true;
     }
     private void SwitchToMenuCamera()
     {

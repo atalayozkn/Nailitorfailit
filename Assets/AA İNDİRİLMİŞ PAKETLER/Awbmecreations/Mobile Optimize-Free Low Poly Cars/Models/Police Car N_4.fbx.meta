@@ -1,7 +1,15 @@
 fileFormatVersion: 2
 guid: ddae4734f30aef14f89e7635cc5d153c
+AssetOrigin:
+  serializedVersion: 1
+  productId: 327313
+  packageName: Mobile Optimize-Free Low Poly Cars
+  packageVersion: 1.6
+  assetPath: Assets/Awbmecreations/Mobile Optimize-Free Low Poly Cars/Models/Police
+    Car N_4.fbx
+  uploadId: 981970
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects: {}
   materials:
@@ -16,8 +24,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -48,7 +54,7 @@ ModelImporter:
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
     swapUVChannels: 0
-    generateSecondaryUV: 0
+    generateSecondaryUV: 1
     useFileUnits: 1
     keepQuads: 0
     weldVertices: 1
@@ -58,6 +64,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -107,11 +116,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 327313
-  packageName: Mobile Optimize-Free Low Poly Cars
-  packageVersion: 1.6
-  assetPath: Assets/Awbmecreations/Mobile Optimize-Free Low Poly Cars/Models/Police
-    Car N_4.fbx
-  uploadId: 981970

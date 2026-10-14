@@ -15,6 +15,10 @@ public class Cutter : MonoBehaviour, IInteractable
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private Generator_Prototype connectedGenerator;
 
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorial = false;
+    [SerializeField] private TutorialObjective objective;
+
     [Header("Spawn Settings")]
     [SerializeField] private int spawnCount = 2;
     [SerializeField] private float spawnDelay = 1.0f;
@@ -127,7 +131,7 @@ public class Cutter : MonoBehaviour, IInteractable
         isObjectPlaced = false;
 
         objectToConsume.OnConsume();
-
+        if (isTutorial) objective.CompleteCondition();
         StartCoroutine(SpawnRoutine(objectType));
     }
 

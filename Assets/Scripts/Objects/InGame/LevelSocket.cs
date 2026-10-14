@@ -82,7 +82,7 @@ public class LevelSocket : MonoBehaviour
         // Play sound
 
         yield return new WaitForSeconds(indicationDuration);
-        GameManager.Instance.MarkLevelIndicated(levelIndex);
+        //GameManager.Instance.MarkLevelIndicated(levelIndex);
         SetPhase(SocketPhase.Complete);
     }
     public void OnInteract()

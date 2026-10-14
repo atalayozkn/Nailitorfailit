@@ -6,5 +6,6 @@ public enum CarriableType
     Glass,
     EnergyDrink,
     PetFood,
-    Usable
+    Usable,
+    Cement
 }

@@ -10,6 +10,7 @@ public class DogBarkState : DogBaseState
     {
         counter = 0f;
         stateMachine.animator.CrossFadeInFixedTime(barkHash, 0.1f);
+        stateMachine.onBark?.Invoke();
         stateMachine.mailmanController.Scare();
     }
     public override void Tick(float deltaTime)

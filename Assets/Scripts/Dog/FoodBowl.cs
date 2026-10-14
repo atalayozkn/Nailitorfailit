@@ -1,13 +1,13 @@
 using Interactions;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class FoodBowl : MonoBehaviour, IInteractable
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
-    [SerializeField] private UIImageFillHelper imageFiller;
+    [SerializeField] private Slider slider;
 
     [Header("Settings")]
     [SerializeField] private int maxFood;
@@ -25,6 +25,8 @@ public class FoodBowl : MonoBehaviour, IInteractable
     {
         interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         currentFood = maxFood;
+        slider.maxValue = maxFood;
+        UpdateUI();
     }
     public void OnInteract()
     {
@@ -64,7 +66,6 @@ public class FoodBowl : MonoBehaviour, IInteractable
     }
     private void UpdateUI()
     {
-        float foodPercent = (float)currentFood / (float)maxFood;
-        imageFiller.UpdateUI(foodPercent);
+        slider.value = currentFood;
     }
 }

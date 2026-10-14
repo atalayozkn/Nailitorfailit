@@ -1,6 +1,7 @@
 using ItemScript;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 public class DogStateMachine : StateMachine_Dog
 {
     public enum DogState
@@ -50,6 +51,11 @@ public class DogStateMachine : StateMachine_Dog
     [field: SerializeField] public Transform patrolTarget { get; private set; }
     [field: SerializeField] public Transform chaseTarget { get; private set; }
     [field: SerializeField] public Transform playTarget { get; private set; }
+
+    [field: Header("Unity Events")]
+    [field: SerializeField] public UnityEvent onBark { get; private set; }
+    [field: SerializeField] public UnityEvent onSadness { get; private set; }
+
     private void OnEnable()
     {
         currentDogState = DogState.Play;

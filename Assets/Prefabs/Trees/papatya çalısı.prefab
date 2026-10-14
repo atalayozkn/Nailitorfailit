@@ -22,7 +22,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -9.128
+      value: -6.344
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalPosition.y
@@ -30,11 +30,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 37.328
+      value: 37.9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9965655
+      value: 0.5027937
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalRotation.x
@@ -42,7 +42,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.08280819
+      value: 0.86440647
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalRotation.z
@@ -54,15 +54,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 9.5
+      value: 119.63
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f074c864c83ada547818b66c062f7ebe, type: 2}
     - target: {fileID: 919132149155446097, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_Name
-      value: "papatya \xE7al\u0131s\u0131 yeni"
+      value: "papatya \xE7al\u0131s\u0131"
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: e72d54194312bb74f94c63f7fe7cf4c2, type: 3}
       propertyPath: m_StaticEditorFlags
