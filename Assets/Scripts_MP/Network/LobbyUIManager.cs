@@ -17,6 +17,9 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] Button readyButtonComponent;
     [SerializeField] Button leaveLobbyButton;
 
+    [Tooltip("Optional: 'Invite Steam friends' button. Only shown when a Steam lobby is active.")]
+    [SerializeField] Button inviteFriendsButton;
+
     [Tooltip("Optional: 'n/4 Ready' text. Player_Count can be dragged here.")]
     [SerializeField] TMP_Text statusText;
 
@@ -47,6 +50,20 @@ public class LobbyUIManager : MonoBehaviour
         Debug.Log("[UI] LobbyUIManager ready: Leave/Start listeners bound.");
         leaveLobbyButton.onClick.AddListener(OnLeaveLobby);
         startGameButtonComponent.onClick.AddListener(OnStartGame);
+
+        if (inviteFriendsButton != null)
+        {
+            // Davet yalnizca Steam lobisi varken anlamli; LAN modunda dugme gizlenir.
+            bool steamAvailable = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.SteamOnline;
+            inviteFriendsButton.gameObject.SetActive(steamAvailable);
+            inviteFriendsButton.onClick.AddListener(OnInviteFriends);
+        }
+    }
+
+    void OnInviteFriends()
+    {
+        Debug.Log("[UI] Invite Steam friends pressed.");
+        SteamLobbyManager.Instance?.OpenInviteOverlay();
     }
 
     public PlayerListEntryUI AddPlayerRow(LobbyPlayer player)
@@ -97,21 +114,21 @@ public class LobbyUIManager : MonoBehaviour
     {
         leaveLobbyButton.interactable = false;
 
-        var relayMgr = EdgegapRelayManager.Instance;
         var lobbyNm = NetworkManager.singleton as LobbyNetworkManager;
 
         bool wasHost = NetworkServer.active && NetworkClient.isConnected;
 
+        // Steam: lobiden ayril. Host ayrilirsa Steam lobiyi dagitir; Edgegap'teki gibi
+        // ayrica silinecek bir relay session yok.
+        SteamLobbyManager.Instance?.LeaveLobby();
+
         if (wasHost)
         {
-            if (relayMgr != null && lobbyNm != null) relayMgr.DeleteRelaySession(lobbyNm.edgegapSessionId);
-            Debug.Log("[LOBBY] Host leaving: deleting relay session.");
+            Debug.Log("[LOBBY] Host leaving: closing the host.");
             NetworkManager.singleton.StopHost();
         }
         else
         {
-            if (relayMgr != null && lobbyNm != null)
-                relayMgr.RevokeSelfInSession(lobbyNm.edgegapSessionId, relayMgr.lastUserAuthToken);
             Debug.Log("[LOBBY] Client leaving: closing connection.");
             NetworkManager.singleton.StopClient();
         }

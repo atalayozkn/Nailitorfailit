@@ -7,17 +7,29 @@ using UnityEngine;
 /// Komut satiri argumanlariyla otomatik lobi baslatma (ParrelSync / build testleri icin).
 ///
 /// Kullanim:
-///   -host     → oyun baslar baslamaz otomatik "Create Lobby" yapar
-///   -client   → oyun baslar baslamaz 127.0.0.1 adresine otomatik Join yapar
-///   -join=CODE → verilen 6 haneli lobby koduna otomatik Join yapar
+///   -host               → oyun baslar baslamaz otomatik "Create Lobby" yapar
+///   -client             → LAN modunda 127.0.0.1'e otomatik Join yapar.
+///                         Steam modunda calismaz (asagiya bakin) — -join=CODE kullanin.
+///   -join=CODE          → verilen 6 haneli lobby koduna (Steam) veya host IP'sine (LAN) Join yapar
+///   +connect_lobby ID   → Steam'in davet ile baslatirken ekledigi arguman; sifre sorulur
 ///
 /// ParrelSync Clones Manager'daki "Arguments" alanina "client" yazarsaniz, argumanin basina
 /// tire eklemeyi unutmayin: "-client". (ParrelSync argumani oldugu gibi gecirir.)
+///
+/// Bu bilesen kendini kendisi olusturur (RuntimeInitializeOnLoadMethod), boylece
+/// SteamLobbyManager'in Start() sirasina bagimli degildir.
 /// </summary>
 public class AutoStartFromArgs : MonoBehaviour
 {
     [SerializeField] private float startupDelay = 1.5f;
     [SerializeField] private string defaultPassword = "1111";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
+    {
+        if (FindAnyObjectByType<AutoStartFromArgs>() != null) return;
+        new GameObject("AutoStartFromArgs").AddComponent<AutoStartFromArgs>();
+    }
 
     private void Start()
     {
@@ -27,13 +39,17 @@ public class AutoStartFromArgs : MonoBehaviour
         bool isClient = HasArg(args, "-client") || HasArg(args, "client");
         string joinTarget = GetArgValue(args, "-join");
 
-        if (!isHost && !isClient && string.IsNullOrEmpty(joinTarget))
+        // Steam daveti: oyun kapaliyken davet kabul edilirse Steam "+connect_lobby <id>"
+        // argumaniyla baslatir.
+        string connectLobby = GetConnectLobbyArg(args);
+
+        if (!isHost && !isClient && string.IsNullOrEmpty(joinTarget) && string.IsNullOrEmpty(connectLobby))
             return;   // arguman yok → normal akis
 
-        StartCoroutine(AutoJoinRoutine(isHost, isClient, joinTarget));
+        StartCoroutine(AutoJoinRoutine(isHost, isClient, joinTarget, connectLobby));
     }
 
-    private IEnumerator AutoJoinRoutine(bool isHost, bool isClient, string joinTarget)
+    private IEnumerator AutoJoinRoutine(bool isHost, bool isClient, string joinTarget, string connectLobby)
     {
         // Sahnenin ve NetworkManager'in hazir olmasini bekle.
         yield return new WaitForSeconds(startupDelay);
@@ -56,18 +72,53 @@ public class AutoStartFromArgs : MonoBehaviour
         {
             Debug.Log("[AUTO] -host algilandi → otomatik Create Lobby.");
             nm.HostLobby(defaultPassword);
+            yield break;
         }
-        else
+
+        if (!string.IsNullOrEmpty(connectLobby))
         {
-            string target = !string.IsNullOrEmpty(joinTarget)
-                ? joinTarget
-                : (isClient ? "127.0.0.1" : null);
+            // Oyun kapaliyken gelen davet: Steam bizi "+connect_lobby <id>" ile baslatir.
+            // Lobiye katilip kodu cozeriz; sifre kullaniciya sorulur
+            // (SteamLobbyManager.OnInviteCodeReady -> Join ekrani doldurulur).
+            Debug.Log($"[AUTO] +connect_lobby {connectLobby} algilandi → lobiye katiliniyor.");
 
-            if (string.IsNullOrEmpty(target)) yield break;
+            if (SteamLobbyManager.Instance == null)
+            {
+                Debug.LogError("[AUTO] SteamLobbyManager bulunamadi; davet islenemedi.");
+                yield break;
+            }
 
-            Debug.Log($"[AUTO] otomatik Join → '{target}'");
-            nm.JoinLobby(target, defaultPassword);
+            if (!ulong.TryParse(connectLobby, out ulong lobbyId))
+            {
+                Debug.LogError("[AUTO] +connect_lobby degeri sayisal degil: " + connectLobby);
+                yield break;
+            }
+
+            SteamLobbyManager.Instance.JoinLobbyFromInvite(new Steamworks.CSteamID(lobbyId));
+            yield break;
         }
+
+        if (!string.IsNullOrEmpty(joinTarget))
+        {
+            Debug.Log($"[AUTO] otomatik Join → '{joinTarget}'");
+            nm.JoinLobby(joinTarget, defaultPassword);
+            yield break;
+        }
+
+        // -client: yalnizca LAN modunda anlamli. Steam modunda "127.0.0.1" ne
+        // SteamID64 ne de 6 haneli koddur; sessizce basarisiz olmak yerine uyariyoruz.
+        bool lanMode = SteamLobbyManager.Instance == null || SteamLobbyManager.Instance.UseLanDevMode;
+
+        if (!lanMode)
+        {
+            Debug.LogError("[AUTO] -client Steam modunda desteklenmiyor. " +
+                           "Ikinci oyuncu icin '-join=<6 haneli kod>' kullanin " +
+                           "(veya LAN testi icin SteamLobbyManager.forceLanMode acin / NIF_LAN kullanin).");
+            yield break;
+        }
+
+        Debug.Log("[AUTO] -client algilandi → 127.0.0.1'e baglaniliyor.");
+        nm.JoinLobby("127.0.0.1", defaultPassword);
     }
 
     private static bool HasArg(string[] args, string name)
@@ -83,6 +134,15 @@ public class AutoStartFromArgs : MonoBehaviour
         foreach (string a in args)
             if (a.StartsWith(prefix + "=", StringComparison.OrdinalIgnoreCase))
                 return a.Substring(prefix.Length + 1);
+        return null;
+    }
+
+    /// <summary>Steam'in davet akisinda ekledigi "+connect_lobby 123456789" argumanini okur.</summary>
+    private static string GetConnectLobbyArg(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+            if (string.Equals(args[i].Trim(), "+connect_lobby", StringComparison.OrdinalIgnoreCase))
+                return args[i + 1].Trim();
         return null;
     }
 }

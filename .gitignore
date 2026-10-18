@@ -3,6 +3,23 @@
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
 .utmp/
+
+# ---------------------------------------------------------------------------
+# ParrelSync (multiplayer test clones)
+# Clones are normally created NEXT TO the project (<ProjectName>_clone_0 ...),
+# but the Clones Manager lets you pick any path - so ignore them inside the
+# project too. The clone itself contains "Assets/Packages/ProjectSettings"
+# symlinks plus these marker files, none of which belong in version control.
+# ---------------------------------------------------------------------------
+/*_clone_*/
+/*_clone*/
+/ParrelSync_clone*/
+.clone
+cloneArguments.txt
+collabignore.txt
+# Only needed if ParrelSync is imported as a .unitypackage instead of the UPM package
+/Assets/ParrelSync/
+/Assets/ParrelSync.meta
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -122,3 +139,7 @@ Assets/Art/PANDANIN/etrafa konulacaklar/yola eklenecek yeşillik.fbx.meta
 Assets/Art/PANDANIN/etrafa konulacaklar/yön tabelası.fbx.meta
 Assets/Art/PANDANIN/etrafa konulacaklar/çöp yığını.fbx.meta
 Assets/Art/PANDANIN/inşaat malzemeleri/odun dolabı.fbx.meta
+
+# Steam modunu (FizzySteamworks) sahneyi degistirmeden zorlayan isaretci dosya.
+# Olusturulunca (touch NIF_STEAM) oyun Steam modunda baslar; silinince LAN moduna doner.
+/NIF_STEAM

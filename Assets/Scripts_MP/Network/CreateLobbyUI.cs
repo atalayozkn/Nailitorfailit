@@ -36,8 +36,23 @@ public class CreateLobbyUI : MonoBehaviour
         NetworkManager.singleton.maxConnections = maxPlayers;
 
         createButton.interactable = false;
-        if (statusText != null) statusText.text = "Creating relay...";
+        if (statusText != null) statusText.text = "Creating lobby...";
 
         ((LobbyNetworkManager)NetworkManager.singleton).HostLobby(pw);
+    }
+
+    /// <summary>
+    /// Back/exit button: return to the multiplayer menu and cancel whatever
+    /// lobby creation is still in flight, so no half-open host survives.
+    /// </summary>
+    public void OnExit()
+    {
+        if (createButton != null) createButton.interactable = true;
+        if (statusText != null) statusText.text = string.Empty;
+
+        ((LobbyNetworkManager)NetworkManager.singleton).CancelPendingSetup();
+
+        if (GameManager.Instance != null) GameManager.Instance.ShowMultiplayerMenu();
+        else gameObject.SetActive(false);
     }
 }

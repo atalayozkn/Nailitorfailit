@@ -50,11 +50,21 @@ namespace PlayerScripts
         {
             if (interactionHandlerSp == null) interactionHandlerSp = GetComponent<PlayerInteractionHandler>();
             if (stateMachine == null) stateMachine = GetComponent<PlayerStateMachine>();
+
+            // MP: route ALL interactions through the networked path. The SP handler on the
+            // same object calls CarriableObject_SP.OnInteract() directly - local only, the
+            // other machines would never see the pickup - and its detection mask differs
+            // from ours (2112 vs 64), which caused double/bugged pickups. Keep it quiet,
+            // this component does the detecting and the networking.
+            if (interactionHandlerSp != null)
+                interactionHandlerSp.enabled = false;
         }
 
         public override void OnStartLocalPlayer()
         {
             base.OnStartLocalPlayer();
+
+            InteractionDebug.Log($"[{name}] local player interaction wrapper [{InteractionDebug.Version}]");
 
             interactAction.action.Enable();
             detectionRoutine = StartCoroutine(TargetDetectionRoutine());
@@ -80,7 +90,11 @@ namespace PlayerScripts
             if (!isLocalPlayer) return;
             if (isInteractOnCooldown) return;
 
-            if (interactAction.action.WasPressedThisFrame())
+            // Held key repeats the interaction on the cooldown, exactly like the
+            // singleplayer handler did (IsPressed). WasPressedThisFrame only ever
+            // counted the FIRST step of a multi-step station process (cutter/mixer),
+            // so holding E looked dead after one hit.
+            if (interactAction.action.IsPressed())
             {
                 HandleInteract();
                 isInteractOnCooldown = true;
@@ -153,19 +167,56 @@ namespace PlayerScripts
 
         private void DispatchInteract(IInteractable interactable)
         {
+            InteractionDebug.Log($"[{name}] dispatch on '{(interactable as Component)?.name ?? "?"}' " +
+                                 $"type={interactable?.InteractableType}");
+
             if (interactable is Component component)
             {
                 if (component.TryGetComponent(out CarriableObject_MP carriableMp))
                 {
+                    InteractionDebug.Log($"[{name}] -> pickup/drop of networked carriable '{component.name}'");
                     carriableMp.NotifyPickedUp(interactionHandlerSp);
                     return;
                 }
 
-                if (component.TryGetComponent(out IInteractionNetworkProxy proxy))
+                // Children matter: a mixer's crank is a child object while its proxy
+                // sits on the station root, so search upwards. And the proxy gets the
+                // exact interactable component so it can tell the crank from the panel.
+                IInteractionNetworkProxy proxy = component.GetComponentInParent<IInteractionNetworkProxy>();
+
+                if (proxy is NetworkBehaviour proxyBehaviour && proxyBehaviour.netIdentity == null)
                 {
-                    proxy.RequestInteract();
+                    InteractionDebug.Log($"[{name}] proxy {proxy.GetType().Name} on '{component.name}' " +
+                                         "has no NetworkIdentity; routing through the player instead");
+                    proxy = null;
+                }
+
+                if (proxy != null)
+                {
+                    InteractionDebug.Log($"[{name}] -> proxy {proxy.GetType().Name} for '{component.name}'");
+                    // Pass who pressed: the station's host-side handler must know the
+                    // requester to read THEIR carrying state (the host's own local
+                    // player is somebody else).
+                    // NetworkBehaviour.netIdentity resolves the parent identity (the
+                    // components sit on a child of the networked root).
+                    proxy.RequestInteract(netIdentity, component);
                     return;
                 }
+
+                // No proxy on the object itself (e.g. the shop shelves are prefab
+                // variants without their own NetworkIdentity): route the interaction
+                // through the LOCAL PLAYER's identity - the host addresses the object
+                // by scene + hierarchy path.
+                NetworkIdentity ownIdentity = netIdentity;
+
+                if (ownIdentity != null && TryGetComponent(out PlayerInteractRouter_MP router))
+                {
+                    InteractionDebug.Log($"[{name}] -> player-routed interact for '{component.name}'");
+                    router.RequestInteract(component);
+                    return;
+                }
+
+                InteractionDebug.Log($"[{name}] -> NO PROXY for '{component.name}' (local/SP fallback!)");
             }
 
             interactable.OnInteract();

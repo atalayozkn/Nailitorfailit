@@ -1,4 +1,3 @@
-
 using System.Collections;
 using Mirror;
 using TMPro;
@@ -22,25 +21,44 @@ public class JoinLobbyUI : MonoBehaviour
         if (statusText != null) statusText.text = string.Empty;
     }
 
+    /// <summary>
+    /// Steam daveti kabul edildiginde LobbyNetworkManager tarafindan cagrilir: kod hazir
+    /// ama sifre Steam'de tutulmadigi icin kullanici girmeli.
+    /// </summary>
+    public void PrefillInviteCode(string code)
+    {
+        if (lobbyIdInput != null) lobbyIdInput.text = code;
+        if (passwordInput != null)
+        {
+            passwordInput.text = string.Empty;
+            passwordInput.ActivateInputField();
+        }
+
+        if (joinButton != null) joinButton.interactable = true;
+        if (statusText != null) statusText.text = "You were invited - enter the lobby password";
+    }
+
     void OnJoinPressed()
     {
-        string sessionId = lobbyIdInput.text.Trim();
+        string code = LobbyCodeCodec.Canonicalize(lobbyIdInput.text);
         string password = passwordInput.text;
 
-        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(password))
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(password))
         {
-            if (statusText != null) statusText.text = "Session ID and password required";
+            if (statusText != null) statusText.text = "Lobby code and password required";
             return;
         }
 
         joinButton.interactable = false;
         if (statusText != null) statusText.text = "Connecting...";
 
-        ((LobbyNetworkManager)NetworkManager.singleton).JoinLobby(sessionId, password);
+        ((LobbyNetworkManager)NetworkManager.singleton).JoinLobby(code, password);
 
         if (isActiveAndEnabled)
-            StartCoroutine(UnlockIfNotConnected());
+            unlockCoroutine = StartCoroutine(UnlockIfNotConnected());
     }
+
+    Coroutine unlockCoroutine;
 
     private IEnumerator UnlockIfNotConnected()
     {
@@ -49,6 +67,39 @@ public class JoinLobbyUI : MonoBehaviour
         if (NetworkClient.isConnected) yield break;
 
         if (joinButton != null) joinButton.interactable = true;
-        if (statusText != null) statusText.text = "Could not connect - try again";
+
+        if (statusText != null)
+        {
+            string error = SteamLobbyManager.Instance != null ? SteamLobbyManager.Instance.LastError : null;
+            statusText.text = string.IsNullOrEmpty(error) ? "Could not connect - try again" : error;
+        }
+    }
+
+    /// <summary>
+    /// Back/exit button: return to the multiplayer menu and drop any connection
+    /// attempt that is still running, so a late connect cannot yank the player
+    /// into a lobby they already left.
+    /// </summary>
+    public void OnExit()
+    {
+        StopCoroutine_Unlock();
+
+        if (joinButton != null) joinButton.interactable = true;
+        if (statusText != null) statusText.text = string.Empty;
+
+        ((LobbyNetworkManager)NetworkManager.singleton).CancelPendingSetup();
+
+        if (GameManager.Instance != null) GameManager.Instance.ShowMultiplayerMenu();
+        else gameObject.SetActive(false);
+    }
+
+    /// <summary>OnExit can fire while the panel is inactive; inactive objects cannot run coroutines.</summary>
+    void StopCoroutine_Unlock()
+    {
+        if (unlockCoroutine != null)
+        {
+            StopCoroutine(unlockCoroutine);
+            unlockCoroutine = null;
+        }
     }
 }

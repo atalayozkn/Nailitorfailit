@@ -1,8 +1,8 @@
-
 using System.Collections;
 using Mirror;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace PlayerScripts
 {
@@ -25,18 +25,31 @@ namespace PlayerScripts
         [Tooltip("Visual object hidden while dead. Leave empty to hide nothing.")]
         [SerializeField] private GameObject visualRoot;
         [SerializeField] private PlayerStateMachine playerStateMachine;
+        [SerializeField] private float respawnDelay = 5f;
 
-        /// <summary>
-        /// Server-authoritative death state. Because it is a SyncVar, the hook runs on
-        /// every client and shows/hides the visual for everyone.
-        /// </summary>
+        private InputActionReference moveAction;
+        private InputActionReference jumpAction;
+        private InputActionReference sprintAction;
+
+        private Animator netAnimator;
+        private int lastSentAnimHash;
+
+        [SyncVar(hook = nameof(OnNetAnimStateChanged))]
+        private int netAnimStateHash;
+
+        private static readonly int emptyStateHash = Animator.StringToHash("Empty");
+
         [SyncVar(hook = nameof(OnDeadChanged))]
         public bool isDead;
 
         private bool respawnRoutineRunning;
 
+        private Rigidbody body;
+
         private void Awake()
         {
+            body = GetComponent<Rigidbody>();
+
             if (movement == null) movement = GetComponent<PlayerMovement>();
             if (interaction == null) interaction = GetComponent<PlayerInteractionHandler>();
             if (interactionNetwork == null) interactionNetwork = GetComponent<PlayerInteractionNetwork_MP>();
@@ -45,6 +58,49 @@ namespace PlayerScripts
             if (crashHelper == null) crashHelper = GetComponent<PlayerCrashHelper>();
             if (trapRespawn == null) trapRespawn = GetComponent<PlayerTrapRespawn>();
             if (playerStateMachine == null) playerStateMachine = GetComponent<PlayerStateMachine>();
+
+            if (movement != null)
+            {
+                moveAction = movement.move;
+                jumpAction = movement.jump;
+                sprintAction = movement.sprint;
+            }
+
+            netAnimator = stateMachine != null ? stateMachine.animator : null;
+            if (netAnimator == null)
+            {
+                int carryIdleHash = Animator.StringToHash("CarryIdle");
+                foreach (Animator candidate in GetComponentsInChildren<Animator>(true))
+                {
+                    if (candidate.runtimeAnimatorController != null && candidate.HasState(0, carryIdleHash))
+                    {
+                        netAnimator = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public override void OnStartAuthority()
+        {
+            base.OnStartAuthority();
+            if (body != null) body.isKinematic = false;
+            ApplyMovementInput(true);
+        }
+
+        public override void OnStopAuthority()
+        {
+            base.OnStopAuthority();
+            ApplyMovementInput(false);
+        }
+
+        private void ApplyMovementInput(bool enabled)
+        {
+            if (movement == null) return;
+
+            movement.move = enabled ? moveAction : null;
+            movement.jump = enabled ? jumpAction : null;
+            movement.sprint = enabled ? sprintAction : null;
         }
 
         public override void OnStartClient()
@@ -52,12 +108,36 @@ namespace PlayerScripts
             base.OnStartClient();
 
             SetLocalOnlyActive(isOwned);
+
+            ApplyMovementInput(isOwned);
+
+            if (interaction != null) interaction.enabled = false;
+
+            DogStateMachine dogAI = GetComponentInChildren<DogStateMachine>(true);
+            if (dogAI != null) dogAI.enabled = isOwned;
+
+            PauseMenu pauseMenu = transform.root.GetComponent<PauseMenu>();
+            if (pauseMenu != null)
+            {
+                pauseMenu.enabled = isOwned;
+            }
+
+            EmoteListener emoteListener = GetComponent<EmoteListener>();
+            if (emoteListener != null) emoteListener.enabled = isOwned;
+
+            ApplyRemotePhysics();
+        }
+
+        private void ApplyRemotePhysics()
+        {
+            if (body == null) return;
+            if (isOwned) return;
+            if (!body.isKinematic) body.isKinematic = true;
         }
 
         public override void OnStartLocalPlayer()
         {
             base.OnStartLocalPlayer();
-
             stateMachine.enabled = true;
             movement.enabled = true;
             interaction.enabled = false;
@@ -67,18 +147,79 @@ namespace PlayerScripts
             if (trapRespawn != null) trapRespawn.enabled = true;
 
             SetLocalOnlyActive(true);
+
+            if (movement != null) movement.SetActivity(true);
+            if (interaction != null) interaction.SetActivity(true);
+
+            Debug.Log($"[MP] Local player ready. name={name} netId={netId} " +
+                      $"isServer={isServer} isClient={isClient} pos={transform.position} " +
+                      $"scene={UnityEngine.SceneManagement.SceneManager.GetActiveScene().path}");
+
+            if (stateMachine != null && stateMachine.animator != null)
+            {
+                Animator anim = stateMachine.animator;
+                if (!anim.HasState(0, Animator.StringToHash("Idle")))
+                {
+                    Debug.LogWarning($"[MP] '{anim.name}' Animator'inda 'Idle' state'i yok (controller=" +
+                                     $"{(anim.runtimeAnimatorController != null ? anim.runtimeAnimatorController.name : "null")}). " +
+                                     "Controller, paylasilan Player state'lerinin kullandigi isimleri " +
+                                     "(Idle/Run/Walk/CarryIdle/Jump) icermeli; Player_Package_Default_MP prefabinda " +
+                                     "Player01_Male_Controller kullanilir.");
+                }
+                else
+                {
+                    Debug.Log($"[MP] Animator hazir. controller={anim.runtimeAnimatorController.name} " +
+                              "(Idle/Run/Walk/CarryIdle/Jump state'leri bulundu)");
+                }
+            }
         }
+
+        #region ANIMATION SYNC
+
+        private void Update()
+        {
+            ApplyRemotePhysics();
+
+            if (!isOwned || netAnimator == null || netAnimator.runtimeAnimatorController == null) return;
+
+            int hash = netAnimator.IsInTransition(0)
+                ? netAnimator.GetNextAnimatorStateInfo(0).shortNameHash
+                : netAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash;
+
+            if (hash == emptyStateHash || hash == lastSentAnimHash) return;
+
+            lastSentAnimHash = hash;
+
+            if (isServer) netAnimStateHash = hash;
+            else CmdSetAnimState(hash);
+        }
+
+        [Command]
+        private void CmdSetAnimState(int hash)
+        {
+            netAnimStateHash = hash;
+        }
+
+        private void OnNetAnimStateChanged(int oldHash, int newHash)
+        {
+            if (isOwned || netAnimator == null || netAnimator.runtimeAnimatorController == null) return;
+            if (newHash == 0) return;
+
+            if (netAnimator.HasState(0, newHash))
+            {
+                netAnimator.CrossFadeInFixedTime(newHash, 0.1f);
+            }
+            else
+            {
+                Debug.LogWarning($"[MP] Uzak oyuncuda '{newHash}' animasyon state'i yok " +
+                                 $"(controller={netAnimator.runtimeAnimatorController.name}).");
+            }
+        }
+
+        #endregion
 
         #region LIFE / RESPAWN
 
-        /// <summary>
-        /// Reports a death to the server. On the host, [Command] runs instantly; on a
-        /// client it is sent to the server - both take the same path.
-        ///
-        /// RespawnManager calls this instead of SetActive(): calling SetActive on a
-        /// networked object on the server detaches it from the other clients, and
-        /// SetActive(true) does not re-spawn it, so that player never reappears.
-        /// </summary>
         public void RequestDeath()
         {
             if (isDead || respawnRoutineRunning) return;
@@ -101,13 +242,14 @@ namespace PlayerScripts
             respawnRoutineRunning = true;
             isDead = true;
 
-            RespawnManager rm = FindAnyObjectByType<RespawnManager>();
+            Transform spawnRoot = null;
+            GameObject spawnMarker = GameObject.Find(LobbyNetworkManager.SpawnMarkerName);
+            if (spawnMarker != null) spawnRoot = spawnMarker.transform;
 
-            float delay = rm != null ? rm.SpawnDuration : 3f;
-            Vector3 pos = (rm != null && rm.SpawnPoint != null) ? rm.SpawnPoint.position : transform.position;
-            Quaternion rot = (rm != null && rm.SpawnPoint != null) ? rm.SpawnPoint.rotation : transform.rotation;
+            Vector3 pos = spawnRoot != null ? spawnRoot.position : transform.position;
+            Quaternion rot = spawnRoot != null ? spawnRoot.rotation : transform.rotation;
 
-            StartCoroutine(ServerRespawnRoutine(delay, pos, rot));
+            StartCoroutine(ServerRespawnRoutine(respawnDelay, pos, rot));
         }
 
         private IEnumerator ServerRespawnRoutine(float delay, Vector3 pos, Quaternion rot)
@@ -141,14 +283,6 @@ namespace PlayerScripts
 
         #endregion
 
-        /// <summary>
-        /// Enables/disables the "LocalPlayerOnly" group on the player prefab root.
-        /// It contains the Main Camera, InLevelCamera and the Overlay HUD canvas.
-        /// The group sits under the root (a sibling of Player_Default), so it cannot be
-        /// found with GetComponentInChildren - we look it up via transform.root.
-        /// The dog's status canvas is world-space and deliberately outside this group,
-        /// so remote players still see it.
-        /// </summary>
         private void SetLocalOnlyActive(bool isLocal)
         {
             Transform localOnly = transform.root.Find("LocalPlayerOnly");
