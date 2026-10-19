@@ -211,8 +211,14 @@ public class PlayerInteractionHandler : MonoBehaviour
         currentCarriableType = default;
         isCarrying = false;
         useHandler.ClearCurrentUsable();
-        if (stateMachine.currentPlayerState != PlayerStates.Slipping && stateMachine.currentPlayerState != PlayerStates.Using) stateMachine.ForceUpdateIdle();
+        if (stateMachine.currentPlayerState != PlayerStates.Slipping && stateMachine.currentPlayerState != PlayerStates.Using && stateMachine.currentPlayerState != PlayerStates.Dead) stateMachine.ForceUpdateIdle();
         pressureHandler.SetHeavy(false);
+    }
+    // Drops whatever the player is holding where it currently is (used on death so it doesn't respawn with the player).
+    public void DropCarriedObject()
+    {
+        if (currentCarriable == null) return;
+        currentCarriable.OnDrop();
     }
     public void SetActivity(bool condition)
     {

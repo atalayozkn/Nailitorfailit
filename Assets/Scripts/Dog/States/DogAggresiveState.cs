@@ -19,7 +19,8 @@ public class DogAggresiveState : DogBaseState
 
         if (counter > animDuration)
         {
-            var carriable = stateMachine.presenceChecker.GetCurrentCarriable();
+            //Only destroy the item the dog was playing with, not whatever the presence checker last saw.
+            var carriable = stateMachine.currentCarriable;
             if (carriable != null)
             {
                 carriable.DestroyedByDog();
@@ -34,6 +35,7 @@ public class DogAggresiveState : DogBaseState
     }
     public override void Exit()
     {
-
+        //Don't let the played item linger as a target for later states.
+        stateMachine.SetCurrentCarriable(null);
     }
 }

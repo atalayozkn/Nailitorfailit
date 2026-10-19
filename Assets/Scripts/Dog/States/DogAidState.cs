@@ -34,11 +34,12 @@ public class DogAidState : DogBaseState
             stateMachine.movementHandler.SetBreakDistance(0.1f);
             stateMachine.movementHandler.SetTarget(stateMachine.itemDropTransfom);
             stateMachine.movementHandler.MoveTowardsTarget();
+            stateMachine.animator.CrossFadeInFixedTime(runHash, 0.1f);
         }
 
         if (stateMachine.movementHandler.IsMoving()) return;
 
-        stateMachine.currentCarriable.DropByDog(stateMachine.itemDropTransfom);
+        DropCarriable(stateMachine.itemDropTransfom);
         stateMachine.ChangeToIdleState();
     }
     public override void FixedTick(float fixedDeltaTime)
@@ -47,6 +48,13 @@ public class DogAidState : DogBaseState
     }
     public override void Exit()
     {
-
+        //Interrupted (eat/sleep) while still carrying the spawned object.
+        DropCarriable(stateMachine.dropTransform);
+    }
+    private void DropCarriable(Transform target)
+    {
+        if (stateMachine.currentCarriable == null) return;
+        stateMachine.currentCarriable.DropByDog(target);
+        stateMachine.SetCurrentCarriable(null);
     }
 }
