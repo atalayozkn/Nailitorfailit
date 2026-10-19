@@ -11500,6 +11500,10 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 65
+  ditherAmount: 0.6
+  litDitherShader: {fileID: 4800000, guid: cf2a6f52ec3be5bf1bf4887b0c80f690, type: 3}
+  simpleLitDitherShader: {fileID: 4800000, guid: f99925622bb1ca8f5c79d50bbccbefe0, type: 3}
+  toonDitherShader: {fileID: 4800000, guid: ffd25d9a9e310a679b2414037c7b8f78, type: 3}
 --- !u!1 &7570316481986156351
 GameObject:
   m_ObjectHideFlags: 0

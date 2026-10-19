@@ -1,6 +1,4 @@
-﻿using System;
-using Unity.Cinemachine;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,16 +6,12 @@ public class GameManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private int startCurrencyAmount = 250;
+    [SerializeField] private int firstLevelIndex = 1;
 
     private GamePhase currentPhase = GamePhase.Menu;
 
     // Scene References
-    private CinemachineCamera inGameCamera;
-    private CinemachineCamera inMenuCamera;
     private MainMenu mainMenu;
-    private InGameOverlayUI inGameOverlayUI;
-
-    private bool gameStarted;
 
     #region Initialization
 
@@ -31,6 +25,8 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        SaveSystem.Load();
     }
 
     private void Start()
@@ -47,148 +43,76 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnSceneLoaded()
     {
-        CacheSceneReferences();
-
-        switch (currentPhase)
-        {
-            case GamePhase.Menu:
-                SetupMenuScene();
-                break;
-
-            case GamePhase.InGame:
-                SetupGameScene();
-                break;
-        }
-    }
-
-    private void CacheSceneReferences()
-    {
-        GameObject inGameCameraObject = GameObject.FindGameObjectWithTag("InGame");
-        if (inGameCameraObject != null) inGameCamera = inGameCameraObject.GetComponent<CinemachineCamera>();
-
-        GameObject inMenuCameraObject = GameObject.FindGameObjectWithTag("InMenu");
-        if (inMenuCameraObject != null) inMenuCamera = inMenuCameraObject.GetComponent<CinemachineCamera>();
-
         mainMenu = FindAnyObjectByType<MainMenu>();
-        inGameOverlayUI = FindAnyObjectByType<InGameOverlayUI>();
+
+        currentPhase = mainMenu != null ? GamePhase.Menu : GamePhase.InLevel;
+
+        if (currentPhase == GamePhase.Menu) mainMenu.SwitchToMainTab();
     }
+
     #endregion
 
     #region Menu
-    public void SwitchToMenuPhase()
-    {
-        currentPhase = GamePhase.Menu;
-    }
-    private void SetupMenuScene()
-    {
-        if (inMenuCamera != null) SwitchToMenuCamera();
 
-        if (mainMenu != null)
-        {
-            mainMenu.SetActivity(true);
-            mainMenu.SwitchToMenuTab();
-        }
-
-        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(false);
+    public void NewGame()
+    {
+        SaveSystem.ResetProgress();
+        PlayLevel(firstLevelIndex);
     }
 
-    public void ActivateCharacterSelection()
+    public bool CanContinue()
     {
-        mainMenu.SwitchToCharacterTab();
+        return SaveSystem.HasSave();
     }
 
-    public void StartGame(int characterIndex)
+    // Continues from the furthest unlocked level.
+    public void Continue()
     {
-        switch (characterIndex)
-        {
-            case 0:
-                // Spawn selected character later.
-                break;
-        }
+        if (!CanContinue()) return;
 
-        ChangeToGamePhase();
-    }
-
-    #endregion
-
-    #region Game
-
-    public void ChangeToGamePhase()
-    {
-        currentPhase = GamePhase.InGame;
-        if (mainMenu != null) mainMenu.SetActivity(false);
-        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
-        if (inGameCamera != null) SwitchToInGameCamera();
-        if (!gameStarted)
-        {
-            CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
-            gameStarted = true;
-        }
-    }
-
-    private void SetupGameScene()
-    {
-        if (mainMenu != null) mainMenu.SetActivity(false);
-        if (inGameOverlayUI != null) inGameOverlayUI.SetActivity(true);
-        if (inGameCamera != null) SwitchToInGameCamera();
+        int level = Mathf.Clamp(SaveSystem.Data.highestUnlockedLevel, firstLevelIndex, GameSceneManager.Instance.GetLevelCount());
+        PlayLevel(level);
     }
 
     #endregion
 
     #region Level
 
-    public void ChangeToLevelPhase(int levelIndex)
+    public void PlayLevel(int levelIndex)
     {
+        if (levelIndex < firstLevelIndex || levelIndex > GameSceneManager.Instance.GetLevelCount())
+        {
+            Debug.LogWarning($"GameManager: Level {levelIndex} does not exist in GameSceneManager scenes.");
+            return;
+        }
+
         currentPhase = GamePhase.InLevel;
         CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
         GameSceneManager.Instance.LoadLevel(levelIndex);
     }
-    public void CompleteLevel(int levelIndex, bool success)
+
+    // Saves the active level as completed and unlocks the next one.
+    public void CompleteCurrentLevel()
     {
-        if (success)
-        {
-            //levelSockets[levelIndex].isCompleted = true;
+        int levelIndex = GameSceneManager.Instance.GetActiveSceneIndex();
+        if (levelIndex < firstLevelIndex) return;
 
-            currentPhase = GamePhase.InGame;
-            GameSceneManager.Instance.LoadMenu();
-            return;
-        }
+        SaveSystem.CompleteLevel(levelIndex);
+    }
 
-        // Reset the run data immediately.
-        CurrencyManager.Instance.SetCurrency(startCurrencyAmount);
-        gameStarted = false;
-
-        // Return to the main menu as a completely fresh game.
+    public void ReturnToMenu()
+    {
         currentPhase = GamePhase.Menu;
         GameSceneManager.Instance.LoadMenu();
     }
-    public void ReturnToGameMenu()
-    {
-        currentPhase = GamePhase.InGame;
-        GameSceneManager.Instance.LoadMenu();
-    }
-    #endregion
-
-    #region LevelSockets
-
-    
 
     #endregion
 
     #region Utility
+
     public GamePhase GetCurrentPhase()
     {
         return currentPhase;
-    }
-    private void SwitchToMenuCamera()
-    {
-        inMenuCamera.Priority = 1;
-        inGameCamera.Priority = 0;
-    }
-    private void SwitchToInGameCamera()
-    {
-        inMenuCamera.Priority = 0;
-        inGameCamera.Priority = 1;
     }
 
     #endregion

@@ -83,6 +83,8 @@ public class TutorialManager : MonoBehaviour
     }
     private void CompleteTutorial()
     {
+        // Tutorial has no LevelManager, so it saves its own completion (unlocks the next level).
+        GameManager.Instance?.CompleteCurrentLevel();
         onTutorialEnd?.Invoke();
         Debug.Log("Tutorial Completed");
     }
