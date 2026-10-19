@@ -1,7 +1,14 @@
 fileFormatVersion: 2
 guid: 35de2b96ecc46cd4cb99c56683db7b08
+AssetOrigin:
+  serializedVersion: 1
+  productId: 388800
+  packageName: Low Poly Vehicle Collection 2
+  packageVersion: 1.1
+  assetPath: Assets/Hodaart/LowPoly Vehicle Collection 2/Models/Car 05.fbx
+  uploadId: 944432
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects:
   - first:
@@ -9,6 +16,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Car 05 Material
     second: {fileID: 2100000, guid: 5e8ec35b4bb78a344ba0be96ca9243ba, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.001
+    second: {fileID: 2100000, guid: 6bc790a7f128fb24f8ee10dfd6437ff9, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -61,6 +73,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -110,10 +125,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 388800
-  packageName: Low Poly Vehicle Collection 2
-  packageVersion: 1.1
-  assetPath: Assets/Hodaart/LowPoly Vehicle Collection 2/Models/Car 05.fbx
-  uploadId: 944432
