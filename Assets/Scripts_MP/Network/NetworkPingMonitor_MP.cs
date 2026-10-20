@@ -54,7 +54,6 @@ public class NetworkPingMonitor_MP : MonoBehaviour
         public string name;
         public double rttMs;
     }
-    private bool registered;
     private double nextReportAt;
     private double nextTableAt;
 
@@ -113,15 +112,26 @@ public class NetworkPingMonitor_MP : MonoBehaviour
 
     private void RegisterOnce()
     {
-        if (registered) return;
-        registered = true;
+        // Mirror clears handler tables on shutdown; registering "once" with a flag
+        // left the second session in the same editor without handlers, and the first
+        // table/report message then disconnected it as an unknown message id.
+        if (NetworkServer.active)
+        {
+            NetworkServer.UnregisterHandler<PingReportMessage>();
+            NetworkServer.RegisterHandler<PingReportMessage>(OnPingReport);
+        }
 
-        NetworkServer.RegisterHandler<PingReportMessage>(OnPingReport);
-        // requireAuthentication: false - the very first table broadcast can arrive
-        // while the host's local connection is still handshaking; rejecting it would
-        // make Mirror disconnect the host itself.
-        NetworkClient.RegisterHandler<PingTableMessage>(OnPingTable, false);
-        Debug.Log("[PING] RTT handlers registered.");
+        if (NetworkClient.active)
+        {
+            // requireAuthentication: false - the very first table broadcast can arrive
+            // while the host's local connection is still handshaking; rejecting it would
+            // make Mirror disconnect the host itself.
+            NetworkClient.UnregisterHandler<PingTableMessage>();
+            NetworkClient.RegisterHandler<PingTableMessage>(OnPingTable, false);
+        }
+
+        Debug.Log("[PING] RTT handlers registered. " +
+                  $"server={NetworkServer.active} client={NetworkClient.active}");
     }
 
     // -------------------------------------------------------------- server side

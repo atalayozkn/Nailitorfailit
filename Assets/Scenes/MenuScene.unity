@@ -5191,14 +5191,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   startCurrencyAmount: 100
-  mpMainMenuPanel: {fileID: 0}
-  mpMultiplayerMenuPanel: {fileID: 0}
-  mpCreateLobbyPanel: {fileID: 0}
-  mpJoinLobbyPanel: {fileID: 0}
-  mpLobbyMenuPanel: {fileID: 0}
-  mpCharacterSelectionPanel: {fileID: 0}
-  mpLobbyIdLabel: {fileID: 0}
-  mpLobbyPasswordLabel: {fileID: 0}
+  firstLevelIndex: 1
 --- !u!4 &1325913705
 Transform:
   m_ObjectHideFlags: 0
@@ -7315,8 +7308,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   menuRoot: {fileID: 1967710253}
   mainTab: {fileID: 1788775542}
-  menuTab: {fileID: 1234622942}
-  characterTab: {fileID: 1741479011}
+  levelSelectTab: {fileID: 1234622942}
+  continueButton: {fileID: 0}
 --- !u!1 &1873958764
 GameObject:
   m_ObjectHideFlags: 0
@@ -7618,7 +7611,6 @@ MonoBehaviour:
   - MenuScene
   - TutorialScene
   - DemoScene
-  multiplayerSceneName: MenuScene_MP
 --- !u!4 &1926751209
 Transform:
   m_ObjectHideFlags: 0

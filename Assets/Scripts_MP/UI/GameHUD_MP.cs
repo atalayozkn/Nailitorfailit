@@ -14,6 +14,29 @@ public class GameHUD_MP : MonoBehaviour
     private PlayerStateMachine stateMachine;
     private PlayerMovement movement;
     private bool gameEnded;
+    private bool authoredTimerActive;
+
+    /// <summary>
+    /// The level's authored SP HUD is showing the synchronized money/time (the SP
+    /// managers write into it), so switch off this prefab's copies of those two plaques.
+    /// The rest of the canvas - pause, victory/defeat, emotes - is left untouched.
+    /// </summary>
+    public void HideAuthoredDuplicates(bool hideTimer, bool hideCurrency)
+    {
+        if (hideTimer && timerText != null)
+        {
+            authoredTimerActive = true;
+
+            Transform counter = timerText.transform.parent;
+            if (counter != null) counter.gameObject.SetActive(false);
+        }
+
+        if (!hideCurrency) return;
+
+        CurrencyText currency = GetComponentInChildren<CurrencyText>(true);
+        if (currency != null && currency.transform.parent != null)
+            currency.transform.parent.gameObject.SetActive(false);
+    }
 
     private UnityEngine.Events.UnityEvent victoryEvent;
     private UnityEngine.Events.UnityEvent defeatEvent;
@@ -65,7 +88,7 @@ public class GameHUD_MP : MonoBehaviour
 
     private void Update()
     {
-        if (gameEnded || timerText == null || GameTimeManager.Instance == null) return;
+        if (authoredTimerActive || gameEnded || timerText == null || GameTimeManager.Instance == null) return;
 
         float remaining = GameTimeManager.Instance.GetCurrentTime();
         int minutes = Mathf.FloorToInt(remaining / 60f);

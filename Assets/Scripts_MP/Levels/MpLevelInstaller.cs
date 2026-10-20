@@ -1,8 +1,12 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using ItemScript;
 using Mirror;
+using TMPro;
 using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -101,6 +105,11 @@ public class MpLevelInstaller : MonoBehaviour
         if (!scene.IsValid() || string.IsNullOrEmpty(scene.path)) return 0;
         if (IsIgnored(scene)) return 0;
 
+        // MP keeps the level's authored SP HUD and overwrites its values instead of
+        // drawing a second HUD from the player prefab. Point the SP managers at those
+        // widgets so the values land in the objects the level already has.
+        BindAuthoredPlayerHud(scene);
+
         addedThisScene.Clear();
 
         int installed = 0;
@@ -114,6 +123,10 @@ public class MpLevelInstaller : MonoBehaviour
         }
 
         EnsureNavMesh(scene);
+
+        // Runs after the bake was started on purpose: a puddle mesh that just became
+        // active must not end up as walkable NavMesh source geometry.
+        RepairSceneLogErrors(scene);
 
         if (installed > 0)
         {
@@ -134,21 +147,244 @@ public class MpLevelInstaller : MonoBehaviour
     /// after the dog / mail man agents have already spawned, which produced
     ///     '"SetDestination" can only be called on an active agent that has been placed
     ///      on a NavMesh.'
-    /// Building it here removes the race (and costs a few ms per level load).
+    ///
+    /// The bake itself is now ASYNCHRONOUS. `surface.BuildNavMesh()` voxelizes the whole
+    /// level on the main thread - measured at 7.5 s for Level 1 and 37.9 s for the
+    /// Level 2 city - and that single call is what made an MP level look like it froze
+    /// the editor on load. `surface.UpdateNavMesh` hands the same work to the NavMesh
+    /// worker threads, so the level appears immediately and the dogs simply start
+    /// patrolling once the bake reports done.
+    ///
+    /// Completed data is also cached per scene and kept REGISTERED in the navigation
+    /// system across scene changes (the instance is owned by this DontDestroyOnLoad
+    /// object, not by the surface, so the surface cannot remove it on unload). Loading
+    /// the same level again - or coming back to it from the MP menu - therefore has a
+    /// NavMesh from the first frame, which also removes the one-per-load
+    /// "Failed to create agent ..." / "ResetPath ..." warning pair that the authored
+    /// dog emits while no NavMesh exists yet.
     /// </summary>
+    private sealed class CachedNavMesh
+    {
+        public NavMeshData data;
+        public NavMeshDataInstance instance;
+        public Vector3 position;
+        public Quaternion rotation;
+    }
+
+    private static readonly Dictionary<string, CachedNavMesh> NavMeshCache =
+        new Dictionary<string, CachedNavMesh>();
+
+    private readonly HashSet<string> navMeshBuildsInFlight = new HashSet<string>();
+
+    /// <summary>
+    /// False while an asynchronous bake for the current level is still running. Dog /
+    /// mail man AI has to wait for this: calling NavMeshAgent.SetDestination before the
+    /// NavMesh exists logs an error EVERY frame, and the bake now takes seconds without
+    /// blocking the main thread (it used to block, which hid the spam).
+    /// </summary>
+    public static bool NavMeshReady { get; private set; } = true;
+
+    private static void SetNavMeshReady(bool ready)
+    {
+        NavMeshReady = ready;
+    }
+
     private void EnsureNavMesh(Scene scene)
     {
+        // Two levels at the same world coordinates must never share the navigation
+        // system at once (an agent could snap onto the other level's NavMesh), so drop
+        // this object's registration for any other level. The data stays cached.
+        ReleaseOtherSceneNavMeshes(scene);
+
         foreach (NavMeshSurface surface in FindObjectsByType<NavMeshSurface>(
                      FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (surface == null) continue;
-            if (surface.navMeshData != null) continue;      // already baked
 
-            surface.BuildNavMesh();
+            if (surface.navMeshData != null) continue;      // authored/baked data
 
-            if (logInstalls)
-                InteractionDebug.Log($"built NavMesh for '{scene.name}' (surface '{surface.name}')");
+            string key = NavMeshKey(scene, surface);
+
+            if (NavMeshCache.TryGetValue(key, out CachedNavMesh cached) && cached.data != null)
+            {
+                AttachCachedNavMesh(surface, cached);
+                PlaceAgentsOnNavMesh(scene);
+
+                if (logInstalls)
+                    InteractionDebug.Log($"reused cached NavMesh for '{scene.name}' " +
+                                         $"(surface '{surface.name}')");
+
+                continue;
+            }
+
+            if (!navMeshBuildsInFlight.Add(key)) continue;  // one build per surface
+
+            SetNavMeshReady(false);
+            StartCoroutine(BuildNavMeshAsync(scene, surface, key));
         }
+    }
+
+    private IEnumerator BuildNavMeshAsync(Scene scene, NavMeshSurface surface, string key)
+    {
+        Vector3 position = surface.transform.position;
+        Quaternion rotation = surface.transform.rotation;
+        string surfaceLabel = surface.name;
+
+        // Seed the data with the surface transform so UpdateNavMeshDataAsync writes it
+        // in the same space the surface uses (this mirrors what the package's own
+        // editor baker does).
+        NavMeshData data = NavMeshBuilder.BuildNavMeshData(
+            surface.GetBuildSettings(),
+            new List<NavMeshBuildSource>(),
+            new Bounds(),
+            position,
+            rotation);
+
+        // CollectSources() runs synchronously inside UpdateNavMesh and emits hundreds of
+        // "Source mesh ... does not allow read access" warnings for a big level. Walking
+        // and writing a stack for each one buried the log, so mute warning stacks just
+        // for that call; the expensive voxelization happens afterwards on worker threads.
+        StackTraceLogType previous = Application.GetStackTraceLogType(LogType.Warning);
+        Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+
+        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        AsyncOperation operation;
+        try
+        {
+            operation = surface.UpdateNavMesh(data);
+        }
+        finally
+        {
+            Application.SetStackTraceLogType(LogType.Warning, previous);
+        }
+
+        if (operation == null)
+        {
+            navMeshBuildsInFlight.Remove(key);
+            SetNavMeshReady(navMeshBuildsInFlight.Count == 0);
+            Object.Destroy(data);
+            yield break;
+        }
+
+        while (!operation.isDone) yield return null;
+
+        stopwatch.Stop();
+        navMeshBuildsInFlight.Remove(key);
+        SetNavMeshReady(navMeshBuildsInFlight.Count == 0);
+
+        // The level may have been unloaded while the worker threads were baking; in
+        // that case re-find the surface only if the same scene is loaded again.
+        NavMeshSurface target = surface != null ? surface : FindSurface(scene, key);
+        bool sceneLoadedAgain = target != null || (scene.IsValid() && scene.isLoaded);
+
+        CachedNavMesh entry = new CachedNavMesh
+        {
+            data = data,
+            position = position,
+            rotation = rotation,
+        };
+
+        // Register now when this level is still (or again) loaded; otherwise keep the
+        // data cached for the next load so a different level's NavMesh is never live
+        // at the same time.
+        if (sceneLoadedAgain)
+            entry.instance = NavMesh.AddNavMeshData(data, position, rotation);
+
+        if (NavMeshCache.TryGetValue(key, out CachedNavMesh old) && old.data != null && old.data != data)
+        {
+            if (old.instance.valid) old.instance.Remove();
+            Object.Destroy(old.data);
+        }
+
+        NavMeshCache[key] = entry;
+
+        if (target != null)
+        {
+            // Keep the surface's own registration out of the way; the cached instance
+            // above is the one that must survive this scene.
+            target.RemoveData();
+            target.navMeshData = data;
+        }
+
+        if (scene.IsValid() && scene.isLoaded)
+            PlaceAgentsOnNavMesh(scene);
+
+        if (logInstalls)
+            InteractionDebug.Log($"built NavMesh for '{scene.name}' (surface '{surfaceLabel}') " +
+                                 $"in {stopwatch.ElapsedMilliseconds} ms (async)");
+    }
+
+    private static NavMeshSurface FindSurface(Scene scene, string key)
+    {
+        foreach (NavMeshSurface candidate in FindObjectsByType<NavMeshSurface>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (candidate == null) continue;
+            if (NavMeshKey(scene, candidate) == key) return candidate;
+        }
+
+        return null;
+    }
+
+    private static void AttachCachedNavMesh(NavMeshSurface surface, CachedNavMesh cached)
+    {
+        if (!cached.instance.valid)
+        {
+            cached.instance = NavMesh.AddNavMeshData(
+                cached.data, cached.position, cached.rotation);
+        }
+
+        // Hand the data to the surface for bookkeeping, but do NOT call AddData():
+        // the registration above is owned by this installer and has to survive the
+        // surface being destroyed with the scene.
+        surface.navMeshData = cached.data;
+    }
+
+    private static void ReleaseOtherSceneNavMeshes(Scene scene)
+    {
+        string prefix = scene.path + "|";
+
+        foreach (KeyValuePair<string, CachedNavMesh> pair in NavMeshCache)
+        {
+            if (pair.Key.StartsWith(prefix)) continue;
+            if (!pair.Value.instance.valid) continue;
+
+            pair.Value.instance.Remove();
+            pair.Value.instance = default;
+        }
+    }
+
+    /// <summary>
+    /// Agents enabled before a NavMesh existed stay unplaced for the rest of the
+    /// session. Re-creating them now that the bake is done puts them back on the mesh;
+    /// disabled agents (ghost dogs stopped by DogSync_MP) keep their disabled state.
+    /// </summary>
+    private static void PlaceAgentsOnNavMesh(Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root == null) continue;
+
+            foreach (NavMeshAgent agent in root.GetComponentsInChildren<NavMeshAgent>(true))
+            {
+                if (agent == null || !agent.isActiveAndEnabled || agent.isOnNavMesh) continue;
+
+                agent.enabled = false;
+                agent.enabled = true;
+
+                if (!agent.isOnNavMesh &&
+                    NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit,
+                                           3f, NavMesh.AllAreas))
+                {
+                    agent.Warp(hit.position);
+                }
+            }
+        }
+    }
+
+    private static string NavMeshKey(Scene scene, NavMeshSurface surface)
+    {
+        return scene.path + "|" + PathOf(surface.transform) + "|" + surface.agentTypeID;
     }
 
     private bool IsIgnored(Scene scene)
@@ -210,6 +446,227 @@ public class MpLevelInstaller : MonoBehaviour
 
             NetworkServer.Spawn(identity.gameObject);
         }
+    }
+
+    // ---------------------------------------------------------------- authored SP HUD
+
+    /// <summary>
+    /// Finds the player HUD the SP level already contains and binds the SP managers to
+    /// its widgets. Nothing is disabled or removed: the authored money/time objects stay
+    /// exactly where they are, the SP CurrencyManager writes the network-synced wallet
+    /// into them and GameTimeManager's UpdateUI writes the synchronized round time.
+    /// </summary>
+    private void BindAuthoredPlayerHud(Scene scene)
+    {
+        CurrencyText currencyText = null;
+        TextMeshProUGUI timerText = null;
+        string packagePath = null;
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (PlayerStateMachine stateMachine in root.GetComponentsInChildren<PlayerStateMachine>(true))
+            {
+                Transform avatar = stateMachine.transform;
+
+                // Mirror player prefabs are not the authored level objects.
+                if (avatar.GetComponentInParent<NetworkIdentity>(true) != null) continue;
+
+                GameObject package = FindPlayerPackage(avatar);
+                if (package == null || !package.scene.IsValid() || !package.activeInHierarchy) continue;
+
+                currencyText = package.GetComponentInChildren<CurrencyText>(true);
+                timerText = FindTimeCounterText(package.transform);
+                packagePath = PathOf(package.transform);
+
+                PrepareAuthoredPlayer(package);
+                break;
+            }
+
+            if (packagePath != null) break;
+        }
+
+        MpSharedCompat.BindAuthoredPlayerHud(currencyText, timerText);
+
+        if (packagePath == null || !logInstalls) return;
+
+        InteractionDebug.Log($"using authored SP HUD '{packagePath}' " +
+                             $"(money={(currencyText != null)}, time={(timerText != null)})");
+    }
+
+    /// <summary>
+    /// The level keeps its authored SP player package because the money/time HUD lives
+    /// on it, but the PLAYER itself belongs to the Mirror prefab. This turns the
+    /// authored package into an HUD-only object:
+    ///
+    ///  - the duplicate avatar / dog / mail man / cameras are switched off, so an MP
+    ///    level no longer shows the authored player standing next to the networked one
+    ///    ("two players"),
+    ///  - the authored PauseMenu is switched off because it pauses the whole world via
+    ///    GamePauseManager (the Mirror player prefab has an owner-only PauseMenu),
+    ///  - the authored camera + AudioListener + CinemachineBrain are silenced so the
+    ///    level is not rendered a second time (that double render pinned the CPU).
+    ///
+    /// The package root, its OverlayCanvas (the HUD MP writes into) and its
+    /// BoundCollider stay untouched.
+    /// </summary>
+    private void PrepareAuthoredPlayer(GameObject package)
+    {
+        SilenceAuthoredCamera(package);
+        DisableAuthoredDuplicates(package);
+        DisableAuthoredPauseMenu(package);
+    }
+
+    private static readonly string[] AuthoredPlayerDuplicates =
+    {
+        "Player_Default", "DogPackage", "MailManPackage", "LevelStartCamera", "InLevelCamera",
+    };
+
+    private void DisableAuthoredDuplicates(GameObject package)
+    {
+        foreach (string childName in AuthoredPlayerDuplicates)
+        {
+            Transform child = package.transform.Find(childName);
+            if (child == null || !child.gameObject.activeSelf) continue;
+
+            child.gameObject.SetActive(false);
+
+            if (logInstalls)
+                InteractionDebug.Log($"MP: disabled authored duplicate '{childName}' " +
+                                     "(the networked player prefab owns this object)");
+        }
+    }
+
+    private void DisableAuthoredPauseMenu(GameObject package)
+    {
+        foreach (PauseMenu pauseMenu in package.GetComponentsInChildren<PauseMenu>(true))
+        {
+            if (!pauseMenu.enabled) continue;
+
+            pauseMenu.enabled = false;
+
+            if (logInstalls)
+                InteractionDebug.Log("MP: authored PauseMenu disabled (the MP player prefab has its own)");
+        }
+    }
+
+    /// <summary>
+    /// The authored SP package keeps its whole player stack - including a Main Camera
+    /// with an AudioListener - while the MP player prefab spawns the same camera again
+    /// inside LocalPlayerOnly. With both enabled, Unity renders the entire level twice
+    /// every frame (and warns about two audio listeners), which is what made big MP
+    /// levels like Level 2 pin the CPU. Only the rendering/audio output is silenced;
+    /// the package itself and the HUD we write into stay untouched.
+    /// </summary>
+    private static void SilenceAuthoredCamera(GameObject package)
+    {
+        foreach (Camera camera in package.GetComponentsInChildren<Camera>(true))
+            camera.enabled = false;
+
+        foreach (AudioListener listener in package.GetComponentsInChildren<AudioListener>(true))
+            listener.enabled = false;
+
+        // The brain keeps evaluating the authored virtual cameras even when its
+        // output Camera is off; the MP player has its own brain.
+        foreach (Unity.Cinemachine.CinemachineBrain brain in
+                 package.GetComponentsInChildren<Unity.Cinemachine.CinemachineBrain>(true))
+            brain.enabled = false;
+    }
+
+    private static TextMeshProUGUI FindTimeCounterText(Transform package)
+    {
+        foreach (TextMeshProUGUI text in package.GetComponentsInChildren<TextMeshProUGUI>(true))
+        {
+            if (text.transform.parent != null && text.transform.parent.name == "TimeCounter")
+                return text;
+        }
+
+        return null;
+    }
+
+    private static GameObject FindPlayerPackage(Transform avatar)
+    {
+        for (Transform candidate = avatar; candidate != null; candidate = candidate.parent)
+        {
+            if (candidate.GetComponentInChildren<CurrencyText>(true) != null)
+                return candidate.gameObject;
+        }
+
+        return null;
+    }
+
+    // ---------------------------------------------------------------- scene log repairs
+
+    private static readonly FieldInfo CarSpawnPointsField =
+        typeof(CarController_Prototype).GetField(
+            "spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    /// <summary>
+    /// Two authoring mistakes in the levels throw at runtime (they do so in SP as
+    /// well, but SP never had a log to watch). Repairing them here keeps an MP
+    /// session's console to actual network problems:
+    ///
+    ///  - Level 2's CarController_Prototype has an empty lane in its spawnPoints
+    ///    array; the car routine picks lanes at random and dereferences the null
+    ///    Transform -> UnassignedReferenceException every time it picks that lane,
+    ///  - the rain event calls StartLerping on a dissolve helper that sits on the
+    ///    authored-inactive 'SceneWaterPuddle' -> "Coroutine couldn't be started
+    ///    because the game object ... is inactive" on every rain cycle.
+    /// </summary>
+    private void RepairSceneLogErrors(Scene scene)
+    {
+        int repairedCars = 0;
+        int activatedLerpObjects = 0;
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root == null) continue;
+
+            if (CarSpawnPointsField != null)
+            {
+                foreach (CarController_Prototype car in
+                         root.GetComponentsInChildren<CarController_Prototype>(true))
+                {
+                    if (!(CarSpawnPointsField.GetValue(car) is Transform[] points)) continue;
+
+                    int valid = 0;
+                    foreach (Transform point in points)
+                        if (point != null) valid++;
+
+                    if (valid == points.Length) continue;
+
+                    Transform[] cleaned = new Transform[valid];
+                    int index = 0;
+                    foreach (Transform point in points)
+                        if (point != null) cleaned[index++] = point;
+
+                    CarSpawnPointsField.SetValue(car, cleaned);
+                    repairedCars++;
+                }
+            }
+
+            foreach (MaterialParameterLerpHelper helper in
+                     root.GetComponentsInChildren<MaterialParameterLerpHelper>(true))
+            {
+                GameObject target = helper.gameObject;
+
+                // Only objects that a parent hierarchy would activate anyway; leaving an
+                // intentionally disabled branch alone is safer than switching it on.
+                if (target.activeInHierarchy || target.activeSelf) continue;
+                if (target.transform.parent != null &&
+                    !target.transform.parent.gameObject.activeInHierarchy) continue;
+                if (target.GetComponent<MeshRenderer>() == null) continue;
+
+                // The helper starts at lerp 0, which is fully dissolved, so the object
+                // stays invisible until the rain event fades it in.
+                target.SetActive(true);
+                activatedLerpObjects++;
+            }
+        }
+
+        if (logInstalls && (repairedCars > 0 || activatedLerpObjects > 0))
+            InteractionDebug.Log($"repaired scene log errors in '{scene.name}' " +
+                                 $"(car spawn points: {repairedCars}, " +
+                                 $"inactive dissolve objects: {activatedLerpObjects})");
     }
 
     // ---------------------------------------------------------------- helpers

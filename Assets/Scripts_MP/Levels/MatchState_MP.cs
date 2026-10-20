@@ -39,7 +39,6 @@ public class MatchState_MP : MonoBehaviour
     [SerializeField] private float timeBroadcastInterval = 0.25f;
     [SerializeField] private float scoreBroadcastInterval = 0.5f;
 
-    private static bool registered;
     private static bool hasScore;
     private static int serverScore;
     private float nextTimeAt;
@@ -77,12 +76,21 @@ public class MatchState_MP : MonoBehaviour
     /// <summary>Called by LobbyNetworkManager on server/client start.</summary>
     public static void Register()
     {
-        if (registered) return;
+        // Mirror clears handler tables on shutdown; re-register every session or the
+        // second host/join in the same editor answers with "Unknown message id".
+        if (NetworkServer.active)
+        {
+            NetworkServer.UnregisterHandler<TimeRequestMessage>();
+            NetworkServer.RegisterHandler<TimeRequestMessage>(OnServerTimeRequest, false);
+        }
 
-        NetworkServer.RegisterHandler<TimeRequestMessage>(OnServerTimeRequest, false);
-        NetworkClient.RegisterHandler<TimeMessage>(OnTime, false);
-        NetworkClient.RegisterHandler<ScoreMessage>(OnScore, false);
-        registered = true;
+        if (NetworkClient.active)
+        {
+            NetworkClient.UnregisterHandler<TimeMessage>();
+            NetworkClient.RegisterHandler<TimeMessage>(OnTime, false);
+            NetworkClient.UnregisterHandler<ScoreMessage>();
+            NetworkClient.RegisterHandler<ScoreMessage>(OnScore, false);
+        }
     }
 
     // ---------------------------------------------------------------- server

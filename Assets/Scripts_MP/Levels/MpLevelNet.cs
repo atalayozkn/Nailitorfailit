@@ -24,8 +24,6 @@ public class MpLevelNet : MonoBehaviour
         public int index;
     }
 
-    private static bool registered;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoSpawn()
     {
@@ -53,11 +51,19 @@ public class MpLevelNet : MonoBehaviour
     /// <summary>Called by LobbyNetworkManager on server/client start (like ChatNetwork.Register).</summary>
     public static void Register()
     {
-        if (registered) return;
+        // Mirror clears handler tables on shutdown; re-register every session or the
+        // second host/join in the same editor answers with "Unknown message id".
+        if (NetworkServer.active)
+        {
+            NetworkServer.UnregisterHandler<LevelMessage>();
+            NetworkServer.RegisterHandler<LevelMessage>(OnServerLevel, false);
+        }
 
-        NetworkServer.RegisterHandler<LevelMessage>(OnServerLevel, false);
-        NetworkClient.RegisterHandler<LevelMessage>(OnClientLevel, false);
-        registered = true;
+        if (NetworkClient.active)
+        {
+            NetworkClient.UnregisterHandler<LevelMessage>();
+            NetworkClient.RegisterHandler<LevelMessage>(OnClientLevel, false);
+        }
     }
 
     // ---------------------------------------------------------------- host side

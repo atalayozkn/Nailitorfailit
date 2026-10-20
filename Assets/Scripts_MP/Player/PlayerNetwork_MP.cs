@@ -46,6 +46,9 @@ namespace PlayerScripts
 
         private Rigidbody body;
 
+        private DogStateMachine dogAI;
+        private bool dogAiWaitingForNavMesh;
+
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
@@ -113,8 +116,16 @@ namespace PlayerScripts
 
             if (interaction != null) interaction.enabled = false;
 
-            DogStateMachine dogAI = GetComponentInChildren<DogStateMachine>(true);
-            if (dogAI != null) dogAI.enabled = isOwned;
+            // The level's NavMesh is baked asynchronously now; until it exists a nav
+            // agent logs an error on EVERY SetDestination (the dog's movement routine
+            // calls it per frame). Hold the owner's AI until the bake reports done; the
+            // Update below starts it. Ghost copies never get AI.
+            dogAI = GetComponentInChildren<DogStateMachine>(true);
+            if (dogAI != null)
+            {
+                dogAI.enabled = isOwned && MpLevelInstaller.NavMeshReady;
+                dogAiWaitingForNavMesh = isOwned && !MpLevelInstaller.NavMeshReady;
+            }
 
             PauseMenu pauseMenu = transform.root.GetComponent<PauseMenu>();
             if (pauseMenu != null)
@@ -148,6 +159,31 @@ namespace PlayerScripts
 
             SetLocalOnlyActive(true);
 
+            // Pause lives on the prefab root and is owner-only. Give it THIS player's
+            // state machine - its Awake fallback (FindFirstObjectByType) can pick a
+            // remote player's one, which would open the cursor on the wrong avatar.
+            PauseMenu pauseMenu = transform.root.GetComponent<PauseMenu>();
+            if (pauseMenu != null) MpSharedCompat.BindPauseStateMachine(pauseMenu, stateMachine);
+
+            // The wallet may have been applied before this HUD existed; paint it now so
+            // the first visible frame already shows the SP-owned value.
+            MpSharedCompat.RefreshLocalCurrencyText(CurrencyManager.Instance);
+
+            // When the level's own SP money/time objects are the ones being driven, the
+            // prefab's copies are redundant and would overlap them on screen.
+            // GameHUD_MP lives on a sibling branch (LocalPlayerOnly/OverlayCanvas), so
+            // the search has to start at the prefab root, not at Player_Default.
+            if (MpSharedCompat.HasAuthoredTimeHud || MpSharedCompat.HasAuthoredMoneyHud)
+            {
+                GameHUD_MP hud = transform.root.GetComponentInChildren<GameHUD_MP>(true);
+                if (hud != null)
+                {
+                    hud.HideAuthoredDuplicates(
+                        MpSharedCompat.HasAuthoredTimeHud,
+                        MpSharedCompat.HasAuthoredMoneyHud);
+                }
+            }
+
             if (movement != null) movement.SetActivity(true);
             if (interaction != null) interaction.SetActivity(true);
 
@@ -179,6 +215,12 @@ namespace PlayerScripts
         private void Update()
         {
             ApplyRemotePhysics();
+
+            if (dogAiWaitingForNavMesh && MpLevelInstaller.NavMeshReady)
+            {
+                dogAiWaitingForNavMesh = false;
+                if (dogAI != null) dogAI.enabled = true;
+            }
 
             if (!isOwned || netAnimator == null || netAnimator.runtimeAnimatorController == null) return;
 

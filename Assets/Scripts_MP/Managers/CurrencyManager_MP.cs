@@ -33,8 +33,6 @@ public class CurrencyManager_MP : MonoBehaviour
 
     // server-side authoritative total (-1 until the first request seeds it)
     private static int serverTotal = -1;
-    private static bool requestHandlerRegistered;
-    private static bool stateHandlerRegistered;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoSpawn()
@@ -63,16 +61,19 @@ public class CurrencyManager_MP : MonoBehaviour
     /// <summary>Called by LobbyNetworkManager on server/client start (like ChatNetwork.Register).</summary>
     public static void Register()
     {
-        if (!requestHandlerRegistered)
+        // Mirror clears the handler tables on shutdown, so registering "once" with a
+        // static flag leaves the second session of the same editor without handlers
+        // ("Unknown message id: 1487" -> disconnect). Re-register every session.
+        if (NetworkServer.active)
         {
+            NetworkServer.UnregisterHandler<RequestChangeMessage>();
             NetworkServer.RegisterHandler<RequestChangeMessage>(OnRequestChange, false);
-            requestHandlerRegistered = true;
         }
 
-        if (!stateHandlerRegistered)
+        if (NetworkClient.active)
         {
+            NetworkClient.UnregisterHandler<StateMessage>();
             NetworkClient.RegisterHandler<StateMessage>(OnState, false);
-            stateHandlerRegistered = true;
         }
     }
 
@@ -128,15 +129,26 @@ public class CurrencyManager_MP : MonoBehaviour
 
         // the host's own client copy gets the state through the local connection too,
         // but applying it here keeps the host in step even before that arrives.
-        CurrencyManager.Instance?.SetCurrency(serverTotal);
+        ApplyTotal(serverTotal);
     }
 
     // ---------------------------------------------------------------- client
 
     private static void OnState(StateMessage message)
     {
-        CurrencyManager.Instance?.SetCurrency(message.total);
+        ApplyTotal(message.total);
         InteractionDebug.Log($"wallet: server says {message.total}");
+    }
+
+    /// <summary>
+    /// SP's CurrencyManager owns the value and updates the CurrencyText it cached at
+    /// scene load. In MP that cached text belongs to the level's authored SP player
+    /// (the installer disables it), so the Mirror player's HUD is refreshed separately.
+    /// </summary>
+    private static void ApplyTotal(int total)
+    {
+        CurrencyManager.Instance?.SetCurrency(total);
+        CurrencyManager.Instance?.RefreshLocalCurrencyText();
     }
 
     /// <summary>
@@ -153,9 +165,14 @@ public class CurrencyManager_MP : MonoBehaviour
         conn.Send(new StateMessage { total = serverTotal });
     }
 
-    /// <summary>Server: seeds the authoritative total (called when a match starts).</summary>
+    /// <summary>
+    /// Server: starts a match with the same wallet SP would give (GameManager's
+    /// startCurrencyAmount) and applies it locally. Players spawned afterwards get the
+    /// value through SendStateTo, so every HUD shows the same number from frame one.
+    /// </summary>
     public static void SeedServerTotal(int total)
     {
-        serverTotal = total;
+        serverTotal = Mathf.Max(0, total);
+        ApplyTotal(serverTotal);
     }
 }

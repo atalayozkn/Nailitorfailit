@@ -80,6 +80,22 @@ public class LobbyNetworkManager : NetworkManager
     /// <summary>Menuye donus zaten baslatildi mi (sahnenin iki kez yuklenmesini engeller).</summary>
     private bool returnToMenuRequested;
 
+    /// <summary>
+    /// True while Unity is shutting the play session down. StopClient/StopHost run from
+    /// OnApplicationQuit too, and the resulting OnClientDisconnect used to "return to
+    /// the menu" during shutdown: Unity refuses the load and logged
+    /// "[SCENES] Could not load 'MenuScene_MP'." on every exit.
+    /// </summary>
+    private bool quitInProgress;
+
+    public override void OnApplicationQuit()
+    {
+        // Set before base: the base implementation stops the client, which raises
+        // OnClientDisconnect -> ReturnToMenuScene synchronously.
+        quitInProgress = true;
+        base.OnApplicationQuit();
+    }
+
     public override void Awake()
     {
         base.Awake();
@@ -417,6 +433,10 @@ public class LobbyNetworkManager : NetworkManager
         else
             NetworkServer.AddPlayerForConnection(conn, gamePlayer);
 
+        // The player's HUD exists from now on: send the seeded wallet so the number is
+        // correct before the first frame instead of waiting for the first purchase.
+        CurrencyManager_MP.SendStateTo(conn);
+
         Debug.Log($"[MP] Game player spawned. conn={conn.connectionId} slot={slot} " +
                   $"pos={basePos + separation} prefab={gamePlayerPrefab.name} replacedOld={replacedOld}");
     }
@@ -527,6 +547,10 @@ public class LobbyNetworkManager : NetworkManager
         // "Multiple NetworkManagers detected in the scene" + tekil ornek uyarilari duser.
         if (returnToMenuRequested) return;
 
+        // Quitting the application: Unity does not load scenes during shutdown, and
+        // this path is reached from NetworkManager.OnApplicationQuit.
+        if (quitInProgress) return;
+
         Scene active = SceneManager.GetActiveScene();
 
         // Zaten menude (orn. lobiden ayrilma): sahneyi bosuna yeniden yuklemeyelim.
@@ -559,6 +583,12 @@ public class LobbyNetworkManager : NetworkManager
         Debug.Log($"[SCENE] Server scene ready: {sceneName} - oyuncular hazir oldukca olusturulacak.");
 
         spawnSlot = 0;
+
+        // A new MP match starts with the same wallet a fresh SP level would: the SP
+        // CurrencyManager value is seeded from GameManager.startCurrencyAmount before
+        // any game player spawns, so every HUD (host and clients) starts in sync.
+        if (GameManager.Instance != null)
+            CurrencyManager_MP.SeedServerTotal(GameManager.Instance.GetStartCurrencyAmount());
 
         // NOT: Burada oyunculari ELLE spawn ETMIYORUZ (eski surumde vardi, kaldirildi).
         //
