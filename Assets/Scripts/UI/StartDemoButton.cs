@@ -4,6 +4,6 @@ public class StartDemoButton : MonoBehaviour
 {
     public void StartDemo()
     {
-        GameManager.Instance.ChangeToLevelPhase(2);
+        GameManager.Instance.PlayLevel(2);
     }
 }

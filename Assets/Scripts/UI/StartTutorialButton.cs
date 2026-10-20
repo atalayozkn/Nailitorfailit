@@ -4,6 +4,6 @@ public class StartTutorialButton : MonoBehaviour
 {
     public void StartDemo()
     {
-        GameManager.Instance.ChangeToLevelPhase(1);
+        GameManager.Instance.PlayLevel(1);
     }
 }

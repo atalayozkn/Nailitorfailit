@@ -5223,7 +5223,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1330435398}
-  - component: {fileID: 1330435397}
   - component: {fileID: 1330435396}
   - component: {fileID: 1330435395}
   - component: {fileID: 1330435394}
@@ -5303,31 +5302,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 116
   m_CollisionDetection: 0
---- !u!114 &1330435397
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1330435393}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a5f58cd0cb0a0447b2b4bf642d0512c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InMenuPlayer
-  rb: {fileID: 1330435396}
-  meshParent: {fileID: 930811494}
-  moveSpeed: 5
-  drag: 5
-  rotationLerpSpeed: 10
-  interactableLayerMask:
-    serializedVersion: 2
-    m_Bits: 64
-  groundLayerMask:
-    serializedVersion: 2
-    m_Bits: 256
-  moveInputReference: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  interactInputReference: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!4 &1330435398
 Transform:
   m_ObjectHideFlags: 0
@@ -5357,7 +5331,6 @@ GameObject:
   - component: {fileID: 1384886796}
   - component: {fileID: 1384886795}
   - component: {fileID: 1384886793}
-  - component: {fileID: 1384886798}
   m_Layer: 5
   m_Name: Button_CharacterSelection
   m_TagString: Untagged
@@ -5481,64 +5454,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1384886791}
   m_CullTransparentMesh: 1
---- !u!114 &1384886798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1384886791}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4afcc1e946905484981962ccd3ba6658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectButton
-  characterIndex: 0
-  onPointerEnterEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1384886793}
-        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onPointerExitEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1384886793}
-        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
-        m_MethodName: RevertToOriginalColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onPointerClickEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1384886793}
-        m_TargetAssemblyTypeName: ImageMaterialChangeHelper, Assembly-CSharp
-        m_MethodName: RevertToOriginalColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &1386754824
 GameObject:
   m_ObjectHideFlags: 0
@@ -7296,7 +7211,6 @@ GameObject:
   - component: {fileID: 1826857829}
   - component: {fileID: 1826857828}
   - component: {fileID: 1826857832}
-  - component: {fileID: 1826857833}
   m_Layer: 5
   m_Name: Canvas_Overlay_MainMenu
   m_TagString: Untagged
@@ -7400,21 +7314,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   menuRoot: {fileID: 1967710253}
+  mainTab: {fileID: 1788775542}
   menuTab: {fileID: 1234622942}
   characterTab: {fileID: 1741479011}
---- !u!114 &1826857833
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1826857827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4bd53071ced39c04e83b6754b98dbf62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InGameOverlayUI
-  overlayUIParent: {fileID: 0}
 --- !u!1 &1873958764
 GameObject:
   m_ObjectHideFlags: 0

@@ -176,6 +176,11 @@ namespace ItemScript
         }
         public void DropByDog(Transform target)
         {
+            //Cancel pending attach, otherwise it snaps back if dropped within 0.1s of pickup.
+            CancelInvoke(nameof(AttachToTransform));
+            isOccupied = false;
+            attachTransform = null;
+
             transform.SetParent(target);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;

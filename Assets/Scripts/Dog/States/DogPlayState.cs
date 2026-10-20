@@ -9,6 +9,7 @@ public class DogPlayState : DogBaseState
     private CarriableObject_SP currentCarriable;
     private float counter;
     private float playTime = 10f;
+    private bool hasPickedUp;
 
     public override void Enter()
     {
@@ -32,8 +33,9 @@ public class DogPlayState : DogBaseState
 
         if (stateMachine.movementHandler.IsMoving()) return;
 
-        if (currentCarriable != null && !currentCarriable.IsOccupied())
+        if (currentCarriable != null && !hasPickedUp && !currentCarriable.IsOccupied())
         {
+            hasPickedUp = true;
             currentCarriable.PickUpByDog(stateMachine.carryTransform);
             stateMachine.RandomizePatrolTarget();
             stateMachine.movementHandler.SetRunning(true);
@@ -46,14 +48,15 @@ public class DogPlayState : DogBaseState
 
         if (counter > playTime)
         {
-            if (stateMachine.favorController.GetPercentFavor() <= 50)
+            //Only get aggressive about an item the dog actually played with.
+            if (hasPickedUp && stateMachine.favorController.GetPercentFavor() <= 50)
             {
                 stateMachine.SetCurrentCarriable(currentCarriable);
                 stateMachine.ChangeToAggresiveState();
             }
             else
             {
-                currentCarriable.DropByDog(stateMachine.dropTransform);
+                if (hasPickedUp) currentCarriable.DropByDog(stateMachine.dropTransform);
                 currentCarriable = null;
                 stateMachine.ChangeToIdleState();
             }
@@ -75,9 +78,12 @@ public class DogPlayState : DogBaseState
     }
     public override void Exit()
     {
-        if (currentCarriable != null)
+        //Only drop if the dog actually picked it up, otherwise we'd yank it from the player/station.
+        if (currentCarriable != null && hasPickedUp)
         {
             currentCarriable.DropByDog(stateMachine.dropTransform);
         }
+        currentCarriable = null;
+        hasPickedUp = false;
     }
 }

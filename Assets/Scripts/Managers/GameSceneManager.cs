@@ -37,6 +37,16 @@ public class GameSceneManager : MonoBehaviour
     {
         return activeScene;
     }
+    // Index of the active scene inside the scenes array (also used as level index), -1 if not listed.
+    public int GetActiveSceneIndex()
+    {
+        return System.Array.IndexOf(scenes, SceneManager.GetActiveScene().name);
+    }
+    // Playable levels are every scene after the menu (index 0).
+    public int GetLevelCount()
+    {
+        return scenes.Length - 1;
+    }
 
     private IEnumerator LoadSceneRoutine(int index)
     {
@@ -49,6 +59,11 @@ public class GameSceneManager : MonoBehaviour
         while (!operation.isDone) yield return null;
 
         activeScene = scenes[index];
+
+        // Leaving a level from the pause menu keeps timeScale at 0 (GamePauseManager may be destroyed
+        // before PauseMenu.OnDisable can unpause). Every freshly loaded scene must start unpaused,
+        // otherwise scaled timers like the level start camera/input Invokes never fire.
+        Time.timeScale = 1f;
 
         // Tell every persistent manager that the scene is ready.
         GameManager.Instance.OnSceneLoaded();

@@ -86,10 +86,6 @@ public class PlayerStateMachine : StateMachine_Player
 
         respawnManager = FindAnyObjectByType<RespawnManager>();
         initialTarget = playerCamera.Follow;
-        movementHandler.SetActivity(false);
-        interactionHandler.SetActivity(false);
-        Invoke(nameof(SwitchToPlayerCamera), 1f);
-        Invoke(nameof(EnablePlayerInputs), 6f);
 
         //Disable of Ragdoll
         foreach (var joint in ragdollJoints) joint.enableCollision = false;
@@ -103,6 +99,16 @@ public class PlayerStateMachine : StateMachine_Player
         }
 
         CloseCursor();
+    }
+    private void Start()
+    {
+        // Lock inputs in Start, not Awake: PlayerMovement/PlayerInteractionHandler set isActive = true
+        // in their OnEnable, and Awake/OnEnable order between components differs between editor and build.
+        // Start runs after every Awake/OnEnable, so the lock can not be overwritten.
+        movementHandler.SetActivity(false);
+        interactionHandler.SetActivity(false);
+        Invoke(nameof(SwitchToPlayerCamera), 1f);
+        Invoke(nameof(EnablePlayerInputs), 6f);
     }
     private void OnEnable()
     {
@@ -302,7 +308,7 @@ public class PlayerStateMachine : StateMachine_Player
     }
     public void CloseCursor()
     {
-        Cursor.lockState &= CursorLockMode.Locked;
+        Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 

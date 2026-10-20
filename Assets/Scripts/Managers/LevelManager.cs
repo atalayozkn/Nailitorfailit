@@ -6,7 +6,6 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private int roomCurrencyReward = 10;
     [SerializeField] private int roomTimeReward = 60;
-    [SerializeField] private int currentLevel = 1;
 
     [SerializeField] private UnityEvent onVictoryEvent;
     [SerializeField] private UnityEvent onDefeatEvent;
@@ -57,13 +56,6 @@ public class LevelManager : MonoBehaviour
         {
             //Play Backrupcy
             //Delay
-            //Return to Menu scene as Menu Mode
-            //GameManager.Instance.CompleteLevel(currentLevel, false);
-        }
-        else
-        {
-            //GameManager.Instance.ReturnToGameMenu();
-            //Return to Menu scene as GameMode
         }
     }
     private void Victory()
@@ -74,7 +66,9 @@ public class LevelManager : MonoBehaviour
         //Probably delay will be added here
 
         CurrencyManager.Instance.GainCurrency(score);
-        //GameManager.Instance.CompleteLevel(currentLevel, true);
+
+        // Save progress right away so the next level is unlocked even if the player quits from here.
+        GameManager.Instance?.CompleteCurrentLevel();
     }
 
 }
