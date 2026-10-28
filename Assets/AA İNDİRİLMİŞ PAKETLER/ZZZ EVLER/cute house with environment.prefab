@@ -26,6 +26,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9170027422479897858}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -37,7 +38,6 @@ Transform:
   - {fileID: 4670352272940971549}
   - {fileID: 6662532642602265413}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &4874707216193421341
 MeshFilter:
@@ -64,10 +64,15 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1cd256ba8acac3a4bb49758d889d920e, type: 2}
+  - {fileID: 2100000, guid: 6bc790a7f128fb24f8ee10dfd6437ff9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -85,9 +90,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &6046029564463400093
 BoxCollider:
@@ -97,9 +104,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9170027422479897858}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 11.085542, y: 5.7957764, z: 8.298216}
   m_Center: {x: 0, y: 2.8978882, z: -0.00000023841858}
 --- !u!1001 &1949244040421338398
@@ -107,6 +122,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8361403262736338872}
     m_Modifications:
     - target: {fileID: 5150720507772716635, guid: 13481381611e88a4ca2f951c5646b485, type: 3}
@@ -158,6 +174,9 @@ PrefabInstance:
       value: cottage tree 2 (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 13481381611e88a4ca2f951c5646b485, type: 3}
 --- !u!4 &6662532642602265413 stripped
 Transform:
@@ -169,6 +188,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8361403262736338872}
     m_Modifications:
     - target: {fileID: 6067956420894348072, guid: 3768e9958615ec448aa0316549ed68cc, type: 3}
@@ -220,6 +240,9 @@ PrefabInstance:
       value: fence white left
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3768e9958615ec448aa0316549ed68cc, type: 3}
 --- !u!4 &4439777286363789281 stripped
 Transform:
@@ -231,6 +254,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8361403262736338872}
     m_Modifications:
     - target: {fileID: 3878564060718010468, guid: bd3beafafa4d79140971d27971731027, type: 3}
@@ -282,6 +306,9 @@ PrefabInstance:
       value: bush 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bd3beafafa4d79140971d27971731027, type: 3}
 --- !u!4 &4670352272940971549 stripped
 Transform:
@@ -293,6 +320,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8361403262736338872}
     m_Modifications:
     - target: {fileID: 5150720507772716635, guid: 13481381611e88a4ca2f951c5646b485, type: 3}
@@ -344,6 +372,9 @@ PrefabInstance:
       value: cottage tree 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 13481381611e88a4ca2f951c5646b485, type: 3}
 --- !u!4 &4609522213173092394 stripped
 Transform:
@@ -355,6 +386,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8361403262736338872}
     m_Modifications:
     - target: {fileID: 1696430887500569420, guid: 5dd8209dc48ef624498af0bc0c965410, type: 3}
@@ -406,6 +438,9 @@ PrefabInstance:
       value: fence white right
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5dd8209dc48ef624498af0bc0c965410, type: 3}
 --- !u!4 &7936048187851381060 stripped
 Transform:
