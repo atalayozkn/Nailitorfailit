@@ -3,22 +3,6 @@ using System.Collections;
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Komut satiri argumanlariyla otomatik lobi baslatma (ParrelSync / build testleri icin).
-///
-/// Kullanim:
-///   -host               → oyun baslar baslamaz otomatik "Create Lobby" yapar
-///   -client             → LAN modunda 127.0.0.1'e otomatik Join yapar.
-///                         Steam modunda calismaz (asagiya bakin) — -join=CODE kullanin.
-///   -join=CODE          → verilen 6 haneli lobby koduna (Steam) veya host IP'sine (LAN) Join yapar
-///   +connect_lobby ID   → Steam'in davet ile baslatirken ekledigi arguman; sifre sorulur
-///
-/// ParrelSync Clones Manager'daki "Arguments" alanina "client" yazarsaniz, argumanin basina
-/// tire eklemeyi unutmayin: "-client". (ParrelSync argumani oldugu gibi gecirir.)
-///
-/// Bu bilesen kendini kendisi olusturur (RuntimeInitializeOnLoadMethod), boylece
-/// SteamLobbyManager'in Start() sirasina bagimli degildir.
-/// </summary>
 public class AutoStartFromArgs : MonoBehaviour
 {
     [SerializeField] private float startupDelay = 1.5f;
@@ -39,19 +23,17 @@ public class AutoStartFromArgs : MonoBehaviour
         bool isClient = HasArg(args, "-client") || HasArg(args, "client");
         string joinTarget = GetArgValue(args, "-join");
 
-        // Steam daveti: oyun kapaliyken davet kabul edilirse Steam "+connect_lobby <id>"
-        // argumaniyla baslatir.
         string connectLobby = GetConnectLobbyArg(args);
 
         if (!isHost && !isClient && string.IsNullOrEmpty(joinTarget) && string.IsNullOrEmpty(connectLobby))
-            return;   // arguman yok → normal akis
+            return;
 
         StartCoroutine(AutoJoinRoutine(isHost, isClient, joinTarget, connectLobby));
     }
 
     private IEnumerator AutoJoinRoutine(bool isHost, bool isClient, string joinTarget, string connectLobby)
     {
-        // Sahnenin ve NetworkManager'in hazir olmasini bekle.
+
         yield return new WaitForSeconds(startupDelay);
 
         LobbyNetworkManager nm = null;
@@ -77,9 +59,7 @@ public class AutoStartFromArgs : MonoBehaviour
 
         if (!string.IsNullOrEmpty(connectLobby))
         {
-            // Oyun kapaliyken gelen davet: Steam bizi "+connect_lobby <id>" ile baslatir.
-            // Lobiye katilip kodu cozeriz; sifre kullaniciya sorulur
-            // (SteamLobbyManager.OnInviteCodeReady -> Join ekrani doldurulur).
+
             Debug.Log($"[AUTO] +connect_lobby {connectLobby} algilandi → lobiye katiliniyor.");
 
             if (SteamLobbyManager.Instance == null)
@@ -105,20 +85,8 @@ public class AutoStartFromArgs : MonoBehaviour
             yield break;
         }
 
-        // -client: yalnizca LAN modunda anlamli. Steam modunda "127.0.0.1" ne
-        // SteamID64 ne de 6 haneli koddur; sessizce basarisiz olmak yerine uyariyoruz.
-        bool lanMode = SteamLobbyManager.Instance == null || SteamLobbyManager.Instance.UseLanDevMode;
-
-        if (!lanMode)
-        {
-            Debug.LogError("[AUTO] -client Steam modunda desteklenmiyor. " +
-                           "Ikinci oyuncu icin '-join=<6 haneli kod>' kullanin " +
-                           "(veya LAN testi icin SteamLobbyManager.forceLanMode acin / NIF_LAN kullanin).");
-            yield break;
-        }
-
-        Debug.Log("[AUTO] -client algilandi → 127.0.0.1'e baglaniliyor.");
-        nm.JoinLobby("127.0.0.1", defaultPassword);
+        Debug.LogError("[AUTO] -client Steam modunda desteklenmiyor. " +
+                       "Ikinci oyuncu icin '-join=<6 haneli kod>' kullanin.");
     }
 
     private static bool HasArg(string[] args, string name)
@@ -137,7 +105,6 @@ public class AutoStartFromArgs : MonoBehaviour
         return null;
     }
 
-    /// <summary>Steam'in davet akisinda ekledigi "+connect_lobby 123456789" argumanini okur.</summary>
     private static string GetConnectLobbyArg(string[] args)
     {
         for (int i = 0; i < args.Length - 1; i++)

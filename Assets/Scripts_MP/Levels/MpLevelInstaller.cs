@@ -9,27 +9,6 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Makes ANY level scene multiplayer-ready at load time (M4 of the modular MP system).
-///
-/// Until now a level only worked in MP if its scene had been opened, re-saved and
-/// hand-patched with NetworkIdentities + sceneIds (that is why several sessions got
-/// stuck on "scene needs to be opened and resaved"). This installer removes that
-/// requirement completely: on every machine, right after a level is loaded, it walks
-/// the scene and applies a small rule table:
-///
-///     Cutter              -> + NetworkIdentity + Cutter_MP
-///     ObjectSpawner       -> + NetworkIdentity + Spawner_MP
-///     Mixer               -> + NetworkIdentity + Mixer_MP           (handles the crank)
-///     Constructor         -> + NetworkIdentity + Constructor_MP     (handles the tiles)
-///     CarriableObject_SP  -> + NetworkIdentity + CarriableObject_MP + NetworkSpawnSelf_MP
-///
-/// The sceneId is derived DETERMINISTICALLY from the object's hierarchy path, so the
-/// server and every client compute the same value and Mirror's normal scene-object
-/// handshake does the rest - no scene editing, no prefab surgery.
-///
-/// Supporting a new system in MP = adding one row to <see cref="Rules"/>.
-/// </summary>
 public class MpLevelInstaller : MonoBehaviour
 {
     public static MpLevelInstaller Instance { get; private set; }
@@ -43,16 +22,36 @@ public class MpLevelInstaller : MonoBehaviour
     [Tooltip("Log every object that was made multiplayer-ready.")]
     [SerializeField] private bool logInstalls = true;
 
-    /// <summary>
-    /// SP component -> components to add next to the (implicitly added) NetworkIdentity.
-    /// </summary>
-    private static readonly (System.Type spi, System.Type[] added, string label)[] Rules =
+    [Header("Runtime NavMesh (sadece piserilmemis sahneler icin)")]
+    [Tooltip("Piserilmis NavMesh yoksa runtime bake'i kaba (hizli) ayarlarla yap.")]
+    [SerializeField] private bool coarseRuntimeBake = true;
+
+    [Tooltip("Kaba bake voxel boyutu. Buyuk = hizli/kaba. 0.17 varsayilan, 0.32 yaklasik 3.5x hizli.")]
+    [SerializeField] private float coarseVoxelSize = 0.32f;
+
+    [Tooltip("Bake alanini zemin sinirlariyla sinirla (tum sahne yerine).")]
+    [SerializeField] private bool limitBakeArea = true;
+
+    [Tooltip("NavMesh'i senkron bake et. Boylece agent'lar (kopek/postaci) NavMesh hazirken olusur ve 'agent not placed' hatalari cikmaz.")]
+    [SerializeField] private bool synchronousRuntimeBake = true;
+
+    [Header("Otomatik bolgeler (sahnede elle ZoneVolume yoksa)")]
+    [Tooltip("Otomatik olusturulan PlayArea'nin kenar politikasi. None = oyuncuyu geri itmez.")]
+    [SerializeField] private BoundaryPolicy autoPlayAreaPolicy = BoundaryPolicy.None;
+
+    [Tooltip("Otomatik PlayArea icin zemin sinirlarina eklenecek marj (metre).")]
+    [SerializeField] private float autoPlayAreaMargin = 12f;
+
+    private static readonly (System.Type spi, System.Type[] added, string label, bool skipInsideStation)[] Rules =
     {
-        (typeof(Cutter),             new[] { typeof(Cutter_MP) },                                              "cutter"),
-        (typeof(ObjectSpawner),      new[] { typeof(Spawner_MP) },                                             "spawner"),
-        (typeof(Mixer),              new[] { typeof(Mixer_MP) },                                               "mixer"),
-        (typeof(Constructor),        new[] { typeof(Constructor_MP) },                                         "constructor"),
-        (typeof(CarriableObject_SP), new[] { typeof(CarriableObject_MP), typeof(NetworkSpawnSelf_MP) },         "carriable"),
+        (typeof(Cutter),             new[] { typeof(Cutter_MP) },                                       "cutter",      false),
+        (typeof(ObjectSpawner),      new[] { typeof(Spawner_MP) },                                      "spawner",     false),
+        (typeof(Mixer),              new[] { typeof(Mixer_MP) },                                        "mixer",       false),
+        (typeof(Constructor),        new[] { typeof(Constructor_MP) },                                  "constructor", false),
+        (typeof(CarriableObject_SP), new[] { typeof(CarriableObject_MP), typeof(NetworkSpawnSelf_MP) },  "carriable",   false),
+        (typeof(Shop),               new[] { typeof(Shop_MP) },                                         "shop",        false),
+        (typeof(ShopIndex),          new[] { typeof(ShopIndex_MP) },                                    "shop-index",  false),
+        (typeof(Generator_SP),       new[] { typeof(Generator_MP) },                                    "generator",   true),
     };
 
     private readonly List<NetworkIdentity> addedThisScene = new List<NetworkIdentity>();
@@ -96,19 +95,15 @@ public class MpLevelInstaller : MonoBehaviour
         Install(scene);
     }
 
-    // ---------------------------------------------------------------- install pass
-
     public int Install(Scene scene)
     {
-        // Singleplayer sessions must stay completely untouched.
         if (!NetworkServer.active && !NetworkClient.active) return 0;
         if (!scene.IsValid() || string.IsNullOrEmpty(scene.path)) return 0;
         if (IsIgnored(scene)) return 0;
 
-        // MP keeps the level's authored SP HUD and overwrites its values instead of
-        // drawing a second HUD from the player prefab. Point the SP managers at those
-        // widgets so the values land in the objects the level already has.
         BindAuthoredPlayerHud(scene);
+
+        MpEndUiSuppressor_MP.Suppress(scene);
 
         addedThisScene.Clear();
 
@@ -123,9 +118,8 @@ public class MpLevelInstaller : MonoBehaviour
         }
 
         EnsureNavMesh(scene);
+        EnsureLevelData(scene);
 
-        // Runs after the bake was started on purpose: a puddle mesh that just became
-        // active must not end up as walkable NavMesh source geometry.
         RepairSceneLogErrors(scene);
 
         if (installed > 0)
@@ -133,36 +127,12 @@ public class MpLevelInstaller : MonoBehaviour
             Debug.Log($"[MP-INSTALL] '{scene.name}': {installed} object(s) made multiplayer-ready " +
                       $"(server={NetworkServer.active}, client={NetworkClient.active}).");
 
-            // Mirror registers scene objects at the start of its spawn phase; anything we
-            // added after that must be spawned explicitly (server only, and never twice:
-            // NetworkServer.Spawn on an already spawned netId is skipped below).
             if (NetworkServer.active) SpawnServerObjects();
         }
 
         return installed;
     }
 
-    /// <summary>
-    /// The levels have no baked NavMesh - a NavMeshSurface builds one at RUNTIME, often
-    /// after the dog / mail man agents have already spawned, which produced
-    ///     '"SetDestination" can only be called on an active agent that has been placed
-    ///      on a NavMesh.'
-    ///
-    /// The bake itself is now ASYNCHRONOUS. `surface.BuildNavMesh()` voxelizes the whole
-    /// level on the main thread - measured at 7.5 s for Level 1 and 37.9 s for the
-    /// Level 2 city - and that single call is what made an MP level look like it froze
-    /// the editor on load. `surface.UpdateNavMesh` hands the same work to the NavMesh
-    /// worker threads, so the level appears immediately and the dogs simply start
-    /// patrolling once the bake reports done.
-    ///
-    /// Completed data is also cached per scene and kept REGISTERED in the navigation
-    /// system across scene changes (the instance is owned by this DontDestroyOnLoad
-    /// object, not by the surface, so the surface cannot remove it on unload). Loading
-    /// the same level again - or coming back to it from the MP menu - therefore has a
-    /// NavMesh from the first frame, which also removes the one-per-load
-    /// "Failed to create agent ..." / "ResetPath ..." warning pair that the authored
-    /// dog emits while no NavMesh exists yet.
-    /// </summary>
     private sealed class CachedNavMesh
     {
         public NavMeshData data;
@@ -176,12 +146,6 @@ public class MpLevelInstaller : MonoBehaviour
 
     private readonly HashSet<string> navMeshBuildsInFlight = new HashSet<string>();
 
-    /// <summary>
-    /// False while an asynchronous bake for the current level is still running. Dog /
-    /// mail man AI has to wait for this: calling NavMeshAgent.SetDestination before the
-    /// NavMesh exists logs an error EVERY frame, and the bake now takes seconds without
-    /// blocking the main thread (it used to block, which hid the spam).
-    /// </summary>
     public static bool NavMeshReady { get; private set; } = true;
 
     private static void SetNavMeshReady(bool ready)
@@ -191,9 +155,6 @@ public class MpLevelInstaller : MonoBehaviour
 
     private void EnsureNavMesh(Scene scene)
     {
-        // Two levels at the same world coordinates must never share the navigation
-        // system at once (an agent could snap onto the other level's NavMesh), so drop
-        // this object's registration for any other level. The data stays cached.
         ReleaseOtherSceneNavMeshes(scene);
 
         foreach (NavMeshSurface surface in FindObjectsByType<NavMeshSurface>(
@@ -201,7 +162,7 @@ public class MpLevelInstaller : MonoBehaviour
         {
             if (surface == null) continue;
 
-            if (surface.navMeshData != null) continue;      // authored/baked data
+            if (surface.navMeshData != null) continue;
 
             string key = NavMeshKey(scene, surface);
 
@@ -217,10 +178,62 @@ public class MpLevelInstaller : MonoBehaviour
                 continue;
             }
 
-            if (!navMeshBuildsInFlight.Add(key)) continue;  // one build per surface
+            if (synchronousRuntimeBake)
+            {
+                BakeNavMeshNow(scene, surface);
+                continue;
+            }
+
+            if (!navMeshBuildsInFlight.Add(key)) continue;
 
             SetNavMeshReady(false);
             StartCoroutine(BuildNavMeshAsync(scene, surface, key));
+        }
+    }
+
+    private void ApplyRuntimeBakeSettings(Scene scene, NavMeshSurface surface)
+    {
+        if (coarseRuntimeBake)
+        {
+            surface.overrideVoxelSize = true;
+            surface.voxelSize = Mathf.Max(surface.voxelSize, coarseVoxelSize);
+        }
+
+        if (!limitBakeArea) return;
+        if (!TryGetBakeArea(scene, out Bounds bakeArea)) return;
+
+        surface.collectObjects = CollectObjects.Volume;
+        surface.center = bakeArea.center;
+        surface.size = bakeArea.size;
+    }
+
+    private void BakeNavMeshNow(Scene scene, NavMeshSurface surface)
+    {
+        ApplyRuntimeBakeSettings(scene, surface);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        StackTraceLogType previous = Application.GetStackTraceLogType(LogType.Warning);
+        Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+        try
+        {
+            surface.BuildNavMesh();
+        }
+        finally
+        {
+            Application.SetStackTraceLogType(LogType.Warning, previous);
+        }
+
+        stopwatch.Stop();
+
+        SetNavMeshReady(navMeshBuildsInFlight.Count == 0);
+        PlaceAgentsOnNavMesh(scene);
+
+        if (logInstalls)
+        {
+            InteractionDebug.Log($"NavMesh ({scene.name} / {surface.name}) senkron bake edildi: " +
+                                 $"{stopwatch.ElapsedMilliseconds} ms, voxel={surface.voxelSize:0.###}, " +
+                                 $"collect={surface.collectObjects}, area={surface.size}");
         }
     }
 
@@ -230,20 +243,24 @@ public class MpLevelInstaller : MonoBehaviour
         Quaternion rotation = surface.transform.rotation;
         string surfaceLabel = surface.name;
 
-        // Seed the data with the surface transform so UpdateNavMeshDataAsync writes it
-        // in the same space the surface uses (this mirrors what the package's own
-        // editor baker does).
+        ApplyRuntimeBakeSettings(scene, surface);
+
+        NavMeshBuildSettings settings = surface.GetBuildSettings();
+
+        if (logInstalls)
+        {
+            InteractionDebug.Log($"runtime NavMesh bake ayarlari ('{scene.name}' / '{surfaceLabel}'): " +
+                                 $"voxel={settings.voxelSize:0.###}, agentRadius={settings.agentRadius:0.##}, " +
+                                 $"collect={surface.collectObjects}, area={surface.size}");
+        }
+
         NavMeshData data = NavMeshBuilder.BuildNavMeshData(
-            surface.GetBuildSettings(),
+            settings,
             new List<NavMeshBuildSource>(),
             new Bounds(),
             position,
             rotation);
 
-        // CollectSources() runs synchronously inside UpdateNavMesh and emits hundreds of
-        // "Source mesh ... does not allow read access" warnings for a big level. Walking
-        // and writing a stack for each one buried the log, so mute warning stacks just
-        // for that call; the expensive voxelization happens afterwards on worker threads.
         StackTraceLogType previous = Application.GetStackTraceLogType(LogType.Warning);
         Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
 
@@ -272,8 +289,6 @@ public class MpLevelInstaller : MonoBehaviour
         navMeshBuildsInFlight.Remove(key);
         SetNavMeshReady(navMeshBuildsInFlight.Count == 0);
 
-        // The level may have been unloaded while the worker threads were baking; in
-        // that case re-find the surface only if the same scene is loaded again.
         NavMeshSurface target = surface != null ? surface : FindSurface(scene, key);
         bool sceneLoadedAgain = target != null || (scene.IsValid() && scene.isLoaded);
 
@@ -284,9 +299,6 @@ public class MpLevelInstaller : MonoBehaviour
             rotation = rotation,
         };
 
-        // Register now when this level is still (or again) loaded; otherwise keep the
-        // data cached for the next load so a different level's NavMesh is never live
-        // at the same time.
         if (sceneLoadedAgain)
             entry.instance = NavMesh.AddNavMeshData(data, position, rotation);
 
@@ -300,14 +312,15 @@ public class MpLevelInstaller : MonoBehaviour
 
         if (target != null)
         {
-            // Keep the surface's own registration out of the way; the cached instance
-            // above is the one that must survive this scene.
             target.RemoveData();
             target.navMeshData = data;
         }
 
         if (scene.IsValid() && scene.isLoaded)
+        {
             PlaceAgentsOnNavMesh(scene);
+            StartCoroutine(RepositionAgentsLater(scene));
+        }
 
         if (logInstalls)
             InteractionDebug.Log($"built NavMesh for '{scene.name}' (surface '{surfaceLabel}') " +
@@ -334,9 +347,6 @@ public class MpLevelInstaller : MonoBehaviour
                 cached.data, cached.position, cached.rotation);
         }
 
-        // Hand the data to the surface for bookkeeping, but do NOT call AddData():
-        // the registration above is owned by this installer and has to survive the
-        // surface being destroyed with the scene.
         surface.navMeshData = cached.data;
     }
 
@@ -354,13 +364,12 @@ public class MpLevelInstaller : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Agents enabled before a NavMesh existed stay unplaced for the rest of the
-    /// session. Re-creating them now that the bake is done puts them back on the mesh;
-    /// disabled agents (ghost dogs stopped by DogSync_MP) keep their disabled state.
-    /// </summary>
-    private static void PlaceAgentsOnNavMesh(Scene scene)
+    private const float AgentPlacementRadius = 15f;
+
+    private static int PlaceAgentsOnNavMesh(Scene scene)
     {
+        int placed = 0;
+
         foreach (GameObject root in scene.GetRootGameObjects())
         {
             if (root == null) continue;
@@ -372,13 +381,35 @@ public class MpLevelInstaller : MonoBehaviour
                 agent.enabled = false;
                 agent.enabled = true;
 
-                if (!agent.isOnNavMesh &&
-                    NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit,
-                                           3f, NavMesh.AllAreas))
+                if (agent.isOnNavMesh) continue;
+
+                if (!NavMesh.SamplePosition(agent.transform.position, out NavMeshHit hit,
+                                            AgentPlacementRadius, NavMesh.AllAreas))
                 {
-                    agent.Warp(hit.position);
+                    continue;
                 }
+
+                agent.Warp(hit.position);
+                placed++;
             }
+        }
+
+        return placed;
+    }
+
+    private IEnumerator RepositionAgentsLater(Scene scene)
+    {
+        for (int attempt = 0; attempt < 6; attempt++)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            if (!scene.IsValid() || !scene.isLoaded) yield break;
+
+            int placed = PlaceAgentsOnNavMesh(scene);
+            if (placed <= 0) continue;
+
+            if (logInstalls)
+                InteractionDebug.Log($"'{scene.name}': {placed} agent NavMesh'e yerlestirildi (deneme {attempt + 1}).");
         }
     }
 
@@ -401,16 +432,20 @@ public class MpLevelInstaller : MonoBehaviour
 
     private bool TryInstallObject(GameObject go)
     {
-        // already networked (authored identity, or a child of one)? leave it alone.
         if (go.GetComponent<NetworkIdentity>() != null) return false;
         if (go.GetComponentInParent<NetworkIdentity>(true) != null) return false;
 
-        // prefab assets / invalid scenes
         if (!go.scene.IsValid()) return false;
 
-        foreach ((System.Type spi, System.Type[] added, string label) in Rules)
+        foreach ((System.Type spi, System.Type[] added, string label, bool skipInsideStation) in Rules)
         {
             if (go.GetComponent(spi) == null) continue;
+
+            if (skipInsideStation &&
+                (go.GetComponentInParent<Cutter>(true) != null || go.GetComponentInParent<Mixer>(true) != null))
+            {
+                continue;
+            }
 
             foreach (System.Type type in added)
             {
@@ -419,8 +454,6 @@ public class MpLevelInstaller : MonoBehaviour
 
             NetworkIdentity identity = go.AddComponent<NetworkIdentity>();
 
-            // deterministic id: same value on the server and on every client.
-            // Layout mirrors Mirror's scene objects: [scene path hash | object hash].
             identity.sceneId = ComposeSceneId(go);
 
             addedThisScene.Add(identity);
@@ -442,20 +475,12 @@ public class MpLevelInstaller : MonoBehaviour
         foreach (NetworkIdentity identity in addedThisScene)
         {
             if (identity == null) continue;
-            if (identity.netId != 0) continue;              // already spawned
+            if (identity.netId != 0) continue;
 
             NetworkServer.Spawn(identity.gameObject);
         }
     }
 
-    // ---------------------------------------------------------------- authored SP HUD
-
-    /// <summary>
-    /// Finds the player HUD the SP level already contains and binds the SP managers to
-    /// its widgets. Nothing is disabled or removed: the authored money/time objects stay
-    /// exactly where they are, the SP CurrencyManager writes the network-synced wallet
-    /// into them and GameTimeManager's UpdateUI writes the synchronized round time.
-    /// </summary>
     private void BindAuthoredPlayerHud(Scene scene)
     {
         CurrencyText currencyText = null;
@@ -468,7 +493,6 @@ public class MpLevelInstaller : MonoBehaviour
             {
                 Transform avatar = stateMachine.transform;
 
-                // Mirror player prefabs are not the authored level objects.
                 if (avatar.GetComponentInParent<NetworkIdentity>(true) != null) continue;
 
                 GameObject package = FindPlayerPackage(avatar);
@@ -493,22 +517,6 @@ public class MpLevelInstaller : MonoBehaviour
                              $"(money={(currencyText != null)}, time={(timerText != null)})");
     }
 
-    /// <summary>
-    /// The level keeps its authored SP player package because the money/time HUD lives
-    /// on it, but the PLAYER itself belongs to the Mirror prefab. This turns the
-    /// authored package into an HUD-only object:
-    ///
-    ///  - the duplicate avatar / dog / mail man / cameras are switched off, so an MP
-    ///    level no longer shows the authored player standing next to the networked one
-    ///    ("two players"),
-    ///  - the authored PauseMenu is switched off because it pauses the whole world via
-    ///    GamePauseManager (the Mirror player prefab has an owner-only PauseMenu),
-    ///  - the authored camera + AudioListener + CinemachineBrain are silenced so the
-    ///    level is not rendered a second time (that double render pinned the CPU).
-    ///
-    /// The package root, its OverlayCanvas (the HUD MP writes into) and its
-    /// BoundCollider stay untouched.
-    /// </summary>
     private void PrepareAuthoredPlayer(GameObject package)
     {
         SilenceAuthoredCamera(package);
@@ -549,14 +557,6 @@ public class MpLevelInstaller : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// The authored SP package keeps its whole player stack - including a Main Camera
-    /// with an AudioListener - while the MP player prefab spawns the same camera again
-    /// inside LocalPlayerOnly. With both enabled, Unity renders the entire level twice
-    /// every frame (and warns about two audio listeners), which is what made big MP
-    /// levels like Level 2 pin the CPU. Only the rendering/audio output is silenced;
-    /// the package itself and the HUD we write into stay untouched.
-    /// </summary>
     private static void SilenceAuthoredCamera(GameObject package)
     {
         foreach (Camera camera in package.GetComponentsInChildren<Camera>(true))
@@ -565,8 +565,6 @@ public class MpLevelInstaller : MonoBehaviour
         foreach (AudioListener listener in package.GetComponentsInChildren<AudioListener>(true))
             listener.enabled = false;
 
-        // The brain keeps evaluating the authored virtual cameras even when its
-        // output Camera is off; the MP player has its own brain.
         foreach (Unity.Cinemachine.CinemachineBrain brain in
                  package.GetComponentsInChildren<Unity.Cinemachine.CinemachineBrain>(true))
             brain.enabled = false;
@@ -594,24 +592,10 @@ public class MpLevelInstaller : MonoBehaviour
         return null;
     }
 
-    // ---------------------------------------------------------------- scene log repairs
-
     private static readonly FieldInfo CarSpawnPointsField =
         typeof(CarController_Prototype).GetField(
             "spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
 
-    /// <summary>
-    /// Two authoring mistakes in the levels throw at runtime (they do so in SP as
-    /// well, but SP never had a log to watch). Repairing them here keeps an MP
-    /// session's console to actual network problems:
-    ///
-    ///  - Level 2's CarController_Prototype has an empty lane in its spawnPoints
-    ///    array; the car routine picks lanes at random and dereferences the null
-    ///    Transform -> UnassignedReferenceException every time it picks that lane,
-    ///  - the rain event calls StartLerping on a dissolve helper that sits on the
-    ///    authored-inactive 'SceneWaterPuddle' -> "Coroutine couldn't be started
-    ///    because the game object ... is inactive" on every rain cycle.
-    /// </summary>
     private void RepairSceneLogErrors(Scene scene)
     {
         int repairedCars = 0;
@@ -649,15 +633,11 @@ public class MpLevelInstaller : MonoBehaviour
             {
                 GameObject target = helper.gameObject;
 
-                // Only objects that a parent hierarchy would activate anyway; leaving an
-                // intentionally disabled branch alone is safer than switching it on.
                 if (target.activeInHierarchy || target.activeSelf) continue;
                 if (target.transform.parent != null &&
                     !target.transform.parent.gameObject.activeInHierarchy) continue;
                 if (target.GetComponent<MeshRenderer>() == null) continue;
 
-                // The helper starts at lerp 0, which is fully dissolved, so the object
-                // stays invisible until the rain event fades it in.
                 target.SetActive(true);
                 activatedLerpObjects++;
             }
@@ -669,21 +649,10 @@ public class MpLevelInstaller : MonoBehaviour
                                  $"inactive dissolve objects: {activatedLerpObjects})");
     }
 
-    // ---------------------------------------------------------------- helpers
-
-    /// <summary>
-    /// Full sceneId for a runtime-created scene object: low 32 bits identify the object
-    /// (hash of its hierarchy path), high 32 bits identify the scene (hash of its lower
-    /// cased path - Mirror does the same to keep ids stable between editor and build).
-    ///
-    /// Both parts are computed locally on purpose: Mirror's own helper for the hash part
-    /// is not accessible from this assembly, and the only requirement is that the server
-    /// and every client compute the SAME value - which this does.
-    /// </summary>
     private static ulong ComposeSceneId(GameObject go)
     {
         uint objectHash = Fnv1a(PathOf(go.transform));
-        if (objectHash == 0) objectHash = 1;   // 0 means "no scene id"
+        if (objectHash == 0) objectHash = 1;
 
         string scenePath = go.scene.path;
         uint sceneHash = string.IsNullOrEmpty(scenePath) ? 0 : Fnv1a(scenePath.ToLowerInvariant());
@@ -717,5 +686,173 @@ public class MpLevelInstaller : MonoBehaviour
         }
 
         return path;
+    }
+
+    private void EnsureLevelData(Scene scene)
+    {
+        Bounds bounds = GroundBounds(scene);
+        bool hasBounds = bounds.size.sqrMagnitude > 0.001f;
+
+        if (FindInScene(scene, "SpawnPoint") == null)
+        {
+            Vector3 position = hasBounds
+                ? new Vector3(bounds.center.x, bounds.min.y + 1f, bounds.center.z)
+                : Vector3.zero;
+
+            var spawn = new GameObject("SpawnPoint");
+            spawn.transform.position = position;
+
+            if (Physics.Raycast(position + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 50f))
+                spawn.transform.position = hit.point;
+
+            InteractionDebug.Log($"created SpawnPoint in '{scene.name}' at {spawn.transform.position}");
+        }
+
+        if (!hasBounds) return;
+
+        if (ZoneRegistry.PrimaryPlayArea() == null)
+        {
+            Bounds play = Grow(bounds, autoPlayAreaMargin);
+            CreateZone("Zone_PlayArea", play, ZoneKind.PlayArea, true);
+            InteractionDebug.Log($"created Zone_PlayArea in '{scene.name}' (center {play.center}, size {play.size}, policy {autoPlayAreaPolicy})");
+        }
+
+        if (ZoneRegistry.Nearest(bounds.center, ZoneKind.DogPatrol) == null)
+        {
+            Bounds patrol = Shrink(bounds, 0.35f);
+            CreateZone("Zone_DogPatrol", patrol, ZoneKind.DogPatrol, false);
+            InteractionDebug.Log($"created Zone_DogPatrol in '{scene.name}' (center {patrol.center}, size {patrol.size})");
+        }
+    }
+
+    private void CreateZone(string name, Bounds bounds, ZoneKind kind, bool primary)
+    {
+        var go = new GameObject(name);
+
+        BoxCollider box = go.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.center = bounds.center;
+        box.size = bounds.size;
+
+        ZoneVolume zone = go.AddComponent<ZoneVolume>();
+
+        BoundaryPolicy boundaryPolicy = kind == ZoneKind.PlayArea
+            ? autoPlayAreaPolicy
+            : BoundaryPolicy.None;
+
+        string zoneId = kind == ZoneKind.DogPatrol ? "dog_patrol" : null;
+
+        zone.Configure(kind, primary, boundaryPolicy, zoneId);
+    }
+
+    private bool TryGetBakeArea(Scene scene, out Bounds area)
+    {
+        area = GroundBounds(scene);
+
+        if (area.size.sqrMagnitude <= 1f) return false;
+
+        area.size = new Vector3(
+            area.size.x * 1.1f,
+            Mathf.Max(24f, area.size.y),
+            area.size.z * 1.1f);
+
+        return true;
+    }
+
+    private static Bounds BoundsOfAllRenderers(Scene scene)
+    {
+        Bounds all = new Bounds(Vector3.zero, Vector3.zero);
+        bool hasAny = false;
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root == null) continue;
+
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null) continue;
+
+                if (!hasAny) { all = renderer.bounds; hasAny = true; }
+                else all.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return all;
+    }
+
+    private static Bounds GroundBounds(Scene scene)
+    {
+        int groundLayer = LayerMask.NameToLayer("Ground");
+        bool has = false;
+        Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (groundLayer >= 0 && renderer.gameObject.layer != groundLayer) continue;
+
+                if (!has) { bounds = renderer.bounds; has = true; }
+                else bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        bool tooThin = has && Mathf.Min(bounds.size.x, bounds.size.z) < Mathf.Max(bounds.size.x, bounds.size.z) * 0.35f;
+
+        bool tooSmall = false;
+
+        if (has)
+        {
+            Bounds allExtent = BoundsOfAllRenderers(scene);
+
+            if (allExtent.size.sqrMagnitude > 1f)
+            {
+                tooSmall = bounds.size.x < allExtent.size.x * 0.7f ||
+                           bounds.size.z < allExtent.size.z * 0.7f;
+            }
+        }
+
+        if (!has || tooThin || tooSmall)
+        {
+            Bounds all = new Bounds(Vector3.zero, Vector3.zero);
+            bool hasAll = false;
+
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!hasAll) { all = renderer.bounds; hasAll = true; }
+                    else all.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (hasAll) bounds = all;
+        }
+
+        bounds.size = new Vector3(bounds.size.x, Mathf.Max(20f, bounds.size.y), bounds.size.z);
+        return bounds;
+    }
+
+    private static Bounds Grow(Bounds b, float margin)
+    {
+        b.Expand(new Vector3(margin * 2f, 0f, margin * 2f));
+        return b;
+    }
+
+    private static Bounds Shrink(Bounds b, float factor)
+    {
+        b.size = new Vector3(b.size.x * (1f - factor), b.size.y, b.size.z * (1f - factor));
+        return b;
+    }
+
+    private static GameObject FindInScene(Scene scene, string name)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            Transform found = root.transform.Find(name);
+            if (found != null) return found.gameObject;
+        }
+
+        return null;
     }
 }

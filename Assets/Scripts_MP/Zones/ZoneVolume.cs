@@ -3,26 +3,18 @@ using UnityEngine;
 
 public enum ZoneKind
 {
-
     PlayArea,
-
     DogPatrol,
-
     SystemZone,
-
     NoGo,
 }
 
 public enum BoundaryPolicy
 {
     None,
-
     PushBack,
-
     Stun,
-
     Kill,
-
     Respawn,
 }
 
@@ -30,27 +22,25 @@ public enum BoundaryPolicy
 [DisallowMultipleComponent]
 public class ZoneVolume : MonoBehaviour
 {
-    [Header("Identity")]
     [SerializeField] private string zoneId = "";
     [SerializeField] private ZoneKind kind = ZoneKind.PlayArea;
-
-    [Tooltip("The one PlayArea zone that represents the MAP BOUNDARY. Players outside " +
-             "it are handled by the policy below. Mark exactly one PlayArea as primary.")]
     [SerializeField] private bool primaryPlayArea;
-
-    [Header("Boundary policy (PlayArea)")]
     [SerializeField] private BoundaryPolicy policy = BoundaryPolicy.PushBack;
-    [Tooltip("Inward nudge speed given to the player (m/s).")]
     [SerializeField] private float pushBackSpeed = 7f;
-    [Tooltip("How far inside the edge the player is placed when pushed back.")]
     [SerializeField] private float pushBackMargin = 1.5f;
-    [Tooltip("Seconds before the policy may fire again for the same player.")]
     [SerializeField] private float policyCooldown = 3f;
-
-    [Header("Gizmos")]
     [SerializeField] private Color gizmoColor = new Color(0.15f, 0.8f, 0.45f, 0.12f);
 
     private BoxCollider box;
+
+    public void Configure(ZoneKind zoneKind, bool isPrimary, BoundaryPolicy boundaryPolicy, string id = null)
+    {
+        kind = zoneKind;
+        primaryPlayArea = isPrimary;
+        policy = boundaryPolicy;
+
+        if (!string.IsNullOrWhiteSpace(id)) zoneId = id;
+    }
 
     public string ZoneId => string.IsNullOrWhiteSpace(zoneId) ? name : zoneId;
     public ZoneKind Kind => kind;
@@ -73,7 +63,6 @@ public class ZoneVolume : MonoBehaviour
     private void Awake()
     {
         box = GetComponent<BoxCollider>();
-
         if (box != null && !box.isTrigger) box.isTrigger = true;
     }
 

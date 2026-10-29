@@ -1,26 +1,6 @@
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Multiplayer pause is a LOCAL menu, never a global time stop.
-///
-/// The SP pause flow (PauseMenu -> GamePauseManager.SetPause) sets Time.timeScale = 0,
-/// which freezes every simulated object on this machine: the other players' avatars,
-/// the dog, traps, timers - the whole shared world stops while one player reads the
-/// menu. In MP the menu must only stop the player who opened it.
-///
-/// The authored SP PauseMenu is switched off by MpLevelInstaller; the owner-only
-/// PauseMenu on the Mirror player prefab stays, so the panel and the cursor still
-/// work exactly as before. This guard then:
-///
-///  - restores Time.timeScale immediately whenever a network session is running,
-///  - stops (and restarts) only the LOCAL player's movement/interaction while the
-///    menu is open,
-///  - makes sure leaving the session while paused does not leave time frozen.
-///
-/// It is a self-spawning DontDestroyOnLoad singleton, like the other MP services, so
-/// it needs no scene or prefab wiring.
-/// </summary>
 public class MpPauseGuard_MP : MonoBehaviour
 {
     public static MpPauseGuard_MP Instance { get; private set; }
@@ -58,8 +38,7 @@ public class MpPauseGuard_MP : MonoBehaviour
 
         if (!networked)
         {
-            // Leaving (or never joining) a session while the local menu was open must
-            // not leave the next scene frozen.
+
             if (wasPaused)
             {
                 wasPaused = false;
@@ -90,11 +69,6 @@ public class MpPauseGuard_MP : MonoBehaviour
         ApplyLocalControls(!paused);
     }
 
-    /// <summary>
-    /// GamePauseManager caches the movement/interaction handlers of the AUTHORED SP
-    /// avatar (which MP disables), so it no longer reaches the networked local player.
-    /// Apply the pause to the local Mirror player explicitly.
-    /// </summary>
     private static void ApplyLocalControls(bool active)
     {
         NetworkIdentity localPlayer = NetworkClient.localPlayer;

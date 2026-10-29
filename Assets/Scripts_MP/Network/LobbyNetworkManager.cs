@@ -17,7 +17,8 @@ public class LobbyNetworkManager : NetworkManager
              "is refused with 'assets not registered'.")]
     [SerializeField] private GameObject trafficCarPrefab;
 
-    /// <summary>Host'un bulundugu Steam lobisinin id'si (LAN modunda 0).</summary>
+    public GameObject TrafficCarPrefab => trafficCarPrefab;
+
     public ulong SteamLobbyId { get; private set; }
 
     public string LobbyID { get; private set; }
@@ -33,13 +34,8 @@ public class LobbyNetworkManager : NetworkManager
     public const int MinPlayers = 2;
     public const int MaxPlayers = 4;
 
-    // Fallback scene if no level catalog is available (kept for safety).
     public const string GameScenePath = "Assets/Scenes_MP/DemoScene_MP.unity";
 
-    /// <summary>
-    /// The scene a match will load: the level the HOST picked in the lobby catalog,
-    /// falling back to GameScenePath when no catalog is present.
-    /// </summary>
     public static string SelectedGameScenePath
     {
         get
@@ -49,18 +45,8 @@ public class LobbyNetworkManager : NetworkManager
         }
     }
 
-    /// <summary>
-    /// Oyun sahnesindeki spawn noktasi. DemoScene_MP'deki (ReSpawnManager altindaki)
-    /// nesnenin adi "SpawnPoint"; RespawnManager da ayni Transform'a isaret eder.
-    /// </summary>
     public const string SpawnMarkerName = "SpawnPoint";
 
-    /// <summary>
-    /// Baglanti koptugunda istemcinin donduruldugu coklu oyuncu menu sahnesi.
-    /// SP menusu (Assets/Scenes/MenuScene.unity) artik MP bilesenlerini ICERMEZ; lobi
-    /// panelleri, MP_NetworkManager ve Steam bilesenleri Assets/Scenes_MP/MenuScene_MP.unity
-    /// icindedir. Bu yuzden MP'den menuye donus de o sahneye yapilir.
-    /// </summary>
     public const string MenuSceneName = "MenuScene_MP";
 
     bool gameStarted = false;
@@ -69,29 +55,14 @@ public class LobbyNetworkManager : NetworkManager
 
     bool connectedOnce = false;
 
-    /// <summary>
-    /// Bumps every time the user cancels the create/join flow. Since Steam lobby
-    /// creation and joining complete in callbacks that may fire AFTER the user has
-    /// already pressed the back button, each pending request records the generation
-    /// it started with and simply bails out if the counter has moved on.
-    /// </summary>
     int setupGeneration;
 
-    /// <summary>Menuye donus zaten baslatildi mi (sahnenin iki kez yuklenmesini engeller).</summary>
     private bool returnToMenuRequested;
 
-    /// <summary>
-    /// True while Unity is shutting the play session down. StopClient/StopHost run from
-    /// OnApplicationQuit too, and the resulting OnClientDisconnect used to "return to
-    /// the menu" during shutdown: Unity refuses the load and logged
-    /// "[SCENES] Could not load 'MenuScene_MP'." on every exit.
-    /// </summary>
     private bool quitInProgress;
 
     public override void OnApplicationQuit()
     {
-        // Set before base: the base implementation stops the client, which raises
-        // OnClientDisconnect -> ReturnToMenuScene synchronously.
         quitInProgress = true;
         base.OnApplicationQuit();
     }
@@ -100,16 +71,9 @@ public class LobbyNetworkManager : NetworkManager
     {
         base.Awake();
 
-        // gamePlayerPrefab, NetworkManager.playerPrefab DEGIL: Mirror uzak istemcilerde
-        // spawn mesajini assetId ile cozer (NetworkClient.SpawnPrefab) ve yalnizca
-        // playerPrefab + spawnPrefabs listesini kayit eder. Kayitli olmazsa istemciler
-        // "Failed to spawn server object, did you forget to add it to the NetworkManager?"
-        // hatasi verip oyuncuyu hic olusturmaz. Bu yuzden burada listeye ekliyoruz.
         if (gamePlayerPrefab != null && !spawnPrefabs.Contains(gamePlayerPrefab))
             spawnPrefabs.Add(gamePlayerPrefab);
 
-        // The traffic cars spawn at runtime (CarController_Prototype on the host);
-        // Mirror resolves the prefab on the clients through this list.
         if (trafficCarPrefab != null && !spawnPrefabs.Contains(trafficCarPrefab))
             spawnPrefabs.Add(trafficCarPrefab);
     }
@@ -118,8 +82,6 @@ public class LobbyNetworkManager : NetworkManager
     {
         base.Start();
 
-        // Davet kabul edildiginde SteamLobbyManager kodu cozer; UI'yi burada yonlendiriyoruz
-        // (davet,JoinLobbyUI pasifken de gelebilir, o yuzden paneli acan taraf burada).
         if (SteamLobbyManager.Instance != null)
             SteamLobbyManager.Instance.OnInviteCodeReady += HandleInviteCode;
     }
@@ -145,21 +107,7 @@ public class LobbyNetworkManager : NetworkManager
 
         var steam = SteamLobbyManager.Instance;
 
-        // ---------- LAN DEV MODE ----------
-        if (steam != null && steam.UseLanDevMode)
-        {
-            steam.EnsureLanTransport();
-            string lanIp = GetLocalIPv4();
-            LobbyID = lanIp;
-            Debug.Log($"LAN mode: not using Steam, hosting.\n" +
-                      $"  For another computer, join with: {lanIp}\n" +
-                      $"  For a second instance on this machine: 127.0.0.1");
-            StartHost();
-            return;
-        }
-        // ----------------------------------
-
-        if (steam == null)
+        if (steam == null || !SteamManager.Initialized)
         {
             Debug.LogError("[STEAM] SteamLobbyManager not found - could not create the lobby.");
             return;
@@ -170,7 +118,6 @@ public class LobbyNetworkManager : NetworkManager
             maxConnections,
             onSuccess: code =>
             {
-                // The user may have pressed the back button while Steam was creating the lobby.
                 if (gen != setupGeneration)
                 {
                     Debug.Log("[LOBBY] Create cancelled by user - discarding the Steam lobby.");
@@ -178,13 +125,11 @@ public class LobbyNetworkManager : NetworkManager
                     return;
                 }
 
-                LobbyID = code;                       // GameManager.ShowLobbyMenu reads this
+                LobbyID = code;
                 SteamLobbyId = steam.CurrentLobby.m_SteamID;
 
                 Debug.Log($"[STEAM] Lobby ready. code={code} steamLobby={SteamLobbyId}");
 
-                // Unlike the Edgegap relay there is no server-side registration to wait
-                // for: the lobby exists and we own it the moment this callback fires.
                 StartHost();
             },
             onFail: err => Debug.LogError("[STEAM] Could not create the lobby: " + err));
@@ -198,7 +143,7 @@ public class LobbyNetworkManager : NetworkManager
 
         var auth = (LobbyAuthenticator)authenticator;
         auth.clientPassword = password;
-        auth.clientName = DesiredName;          // name picked in the UI before connecting
+        auth.clientName = DesiredName;
 
         string input = LobbyCodeCodec.Canonicalize(userInput);
 
@@ -206,32 +151,12 @@ public class LobbyNetworkManager : NetworkManager
 
         int gen = ++setupGeneration;
 
-        // ---------- LAN DEV MODE ----------
-        if (steam != null && steam.UseLanDevMode)
-        {
-            string host = (string.IsNullOrEmpty(input) || input == "LAN" || input == "LOCALHOST" || input == "LOCAL")
-                ? "127.0.0.1"
-                : input;
-
-            steam.EnsureLanTransport();
-            Debug.Log($"LAN mode: connecting to host '{host}'. " +
-                      $"transport={NetworkManager.singleton.transport?.GetType().Name} " +
-                      $"Transport.active={Transport.active?.GetType().Name}");
-            NetworkManager.singleton.networkAddress = host;
-            LobbyID = host;
-            StartClient();
-            return;
-        }
-        // ----------------------------------
-
-        if (steam == null)
+        if (steam == null || !SteamManager.Initialized)
         {
             Debug.LogError("[STEAM] SteamLobbyManager not found - could not join.");
             return;
         }
 
-        // 1) 6-character code (main path) - looked up in Steam's lobby list by the
-        //    "nif_code" metadata filter.
         if (LobbyCodeCodec.IsValidShortCode(input))
         {
             steam.JoinLobbyByCode(input,
@@ -249,7 +174,6 @@ public class LobbyNetworkManager : NetworkManager
             return;
         }
 
-        // 2) A raw SteamID64 / lobby id (what an invite message or the clipboard holds).
         if (ulong.TryParse(input, out ulong steamLobbyId))
         {
             steam.JoinLobbyById(new CSteamID(steamLobbyId),
@@ -270,27 +194,22 @@ public class LobbyNetworkManager : NetworkManager
         Debug.LogError("[STEAM] Unrecognised lobby address: " + input);
     }
 
-    /// <summary>
-    /// Called by the join/create panels' back buttons: cancels whatever setup is
-    /// still in flight so a late Steam callback or pending connect cannot start a
-    /// host or yank the player into a lobby after they returned to the menu.
-    /// </summary>
     public void CancelPendingSetup()
     {
+        MpTeardownLog.Log("LobbyNetworkManager.CancelPendingSetup");
+
         setupGeneration++;
 
         bool aborted = false;
 
         if (NetworkServer.active)
         {
-            // Host was already up - tear it down along with its Steam lobby.
             SteamLobbyManager.Instance?.LeaveLobby();
             StopHost();
             aborted = true;
         }
         else if (NetworkClient.active && !NetworkClient.isConnected)
         {
-            // A connect attempt is still running - stop it clean.
             SteamLobbyManager.Instance?.LeaveLobby();
             StopClient();
             aborted = true;
@@ -300,12 +219,7 @@ public class LobbyNetworkManager : NetworkManager
 
         ResetLobbyState();
     }
-    /// <summary>
-    /// Runs once the Steam lobby has been entered: points Mirror at the host's SteamID64
-    /// (FizzySteamworks does UInt64.Parse on networkAddress) and starts the client.
-    /// </summary>
-    /// <param name="displayId">The code or SteamID the user typed (shown in the UI).</param>
-    /// <param name="gen">The join generation that produced this call; stale calls are discarded.</param>
+
     private void BeginSteamClient(string displayId, int gen)
     {
         if (gen != setupGeneration)
@@ -336,10 +250,6 @@ public class LobbyNetworkManager : NetworkManager
         StartClient();
     }
 
-    /// <summary>
-    /// Arkadas daveti kabul edildi: sifre Steam'de tutulmadigi icin kullaniciya sorulur.
-    /// Join ekranini acip kodu dolduruyoruz; baglanti Join butonuna basinca kurulur.
-    /// </summary>
     private void HandleInviteCode(string code)
     {
         if (NetworkServer.active || NetworkClient.active)
@@ -410,9 +320,6 @@ public class LobbyNetworkManager : NetworkManager
         }
         else
         {
-            // GameObject.Find pasif nesneleri bulmaz; sahne yuklendikten sonra buraya
-            // dusuyorsa "SpawnPoint" pasif ya da adi degismis demektir. Sessizce
-            // (0,0,0)'a dusmek yerine gorunur bir uyari birakiyoruz.
             Debug.LogWarning($"[MP] '{SpawnMarkerName}' bulunamadi ({UnityEngine.SceneManagement.SceneManager.GetActiveScene().path}) " +
                              "- oyuncu dunya orijinine (0,0,0) konuluyor.");
         }
@@ -433,8 +340,6 @@ public class LobbyNetworkManager : NetworkManager
         else
             NetworkServer.AddPlayerForConnection(conn, gamePlayer);
 
-        // The player's HUD exists from now on: send the seeded wallet so the number is
-        // correct before the first frame instead of waiting for the first purchase.
         CurrencyManager_MP.SendStateTo(conn);
 
         Debug.Log($"[MP] Game player spawned. conn={conn.connectionId} slot={slot} " +
@@ -475,7 +380,6 @@ public class LobbyNetworkManager : NetworkManager
         base.OnServerConnect(conn);
         Debug.Log($"[NET] New connection: connId={conn.connectionId} total={NetworkServer.connections.Count}");
 
-        // the joining machine should see the current wallet + level immediately
         CurrencyManager_MP.SendStateTo(conn);
         MpLevelNet.SendCurrentTo(conn);
         MatchState_MP.SendStateTo(conn);
@@ -506,6 +410,14 @@ public class LobbyNetworkManager : NetworkManager
     {
         base.OnClientDisconnect();
         Debug.LogWarning("[NET] Client connection lost.");
+
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path == SelectedGameScenePath)
+            Debug.LogError("[MP] The host ended the session while this client was in the "
+                           + "match scene. Falling back to MenuScene_MP - check the host's "
+                           + "Player.log for '[MP-TEARDOWN]' to see what closed it.");
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         if (!connectedOnce)
         {
             Debug.Log("[LOBBY] Could not connect; staying on the Join screen.");
@@ -514,55 +426,31 @@ public class LobbyNetworkManager : NetworkManager
 
         if (GameManager.Instance != null)
         {
-            // Musteri oyun sahnesinde kopuyorsa faz "InGame" kalir; o durumda menuye
-            // donuste GameManager.SetupGameScene() calisir ve ana menu hic gorunmez
-            // (mp* paneller o sahnede yok). Once faza, sonra panele don.
             GameManager.Instance.SwitchToMenuPhase();
             GameManager.Instance.ShowMainMenu();
         }
 
         ResetLobbyState();
 
-        // Sahne geri donusu: host cikinca istemci oyun sahnesinde UI'siz kaliyordu.
         ReturnToMenuScene();
 
         Debug.Log("[LOBBY] Lobby closed, returned to the main menu.");
     }
 
-    /// <summary>
-    /// Istemciyi ana menu sahnesine dondurur (host oyundan/lobiden ciktiginda).
-    ///
-    /// Neden gerekli: Mirror'in <c>offlineScene</c> alani bu projede bos ve sahne degisimi
-    /// yalnizca host tarafinda <c>ServerChangeScene</c> ile yapiliyor. Host <c>StopHost()</c>
-    /// cagirdiginda istemci DemoScene_MP'de (ya da lobide) UI'siz, etkilesimsiz kaliyordu;
-    /// Mirror'in kendisi hicbir sahne yuklemiyor. Bu yuzden donusu istemci tarafinda
-    /// kendimiz yapiyoruz. Host'un kendisi icin de ayni yol isler (StopHost -> StopClient
-    /// -> OnClientDisconnect); lobide duruyorsa asagidaki erken donus sahneyi yeniden yuklemez.
-    /// </summary>
     private void ReturnToMenuScene()
     {
-        // Ayni anda iki kez cagrilabiliyor (OnClientDisconnect + yedek zamanlayici): sahne
-        // IKINCI kez yuklenirse MenuScene'deki NetworkManager/SteamManager/SteamLobbyManager
-        // kopyalari DDOL ornekleriyle cakisir ve konsola
-        // "Multiple NetworkManagers detected in the scene" + tekil ornek uyarilari duser.
         if (returnToMenuRequested) return;
 
-        // Quitting the application: Unity does not load scenes during shutdown, and
-        // this path is reached from NetworkManager.OnApplicationQuit.
         if (quitInProgress) return;
 
         Scene active = SceneManager.GetActiveScene();
 
-        // Zaten menude (orn. lobiden ayrilma): sahneyi bosuna yeniden yuklemeyelim.
         if (active.name == MenuSceneName) return;
 
         returnToMenuRequested = true;
 
         Debug.Log($"[LOBBY] Host baglantisi koptu; '{active.name}' -> '{MenuSceneName}' yukleniyor.");
 
-        // GameSceneManager kalici (DontDestroyOnLoad) ve yukleme bitince
-        // GameManager.OnSceneLoaded() cagirir; boylece menude paneller/kamera yeniden kurulur.
-        // LoadMenu() DEGIL: o SP menusunu yukler ve MP'den cikinca lobi panelleri kaybolur.
         if (GameSceneManager.Instance != null)
         {
             GameSceneManager.Instance.LoadMultiplayerMenu();
@@ -584,31 +472,11 @@ public class LobbyNetworkManager : NetworkManager
 
         spawnSlot = 0;
 
-        // A new MP match starts with the same wallet a fresh SP level would: the SP
-        // CurrencyManager value is seeded from GameManager.startCurrencyAmount before
-        // any game player spawns, so every HUD (host and clients) starts in sync.
         if (GameManager.Instance != null)
             CurrencyManager_MP.SeedServerTotal(GameManager.Instance.GetStartCurrencyAmount());
 
-        // NOT: Burada oyunculari ELLE spawn ETMIYORUZ (eski surumde vardi, kaldirildi).
-        //
-        // Mirror'in sahne yukleme sirasi:
-        //   FinishLoadSceneHost() -> SpawnObjects() -> OnServerSceneChanged() -> OnClientSceneChanged()
-        // Istemci ancak kendi OnClientSceneChanged icinde Ready() cagirir; dolayisiyla
-        // bu noktada AddPlayerForConnection cagirmak:
-        //   * sunucuda "NetworkClient can't AddPlayer before being ready" uyarisi
-        //   * istemci mesaji hazir olmadan gonderildigi icin istemcide gec gelen spawn
-        //     ve ardindan "There is already a player for this connection." LogError'u
-        // uretiyordu.
-        //
-        // Dogru akis: istemci sahneyi yukleyip Ready() + AddPlayer() gonderir, sunucu da
-        // OnServerAddPlayer icinden SpawnGamePlayer cagirir (MenuScene'de autoCreatePlayer=1).
-        // gameStarted bu asamada zaten true oldugu icin OnServerAddPlayer dogru dala gider.
-
         if (GameManager.Instance != null) GameManager.Instance.EnterGamePhase();
 
-        // Test teshisi: 3 sn sonra kac baglantinin gercekten oyuncusu var, loga yaz.
-        // Boylece "oyuncular spawn olmadi" durumunda sebep tek satirdan gorulur.
         StartCoroutine(LogGamePlayerCountLater());
     }
 
@@ -649,15 +517,6 @@ public class LobbyNetworkManager : NetworkManager
         if (GameManager.Instance != null) GameManager.Instance.EnterGamePhase();
     }
 
-    /// <summary>
-    /// Oyun icindeki "Main Menu" butonlari icin (ReturnMenuHelper): acik Mirror oturumunu
-    /// kapatir.
-    ///
-    /// Donus degeri oturum acikken true olur; bu durumda menuye donusu Mirror'in kopma
-    /// yolu (StopHost/StopClient -> OnClientDisconnect -> ReturnToMenuScene) yapar ve
-    /// cagiran taraf ayrica sahne yuklememelidir. Oturum yoksa (menude/tek oyunculu)
-    /// false doner ve cagiran kendi yolunu izler.
-    /// </summary>
     public bool LeaveMatch()
     {
         bool wasHost = NetworkServer.active;
@@ -668,15 +527,12 @@ public class LobbyNetworkManager : NetworkManager
         Debug.Log($"[LOBBY] Oyun icinden menuye donuluyor: oturum kapatiliyor " +
                   $"(host={wasHost} client={wasClient}).");
 
-        // Steam lobisi varsa dagitilir/yayindan cikilir (LAN modunda no-op).
         SteamLobbyManager.Instance?.LeaveLobby();
 
         if (wasHost && wasClient) StopHost();
         else if (wasClient) StopClient();
         else StopServer();
 
-        // Emniyet: kopma olayi beklenmedik sekilde gelmezse oyuncu oyun sahnesinde
-        // etkilesimsiz kalirdi; kisa bir beklemeden sonra donusu zorluyoruz.
         StartCoroutine(ReturnMenuFallbackRoutine());
         return true;
     }
@@ -685,7 +541,6 @@ public class LobbyNetworkManager : NetworkManager
     {
         yield return new WaitForSecondsRealtime(1.5f);
 
-        // Donus zaten basladiysa bekleme yeterli olmasa bile ikinci kez yuklemeyelim.
         if (returnToMenuRequested || SceneManager.GetActiveScene().name == MenuSceneName) yield break;
 
         Debug.LogWarning("[LOBBY] Disconnect olayi gelmedi; menuye donus yedek yoldan yapiliyor.");
@@ -695,36 +550,16 @@ public class LobbyNetworkManager : NetworkManager
 
     public void ResetLobbyState()
     {
+        MpTeardownLog.Log("LobbyNetworkManager.ResetLobbyState");
+
         gameStarted = false;
         SteamLobbyId = 0;
         LobbyID = null;
         LobbyPassword = null;
 
-        // Steam lobisinden cikis. Host ayrilirsa Steam lobiyi dagitir; Edgegap'teki gibi
-        // silinecek sunucu tarafi bir kayit yoktur.
         SteamLobbyManager.Instance?.LeaveLobby();
 
         Debug.Log("[LOBBY] Lobby state reset.");
-    }
-
-    /// <summary>Bu makinenin LAN IPv4 adresi (LAN/dev modu icin).</summary>
-    public static string GetLocalIPv4()
-    {
-        try
-        {
-            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
-                    !System.Net.IPAddress.IsLoopback(ip))
-                    return ip.ToString();
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning("Could not get the LAN IP: " + e.Message);
-        }
-        return "127.0.0.1";
     }
 
     public bool AllClientsReady()
@@ -775,5 +610,4 @@ public class LobbyNetworkManager : NetworkManager
 
         ServerChangeScene(scenePath);
     }
-
 }

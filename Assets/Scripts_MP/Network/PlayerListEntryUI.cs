@@ -16,7 +16,6 @@ public class PlayerListEntryUI : MonoBehaviour
     {
         if (string.IsNullOrEmpty(name)) name = "Player";
 
-        // Cok uzun isimler satirdan tasmasin: kirp ve uc nokta koy.
         if (maxNameLength > 0 && name.Length > maxNameLength)
             name = name.Substring(0, maxNameLength - 1) + "\u2026";
 

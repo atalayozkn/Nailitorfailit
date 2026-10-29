@@ -1,12 +1,6 @@
 using Mirror;
+using UnityEngine;
 
-/// <summary>
-/// The shelf purchase (buy a tool from the shop) is decided on the host: the host
-/// spawns the bought item into the network and the client-side wallet pays. The
-/// affordability answer comes from the PRESSING machine - the wallet in this build
-/// is a shared one (CurrencyManager_MP ripples every change to everyone), so
-/// trusting the requester's own view of it is consistent.
-/// </summary>
 public class ShopIndex_MP : NetworkBehaviour
 {
     private ShopIndex shopIndex;
@@ -28,6 +22,24 @@ public class ShopIndex_MP : NetworkBehaviour
     [Server]
     private void ServerSpawnPurchase()
     {
-        shopIndex.ServerBuy();
+        if (shopIndex == null) return;
+
+        GameObject prefab = MpSharedCompat.MpGetField<GameObject>(shopIndex, "itemPrefab");
+        if (prefab == null) return;
+
+        int cost = MpSharedCompat.MpGetField(shopIndex, "itemCost", 0);
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
+
+        Transform spawn = MpSharedCompat.MpGetField<Transform>(shopIndex, "spawnPosition");
+        Vector3 position = spawn != null ? spawn.position : shopIndex.transform.position;
+        Quaternion rotation = spawn != null ? spawn.rotation : shopIndex.transform.rotation;
+
+        GameObject obj = Instantiate(MpPrefabResolver.Resolve(prefab), position, rotation);
+        obj.transform.SetParent(null);
+
+        if (NetworkServer.active && obj.TryGetComponent(out NetworkIdentity identity))
+            NetworkServer.Spawn(obj);
+
+        CurrencyManager_MP.Instance?.RequestSpend(cost);
     }
 }

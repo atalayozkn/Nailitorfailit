@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PlayerScripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -56,12 +57,26 @@ public class ChatUI : MonoBehaviour
 
     void Update()
     {
-        if (!escapeReleasesFocus) return;
-        if (inputField == null || !inputField.isFocused) return;
-        if (Keyboard.current == null) return;
+        if (!isOpen) return;
+
+        lastEscapeHandledAt = Time.unscaledTime;
+
+        if (inputField != null && !inputField.isFocused)
+        {
+            inputField.ActivateInputField();
+            inputField.Select();
+        }
+
+        if (cachedMovement != null) cachedMovement.SetActivity(false);
+        SetPlayerInput(false);
+
+        if (!escapeReleasesFocus || Keyboard.current == null) return;
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
-            inputField.DeactivateInputField();
+        {
+            InteractionDebug.Log("[CHAT] Escape pressed - closing the chat.");
+            Close();
+        }
     }
 
     void LateUpdate()
@@ -75,6 +90,127 @@ public class ChatUI : MonoBehaviour
     }
 
     void OnSubmit(string value) => SendCurrent();
+
+    private bool isOpen;
+
+    private PlayerMovement cachedMovement;
+
+    private static float lastEscapeHandledAt = -1f;
+
+    public static ChatUI Active { get; private set; }
+
+    public static bool IsAnyOpen => Active != null && Active.isOpen;
+
+    public static bool EscapeHandledRecently => Time.unscaledTime - lastEscapeHandledAt < 0.2f;
+
+    public bool IsOpen => isOpen;
+
+    public bool IsTyping => isOpen || (inputField != null && inputField.isFocused);
+
+    public void Open()
+    {
+        for (Transform node = transform; node != null; node = node.parent)
+        {
+            if (!node.gameObject.activeSelf) node.gameObject.SetActive(true);
+        }
+
+        if (inputField != null)
+        {
+            inputField.ActivateInputField();
+            inputField.Select();
+        }
+
+        isOpen = true;
+        Active = this;
+        cachedMovement = LocalMovement();
+
+        if (cachedMovement != null) cachedMovement.SetActivity(false);
+
+        SetPlayerInput(false);
+        SetCursorLocked(false);
+    }
+
+    public void Close()
+    {
+        if (!isOpen && (inputField == null || !inputField.isFocused)) return;
+
+        isOpen = false;
+        lastEscapeHandledAt = Time.unscaledTime;
+
+        if (Active == this) Active = null;
+
+        if (inputField != null) inputField.DeactivateInputField();
+
+        if (cachedMovement != null) cachedMovement.SetActivity(true);
+
+        cachedMovement = null;
+        SetPlayerInput(true);
+        SetCursorLocked(true);
+
+        InteractionDebug.Log("[CHAT] chat closed, player input restored.");
+    }
+
+    private static void SetCursorLocked(bool locked)
+    {
+        PlayerStateMachine stateMachine = LocalStateMachine();
+
+        if (stateMachine != null)
+        {
+            if (locked) stateMachine.CloseCursor();
+            else stateMachine.OpenCursor();
+
+            return;
+        }
+
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
+    }
+
+    private static void SetPlayerInput(bool enabled)
+    {
+        PlayerMovement movement = LocalMovement();
+        if (movement == null) return;
+
+        SetAction(movement.move, enabled);
+        SetAction(movement.jump, enabled);
+        SetAction(movement.sprint, enabled);
+    }
+
+    private static void SetAction(InputActionReference reference, bool enabled)
+    {
+        if (reference == null || reference.action == null) return;
+
+        if (enabled)
+        {
+            if (!reference.action.enabled) reference.action.Enable();
+        }
+        else
+        {
+            if (reference.action.enabled) reference.action.Disable();
+        }
+    }
+
+    private static PlayerMovement LocalMovement()
+    {
+        foreach (PlayerNetwork_MP net in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+        {
+            if (net == null || !net.isOwned) continue;
+            return net.GetComponentInChildren<PlayerMovement>(true);
+        }
+
+        return null;
+    }
+
+    private static PlayerStateMachine LocalStateMachine()
+    {
+        foreach (PlayerNetwork_MP net in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+        {
+            if (net == null || !net.isOwned) continue;
+            return net.GetComponentInChildren<PlayerStateMachine>(true);
+        }
+
+        return null;
+    }
 
     void SendCurrent()
     {

@@ -3,9 +3,7 @@ using UnityEngine;
 
 public abstract class ZoneScopedSystem : MonoBehaviour
 {
-    [Tooltip("Leave empty to use the ZoneVolume this object is a child of.")]
     [SerializeField] private string zoneIdOverride = "";
-
     [SerializeField] private ZoneKind expectedKind = ZoneKind.SystemZone;
 
     public ZoneVolume Zone { get; private set; }
@@ -51,6 +49,5 @@ public abstract class ZoneScopedSystem : MonoBehaviour
     }
 
     protected virtual void OnPlayerEntered(PlayerNetwork_MP player) { }
-
     protected virtual void OnPlayerExited(PlayerNetwork_MP player) { }
 }

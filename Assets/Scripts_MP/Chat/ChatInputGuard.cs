@@ -9,6 +9,13 @@ public class ChatInputGuard : MonoBehaviour
 {
     [SerializeField] private TMP_InputField inputField;
 
+    [Header("Kisayollar")]
+    [Tooltip("Bu tusa basinca chat yazma alani acilir.")]
+    [SerializeField] private bool useCHotkey = true;
+
+    [Tooltip("Yazarken ESC ile chati kapat.")]
+    [SerializeField] private bool escapeClosesChat = true;
+
     private bool wasTyping;
     private bool initialized;
 
@@ -32,12 +39,61 @@ public class ChatInputGuard : MonoBehaviour
 
         bool typing = inputField.isFocused;
 
+        if (!typing && useCHotkey && ChatKeyPressed())
+        {
+            OpenChat();
+            return;
+        }
+
+        if (typing && escapeClosesChat && EscapePressed())
+        {
+            inputField.DeactivateInputField();
+            return;
+        }
+
         if (initialized && typing == wasTyping) return;
 
         initialized = true;
         wasTyping = typing;
 
         Apply(typing);
+    }
+
+    private static bool ChatKeyPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null && keyboard.cKey.wasPressedThisFrame) return true;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (UnityEngine.Input.GetKeyDown(KeyCode.C)) return true;
+#endif
+        return false;
+    }
+
+    private static bool EscapePressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) return true;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Escape)) return true;
+#endif
+        return false;
+    }
+
+    private void OpenChat()
+    {
+        for (Transform node = transform; node != null; node = node.parent)
+        {
+            if (!node.gameObject.activeSelf) node.gameObject.SetActive(true);
+        }
+
+        inputField.ActivateInputField();
+        inputField.Select();
+
+        Debug.Log("[CHAT] 'C' ile chat acildi.");
     }
 
     private void Apply(bool typing)

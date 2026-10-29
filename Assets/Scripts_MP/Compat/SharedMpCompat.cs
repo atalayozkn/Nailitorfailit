@@ -805,8 +805,8 @@ public static class MpSharedCompat
         Vector3 position = spawnPosition != null ? spawnPosition.position : shopIndex.transform.position;
         Quaternion rotation = spawnPosition != null ? spawnPosition.rotation : shopIndex.transform.rotation;
 
-        GameObject obj = UnityEngine.Object.Instantiate(itemPrefab, position, rotation);
-        obj.transform.SetParent(null);
+        GameObject obj = MpPrefabSpawn.Spawn(itemPrefab, position, rotation);
+        if (obj != null) obj.transform.SetParent(null);
 
         if (CurrencyManager_MP.Instance != null) CurrencyManager_MP.Instance.RequestSpend(itemCost);
     }
@@ -824,14 +824,44 @@ public static class MpSharedCompat
         if (requesterCarrying) return;
         if (GetField(spawner, "isOnCooldown", false)) return;
 
+        GameObject prefab = GetField<GameObject>(spawner, "objectPrefab");
+        if (prefab == null) return;
+
+        int maxCount = GetField(spawner, "maxCount", 15);
+        int spawnedCount = GetField(spawner, "spawnedObjectCount", 0);
+        if (spawnedCount >= maxCount) return;
+
         SetField(spawner, "isOnCooldown", true);
 
         UnityEvent onInteract = GetField<UnityEvent>(spawner, "onInteractEvent");
         if (onInteract != null) onInteract.Invoke();
 
-        Call(spawner, "SpawnObject");
+        GameObject instance = UnityEngine.Object.Instantiate(MpPrefabResolver.Resolve(prefab), null);
+        instance.transform.SetParent(null);
+
+        if (NetworkServer.active && instance.TryGetComponent(out NetworkIdentity identity))
+            NetworkServer.Spawn(instance);
+
+        SetField(spawner, "spawnedObjectCount", Mathf.Min(maxCount, spawnedCount + 1));
+
+        if (instance.TryGetComponent(out ItemScript.CarriableObject_SP carriable))
+            carriable.OnInteract();
+
+        if (instance.TryGetComponent(out ISpawnable spawnable))
+            spawnable.OnSpawn(spawner.gameObject);
 
         spawner.Invoke("ReverseCooldown", GetField(spawner, "interactCooldown", 0f));
+    }
+
+
+    public static T MpGetField<T>(object target, string name, T fallback = default)
+    {
+        return GetField(target, name, fallback);
+    }
+
+    public static void MpSetField(object target, string name, object value)
+    {
+        SetField(target, name, value);
     }
 
     public static bool IsTimerActive(this GameTimeManager manager)
@@ -908,32 +938,15 @@ public static class MpSharedCompat
         return manager == null ? 0 : GetField(manager, "currentValue", 0);
     }
 
-    /// <summary>
-    /// Value of GameManager's serialized startCurrencyAmount - the amount SP hands the
-    /// player when a level starts. MP matches use it as their starting wallet too.
-    /// </summary>
     public static int GetStartCurrencyAmount(this GameManager gameManager)
     {
         return gameManager == null ? 0 : GetField(gameManager, "startCurrencyAmount", 0);
     }
 
-    /// <summary>
-    /// True when the level's authored SP money object is the one being displayed.
-    /// </summary>
     public static bool HasAuthoredMoneyHud { get; private set; }
 
-    /// <summary>
-    /// True when the level's authored SP timer object is the one being displayed.
-    /// </summary>
     public static bool HasAuthoredTimeHud { get; private set; }
 
-    /// <summary>
-    /// Overwrites the values of the HUD objects the SP level already contains: the SP
-    /// managers are pointed at those same widgets (the private fields singleplayer
-    /// scenes assign in the Inspector), so CurrencyManager and GameTimeManager keep
-    /// writing the synchronized money/time into the authored objects.
-    /// Null clears the binding when the level has no authored HUD.
-    /// </summary>
     public static void BindAuthoredPlayerHud(CurrencyText currencyText, TextMeshProUGUI timerText)
     {
         HasAuthoredMoneyHud = currencyText != null && CurrencyManager.Instance != null;
@@ -952,12 +965,6 @@ public static class MpSharedCompat
         }
     }
 
-    /// <summary>
-    /// Points the MP player's PauseMenu at its own PlayerStateMachine. The prefab leaves
-    /// that slot empty and PauseMenu.Awake fills it with FindFirstObjectByType, which
-    /// can return a REMOTE player's state machine (or the authored SP one), so the
-    /// cursor would be opened on the wrong avatar.
-    /// </summary>
     public static void BindPauseStateMachine(PauseMenu pauseMenu, PlayerStateMachine stateMachine)
     {
         if (pauseMenu == null || stateMachine == null) return;
@@ -965,12 +972,6 @@ public static class MpSharedCompat
         SetField(pauseMenu, "stateMachine", stateMachine);
     }
 
-    /// <summary>
-    /// CurrencyManager caches the first CurrencyText it finds when a scene loads, and in
-    /// an MP level that is the authored SP player's HUD. When that authored HUD is the
-    /// visible one (bound above) there is nothing to refresh here; otherwise the HUD
-    /// lives on the Mirror player prefab and has to be refreshed explicitly.
-    /// </summary>
     public static void RefreshLocalCurrencyText(this CurrencyManager manager)
     {
         if (manager == null) return;
@@ -1051,5 +1052,29 @@ public static class MpSharedCompat
 
         Slider slider = GetField<Slider>(bowl, "slider");
         if (slider != null) slider.value = currentFood;
+    }
+
+    public static Transform GetPlacementTransform(Mirror.NetworkIdentity station)
+    {
+        if (station == null) return null;
+
+        Transform configured = MpGetField<Transform>(station, "placementTransform");
+        if (configured != null) return configured;
+
+        foreach (Component component in station.GetComponents<Component>())
+        {
+            if (component == null) continue;
+
+            System.Reflection.MethodInfo method = component.GetType().GetMethod(
+                "GetPlacementTransform",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (method == null || method.ReturnType != typeof(Transform)) continue;
+
+            Transform result = method.Invoke(component, null) as Transform;
+            if (result != null) return result;
+        }
+
+        return null;
     }
 }

@@ -2,21 +2,6 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Put this ON the menu button that should open the multiplayer flow, then wire the
-/// button's onClick to "MpOpenButton -> Open". Unity's inspector can only call
-/// INSTANCE methods, which is why the button cannot call MpBootstrap.Open() directly.
-///
-/// TWO MODES (pick in the Inspector):
-///
-///   UseWorkingMpScene  - loads Assets/Scenes_MP/MenuScene_MP.unity, i.e. the
-///                        multiplayer setup that already works, unchanged. Nothing is
-///                        re-invented; this is the safe default.
-///
-///   OpenInPlace        - shows the MP UI inside the current menu scene (either the
-///                        instance placed there, or the menu prefab assigned on
-///                        MpBootstrap). Use it if you want to stay in the SP scene.
-/// </summary>
 public class MpOpenButton : MonoBehaviour
 {
     public enum OpenMode
@@ -52,11 +37,6 @@ public class MpOpenButton : MonoBehaviour
                 return;
             }
 
-            // Mirror's NetworkManager and the Steam managers are DontDestroyOnLoad: if
-            // this menu scene has its own MP stack it would SURVIVE the scene load and
-            // collide with the target scene's own stack ("Multiple NetworkManagers
-            // detected" -> Mirror destroys one -> the host connection dies and a lobby
-            // looks like it cannot be created).
             DestroyExistingMpStack();
 
             GameManager.Instance?.SwitchToMenuPhase();
@@ -64,7 +44,6 @@ public class MpOpenButton : MonoBehaviour
             return;
         }
 
-        // open in place
         SetActive(hideWhileOpen, false);
         SetActive(showWhileOpen, true);
 
@@ -82,7 +61,6 @@ public class MpOpenButton : MonoBehaviour
         MpBootstrap.Close();
     }
 
-    /// <summary>Removes the MP stack of the current scene, so the MP scene can bring its own.</summary>
     private static void DestroyExistingMpStack()
     {
         LobbyNetworkManager manager = NetworkManager.singleton as LobbyNetworkManager;
@@ -97,7 +75,6 @@ public class MpOpenButton : MonoBehaviour
             Destroy(manager.gameObject);
         }
 
-        // the Steam wrappers are DontDestroyOnLoad as well
         foreach (SteamManager steam in FindObjectsByType<SteamManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             Destroy(steam.gameObject);
 

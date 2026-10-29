@@ -2,12 +2,6 @@ using Interactions.Networking;
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Station-root proxy. The station prefab contains several interactables - the
-/// cutter itself, and its fuel generator (Generator_Prototype) - so the proxy has to
-/// know which one the player looked at. It also resolves the carried state from the
-/// REQUESTER's mirrored copy on the host.
-/// </summary>
 public class Cutter_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Cutter cutter;
@@ -21,7 +15,7 @@ public class Cutter_MP : NetworkBehaviour, IInteractionNetworkProxy
 
     public void RequestInteract(NetworkIdentity requester, Component interactable)
     {
-        // Component references cannot travel in a Command; decide here and send the answer.
+
         bool usedGenerator = interactable is Generator_Prototype;
 
         if (isServer) ServerHandle(requester, usedGenerator);

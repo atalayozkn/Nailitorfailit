@@ -3,25 +3,6 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>
-/// Syncs this player's COMPANIONS - the dog and the mail man - from the owner to every
-/// other machine: pose AND animation state.
-///
-/// Why both parts matter:
-///  - the dog's / mailman's AI runs only on the owner's copy (PlayerNetwork_MP disables
-///    the dog state machine for ghosts), so ghost copies used to stand frozen at their
-///    prefab pose ("companion movements go async after some time"),
-///  - and even with the pose synced they played their default animation, because the
-///    state machines drive animations with CrossFade (not with parameters), so nothing
-///    about the visual state travelled.
-///
-/// Transport: owner -> [Command] -> server -> SyncVars -> everyone, with the received
-/// poses buffered and rendered at (NetworkTime.time - (rtt + margin)) so the delay each
-/// client sees is measured and compensated instead of guessed.
-///
-/// Ghost copies: AI + NavMesh agents are stopped (coroutines included) so they cannot
-/// fight the interpolated pose.
-/// </summary>
 public class DogSync_MP : NetworkBehaviour
 {
     [Header("Dog")]
@@ -32,7 +13,7 @@ public class DogSync_MP : NetworkBehaviour
     [SerializeField] private Transform mailMan;
 
     [Header("Send (owner -> server)")]
-    [SerializeField] private float sendInterval = 0.06f;      // ~16 Hz
+    [SerializeField] private float sendInterval = 0.06f;
     [SerializeField] private float positionThreshold = 0.005f;
     [SerializeField] private float rotationThreshold = 0.5f;
 
@@ -53,12 +34,6 @@ public class DogSync_MP : NetworkBehaviour
     private int lastDogAnimHash;
     private int lastMailAnimHash;
 
-    // ---------------------------------------------------------------- sync state
-
-    // NOTE: every SyncVar needs its OWN hook name. Reusing one name for two types
-    // (Vector3 + Quaternion) makes the weaver fail with
-    //   "Wrong type for Parameter in hook for 'netLocalRotation' ... Method signature
-    //    should be void OnNetPoseChanged(Quaternion oldValue, Quaternion newValue)".
     [SyncVar(hook = nameof(OnNetDogPositionChanged))] private Vector3 netLocalPosition;
     [SyncVar(hook = nameof(OnNetDogRotationChanged))] private Quaternion netLocalRotation;
     [SyncVar(hook = nameof(OnNetMailPositionChanged))] private Vector3 netMailLocalPosition;
@@ -66,9 +41,6 @@ public class DogSync_MP : NetworkBehaviour
     [SyncVar(hook = nameof(OnDogAnimChanged))] private int netDogAnimStateHash;
     [SyncVar(hook = nameof(OnMailAnimChanged))] private int netMailAnimStateHash;
 
-    // ---------------------------------------------------------------- pose tracks
-
-    /// <summary>Snapshot buffer for one synced transform (rtt-sized render delay).</summary>
     private class PoseTrack
     {
         private struct Snapshot { public double time; public Vector3 pos; public Quaternion rot; }
@@ -131,12 +103,38 @@ public class DogSync_MP : NetworkBehaviour
     private readonly PoseTrack dogTrack = new PoseTrack();
     private readonly PoseTrack mailTrack = new PoseTrack();
 
-    // ---------------------------------------------------------------- lifecycle
-
     private void Awake()
     {
-        if (dog == null) dog = transform.Find("DogPackage/Dog");
-        if (mailMan == null) mailMan = transform.Find("MailManPackage/MailMan");
+        if (dog == null)
+        {
+            DogStateMachine dogStateMachine = GetComponentInChildren<DogStateMachine>(true);
+            if (dogStateMachine != null) dog = dogStateMachine.transform;
+        }
+
+        if (dog == null)
+        {
+            dog = transform.Find("DogPackage/Dog");
+
+            if (dog == null)
+                Debug.LogWarning("[MP-DOG] dog transform not found - dog sync is disabled.");
+        }
+
+        if (mailMan == null)
+        {
+            MailManController mailManController = GetComponentInChildren<MailManController>(true);
+            if (mailManController != null) mailMan = mailManController.transform;
+        }
+
+        if (mailMan == null)
+        {
+            mailMan = transform.Find("MailManPackage/MailMan");
+
+            if (mailMan == null)
+                Debug.LogWarning("[MP-DOG] mail man transform not found - mail man sync is disabled.");
+        }
+
+        if (dog != null && mailMan != null)
+            InteractionDebug.Log($"[MP-DOG] companion sync wired (dog='{dog.name}', mailMan='{mailMan.name}').");
     }
 
     public override void OnStartClient()
@@ -149,8 +147,6 @@ public class DogSync_MP : NetworkBehaviour
 
         if (isOwned) return;
 
-        // Ghost copies: freeze the AI so it cannot fight the interpolated pose. Coroutines
-        // are stopped FIRST - a coroutine keeps running after `enabled = false`.
         if (dog != null)
         {
             if (dogBody != null) dogBody.isKinematic = true;
@@ -190,7 +186,6 @@ public class DogSync_MP : NetworkBehaviour
     {
         if (dog == null) return;
 
-        // ---- owner side: publish pose + animation state -------------------------
         if (isOwned)
         {
             if ((NetworkTime.time - lastSendTime) >= sendInterval)
@@ -224,14 +219,12 @@ public class DogSync_MP : NetworkBehaviour
             return;
         }
 
-        // ---- everyone else: render the buffered pose ---------------------------
         float rate = 1f / Mathf.Max(0.05f, sendInterval + 0.05f);
         dogTrack.Apply(dog, extraBufferSeconds, maxBufferSeconds, rate);
 
         if (mailMan != null)
             mailTrack.Apply(mailMan, extraBufferSeconds, maxBufferSeconds, rate);
 
-        // host-side ghosts need their snapshots buffered manually (no SyncVar hooks there)
         if (isServer)
         {
             if (lastSeenNetPos != netLocalPosition || lastSeenNetRot != netLocalRotation)
@@ -253,8 +246,6 @@ public class DogSync_MP : NetworkBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- commands
-
     [Command]
     private void CmdSetPoses(Vector3 dogPos, Quaternion dogRot, Vector3 mailPos, Quaternion mailRot)
     {
@@ -271,8 +262,6 @@ public class DogSync_MP : NetworkBehaviour
         netMailAnimStateHash = mailHash;
     }
 
-    // ---------------------------------------------------------------- hooks
-
     private void OnNetDogPositionChanged(Vector3 oldPos, Vector3 newPos)
     {
         if (isServer || isOwned) return;
@@ -281,8 +270,6 @@ public class DogSync_MP : NetworkBehaviour
 
     private void OnNetDogRotationChanged(Quaternion oldRot, Quaternion newRot)
     {
-        // the position hook of the same update already buffered the pose; PoseTrack
-        // de-duplicates snapshots by timestamp, so this is safe
         if (isServer || isOwned) return;
         dogTrack.Buffer(netLocalPosition, netLocalRotation);
     }
@@ -313,7 +300,6 @@ public class DogSync_MP : NetworkBehaviour
         if (mailManAnimator != null) mailManAnimator.CrossFadeInFixedTime(newHash, 0.15f);
     }
 
-    /// <summary>Hash of the animator's current state (0 = nothing to sync yet).</summary>
     private static int CurrentAnimHash(Animator animator)
     {
         if (animator == null) return 0;

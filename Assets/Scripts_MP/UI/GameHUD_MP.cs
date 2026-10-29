@@ -16,11 +16,6 @@ public class GameHUD_MP : MonoBehaviour
     private bool gameEnded;
     private bool authoredTimerActive;
 
-    /// <summary>
-    /// The level's authored SP HUD is showing the synchronized money/time (the SP
-    /// managers write into it), so switch off this prefab's copies of those two plaques.
-    /// The rest of the canvas - pause, victory/defeat, emotes - is left untouched.
-    /// </summary>
     public void HideAuthoredDuplicates(bool hideTimer, bool hideCurrency)
     {
         if (hideTimer && timerText != null)
@@ -106,6 +101,12 @@ public class GameHUD_MP : MonoBehaviour
     {
         if (gameEnded) return;
         gameEnded = true;
+
+        if (gameEndPanel != null) MpEndUiSuppressor_MP.StripIn(gameEndPanel);
+        if (victoryPanel != null) MpEndUiSuppressor_MP.StripIn(victoryPanel);
+        if (defeatPanel != null) MpEndUiSuppressor_MP.StripIn(defeatPanel);
+        if (victoryBanner != null) MpEndUiSuppressor_MP.StripIn(victoryBanner);
+        if (defeatBanner != null) MpEndUiSuppressor_MP.StripIn(defeatBanner);
 
         if (gameEndPanel != null) gameEndPanel.SetActive(true);
         if (victoryPanel != null) victoryPanel.SetActive(victory);

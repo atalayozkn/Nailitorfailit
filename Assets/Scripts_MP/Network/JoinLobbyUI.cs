@@ -21,10 +21,6 @@ public class JoinLobbyUI : MonoBehaviour
         if (statusText != null) statusText.text = string.Empty;
     }
 
-    /// <summary>
-    /// Steam daveti kabul edildiginde LobbyNetworkManager tarafindan cagrilir: kod hazir
-    /// ama sifre Steam'de tutulmadigi icin kullanici girmeli.
-    /// </summary>
     public void PrefillInviteCode(string code)
     {
         if (lobbyIdInput != null) lobbyIdInput.text = code;
@@ -75,11 +71,6 @@ public class JoinLobbyUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Back/exit button: return to the multiplayer menu and drop any connection
-    /// attempt that is still running, so a late connect cannot yank the player
-    /// into a lobby they already left.
-    /// </summary>
     public void OnExit()
     {
         StopCoroutine_Unlock();
@@ -93,7 +84,6 @@ public class JoinLobbyUI : MonoBehaviour
         else gameObject.SetActive(false);
     }
 
-    /// <summary>OnExit can fire while the panel is inactive; inactive objects cannot run coroutines.</summary>
     void StopCoroutine_Unlock()
     {
         if (unlockCoroutine != null)

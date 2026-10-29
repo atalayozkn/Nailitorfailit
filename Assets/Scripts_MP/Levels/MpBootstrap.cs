@@ -1,22 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Single entry point of the modular multiplayer system (M1).
-///
-/// A menu scene needs nothing but ONE hook:
-///     MpBootstrap.Open();
-/// (the editor tool 'Tools → MP → Add MP Button To SP Menu' wires your existing
-/// Button_Multiplayer to exactly this call). Open() then
-///
-///   1. makes sure the MP network stack exists in the scene - either it is already
-///      there, or it is instantiated from <see cref="stackPrefab"/>,
-///   2. makes sure the MP menu exists - the authored prefab (<see cref="menuPrefab"/>)
-///      or a runtime-built menu as a fallback,
-///   3. shows the multiplayer menu (Create / Join / Lobby).
-///
-/// Nothing in the SP menu scene has to know about LobbyNetworkManager, Steam, chat or
-/// the lobby at all.
-/// </summary>
 public class MpBootstrap : MonoBehaviour
 {
     public static MpBootstrap Instance { get; private set; }
@@ -45,9 +28,7 @@ public class MpBootstrap : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            // The auto-spawned bootstrap (created before the scene loads) has EMPTY
-            // prefab references; the one placed in the scene has them. Hand them over
-            // instead of destroying them with this object.
+
             if (Instance.stackPrefab == null && stackPrefab != null)
                 Instance.stackPrefab = stackPrefab;
 
@@ -70,22 +51,14 @@ public class MpBootstrap : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // ---------------------------------------------------------------- public API
-
-    /// <summary>Opens the multiplayer menu (call this from any button in any menu scene).</summary>
     public static void Open()
     {
         MpBootstrap bootstrap = Instance != null ? Instance : Ensure();
         bootstrap?.OpenInstance();
     }
 
-    /// <summary>
-    /// Instance entry point for a UnityEvent (persistent listeners need an instance
-    /// method on the button's target object).
-    /// </summary>
     public void OpenFromButton() => OpenInstance();
 
-    /// <summary>Hides the multiplayer menu and returns to whatever is underneath.</summary>
     public static void Close()
     {
         MpMenuUI.Instance?.HideAll();
@@ -100,8 +73,6 @@ public class MpBootstrap : MonoBehaviour
 
         return new GameObject("MpBootstrap").AddComponent<MpBootstrap>();
     }
-
-    // ---------------------------------------------------------------- internals
 
     private void OpenInstance()
     {
@@ -124,7 +95,7 @@ public class MpBootstrap : MonoBehaviour
     private bool EnsureStack()
     {
         if (FindAnyObjectByType<LobbyNetworkManager>(FindObjectsInactive.Include) != null)
-            return true;   // already in this scene
+            return true;
 
         if (stackPrefab != null)
         {

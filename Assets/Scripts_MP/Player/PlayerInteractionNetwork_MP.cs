@@ -38,6 +38,9 @@ namespace PlayerScripts
         [Header("Duration Settings")]
         [SerializeField] private float interactCooldown = 1.0f;
 
+        [Tooltip("Hedef isini bir kare kacirsa, bu sure boyunca onceki hedef korunur (saniye).")]
+        [SerializeField] private float targetGraceSeconds = 0.35f;
+
         private IInteractable currentInteractable;
         private InteractableType currentInteractableType;
 
@@ -51,11 +54,6 @@ namespace PlayerScripts
             if (interactionHandlerSp == null) interactionHandlerSp = GetComponent<PlayerInteractionHandler>();
             if (stateMachine == null) stateMachine = GetComponent<PlayerStateMachine>();
 
-            // MP: route ALL interactions through the networked path. The SP handler on the
-            // same object calls CarriableObject_SP.OnInteract() directly - local only, the
-            // other machines would never see the pickup - and its detection mask differs
-            // from ours (2112 vs 64), which caused double/bugged pickups. Keep it quiet,
-            // this component does the detecting and the networking.
             if (interactionHandlerSp != null)
                 interactionHandlerSp.enabled = false;
         }
@@ -65,6 +63,14 @@ namespace PlayerScripts
             base.OnStartLocalPlayer();
 
             InteractionDebug.Log($"[{name}] local player interaction wrapper [{InteractionDebug.Version}]");
+
+            if (interactAction != null && interactAction.action != null)
+                InteractionDebug.Log($"[{name}] interact action '{interactAction.action.name}' " +
+                                     $"map='{interactAction.action.actionMap?.name}' " +
+                                     $"bindings={interactAction.action.bindings.Count} " +
+                                     $"enabled={interactAction.action.enabled}");
+            else
+                Debug.LogError($"[{name}] interactAction is NOT wired - the interact key can never fire.");
 
             interactAction.action.Enable();
             detectionRoutine = StartCoroutine(TargetDetectionRoutine());
@@ -88,18 +94,33 @@ namespace PlayerScripts
         private void Update()
         {
             if (!isLocalPlayer) return;
+
+            if (interactAction != null && interactAction.action != null && !interactAction.action.enabled)
+                interactAction.action.Enable();
+
             if (isInteractOnCooldown) return;
 
-            // Held key repeats the interaction on the cooldown, exactly like the
-            // singleplayer handler did (IsPressed). WasPressedThisFrame only ever
-            // counted the FIRST step of a multi-step station process (cutter/mixer),
-            // so holding E looked dead after one hit.
-            if (interactAction.action.IsPressed())
+            if (interactAction == null || interactAction.action == null)
             {
-                HandleInteract();
-                isInteractOnCooldown = true;
-                Invoke(nameof(ResetInteractCooldown), interactCooldown);
+                WarnMissingActionOnce();
+                return;
             }
+
+            if (!interactAction.action.IsPressed()) return;
+
+            InteractionDebug.Log($"[{name}] interact key down (target={(currentInteractable as Component)?.name ?? "none"}, " +
+                                 $"carried={(interactionHandlerSp.GetCurrentCarriable() != null ? interactionHandlerSp.GetCurrentCarriable().name : "none")})");
+
+            if (currentInteractable == null) RefreshTarget();
+            if (currentInteractable == null && interactionHandlerSp.GetCurrentCarriable() == null)
+            {
+                InteractionDebug.Log($"[{name}] interact basildi ama hedef yok (menzilde etkilesim nesnesi yok).");
+                return;
+            }
+
+            HandleInteract();
+            isInteractOnCooldown = true;
+            Invoke(nameof(ResetInteractCooldown), Mathf.Clamp(interactCooldown, 0.05f, 0.3f));
         }
 
         private IEnumerator TargetDetectionRoutine()
@@ -113,6 +134,31 @@ namespace PlayerScripts
             }
         }
 
+        private float lastTargetTime;
+        private bool missingActionWarned;
+        private float nextRangeLogAt;
+
+        private void WarnMissingActionOnce()
+        {
+            if (missingActionWarned) return;
+
+            missingActionWarned = true;
+
+            string referenceState = interactAction == null ? "missing" : "set";
+            Debug.LogError($"[{name}] interactAction/action is null - interact input is dead " +
+                           $"(reference {referenceState}).");
+        }
+
+        private void LogEmptyDetection()
+        {
+            if (Time.unscaledTime < nextRangeLogAt) return;
+
+            nextRangeLogAt = Time.unscaledTime + 2f;
+            InteractionDebug.Log($"[{name}] no interactable in range " +
+                                 $"(forward {forwardDistance}m/r{forwardRadius}, ground {groundDistance}m/r{groundRadius}, " +
+                                 $"mask={(int)interactableMask.value})");
+        }
+
         private void RefreshTarget()
         {
             IInteractable interactable = FindForwardInteractable();
@@ -122,6 +168,21 @@ namespace PlayerScripts
                 interactable = FindGroundInteractable();
             }
 
+            if (interactable == null)
+            {
+                if (currentInteractable != null &&
+                    Time.unscaledTime - lastTargetTime <= targetGraceSeconds)
+                {
+                    return;
+                }
+
+                if (currentInteractable == null) LogEmptyDetection();
+
+                SetCurrentInteractable(null);
+                return;
+            }
+
+            lastTargetTime = Time.unscaledTime;
             SetCurrentInteractable(interactable);
         }
 
@@ -179,9 +240,6 @@ namespace PlayerScripts
                     return;
                 }
 
-                // Children matter: a mixer's crank is a child object while its proxy
-                // sits on the station root, so search upwards. And the proxy gets the
-                // exact interactable component so it can tell the crank from the panel.
                 IInteractionNetworkProxy proxy = component.GetComponentInParent<IInteractionNetworkProxy>();
 
                 if (proxy is NetworkBehaviour proxyBehaviour && proxyBehaviour.netIdentity == null)
@@ -194,19 +252,11 @@ namespace PlayerScripts
                 if (proxy != null)
                 {
                     InteractionDebug.Log($"[{name}] -> proxy {proxy.GetType().Name} for '{component.name}'");
-                    // Pass who pressed: the station's host-side handler must know the
-                    // requester to read THEIR carrying state (the host's own local
-                    // player is somebody else).
-                    // NetworkBehaviour.netIdentity resolves the parent identity (the
-                    // components sit on a child of the networked root).
+
                     proxy.RequestInteract(netIdentity, component);
                     return;
                 }
 
-                // No proxy on the object itself (e.g. the shop shelves are prefab
-                // variants without their own NetworkIdentity): route the interaction
-                // through the LOCAL PLAYER's identity - the host addresses the object
-                // by scene + hierarchy path.
                 NetworkIdentity ownIdentity = netIdentity;
 
                 if (ownIdentity != null && TryGetComponent(out PlayerInteractRouter_MP router))
@@ -216,7 +266,16 @@ namespace PlayerScripts
                     return;
                 }
 
-                InteractionDebug.Log($"[{name}] -> NO PROXY for '{component.name}' (local/SP fallback!)");
+                bool clientOnly = NetworkClient.active && !NetworkServer.active;
+
+                if (clientOnly)
+                {
+                    InteractionDebug.Log($"[{name}] -> NO PROXY for '{component.name}' " +
+                                         "- client'ta yerel etkilesim BLOKLANDI (hayalet obje olusmasin)");
+                    return;
+                }
+
+                InteractionDebug.Log($"[{name}] -> NO PROXY for '{component.name}' (host yerel fallback)");
             }
 
             interactable.OnInteract();

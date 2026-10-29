@@ -17,9 +17,7 @@ public class LobbyPlayer : NetworkBehaviour
 
     public override void OnStartClient()
     {
-        // LobbyUIManager, lobby panelinin (inaktif) icinde duruyor; panel aktif edilene
-        // kadar Instance null olur. Bu yuzden satiri hemen eklemeye calismak yerine
-        // Instance hazir olana kadar kisa sure bekliyoruz (host satiri kaybolmasin).
+
         StartCoroutine(AddRowWhenReady());
 
         if (isOwned && GameManager.Instance != null)
@@ -43,11 +41,8 @@ public class LobbyPlayer : NetworkBehaviour
 
         uiRow = LobbyUIManager.Instance.AddPlayerRow(this);
 
-        // SyncVar hook'lari uiRow atanmadan once calismis olabilir; degerleri simdi uygula.
         ApplyRowData();
 
-        // Ayrica 2 saniye boyunca periyodik olarak tekrar uygula: SyncVar gecikmeli
-        // gelirse (veya hook kacarsa) isim/renk yine de dogru gorunur.
         StartCoroutine(RefreshRowBriefly());
     }
 
@@ -85,24 +80,24 @@ public class LobbyPlayer : NetworkBehaviour
     void OnReadyChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(isHost, newVal);
     void OnHostChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(newVal, isReady);
 
-    /// <summary>
-    /// Sunucu tarafinda ismi tekrar yayinlar. Mirror SyncVar setter'i ayni degerde
-    /// dirty biti isaretlemez; bu yuzden once farkli bir deger yazip gercek degeri
-    /// geri koyuyoruz. Boylece delta paketi tum istemcilere gonderilir ve isimler
-    /// (host + client) her iki tarafta da kesin gorunur.
-    /// </summary>
     [Server]
     public void ServerForceNameSync()
     {
         string real = playerName;
-        playerName = real + "\u200b";   // zero-width space: farkli deger
-        playerName = real;                // gercek deger -> delta yayinlanir
+        playerName = real + "\u200b";
+        playerName = real;
     }
 
     [Command]
     public void CmdSetReady(bool ready)
     {
-        if (isHost) return;
+        if (isHost)
+        {
+            Debug.Log("[LOBBY] CmdSetReady ignored: this connection is the host.");
+            return;
+        }
+
         isReady = ready;
+        Debug.Log($"[LOBBY] ready applied: player='{playerName}' ready={ready}");
     }
 }

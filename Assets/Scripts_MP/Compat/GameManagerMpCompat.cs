@@ -2,23 +2,12 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// The multiplayer scripts still navigate through the GameManager API the old
-/// (pre-Multiplayer-rewrite) GameManager exposed. The current GameManager only knows
-/// Menu/InLevel and no longer owns the MP panels, so that missing surface lives here:
-///
-///   * phase changes write the private phase field (SP code still owns the real flow),
-///   * panel navigation drives <see cref="MpMenuUI"/> when the scene has one, and
-///     otherwise the authored MenuScene_MP panels, exactly like the old GameManager's
-///     serialized references did (mpMultiplayerMenuPanel etc. - those fields are still
-///     present in MenuScene_MP's YAML but the current class no longer declares them).
-/// </summary>
 public static class GameManagerMpCompat
 {
     private static readonly FieldInfo CurrentPhaseField =
         typeof(GameManager).GetField("currentPhase", BindingFlags.Instance | BindingFlags.NonPublic);
 
-    // Authored panel names from MenuScene_MP (formerly GameManager's serialized refs).
+    private const string MainMenuPanel = "Buttons_MainMenu";
     private const string MultiplayerPanel = "Buttons_AfterMultiplayer";
     private const string CreatePanel = "Panel_AfterCreate";
     private const string JoinPanel = "Panel_AfterJoin";
@@ -35,18 +24,38 @@ public static class GameManagerMpCompat
         SetPhase(gameManager, GamePhase.Menu);
     }
 
-    /// <summary>
-    /// Called after Mirror loaded the MP game scene. The SP path announces scene loads
-    /// through GameSceneManager; Mirror's ServerChangeScene does not, so without this the
-    /// phase stayed on Menu.
-    /// </summary>
+    private static bool currencyGranted;
+
     public static void EnterGamePhase(this GameManager gameManager)
     {
         if (gameManager == null) return;
 
         SetPhase(gameManager, GamePhase.InLevel);
+
+        if (!currencyGranted)
+        {
+            int amount = gameManager.GetStartCurrencyAmount();
+
+            if (CurrencyManager.Instance != null) CurrencyManager.Instance.SetCurrency(amount);
+            CurrencyManager_MP.SeedServerTotal(amount);
+
+            currencyGranted = true;
+            Debug.Log($"[MP] Starting currency granted: {amount}");
+        }
+
         gameManager.OnSceneLoaded();
         MpMenuUI.Instance?.HideAll();
+    }
+
+    public static void ShowCreateLobby(this GameManager gameManager)
+    {
+        if (MpMenuUI.Instance != null)
+        {
+            MpMenuUI.Instance.ShowCreate();
+            return;
+        }
+
+        ShowScenePanel(CreatePanel);
     }
 
     public static void ShowMultiplayerMenu(this GameManager gameManager)
@@ -83,10 +92,6 @@ public static class GameManagerMpCompat
         RefreshLobbyLabels();
     }
 
-    /// <summary>
-    /// Returns to the main menu screen underneath the MP panels. The old GameManager had
-    /// no mpMainMenuPanel assigned, so its behaviour was simply "hide every MP panel".
-    /// </summary>
     public static void ShowMainMenu(this GameManager gameManager)
     {
         if (MpMenuUI.Instance != null)
@@ -95,7 +100,8 @@ public static class GameManagerMpCompat
             return;
         }
 
-        ShowScenePanel(null);
+        bool hasMainMenuPanel = FindSceneObject(MainMenuPanel) != null;
+        ShowScenePanel(hasMainMenuPanel ? MainMenuPanel : MultiplayerPanel);
     }
 
     private static void SetPhase(GameManager gameManager, GamePhase phase)
@@ -109,7 +115,21 @@ public static class GameManagerMpCompat
         foreach (string panelName in MpPanels)
         {
             GameObject panel = FindSceneObject(panelName);
-            if (panel != null) panel.SetActive(panelName == activeName);
+            if (panel == null) continue;
+            if (panel.activeSelf != (panelName == activeName)) panel.SetActive(panelName == activeName);
+        }
+
+        if (string.IsNullOrEmpty(activeName)) return;
+
+        GameObject target = FindSceneObject(activeName);
+        if (target != null) EnsureVisible(target);
+    }
+
+    private static void EnsureVisible(GameObject target)
+    {
+        for (Transform node = target.transform; node != null; node = node.parent)
+        {
+            if (!node.gameObject.activeSelf) node.gameObject.SetActive(true);
         }
     }
 

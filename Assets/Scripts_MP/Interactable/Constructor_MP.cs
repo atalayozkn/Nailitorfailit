@@ -3,19 +3,6 @@ using ItemScript;
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Station-root proxy for a construction wall. Two different interactables live on
-/// this prefab:
-///   - the Constructor itself (build the wall from a processed material),
-///   - the wall TILES (WoodTile / GlassTile / BrickTile - progress a partially built
-///     wall until it completes).
-///
-/// The wrapper searches proxies upwards, so a tile press used to reach THIS proxy and
-/// was handled as "build the wall" (wrong). The interactable component tells them
-/// apart, and tile work is replicated as a completion state through a ClientRpc.
-///
-/// The file used to be named Constructor_MP.cs; the GUID is unchanged.
-/// </summary>
 public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Constructor constructor;
@@ -34,7 +21,6 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
         else CmdRequestInteract(requester, isTile, tileName);
     }
 
-    /// <summary>Keep the old call shape for stray references.</summary>
     public void RequestBuild() => RequestBuild(null);
 
     public void RequestBuild(NetworkIdentity requester)
@@ -65,8 +51,6 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 
             DispatchTileServerInteract(tile, requester);
 
-            // Keep the clients' progress UI/visual in step with the host (the host is
-            // the authority on the process itself).
             RpcApplyTileProgress(tileName, GetTileProgress(tile));
             return;
         }
@@ -85,7 +69,7 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
     [ClientRpc]
     private void RpcApplyTileProgress(string tileName, float normalized)
     {
-        if (isServer) return;   // the host already has the real state
+        if (isServer) return;
 
         Component tile = FindTile(tileName);
         if (tile == null) return;
@@ -96,7 +80,8 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
     [ClientRpc]
     private void RpcApplyTileCompleted(string tileName)
     {
-        if (isServer) return;   // the host already applied it locally
+        InteractionDebug.Log($"tile completed RPC: '{tileName}' ({(isServer ? "server" : "client")})");
+        if (isServer) return;
 
         Component tile = FindTile(tileName);
         if (tile == null) return;
@@ -105,8 +90,6 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 
         InteractionDebug.Log($"Constructor_MP: tile '{tileName}' marked completed on this client.");
     }
-
-    // ---------------------------------------------------------------- helpers
 
     private static bool IsTile(Component interactable) =>
         interactable is WoodTile || interactable is GlassTile || interactable is BrickTile;

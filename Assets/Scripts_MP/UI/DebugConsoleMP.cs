@@ -8,37 +8,16 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// <summary>
-/// In-build debug console for the multiplayer flow.
-///
-/// Every Debug.Log/Warning/Error/Exception is captured, so friends in the field
-/// see WHY a join failed without needing the development console. The window
-/// toggles with F1 (also auto-opens for a few seconds whenever an error arrives)
-/// and always draws a network status header: host/client state, transport,
-/// Steam lobby code, RTT and the active scene. A command field supports a few
-/// diagnostics commands; type "help".
-///
-/// The console spawns itself before the first scene loads, so it exists in the
-/// menu, the lobby and the game scene alike, and it survives scene changes
-/// (DontDestroyOnLoad). No scene wiring is required.
-/// </summary>
 public class DebugConsoleMP : MonoBehaviour
 {
     public static DebugConsoleMP Instance { get; private set; }
 
-    /// <summary>
-    /// Primary toggle key. Backquote (the key left of "1" / under Esc) is used because
-    /// it exists on every layout (Turkish F and Turkish Q included) and does not
-    /// collide with gameplay; F1 keeps working for muscle memory.
-    /// </summary>
     public static KeyCode ToggleKey = KeyCode.BackQuote;
 
-    /// <summary>Additional accepted toggle keys (F1 kept as a secondary).</summary>
     public static readonly KeyCode[] ExtraToggleKeys = { KeyCode.F1 };
 
     const int MaxEntries = 400;
     const int MaxLineLength = 3000;
-    const int AutoHideSeconds = 8;
     const int MaxStackTraceLines = 4;
 
     struct Entry
@@ -84,11 +63,8 @@ public class DebugConsoleMP : MonoBehaviour
     TMP_Text statusHeader;
 
     bool visible;
-    float autoHideAt;
-    /// <summary>Until this time the error auto-open is suppressed, so a per-frame exception storm cannot keep the window pinned open after the user closes it.</summary>
-    float suppressAutoOpenUntil;
 
-    // ---------------------------------------------------------------- lifecycle
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void AutoSpawn()
     {
@@ -123,17 +99,11 @@ public class DebugConsoleMP : MonoBehaviour
         FlushCapturedEntries();
 
         if (ReadToggleKey())
+        {
             Toggle();
-
-        if (visible && autoHideAt > 0f && Time.unscaledTime > autoHideAt && (commandField == null || !commandField.isFocused))
-            Toggle();
+        }
     }
 
-    /// <summary>
-    /// Key lookup goes through the new Input System when that is the active input
-    /// handler (UnityEngine.Input throws InvalidOperationException in that mode).
-    /// The legacy read stays for projects switched to Input Manager or Both.
-    /// </summary>
     static bool ReadToggleKey()
     {
 #if ENABLE_INPUT_SYSTEM
@@ -161,8 +131,6 @@ public class DebugConsoleMP : MonoBehaviour
     public void SetVisible(bool on)
     {
         visible = on;
-        autoHideAt = 0f;
-        if (!on) suppressAutoOpenUntil = Time.unscaledTime + 3f;
         if (consoleRoot != null) consoleRoot.SetActive(on);
         if (on)
         {
@@ -171,7 +139,6 @@ public class DebugConsoleMP : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- log capture
     void OnLogMessageReceived(string condition, string stackTrace, LogType type)
     {
         if (capturingSuppressed) return;
@@ -192,7 +159,7 @@ public class DebugConsoleMP : MonoBehaviour
 
         lock (pendingLock)
         {
-            // Guard against an unbounded queue during an exception storm.
+
             if (pending.Count < 512) pending.Enqueue(new Entry { Time = DateTime.Now.ToString("HH:mm:ss"), Type = label, Message = message });
         }
     }
@@ -208,7 +175,6 @@ public class DebugConsoleMP : MonoBehaviour
     void FlushCapturedEntries()
     {
         bool addedAny = false;
-        bool addedError = false;
 
         while (true)
         {
@@ -221,22 +187,13 @@ public class DebugConsoleMP : MonoBehaviour
             entries.Add(e);
             if (entries.Count > MaxEntries) entries.RemoveRange(0, entries.Count - MaxEntries);
             addedAny = true;
-            addedError |= e.Type == "ERRO" || e.Type == "EXCP";
         }
 
         if (!addedAny) return;
 
-        if (addedError && Time.unscaledTime > suppressAutoOpenUntil)
-        {
-            // Surface the problem in builds even while the console is hidden.
-            if (!visible) SetVisible(true);
-            autoHideAt = Time.unscaledTime + AutoHideSeconds;
-        }
-
         if (visible) RefreshLogText();
     }
 
-    // ---------------------------------------------------------------- UI building
     void BuildUi()
     {
         consoleRoot = new GameObject("DebugConsole_Root", typeof(RectTransform));
@@ -244,7 +201,7 @@ public class DebugConsoleMP : MonoBehaviour
 
         Canvas canvas = consoleRoot.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 30000; // on top of the chat (10) and the HUD
+        canvas.sortingOrder = 30000;
         CanvasScaler scaler = consoleRoot.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -261,7 +218,6 @@ public class DebugConsoleMP : MonoBehaviour
         Image background = CreateImage(root, "Panel_BG", new Color(0f, 0f, 0f, 0.88f));
         Stretch(background.rectTransform);
 
-        // network status line
         statusHeader = CreateText(root, "Status", Color.white, 22);
         RectTransform statusRect = statusHeader.rectTransform;
         statusRect.anchorMin = new Vector2(0f, 1f);
@@ -270,7 +226,6 @@ public class DebugConsoleMP : MonoBehaviour
         statusRect.anchoredPosition = new Vector2(12f, -4f);
         statusRect.sizeDelta = new Vector2(-24f, 30f);
 
-        // scrollable output
         RectTransform scrollArea = CreateSub(root, "Scroll", new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
         scrollArea.anchorMin = new Vector2(0f, 0f);
         scrollArea.anchorMax = new Vector2(1f, 1f);
@@ -312,7 +267,6 @@ public class DebugConsoleMP : MonoBehaviour
         scrollRect.movementType = ScrollRect.MovementType.Clamped;
         scrollRect.scrollSensitivity = 24f;
 
-        // command input at the bottom
         RectTransform inputRoot = CreateSub(root, "CommandField", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(4f, 2f), new Vector2(-84f, 32f));
         Image fieldBg = inputRoot.gameObject.AddComponent<Image>();
         fieldBg.color = new Color(1f, 1f, 1f, 0.08f);
@@ -352,7 +306,6 @@ public class DebugConsoleMP : MonoBehaviour
             commandField.ActivateInputField();
         });
 
-        // quick actions (top-right)
         CreateButton(root, "Btn_Close", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -46f), new Vector2(72f, 30f), "CLOSE", Toggle);
         CreateButton(root, "Btn_Copy", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-96f, -46f), new Vector2(72f, 30f), "COPY",
             () => ExecuteCommand("copy"));
@@ -361,7 +314,6 @@ public class DebugConsoleMP : MonoBehaviour
         visible = false;
     }
 
-    // ---------------------------------------------------------------- small builders
     static Image CreateImage(RectTransform parent, string name, Color color)
     {
         GameObject go = new GameObject(name, typeof(RectTransform));
@@ -435,7 +387,6 @@ public class DebugConsoleMP : MonoBehaviour
         Stretch((RectTransform)textGo.transform);
     }
 
-    // ---------------------------------------------------------------- commands
     void ExecuteCommand(string raw)
     {
         string command = (raw ?? "").Trim().ToLowerInvariant();
@@ -450,6 +401,7 @@ public class DebugConsoleMP : MonoBehaviour
                      "  ping     - Mirror round trip time (clients)\n" +
                      "  players  - connected connections (host only)\n" +
                      "  scene    - active scene\n" +
+                     "  ui       - open canvases (duplicate HUD tespiti)\n" +
                      "  leave    - stop host/client and reload the menu scene\n" +
                      "  copy     - copy the whole log to the clipboard\n" +
                      "  clear    - wipe the log");
@@ -467,7 +419,7 @@ public class DebugConsoleMP : MonoBehaviour
                      " passwordEntered=" + (!string.IsNullOrEmpty(nm != null ? nm.LobbyPassword : null)) +
                      "\nnetworkAddress=" + NetworkManager.singleton.networkAddress +
                      "\nsteamOnline=" + (SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.SteamOnline) +
-                     " lanDevMode=" + (SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.UseLanDevMode));
+                     "");
                 break;
             }
 
@@ -483,6 +435,10 @@ public class DebugConsoleMP : MonoBehaviour
 
             case "scene":
                 Emit("Active scene: " + SceneManager.GetActiveScene().path);
+                break;
+
+            case "ui":
+                Emit(UiReport());
                 break;
 
             case "leave":
@@ -503,6 +459,54 @@ public class DebugConsoleMP : MonoBehaviour
                 Emit("Unknown command '" + command + "'. Type help.");
                 break;
         }
+    }
+
+    static string UiReport()
+    {
+        var lines = new List<string>();
+        var counts = new Dictionary<string, int>();
+
+        foreach (Canvas canvas in UnityEngine.Object.FindObjectsByType<Canvas>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (canvas == null) continue;
+
+            string state = canvas.isActiveAndEnabled ? "on " : "off";
+            lines.Add($"{state} {canvas.renderMode,-16} order={canvas.sortingOrder,4} {PathOf(canvas.transform)}");
+
+            counts.TryGetValue(canvas.name, out int count);
+            counts[canvas.name] = count + 1;
+        }
+
+        lines.Sort();
+
+        var sb = new StringBuilder();
+        sb.Append("Canvases (").Append(lines.Count).Append("):\n");
+        foreach (string line in lines) sb.Append("  ").Append(line).Append('\n');
+
+        sb.Append("Duplicate canvas names:\n");
+        bool any = false;
+        foreach (KeyValuePair<string, int> pair in counts)
+        {
+            if (pair.Value < 2) continue;
+            sb.Append("  ").Append(pair.Key).Append(" x").Append(pair.Value).Append('\n');
+            any = true;
+        }
+
+        if (!any) sb.Append("  (none)\n");
+
+        Debug.Log("[UI-REPORT] " + sb.ToString().Replace("\n", " | "));
+        return sb.ToString();
+    }
+
+    static string PathOf(Transform transform)
+    {
+        var sb = new StringBuilder(transform.name);
+
+        for (Transform node = transform.parent; node != null; node = node.parent)
+            sb.Insert(0, node.name + "/");
+
+        return sb.ToString();
     }
 
     static string PlayersReport()
@@ -540,7 +544,6 @@ public class DebugConsoleMP : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- refresh
     void RefreshLogText()
     {
         if (logText == null) return;
@@ -597,7 +600,7 @@ public class DebugConsoleMP : MonoBehaviour
     void Emit(string message)
     {
         capturingSuppressed = true;
-        Debug.Log("[Console] " + message); // still lands in player.log
+        Debug.Log("[Console] " + message);
         capturingSuppressed = false;
 
         entries.Add(new Entry { Time = DateTime.Now.ToString("HH:mm:ss"), Type = "INFO", Message = "[Console] " + message });

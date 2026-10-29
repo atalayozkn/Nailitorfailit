@@ -3,23 +3,31 @@ using UnityEngine;
 
 public static class PlayerInteractionResolver
 {
-
     public static PlayerInteractionHandler Local()
     {
-        if (NetworkClient.active && NetworkClient.localPlayer != null &&
-            NetworkClient.localPlayer.TryGetComponent(out PlayerInteractionHandler owned))
+        if (NetworkClient.active && NetworkClient.localPlayer != null)
         {
-            return owned;
+            PlayerInteractionHandler owned =
+                NetworkClient.localPlayer.GetComponentInChildren<PlayerInteractionHandler>(true);
+
+            if (owned != null) return owned;
         }
 
-        return Object.FindAnyObjectByType<PlayerInteractionHandler>();
+        if (NetworkServer.active && NetworkClient.localPlayer != null)
+        {
+            PlayerInteractionHandler host =
+                NetworkClient.localPlayer.GetComponentInChildren<PlayerInteractionHandler>(true);
+
+            if (host != null) return host;
+        }
+
+        return Object.FindAnyObjectByType<PlayerInteractionHandler>(FindObjectsInactive.Include);
     }
 
     public static PlayerInteractionHandler ForIdentity(NetworkIdentity requester)
     {
         if (requester != null)
         {
-
             PlayerInteractionHandler handler = requester.GetComponentInChildren<PlayerInteractionHandler>(true);
             if (handler == null) handler = requester.GetComponentInParent<PlayerInteractionHandler>();
             if (handler != null) return handler;

@@ -4,21 +4,6 @@ using PlayerScripts;
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Modular boundary + zone enforcer for multiplayer.
-///
-///   - Every machine knows the same zones (they are scene objects - ZoneRegistry),
-///     so nothing has to be synchronised for the zones themselves.
-///   - The OWNER's machine immediately handles its own player (push-back / stun), which
-///     keeps the correction smooth with owner-authoritative movement.
-///   - The SERVER enforces the harsher policies (Kill/Respawn) through the existing
-///     authoritative respawn path, and raises enter/exit events for game systems.
-///   - Systems subscribe to PlayerEnteredZone / PlayerExitedZone (server-authoritative),
-///     or derive from ZoneScopedSystem.
-///
-/// The component spawns itself before the first scene and survives scene changes, so
-/// it needs no scene wiring.
-/// </summary>
 public class ZoneSystem_MP : MonoBehaviour
 {
     public static ZoneSystem_MP Instance { get; private set; }
@@ -33,7 +18,6 @@ public class ZoneSystem_MP : MonoBehaviour
     [Tooltip("Log every boundary event (debug).")]
     [SerializeField] private bool logEvents;
 
-    /// <summary>Server-authoritative enter/exit notifications for game systems.</summary>
     public event Action<PlayerNetwork_MP, ZoneVolume> PlayerEnteredZone;
     public event Action<PlayerNetwork_MP, ZoneVolume> PlayerExitedZone;
 
@@ -83,7 +67,6 @@ public class ZoneSystem_MP : MonoBehaviour
         EvaluateOwnerSide();
     }
 
-    // ---------------------------------------------------------------- server side
     private void EvaluateServerSide()
     {
         foreach (PlayerNetwork_MP player in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
@@ -105,7 +88,6 @@ public class ZoneSystem_MP : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- owner side
     private void EvaluateOwnerSide()
     {
         foreach (PlayerNetwork_MP player in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
@@ -122,7 +104,6 @@ public class ZoneSystem_MP : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- policies
     private void ApplyPolicy(PlayerNetwork_MP player, ZoneVolume zone, bool ownerMachineHandlesPushBack)
     {
         if (!CooldownElapsed(player, zone)) return;
@@ -148,9 +129,7 @@ public class ZoneSystem_MP : MonoBehaviour
 
             case BoundaryPolicy.Kill:
             case BoundaryPolicy.Respawn:
-                // Both funnel into the authoritative MP respawn path: on the owner it
-                // becomes a Command, on the server it runs directly. Respawn point and
-                // delay come from RespawnManager.
+
                 if (player.isServer || player.isOwned)
                     player.RequestDeath();
                 break;
@@ -168,11 +147,6 @@ public class ZoneSystem_MP : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Puts the player back inside and nudges them inward. Runs on the machine that
-    /// owns the movement (owner authority), so the correction is immediate and the
-    /// NetworkTransform carries it to everyone.
-    /// </summary>
     private static void PushBack(PlayerNetwork_MP player, ZoneVolume zone)
     {
         Vector3 target = zone.ClosestPointInside(player.transform.position, zone.PushBackMargin);
@@ -200,7 +174,6 @@ public class ZoneSystem_MP : MonoBehaviour
         body.angularVelocity = Vector3.zero;
     }
 
-    // ---------------------------------------------------------------- membership + events
     private void UpdateMembership(PlayerNetwork_MP player, bool raiseEvents)
     {
         List<ZoneVolume> current = ZoneRegistry.Containing(player.transform.position);
@@ -211,7 +184,6 @@ public class ZoneSystem_MP : MonoBehaviour
             membership[player] = previous;
         }
 
-        // entered
         foreach (ZoneVolume zone in current)
         {
             if (previous.Contains(zone)) continue;
@@ -223,7 +195,6 @@ public class ZoneSystem_MP : MonoBehaviour
             PlayerEnteredZone?.Invoke(player, zone);
         }
 
-        // exited (copy: the handler may unregister)
         var exited = new List<ZoneVolume>();
         foreach (ZoneVolume zone in previous)
         {
@@ -241,14 +212,10 @@ public class ZoneSystem_MP : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------------- public API for systems
-    /// <summary>Zone by id (any machine).</summary>
     public static ZoneVolume GetZone(string id, ZoneKind? kind = null) => ZoneRegistry.Find(id, kind);
 
-    /// <summary>Is a position inside the zone with this id?</summary>
     public static bool IsInside(string id, Vector3 position) => ZoneRegistry.IsInside(id, position);
 
-    /// <summary>Zones containing a position (any machine).</summary>
     public static List<ZoneVolume> ZonesAt(Vector3 position, ZoneKind? kind = null) =>
         ZoneRegistry.Containing(position, kind);
 }

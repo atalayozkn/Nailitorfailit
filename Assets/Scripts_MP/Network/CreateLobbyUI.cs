@@ -41,10 +41,6 @@ public class CreateLobbyUI : MonoBehaviour
         ((LobbyNetworkManager)NetworkManager.singleton).HostLobby(pw);
     }
 
-    /// <summary>
-    /// Back/exit button: return to the multiplayer menu and cancel whatever
-    /// lobby creation is still in flight, so no half-open host survives.
-    /// </summary>
     public void OnExit()
     {
         if (createButton != null) createButton.interactable = true;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public struct MpLevelEntry
@@ -8,15 +9,6 @@ public struct MpLevelEntry
     public string scenePath;
 }
 
-/// <summary>
-/// The multiplayer level list (M3 of the modular MP system).
-///
-/// The old code had a single const GameScenePath, so every match went to the same
-/// level. Here the levels live in a list the host picks from, and everything else
-/// (lobby UI, ServerChangeScene) asks this catalog what to load.
-///
-/// Self-spawning DDOL singleton: no scene wiring, works from any menu scene.
-/// </summary>
 public class MpLevelCatalog : MonoBehaviour
 {
     public static MpLevelCatalog Instance { get; private set; }
@@ -56,7 +48,6 @@ public class MpLevelCatalog : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    /// <summary>Seeds the catalog with the levels in the project's Scenes folder.</summary>
     private void EnsureDefaults()
     {
         if (levels != null && levels.Count > 0) return;
@@ -68,11 +59,39 @@ public class MpLevelCatalog : MonoBehaviour
             Entry("Level 01 - Tarik",    "Assets/Scenes/Level_01_TARIK.unity"),
             Entry("Level 02 - Tarik",    "Assets/Scenes/Level_02_TARIK.unity"),
             Entry("Level 03 - Tarik",    "Assets/Scenes/Level_03_TARIK.unity"),
-            Entry("Level 05 - Tarik",    "Assets/Scenes/Level_05_TARIK.unity"),
+            Entry("Level 04 - Tarik",    "Assets/Scenes/Level_04_TARIK.unity"),
             Entry("Level 06 - Tarik",    "Assets/Scenes/Level_06_TARIK.unity"),
         };
 
         Debug.Log($"[MP-LEVELS] catalog seeded with {levels.Count} level(s) from the Scenes folder.");
+
+        ValidateAgainstBuildSettings();
+    }
+
+    private void ValidateAgainstBuildSettings()
+    {
+        if (levels == null) return;
+
+        foreach (MpLevelEntry entry in levels)
+        {
+            if (string.IsNullOrEmpty(entry.scenePath)) continue;
+            if (IsInBuildSettings(entry.scenePath)) continue;
+
+            Debug.LogWarning($"[MP-LEVELS] '{entry.scenePath}' build profilinde yok; build'de acilamaz. " +
+                             "Tools > MP > 8 ile ekleyebilirsin.");
+        }
+    }
+
+    private static bool IsInBuildSettings(string scenePath)
+    {
+        int count = SceneManager.sceneCountInBuildSettings;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (SceneUtility.GetScenePathByBuildIndex(i) == scenePath) return true;
+        }
+
+        return false;
     }
 
     private static MpLevelEntry Entry(string name, string path) =>
@@ -94,7 +113,6 @@ public class MpLevelCatalog : MonoBehaviour
 
     public void SelectPrevious() => Select(SelectedIndex - 1);
 
-    /// <summary>Display text for the lobby label, e.g. "Level 2 - Tarik (2/7)".</summary>
     public string SelectedLabel()
     {
         if (Count == 0) return "no levels in catalog";

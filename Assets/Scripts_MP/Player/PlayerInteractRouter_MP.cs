@@ -6,31 +6,13 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Server-side router for interactables that have NO NetworkIdentity of their own.
-///
-/// Why this exists: several interactables live WITHOUT an identity of their own -
-/// the in-level shop shelves (prefab variants) and the per-player dog bowl inside
-/// the player prefab. Putting an identity on every prop does not work (variants), so
-/// the interaction travels on the PLAYER's identity instead and the object is
-/// addressed by scene + hierarchy path - a key every machine resolves identically.
-///
-/// Server-side handling:
-///   1. an IInteractionNetworkProxy on the object (if it has one),
-///   2. the dog bowl (per-player, contents replicated with a SyncVar),
-///   3. the shop (Shop.ServerInteract - networked spawn + hand-off + wallet),
-///   4. otherwise it is logged and skipped (never silently run the SP path, which
-///      would only mutate the host's copy).
-/// </summary>
 public class PlayerInteractRouter_MP : NetworkBehaviour
 {
     [Tooltip("Per-player dog bowl. Filled on the host, replicated to everyone.")]
     [SyncVar(hook = nameof(OnBowlFoodChanged))]
-    private int bowlFood = -1;   // -1 = not initialized yet
+    private int bowlFood = -1;
 
     private FoodBowl cachedBowl;
-
-    // ---------------------------------------------------------------- local entry
 
     public void RequestInteract(Component interactable)
     {
@@ -46,7 +28,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
         else CmdRequestInteract(sceneName, path);
     }
 
-    /// <summary>Local entry for the dog bowl (called by FoodBowl.OnInteract).</summary>
     public void RequestFeedBowl(FoodBowl bowl)
     {
         InteractionDebug.Log($"[{name}] feed-bowl request (local entry), bowl='{bowl?.name}'");
@@ -60,8 +41,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
 
     [Command]
     private void CmdRequestFeedBowl() => ServerFeedBowl(netIdentity);
-
-    // ---------------------------------------------------------------- server side
 
     [Server]
     private void ServerRoute(string sceneName, string path, NetworkIdentity requester)
@@ -90,7 +69,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
             return;
         }
 
-        // 1) object owns a proxy -> the normal path
         IInteractionNetworkProxy proxy = target.GetComponent<IInteractionNetworkProxy>();
         if (proxy != null)
         {
@@ -99,29 +77,22 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
             return;
         }
 
-        // 2) per-player dog bowl: the requester's OWN bowl is the one to fill
         if (target.TryGetComponent(out FoodBowl _))
         {
             ServerFeedBowl(requester);
             return;
         }
 
-        // 3) known MP-aware interactables
         if (target.TryGetComponent(out Shop shop))
         {
             shop.ServerInteract(requester);
             return;
         }
 
-        // 4) nothing MP-aware here
         InteractionDebug.Log($"player-routed interact: '{path}' has no MP handler " +
                              $"(add a proxy or a ServerInteract method).");
     }
 
-    /// <summary>
-    /// Feeds the requester's dog bowl: consumes the carried PetFood through the
-    /// networked path and raises the replicated bowl contents.
-    /// </summary>
     [Server]
     public void ServerFeedBowl(NetworkIdentity requester)
     {
@@ -147,7 +118,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
             return;
         }
 
-        // consume the food for everyone
         if (carried.TryGetComponent(out CarriableObject_MP carriableMp))
             carriableMp.ServerConsumeNetworked(requester);
         else
@@ -165,8 +135,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
     {
         base.OnStartServer();
 
-        // The bowl starts full (FoodBowl.Awake), and a SyncVar's serialized default is
-        // 0 - so the host seeds the replicated value from the bowl itself.
         FoodBowl bowl = ResolveBowlFor(netIdentity);
         if (bowl != null) bowlFood = bowl.GetCurrentFood();
     }
@@ -181,7 +149,7 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
 
     private FoodBowl ResolveBowlFor(NetworkIdentity requester)
     {
-        // The bowl belongs to the requester's own player object.
+
         if (requester != null)
         {
             FoodBowl owned = requester.GetComponentInChildren<FoodBowl>(true);
@@ -190,8 +158,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
 
         return GetComponentInChildren<FoodBowl>(true);
     }
-
-    // ---------------------------------------------------------------- path helpers
 
     private static Transform FindByPath(Scene scene, string path)
     {
@@ -204,10 +170,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Second chance: any object in that scene whose full hierarchy path ends with the
-    /// requested path (handles inactive roots and renamed prefab instances).
-    /// </summary>
     private static Transform FindByPathTail(Scene scene, string path)
     {
         foreach (Shop shop in UnityEngine.Object.FindObjectsByType<Shop>(
@@ -226,8 +188,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
             }
         }
 
-        // bowls are inside player instances (which are clones and therefore never
-        // match a baked path)
         foreach (FoodBowl bowl in UnityEngine.Object.FindObjectsByType<FoodBowl>(
                      FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -252,7 +212,6 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
         return target;
     }
 
-    /// <summary>Hierarchy path of a transform below its scene root ("A/B/C").</summary>
     private static string PathOf(Transform t)
     {
         var sb = new StringBuilder(t.name);

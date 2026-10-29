@@ -1,15 +1,9 @@
 using Interactions.Networking;
+using ItemScript;
 using Mirror;
 using UnityEngine;
+using UnityEngine.Events;
 
-/// <summary>
-/// The in-level shelf vendor (Shop_Oil / Shop_EnergyDrink / Shop_PetFood shelves).
-///
-/// Those shelves only had a highlight helper: in the MP level there was NO way to
-/// obtain oil / energy drink / pet food at all. This proxy turns each shelf into a
-/// networked purchase point: the HOST decides (requester's hands, wallet), spawns the
-/// item into the network and hands it to the requester on every machine.
-/// </summary>
 public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Shop shop;
@@ -40,6 +34,32 @@ public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
         InteractionDebug.Log($"Shop_MP server handling purchase for " +
                              $"{requester?.name ?? "host"} on '{name}'");
 
-        shop.ServerInteract(requester);
+        GameObject prefab = MpSharedCompat.MpGetField<GameObject>(shop, "objectPrefab");
+        if (prefab == null) return;
+
+        int cost = MpSharedCompat.MpGetField(shop, "cost", 0);
+
+        PlayerInteractionHandler handler = PlayerInteractionResolver.ForIdentity(requester);
+        if (handler != null && handler.IsCarrying()) return;
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
+
+        Transform spawnTransform = MpSharedCompat.MpGetField<Transform>(shop, "spawnTransform");
+        Vector3 position = spawnTransform != null ? spawnTransform.position : shop.transform.position;
+        Quaternion rotation = spawnTransform != null ? spawnTransform.rotation : shop.transform.rotation;
+
+        GameObject obj = Instantiate(MpPrefabResolver.Resolve(prefab), position, rotation);
+
+        if (NetworkServer.active && obj.TryGetComponent(out NetworkIdentity identity))
+            NetworkServer.Spawn(obj);
+
+        if (obj.TryGetComponent(out CarriableObject_MP carriableMp))
+            carriableMp.ServerGiveTo(requester);
+        else if (obj.TryGetComponent(out CarriableObject_SP carriable))
+            carriable.SnapToRightHand();
+
+        CurrencyManager_MP.Instance?.RequestSpend(cost);
+
+        UnityEvent onPurchase = MpSharedCompat.MpGetField<UnityEvent>(shop, "onPurchaseEvent");
+        if (onPurchase != null) onPurchase.Invoke();
     }
 }

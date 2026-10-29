@@ -1,4 +1,3 @@
-
 using Mirror;
 using TMPro;
 using UnityEngine;
@@ -47,17 +46,59 @@ public class LobbyUIManager : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("[UI] LobbyUIManager ready: Leave/Start listeners bound.");
-        leaveLobbyButton.onClick.AddListener(OnLeaveLobby);
-        startGameButtonComponent.onClick.AddListener(OnStartGame);
+        BindLobbyButtons();
 
         if (inviteFriendsButton != null)
         {
-            // Davet yalnizca Steam lobisi varken anlamli; LAN modunda dugme gizlenir.
+
             bool steamAvailable = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.SteamOnline;
             inviteFriendsButton.gameObject.SetActive(steamAvailable);
             inviteFriendsButton.onClick.AddListener(OnInviteFriends);
         }
+    }
+
+    private void BindLobbyButtons()
+    {
+        int bound = 0;
+
+        foreach (Button button in GetComponentsInChildren<Button>(true))
+        {
+            string label = button.name.ToLowerInvariant();
+
+            if (button.onClick.GetPersistentEventCount() > 0) continue;
+
+            string pressedName = button.name;
+
+            if (label.Contains("leave"))
+            {
+                button.onClick.AddListener(() =>
+                {
+                    Debug.Log($"[UI] press '{pressedName}' -> leave");
+                    OnLeaveLobby();
+                });
+                bound++;
+            }
+            else if (label.Contains("start"))
+            {
+                button.onClick.AddListener(() =>
+                {
+                    Debug.Log($"[UI] press '{pressedName}' -> start");
+                    OnStartGame();
+                });
+                bound++;
+            }
+            else if (label.Contains("ready"))
+            {
+                button.onClick.AddListener(() =>
+                {
+                    Debug.Log($"[UI] press '{pressedName}' -> ready");
+                    ToggleLocalReady();
+                });
+                bound++;
+            }
+        }
+
+        Debug.Log($"[UI] LobbyUIManager bound {bound} lobby buttons (leave/start/ready).");
     }
 
     void OnInviteFriends()
@@ -70,8 +111,6 @@ public class LobbyUIManager : MonoBehaviour
     {
         PlayerListEntryUI row = Instantiate(playerEntryPrefab, playerListContent);
 
-        // Prefab sabit genislikte olabilir (500px). Icerik alani daha darsa metin
-        // panelden tasar. Bu yuzden satir genisligini icerigin genisligine uyduruyoruz.
         RectTransform rowRect = row.GetComponent<RectTransform>();
         if (rowRect != null && playerListContent is RectTransform contentRect)
         {
@@ -90,10 +129,6 @@ public class LobbyUIManager : MonoBehaviour
         {
             startGameButton.SetActive(player.isHost);
             readyButton.SetActive(!player.isHost);
-
-            if (!player.isHost)
-                readyButtonComponent.onClick.AddListener(
-                    () => player.CmdSetReady(!player.isReady));
         }
 
         return row;
@@ -106,20 +141,50 @@ public class LobbyUIManager : MonoBehaviour
 
     void OnStartGame()
     {
-        startGameButtonComponent.interactable = false;
+        if (startGameButtonComponent != null) startGameButtonComponent.interactable = false;
         ((LobbyNetworkManager)NetworkManager.singleton).StartGame();
+    }
+
+    private void ToggleLocalReady()
+    {
+        LobbyPlayer local = NetworkClient.localPlayer != null
+            ? NetworkClient.localPlayer.GetComponent<LobbyPlayer>()
+            : null;
+
+        if (local == null)
+        {
+            Debug.LogWarning("[UI] ready ignored: NetworkClient.localPlayer has no LobbyPlayer "
+                             + $"(localPlayer={(NetworkClient.localPlayer != null ? NetworkClient.localPlayer.name : "null")})");
+            return;
+        }
+
+        if (local.isHost)
+        {
+            Debug.Log("[UI] ready ignored: this player is the host.");
+            return;
+        }
+
+        bool next = !local.isReady;
+        local.CmdSetReady(next);
+        Debug.Log($"[UI] ready -> {next} (request sent to the host)");
     }
 
     void OnLeaveLobby()
     {
-        leaveLobbyButton.interactable = false;
+        MpTeardownLog.Log("LobbyUIManager.OnLeaveLobby");
+
+        if (MpMenuUI.Instance != null)
+        {
+            MpMenuUI.Instance.OnLeavePressed();
+            return;
+        }
+
+        if (leaveLobbyButton != null) leaveLobbyButton.interactable = false;
 
         var lobbyNm = NetworkManager.singleton as LobbyNetworkManager;
 
         bool wasHost = NetworkServer.active && NetworkClient.isConnected;
 
-        // Steam: lobiden ayril. Host ayrilirsa Steam lobiyi dagitir; Edgegap'teki gibi
-        // ayrica silinecek bir relay session yok.
         SteamLobbyManager.Instance?.LeaveLobby();
 
         if (wasHost)
@@ -133,9 +198,24 @@ public class LobbyUIManager : MonoBehaviour
             NetworkManager.singleton.StopClient();
         }
 
-        if (GameManager.Instance != null) GameManager.Instance.ShowMainMenu();
+        ResetLobbyUi();
 
-        leaveLobbyButton.interactable = true;
         if (lobbyNm != null) lobbyNm.ResetLobbyState();
+
+        Debug.Log("[LOBBY] Leave pressed: lobby UI closed.");
+    }
+
+    private void ResetLobbyUi()
+    {
+        MpInPlaceToggle inPlace = FindAnyObjectByType<MpInPlaceToggle>(FindObjectsInactive.Include);
+        if (inPlace != null)
+        {
+            inPlace.Close();
+            return;
+        }
+
+        if (GameManager.Instance != null) GameManager.Instance.ShowMultiplayerMenu();
+
+        if (leaveLobbyButton != null) leaveLobbyButton.interactable = true;
     }
 }

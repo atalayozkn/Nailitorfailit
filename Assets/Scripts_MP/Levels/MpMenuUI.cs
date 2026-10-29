@@ -3,28 +3,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// The multiplayer menu front-end (M2): Create / Join / Lobby / Leave / Start plus the
-/// player name and the level picker.
-///
-/// It talks ONLY to the public API of the MP stack
-/// (LobbyNetworkManager.HostLobby / JoinLobby / StartGame / ReadySummary / LobbyID,
-/// SteamLobbyManager.LeaveLobby, MpLevelNet for the level choice) - so the same
-/// component drives the authored panels extracted from MenuScene_MP and, when those are
-/// absent, a compact menu it builds itself at runtime.
-///
-/// That fallback is what makes the module usable from ANY menu scene immediately:
-///    MpBootstrap.Open()  -> menu appears, no scene surgery required.
-/// </summary>
 public class MpMenuUI : MonoBehaviour
 {
     public static MpMenuUI Instance { get; private set; }
 
     [Header("Authored panels (wired by the extractor tool; empty = runtime menu)")]
-    [SerializeField] private GameObject multiplayerPanel;   // Buttons_AfterMultiplayer
-    [SerializeField] private GameObject createPanel;        // Panel_AfterCreate
-    [SerializeField] private GameObject joinPanel;          // Panel_AfterJoin
-    [SerializeField] private GameObject lobbyPanel;         // Panel_Lobby
+    [SerializeField] private GameObject multiplayerPanel;
+    [SerializeField] private GameObject createPanel;
+    [SerializeField] private GameObject joinPanel;
+    [SerializeField] private GameObject lobbyPanel;
 
     [Header("Inputs")]
     [SerializeField] private TMP_InputField nameInput;
@@ -37,7 +24,6 @@ public class MpMenuUI : MonoBehaviour
     [SerializeField] private TMP_Text lobbyPasswordText;
     [SerializeField] private TMP_Text statusText;
 
-    // runtime-built widgets
     private GameObject runtimeRoot;
     private TMP_InputField runtimeNameInput;
     private TMP_InputField runtimeCodeInput;
@@ -51,7 +37,9 @@ public class MpMenuUI : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+
+            Debug.LogWarning("[MP-UI] a second MpMenuUI appeared; destroying only the duplicate component.");
+            Destroy(this);
             return;
         }
 
@@ -73,7 +61,6 @@ public class MpMenuUI : MonoBehaviour
 
         if (lobbyPanel == null && runtimeLobbyText == null) return;
 
-        // live lobby info
         LobbyNetworkManager nm = NetworkManager.singleton as LobbyNetworkManager;
         if (nm == null) return;
 
@@ -84,8 +71,6 @@ public class MpMenuUI : MonoBehaviour
         if (lobbyPasswordText != null) lobbyPasswordText.text = nm.LobbyPassword;
         if (runtimeLobbyText != null) runtimeLobbyText.text = info;
     }
-
-    // ---------------------------------------------------------------- navigation
 
     public void ShowMultiplayerMenu()
     {
@@ -128,7 +113,6 @@ public class MpMenuUI : MonoBehaviour
         else if (!runtimeMode) SetCanvasVisible(active != null);
     }
 
-    /// <summary>Shows/hides the canvas that hosts the authored panels.</summary>
     private void SetCanvasVisible(bool visible)
     {
         Transform node = multiplayerPanel != null ? multiplayerPanel.transform
@@ -141,8 +125,6 @@ public class MpMenuUI : MonoBehaviour
         Canvas canvas = node.GetComponentInParent<Canvas>(true);
         if (canvas != null) canvas.gameObject.SetActive(visible);
     }
-
-    // ---------------------------------------------------------------- actions
 
     public void OnNameChanged(string value)
     {
@@ -177,18 +159,75 @@ public class MpMenuUI : MonoBehaviour
         ((LobbyNetworkManager)NetworkManager.singleton).JoinLobby(code, password);
     }
 
+    private static bool leaveInProgress;
+
     public void OnLeavePressed()
     {
-        LobbyNetworkManager nm = NetworkManager.singleton as LobbyNetworkManager;
-        if (nm == null) { HideAll(); return; }
+        if (leaveInProgress) return;
+        leaveInProgress = true;
 
-        bool wasHost = NetworkServer.active && NetworkClient.isConnected;
-        SteamLobbyManager.Instance?.LeaveLobby();
+        try
+        {
+            LobbyNetworkManager nm = NetworkManager.singleton as LobbyNetworkManager;
+            if (nm == null)
+            {
+                Debug.LogWarning("[MP-UI] leave pressed but there is no LobbyNetworkManager.");
+                CloseMenuUi();
+                return;
+            }
 
-        if (wasHost) NetworkManager.singleton.StopHost();
-        else NetworkManager.singleton.StopClient();
+            bool wasHost = NetworkServer.active && NetworkClient.isConnected;
+            Debug.Log($"[MP-UI] leave pressed (wasHost={wasHost} client={NetworkClient.active} server={NetworkServer.active})");
 
-        nm.ResetLobbyState();
+            SteamLobbyManager.Instance?.LeaveLobby();
+
+            if (wasHost) nm.StopHost();
+            else if (NetworkClient.active) nm.StopClient();
+            else if (NetworkServer.active) nm.StopServer();
+
+            nm.ResetLobbyState();
+            CloseMenuUi();
+
+            Debug.Log("[MP-UI] leave complete.");
+        }
+        finally
+        {
+            leaveInProgress = false;
+        }
+    }
+
+    public void OnReadyPressed()
+    {
+        LobbyPlayer local = NetworkClient.localPlayer != null
+            ? NetworkClient.localPlayer.GetComponent<LobbyPlayer>()
+            : null;
+
+        if (local == null)
+        {
+            Debug.LogWarning("[MP-UI] ready pressed but the local lobby player is not spawned yet.");
+            return;
+        }
+
+        if (local.isHost)
+        {
+            Debug.Log("[MP-UI] the host does not mark itself ready.");
+            return;
+        }
+
+        bool next = !local.isReady;
+        local.CmdSetReady(next);
+        Debug.Log($"[MP-UI] ready -> {next}");
+    }
+
+    private void CloseMenuUi()
+    {
+        MpInPlaceToggle inPlace = GetComponentInChildren<MpInPlaceToggle>(true);
+        if (inPlace != null)
+        {
+            inPlace.Close();
+            return;
+        }
+
         HideAll();
     }
 
@@ -202,7 +241,7 @@ public class MpMenuUI : MonoBehaviour
 
     public void OnBackPressed()
     {
-        // from create/join back to the multiplayer menu; from there, hide everything
+
         if (createPanel != null && createPanel.activeSelf) { ShowMultiplayerMenu(); return; }
         if (joinPanel != null && joinPanel.activeSelf) { ShowMultiplayerMenu(); return; }
 
@@ -240,8 +279,6 @@ public class MpMenuUI : MonoBehaviour
         Debug.Log($"[MP-UI] {message}");
     }
 
-    // ---------------------------------------------------------------- runtime menu
-
     private enum RuntimeView { Multiplayer, Create, Join, Lobby }
     private RuntimeView runtimeView = RuntimeView.Multiplayer;
 
@@ -250,7 +287,6 @@ public class MpMenuUI : MonoBehaviour
     private GameObject runtimeJoinRow;
     private GameObject runtimeLobbyRow;
 
-    /// <summary>Builds a compact working menu in code (used when no authored prefab exists).</summary>
     public static MpMenuUI CreateRuntime()
     {
         var hostGo = new GameObject("MpMenuUI(runtime)");
@@ -285,22 +321,18 @@ public class MpMenuUI : MonoBehaviour
         runtimeCodeInput = CreateInput(root, "Code", new Vector2(0f, 170f), "lobby code");
         runtimePasswordInput = CreateInput(root, "Password", new Vector2(0f, 100f), "password");
 
-        // multiplayer (create / join / back)
         runtimeMultiplayerRow = CreateRow(root, "Row_MP", new Vector2(0f, -20f));
         CreateButton(runtimeMultiplayerRow.GetComponent<RectTransform>(), "Create", new Vector2(-160f, 0f), OnCreatePressed);
         CreateButton(runtimeMultiplayerRow.GetComponent<RectTransform>(), "Join", new Vector2(160f, 0f), OnJoinPressed);
 
-        // create view
         runtimeCreateRow = CreateRow(root, "Row_Create", new Vector2(0f, -20f));
         CreateButton(runtimeCreateRow.GetComponent<RectTransform>(), "Create lobby", new Vector2(-160f, 0f), OnCreatePressed);
         CreateButton(runtimeCreateRow.GetComponent<RectTransform>(), "Back", new Vector2(160f, 0f), OnBackPressed);
 
-        // join view
         runtimeJoinRow = CreateRow(root, "Row_Join", new Vector2(0f, -20f));
         CreateButton(runtimeJoinRow.GetComponent<RectTransform>(), "Join lobby", new Vector2(-160f, 0f), OnJoinPressed);
         CreateButton(runtimeJoinRow.GetComponent<RectTransform>(), "Back", new Vector2(160f, 0f), OnBackPressed);
 
-        // lobby view
         runtimeLobbyRow = CreateRow(root, "Row_Lobby", new Vector2(0f, -20f));
         runtimeLobbyText = CreateText(root, "LobbyInfo", new Vector2(0f, 90f), 30f, string.Empty);
 
@@ -326,8 +358,6 @@ public class MpMenuUI : MonoBehaviour
 
         if (runtimeRoot != null) runtimeRoot.SetActive(true);
     }
-
-    // ---------------------------------------------------------------- tiny builders
 
     private static Image CreateImage(RectTransform parent, string name, Color color)
     {

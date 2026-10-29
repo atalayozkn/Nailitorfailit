@@ -84,7 +84,7 @@ MonoBehaviour:
   evaluationInterval: 3
   timeInterpolationGui: 0
   gamePlayerPrefab: {fileID: 6044505348918361584, guid: 6756b5b61950471d7a3132970000bc3c, type: 3}
-  trafficCarPrefab: {fileID: 0}
+  trafficCarPrefab: {fileID: 5962282076279725234, guid: 87d555764a1357885a5f10fbb3efec8b, type: 3}
 --- !u!114 &2511396773850180733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,7 +150,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edc5ff1890961930f9bf88dcf21a060b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyManager
-  forceLanMode: 0
   lobbyType: 2
   codeKey: nif_code
   versionKey: nif_ver
