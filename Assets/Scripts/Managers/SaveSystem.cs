@@ -6,8 +6,9 @@ using UnityEngine;
 [Serializable]
 public class SaveData
 {
-    // Level indexes match GameSceneManager.scenes (0 = Menu, 1 = Tutorial, 2 = Demo ...).
-    public int highestUnlockedLevel = 1;
+    // Level indexes match GameSceneManager.scenes (0 = Menu, 1 = Tutorial, 2 = Level 1 ...).
+    // Tutorial and Level 1 start unlocked so the tutorial can be skipped.
+    public int highestUnlockedLevel = 2;
     public List<int> completedLevels = new List<int>();
 }
 
@@ -16,6 +17,7 @@ public static class SaveSystem
 {
     private const string FileName = "save.json";
     private const int FirstLevel = 1;
+    private const int MinUnlockedLevel = 2;
 
     private static SaveData data;
 
@@ -53,7 +55,7 @@ public static class SaveSystem
 
         if (data == null) data = new SaveData();
         if (data.completedLevels == null) data.completedLevels = new List<int>();
-        if (data.highestUnlockedLevel < FirstLevel) data.highestUnlockedLevel = FirstLevel;
+        if (data.highestUnlockedLevel < MinUnlockedLevel) data.highestUnlockedLevel = MinUnlockedLevel;
     }
 
     public static void Save()

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class LevelSelectButton : MonoBehaviour
 {
     [Header("Level")]
-    [Tooltip("Index in GameSceneManager scenes (1 = Tutorial, 2 = Demo ...).")]
+    [Tooltip("Index in GameSceneManager scenes (1 = Tutorial, 2 = Level 1 ...).")]
     [SerializeField] private int levelIndex;
 
     [Header("Visuals (optional)")]
