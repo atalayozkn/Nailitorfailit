@@ -13,6 +13,7 @@ public class LevelManager : MonoBehaviour
 
     private RoomController[] roomControllers;
     private int remainingRoomCount;
+    private bool isLevelEnded = false;
     public static LevelManager Instance { get; private set; }
     private void Awake()
     {
@@ -26,9 +27,13 @@ public class LevelManager : MonoBehaviour
 
         roomControllers = FindObjectsByType<RoomController>(FindObjectsSortMode.None);
         remainingRoomCount = roomControllers.Length;
+
+        if (roomControllers.Length == 0) Debug.LogWarning("LevelManager: No RoomController found in scene, level can not be won.");
     }
     public void CompleteRoom()
     {
+        if (isLevelEnded) return;
+
         remainingRoomCount--;
 
         CurrencyManager.Instance.GainCurrency(roomCurrencyReward); //Currency Reward
@@ -45,11 +50,20 @@ public class LevelManager : MonoBehaviour
     }
     public void TimeExpired()
     {
-        if (remainingRoomCount == 0) Victory();
+        if (isLevelEnded) return;
+
+        if (roomControllers.Length > 0 && remainingRoomCount <= 0) Victory();
         else Defeat();
+    }
+    // Stops the round so victory/defeat can only trigger once.
+    private void EndLevel()
+    {
+        isLevelEnded = true;
+        GameTimeManager.Instance?.SetActivity(false);
     }
     private void Defeat()
     {
+        EndLevel();
         onDefeatEvent?.Invoke();
 
         if (!CurrencyManager.Instance.HasEnoughCurrency(50))
@@ -60,6 +74,7 @@ public class LevelManager : MonoBehaviour
     }
     private void Victory()
     {
+        EndLevel();
         onVictoryEvent?.Invoke();
         int score = ScoreManager.Instance.CalculateScore();
 

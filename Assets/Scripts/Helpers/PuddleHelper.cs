@@ -38,6 +38,8 @@ public class PuddleHelper : MonoBehaviour
 
     private void SwitchState(PuddleState state)
     {
+        currentState = state;
+
         switch (state)
         {
             case PuddleState.InActive:

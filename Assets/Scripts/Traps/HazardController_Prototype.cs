@@ -20,11 +20,12 @@ public class HazardController_Prototype : MonoBehaviour
     }
     private IEnumerator HazardRoutine()
     {
+        // An empty list would spin forever without yielding and freeze the game.
+        if (availableHazards == null || availableHazards.Length == 0) yield break;
+
         while (true)
         {
             float waitTime = Random.Range(minHazardInterval, maxHazardInterval);
-
-            if (availableHazards.Length == 0) continue;
 
             int randomIndex = Random.Range(0, availableHazards.Length);
             availableHazards[randomIndex]?.Invoke();
