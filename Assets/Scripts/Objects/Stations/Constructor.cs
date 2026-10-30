@@ -107,6 +107,15 @@ namespace ItemScript
         {
             return isBuilt;
         }
+        // Used by RoomMaterialRecipe to decide which material this tile needs.
+        public void SetAcceptedType(CarriableType type)
+        {
+            acceptedType = type;
+        }
+        public CarriableType GetAcceptedType()
+        {
+            return acceptedType;
+        }
         public float GetCurrentHealthPercent()
         {
             if (activeHealthComponent == null) return 0f;
