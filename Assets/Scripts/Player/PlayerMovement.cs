@@ -43,6 +43,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float onAirMoveDamping = 0.01f;
     [SerializeField] private float onAirRotationDamping = 0.01f;
 
+    [Header("Step Settings")]
+    [Tooltip("Highest ledge (curb, sidewalk) the player walks up without jumping.")]
+    [SerializeField] private float maxStepHeight = 0.45f; // sidewalk curbs are ~0.42m above the road
+    [Tooltip("How far in front of the capsule a ledge is detected.")]
+    [SerializeField] private float stepCheckDistance = 0.15f;
+    [Tooltip("Max height gained per physics step, smooths the climb.")]
+    [SerializeField] private float stepClimbPerFrame = 0.08f;
+
     [Header("GroundCheck Settings")]
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] private float checkDistance;
@@ -68,6 +76,15 @@ public class PlayerMovement : MonoBehaviour
     private bool isSlipping;
     private bool isGrounded;
     private bool wasGrounded;
+    private CapsuleCollider capsule;
+    private bool isStepping;
+    private float stepTargetY;
+    private Vector3 stepDirection;
+
+    private void Awake()
+    {
+        capsule = GetComponent<CapsuleCollider>();
+    }
 
     private void OnEnable()
     {
@@ -111,6 +128,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         HandleMovement();
+        HandleStepUp();
         HandleRotation();
     }
 
@@ -265,6 +283,66 @@ public class PlayerMovement : MonoBehaviour
         float rotationMultiplier = Mathf.Lerp(1f, maxRotationMultiplier, normalizedAngle * normalizedAngle);
 
         rb.AddTorque(transform.up * cross.y * rotateForce * rotationMultiplier, ForceMode.Acceleration);
+    }
+
+    // Lifts the player onto low ledges (curbs, sidewalks) instead of getting stuck against them.
+    // The climb keeps a target height and finishes over a few physics steps: once we are lifted the
+    // short ground ray stops reaching the lower ground, so it can not depend on isGrounded.
+    private void HandleStepUp()
+    {
+        if (!isInputPresent || isSlipping)
+        {
+            isStepping = false;
+            return;
+        }
+
+        if (isStepping)
+        {
+            ContinueStepUp();
+            return;
+        }
+
+        if (!isGrounded) return;
+
+        Vector3 direction = GetMovementDirection();
+        if (direction.sqrMagnitude < 0.01f) return;
+
+        float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : 0.3f;
+        Vector3 feet = rb.position;
+        float reach = radius + stepCheckDistance;
+
+        // Something blocks us just above the floor...
+        if (!Physics.Raycast(feet + Vector3.up * 0.05f, direction, reach, whatIsGround, QueryTriggerInteraction.Ignore)) return;
+        // ...but nothing at step height, so it is a ledge and not a wall.
+        if (Physics.Raycast(feet + Vector3.up * (maxStepHeight + 0.05f), direction, reach + 0.1f, whatIsGround, QueryTriggerInteraction.Ignore)) return;
+
+        // Find the top of the ledge right in front of the capsule.
+        Vector3 probe = feet + direction * reach + Vector3.up * (maxStepHeight + 0.05f);
+        if (!Physics.Raycast(probe, Vector3.down, out RaycastHit top, maxStepHeight + 0.05f, whatIsGround, QueryTriggerInteraction.Ignore)) return;
+
+        float stepHeight = top.point.y - feet.y;
+        if (stepHeight <= 0.01f || stepHeight > maxStepHeight) return;
+
+        isStepping = true;
+        stepTargetY = top.point.y + 0.02f;
+        stepDirection = direction;
+        ContinueStepUp();
+    }
+
+    private void ContinueStepUp()
+    {
+        float remaining = stepTargetY - rb.position.y;
+        if (remaining <= 0f)
+        {
+            // On top: nudge forward so the capsule settles on the ledge instead of its edge.
+            rb.position += stepDirection * 0.05f;
+            isStepping = false;
+            return;
+        }
+
+        rb.position += Vector3.up * Mathf.Min(remaining, stepClimbPerFrame);
+        // Drop the downward velocity so gravity does not pull us back off the edge.
+        if (rb.linearVelocity.y < 0f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
     }
 
     private void HandleJump()

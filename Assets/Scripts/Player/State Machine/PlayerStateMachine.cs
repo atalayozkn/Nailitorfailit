@@ -102,13 +102,9 @@ public class PlayerStateMachine : StateMachine_Player
     }
     private void Start()
     {
-        // Lock inputs in Start, not Awake: PlayerMovement/PlayerInteractionHandler set isActive = true
-        // in their OnEnable, and Awake/OnEnable order between components differs between editor and build.
-        // Start runs after every Awake/OnEnable, so the lock can not be overwritten.
-        movementHandler.SetActivity(false);
-        interactionHandler.SetActivity(false);
-        Invoke(nameof(SwitchToPlayerCamera), 1f);
-        Invoke(nameof(EnablePlayerInputs), 6f);
+        // No level intro: the overview camera is turned off right away and the player can move immediately.
+        if (levelStartCamera != null) levelStartCamera.gameObject.SetActive(false);
+        EnablePlayerInputs();
     }
     private void OnEnable()
     {
@@ -288,10 +284,6 @@ public class PlayerStateMachine : StateMachine_Player
     {
         movementHandler.SetActivity(true);
         interactionHandler.SetActivity(true);
-    }
-    private void SwitchToPlayerCamera()
-    {
-        levelStartCamera.Priority = 0;
     }
     public void Bump(Vector3 hitPosition)
     {
