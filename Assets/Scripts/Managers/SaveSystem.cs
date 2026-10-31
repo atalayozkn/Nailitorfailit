@@ -10,6 +10,8 @@ public class SaveData
     // Tutorial and Level 1 start unlocked so the tutorial can be skipped.
     public int highestUnlockedLevel = 2;
     public List<int> completedLevels = new List<int>();
+    // Info pop-ups (InfoPopupData.popupId) the player already read; they only open automatically once.
+    public List<string> seenPopups = new List<string>();
 }
 
 // Static save file access. Stored as JSON under Application.persistentDataPath.
@@ -55,6 +57,7 @@ public static class SaveSystem
 
         if (data == null) data = new SaveData();
         if (data.completedLevels == null) data.completedLevels = new List<int>();
+        if (data.seenPopups == null) data.seenPopups = new List<string>();
         if (data.highestUnlockedLevel < MinUnlockedLevel) data.highestUnlockedLevel = MinUnlockedLevel;
     }
 
@@ -85,6 +88,18 @@ public static class SaveSystem
     public static bool IsLevelCompleted(int levelIndex)
     {
         return Data.completedLevels.Contains(levelIndex);
+    }
+
+    public static bool HasSeenPopup(string popupId)
+    {
+        return !string.IsNullOrEmpty(popupId) && Data.seenPopups.Contains(popupId);
+    }
+
+    public static void MarkPopupSeen(string popupId)
+    {
+        if (string.IsNullOrEmpty(popupId) || Data.seenPopups.Contains(popupId)) return;
+        Data.seenPopups.Add(popupId);
+        Save();
     }
 
     // Marks the level as completed and unlocks the next one.
