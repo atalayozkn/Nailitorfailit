@@ -11,17 +11,20 @@ public class TutorialManager : MonoBehaviour
     private int currentObjectiveIndex;
 
     [SerializeField] private UnityEvent onTutorialEnd;
+    // Scene-only singleton: it references this scene's objectives, so it must not survive a scene load
+    // (with DontDestroyOnLoad a replayed tutorial kept the old, destroyed objectives).
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+    }
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
     private void Start()
     {
@@ -33,27 +36,27 @@ public class TutorialManager : MonoBehaviour
         switch (index)
         {
             case 0:
-                objectiveText.text = "Move to highlighted area.";
+                objectiveText.text = "Your dog needs a home! Walk to the highlighted spot in the yard.";
                 objectiveHintText.text = "Movement Input: W,A,S,D";
                 break;
             case 1:
-                objectiveText.text = "Interact with the highlighted object to obtain wood.";
+                objectiveText.text = "Interact with the wood pile to pick up a plank.";
                 objectiveHintText.text = "Interaction Input: E";
                 break;
             case 2:
-                objectiveText.text = "Carry the wood and interact with the highlighted station to place the object. After placing keep interacting with station to process.";
+                objectiveText.text = "Carry the wood to the Wood Cutter and interact to put it in. Keep interacting to cut it into a floor tile.";
                 objectiveHintText.text = "Interaction Input: E";
                 break;
             case 3:
-                objectiveText.text = "Carry the processed good to highlighted tile, then interact with the tile. This will place your object onto the construction tile";
+                objectiveText.text = "Carry the cut tile to the highlighted spot of the dog house and interact to place it.";
                 objectiveHintText.text = "Interaction Input: E";
                 break;
             case 4:
-                objectiveText.text = "Keep interaction pressed while looking at the consturction zone to complete construction.";
+                objectiveText.text = "Keep interacting with the placed tile to nail it down.";
                 objectiveHintText.text = "Interaction Input: E";
                 break;
             case 5:
-                objectiveText.text = "Complete all the tiles for the room.";
+                objectiveText.text = "Finish all 4 tiles of the dog house floor.";
                 objectiveHintText.text = "";
                 break;
             case 6:
