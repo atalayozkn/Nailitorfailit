@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52e4a196ade8fa64b94cade3bdeb555c, type: 3}
+  m_Name: Popup_Level05
+  m_EditorClassIdentifier: Assembly-CSharp::InfoPopupData
+  popupId: level05_intro
+  pages:
+  - title: Level 5 - Leaking pipes
+    body: Old water pipes run under this house. Every now and then one bursts and
+      floods the floor around it.
+    image: {fileID: 0}
+  - title: Wet floors
+    body: 'Puddles on the floor are slippery - you can slip and drop what you''re
+      carrying.
+
+
+      Wait for the water to dry or walk around it.'
+    image: {fileID: 0}
+  - title: Water + electricity
+    body: Keep water and sockets apart! A spark that reaches a puddle electrifies
+      it and shocks anyone standing in it.
+    image: {fileID: 0}

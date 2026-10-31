@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52e4a196ade8fa64b94cade3bdeb555c, type: 3}
+  m_Name: Popup_TutorialDog
+  m_EditorClassIdentifier: Assembly-CSharp::InfoPopupData
+  popupId: tutorial_dog
+  pages:
+  - title: Meet your dog!
+    body: 'This yard is now home to your dog. A happy dog is a real helper on the
+      job: it digs up useful items for you, patrols the site and barks at the MailMan.'
+    image: {fileID: 0}
+  - title: Keep it happy
+    body: 'Your dog has three needs:
+
+
+      <b>Hunger</b> - put Pet Food in its
+      bowl.
+
+      <b>Affection</b> - pet it and play with it.
+
+      <b>Energy</b>
+      - let it rest and sleep.
+
+
+      The better these are, the more it helps you.'
+    image: {fileID: 0}
+  - title: Careful!
+    body: 'A hungry, ignored or tired dog gets grumpy. It can turn aggressive and
+      get in your way instead of helping.
+
+
+      Check on your dog between jobs!'
+    image: {fileID: 0}

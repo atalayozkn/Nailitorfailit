@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52e4a196ade8fa64b94cade3bdeb555c, type: 3}
+  m_Name: Popup_Level02
+  m_EditorClassIdentifier: Assembly-CSharp::InfoPopupData
+  popupId: level02_intro
+  pages:
+  - title: Level 2 - Fire hazard
+    body: The electrical sockets in this house are faulty. A spark sets the finished
+      wooden floor around it on fire.
+    image: {fileID: 0}
+  - title: Put it out
+    body: 'Buy a <b>Fire Extinguisher</b> from the shop, carry it to the fire and
+      press <b>Q</b> to spray.
+
+
+      Burning tiles lose health. If a tile burns
+      for too long it breaks and you have to build it again.'
+    image: {fileID: 0}
+  - title: Stay safe
+    body: Don't walk through the flames, and react early - a small fire is much easier
+      to handle than a burning room.
+    image: {fileID: 0}
