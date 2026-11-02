@@ -31,7 +31,6 @@ public class PlayerStateMachine : StateMachine_Player
     [field: SerializeField] public Animator animator { get; private set; }
     [field: SerializeField] public PlayerCrashHelper crashHelper { get; private set; }
     [field: SerializeField] public CinemachineCamera playerCamera { get; private set; }
-    [field: SerializeField] public CinemachineCamera levelStartCamera { get; private set; }
     [field: SerializeField] public Rigidbody[] ragdollRigidBodies { get; private set; }
     [field: SerializeField] public ConfigurableJoint[] ragdollJoints { get; private set; }
     [field: SerializeField] public Collider[] ragdollColliders { get; private set; }
@@ -102,8 +101,6 @@ public class PlayerStateMachine : StateMachine_Player
     }
     private void Start()
     {
-        // No level intro: the overview camera is turned off right away and the player can move immediately.
-        if (levelStartCamera != null) levelStartCamera.gameObject.SetActive(false);
         EnablePlayerInputs();
     }
     private void OnEnable()
