@@ -54,13 +54,11 @@ public class MpLevelCatalog : MonoBehaviour
 
         levels = new List<MpLevelEntry>
         {
-            Entry("Level 01 - Arda",     "Assets/Scenes/Level_01_Arda.unity"),
-            Entry("Level 01 - Ardav2",   "Assets/Scenes/Level_01_Ardav2.unity"),
-            Entry("Level 01 - Tarik",    "Assets/Scenes/Level_01_TARIK.unity"),
-            Entry("Level 02 - Tarik",    "Assets/Scenes/Level_02_TARIK.unity"),
-            Entry("Level 03 - Tarik",    "Assets/Scenes/Level_03_TARIK.unity"),
-            Entry("Level 04 - Tarik",    "Assets/Scenes/Level_04_TARIK.unity"),
-            Entry("Level 06 - Tarik",    "Assets/Scenes/Level_06_TARIK.unity"),
+            Entry("Level 01",           "Assets/Scenes/Level_01.unity"),
+            Entry("Level 02",           "Assets/Scenes/Level_02.unity"),
+            Entry("Level 03",           "Assets/Scenes/Level_03.unity"),
+            Entry("Level 04",           "Assets/Scenes/Level_04.unity"),
+            Entry("Level 05",           "Assets/Scenes/Level_05.unity"),
         };
 
         Debug.Log($"[MP-LEVELS] catalog seeded with {levels.Count} level(s) from the Scenes folder.");

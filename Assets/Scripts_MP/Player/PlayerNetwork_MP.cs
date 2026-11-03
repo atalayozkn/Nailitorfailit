@@ -160,6 +160,8 @@ namespace PlayerScripts
 
             MpSharedCompat.RefreshLocalCurrencyText(CurrencyManager.Instance);
 
+            WireLocalCamera();
+
             if (MpSharedCompat.HasAuthoredTimeHud || MpSharedCompat.HasAuthoredMoneyHud)
             {
                 GameHUD_MP hud = transform.root.GetComponentInChildren<GameHUD_MP>(true);
@@ -311,6 +313,55 @@ namespace PlayerScripts
         }
 
         #endregion
+
+        private void WireLocalCamera()
+        {
+            Transform package = transform.root;
+            CinemachineCamera[] cameras = package.GetComponentsInChildren<CinemachineCamera>(true);
+
+            if (cameras.Length == 0)
+            {
+                InteractionDebug.Log($"[MP-CAM] '{package.name}': no CinemachineCamera under the player - camera follow unchanged.");
+                return;
+            }
+
+            Transform follow = transform;
+            CinemachineCamera live = null;
+
+            foreach (CinemachineCamera camera in cameras)
+            {
+                if (camera.name.Contains("InLevel")) live = camera;
+            }
+
+            if (live == null) live = cameras[cameras.Length - 1];
+
+            CameraTarget targets = live.Target;
+            targets.TrackingTarget = follow;
+            live.Target = targets;
+
+            foreach (CinemachineCamera camera in cameras)
+            {
+                if (camera.enabled != (camera == live)) camera.enabled = camera == live;
+            }
+
+            int disabledCameras = 0;
+
+            foreach (UnityEngine.Camera playerCamera in package.GetComponentsInChildren<UnityEngine.Camera>(true))
+            {
+                bool keep = playerCamera.gameObject.name == "Main Camera" || playerCamera.name == "Main Camera";
+
+                if (playerCamera.enabled == keep) continue;
+
+                playerCamera.enabled = keep;
+                if (!keep) disabledCameras++;
+            }
+
+            foreach (CinemachineBrain brain in package.GetComponentsInChildren<CinemachineBrain>(true))
+                brain.enabled = true;
+
+            InteractionDebug.Log($"[MP-CAM] '{package.name}': live vcam '{live.name}' follows '{follow.name}' " +
+                                 $"(vcams={cameras.Length}, extraCamerasOff={disabledCameras}).");
+        }
 
         private void SetLocalOnlyActive(bool isLocal)
         {

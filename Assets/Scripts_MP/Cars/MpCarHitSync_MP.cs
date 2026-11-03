@@ -1,3 +1,4 @@
+using System.Reflection;
 using Mirror;
 using UnityEngine;
 
@@ -13,8 +14,16 @@ public class MpCarHitSync_MP : NetworkBehaviour
     [Tooltip("Log every hit and despawn.")]
     [SerializeField] private bool logActions = true;
 
+    private static readonly FieldInfo MaxLifeTimeField =
+        typeof(Car_Active).GetField("maxLifeTime", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    private float nextMissLogAt;
+
     private Car_Active carActive;
     private Rigidbody body;
+
+    private float nextSampleAt;
+    private Vector3 lastSamplePosition;
 
     private void Awake()
     {
@@ -24,7 +33,19 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
     public override void OnStartServer()
     {
-        if (carActive != null) carActive.enabled = true;
+        if (carActive != null)
+        {
+            carActive.enabled = true;
+
+            if (MaxLifeTimeField != null)
+            {
+                MaxLifeTimeField.SetValue(carActive, 1e9f);
+
+                if (logActions)
+                    InteractionDebug.Log("[MP-CAR] SP lifetime disabled on the server car " +
+                                         "(despawn is networked now).");
+            }
+        }
 
         if (body != null)
         {
@@ -41,17 +62,54 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
         if (carActive != null) carActive.enabled = false;
 
+        NetworkIdentity identity = GetComponent<NetworkIdentity>();
+
+        InteractionDebug.Log($"[MP-CAR] client received '{name}' netId={identity?.netId} " +
+                             $"pos={transform.position}");
+
         if (body != null)
         {
             body.isKinematic = true;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
         }
+
+        nextSampleAt = Time.unscaledTime + 1f;
+        lastSamplePosition = transform.position;
+
+        InteractionDebug.Log($"[MP-CAR] client received car netId={netId} " +
+                             $"pos={transform.position} hasTransform={GetComponent<Mirror.NetworkTransformReliable>() != null}");
     }
 
-    [Server]
+    private void Update()
+    {
+        if (isServer) return;
+
+        if (Time.unscaledTime < nextSampleAt) return;
+
+        nextSampleAt = Time.unscaledTime + 1f;
+
+        float moved = Vector3.Distance(transform.position, lastSamplePosition);
+        lastSamplePosition = transform.position;
+
+        InteractionDebug.Log($"[MP-CAR] client car netId={netId} moved={moved:F2}m/s " +
+                             $"pos={transform.position}");
+    }
+
+    public override void OnStopServer()
+    {
+        base.OnStopServer();
+        CancelInvoke(nameof(ServerDespawn));
+    }
+
     private void ServerDespawn()
     {
+        if (!NetworkServer.active)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (logActions) InteractionDebug.Log($"[MP-CAR] despawn '{name}'");
         NetworkServer.Destroy(gameObject);
     }
@@ -63,14 +121,26 @@ public class MpCarHitSync_MP : NetworkBehaviour
     private void ServerTryHit(Collider other)
     {
         if (!isServer || other == null) return;
-        if ((whatIsPlayer.value & (1 << other.gameObject.layer)) == 0) return;
 
         PlayerScripts.PlayerNetwork_MP player = other.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>();
-        if (player == null || player.isDead) return;
+
+        if (player == null)
+        {
+            if (logActions && Time.unscaledTime >= nextMissLogAt)
+            {
+                nextMissLogAt = Time.unscaledTime + 3f;
+                InteractionDebug.Log($"[MP-CAR-HIT] '{name}' touched '{other.name}' " +
+                                     $"layer={other.gameObject.layer} - not a player, ignored.");
+            }
+
+            return;
+        }
+
+        if (player.isDead) return;
+
+        InteractionDebug.Log($"[MP-CAR-HIT] '{name}' -> '{player.name}' (layer {other.gameObject.layer}, " +
+                             $"mask {whatIsPlayer.value}) death requested.");
 
         player.RequestDeath();
-
-        if (logActions)
-            InteractionDebug.Log($"[MP-CAR] '{name}' hit '{player.name}' - death requested on the server.");
     }
 }

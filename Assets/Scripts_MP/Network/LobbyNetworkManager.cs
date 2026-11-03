@@ -356,6 +356,8 @@ public class LobbyNetworkManager : NetworkManager
         Debug.Log($"[NET] Server started. transport={transportName} port={portInfo}");
 
         ChatNetwork.Register();
+        VoiceNetwork_MP.Register();
+        MpCarSpawner_MP.RegisterPrefabs();
         NetworkPingMonitor_MP.EnsureRegistered();
         CurrencyManager_MP.Register();
         MpLevelNet.Register();
@@ -369,6 +371,8 @@ public class LobbyNetworkManager : NetworkManager
         Debug.Log($"[NET] Client started. target={networkAddress}");
 
         ChatNetwork.Register();
+        VoiceNetwork_MP.Register();
+        MpCarSpawner_MP.RegisterPrefabs();
         NetworkPingMonitor_MP.EnsureRegistered();
         CurrencyManager_MP.Register();
         MpLevelNet.Register();

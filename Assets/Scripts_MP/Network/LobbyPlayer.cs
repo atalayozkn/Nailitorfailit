@@ -13,6 +13,9 @@ public class LobbyPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(OnHostChanged))]
     public bool isHost;
 
+    [SyncVar(hook = nameof(OnColorChanged))]
+    public int colorIndex;
+
     PlayerListEntryUI uiRow;
 
     public override void OnStartClient()
@@ -51,7 +54,9 @@ public class LobbyPlayer : NetworkBehaviour
         if (uiRow == null) return;
 
         string displayName = string.IsNullOrEmpty(playerName) ? "Player" : playerName;
+
         uiRow.SetName(displayName);
+        uiRow.SetPlayerColor(MpPlayerColor_MP.ColorOf(colorIndex));
         uiRow.UpdateColor(isHost, isReady);
     }
 
@@ -79,6 +84,23 @@ public class LobbyPlayer : NetworkBehaviour
 
     void OnReadyChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(isHost, newVal);
     void OnHostChanged(bool oldVal, bool newVal) => uiRow?.UpdateColor(newVal, isReady);
+
+    void OnColorChanged(int oldVal, int newVal)
+    {
+        if (uiRow == null) return;
+
+        uiRow.SetPlayerColor(MpPlayerColor_MP.ColorOf(newVal));
+        uiRow.UpdateColor(isHost, isReady);
+    }
+
+    public static int ClampColor(int index) => MpPlayerColor_MP.Clamp(index);
+
+    [Command]
+    public void CmdSetColor(int index)
+    {
+        colorIndex = ClampColor(index);
+        InteractionDebug.Log($"[LOBBY] colour for '{playerName}' -> {colorIndex}");
+    }
 
     [Server]
     public void ServerForceNameSync()

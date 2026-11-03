@@ -16,11 +16,15 @@ public class GameHUD_MP : MonoBehaviour
     private bool gameEnded;
     private bool authoredTimerActive;
 
+    private float nextHudLogAt;
+
     public void HideAuthoredDuplicates(bool hideTimer, bool hideCurrency)
     {
         if (hideTimer && timerText != null)
         {
             authoredTimerActive = true;
+
+            InteractionDebug.Log("[MP-TIME] own timer hidden, the authored SP HUD timer is used instead.");
 
             Transform counter = timerText.transform.parent;
             if (counter != null) counter.gameObject.SetActive(false);
@@ -89,6 +93,12 @@ public class GameHUD_MP : MonoBehaviour
         int minutes = Mathf.FloorToInt(remaining / 60f);
         int seconds = Mathf.FloorToInt(remaining % 60f);
         timerText.text = $"{minutes:00}:{seconds:00}";
+
+        if (Time.unscaledTime >= nextHudLogAt)
+        {
+            nextHudLogAt = Time.unscaledTime + 2f;
+            InteractionDebug.Log($"[MP-TIME] hud writes '{timerText.text}' active={GameTimeManager.Instance.IsTimerActive()}");
+        }
     }
 
     private void OnDestroy()

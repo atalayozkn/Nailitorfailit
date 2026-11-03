@@ -18,6 +18,9 @@ public class MpCarSpawner_MP : MonoBehaviour
     [Tooltip("Log bind/spawn/despawn decisions.")]
     [SerializeField] private bool logActions = true;
 
+    [Tooltip("How many cars may be alive at the same time.")]
+    [SerializeField] private int maxConcurrent = 4;
+
     private static readonly FieldInfo SpawnPointsField =
         typeof(CarController_Prototype).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -45,6 +48,23 @@ public class MpCarSpawner_MP : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         ResolvePrefab();
+    }
+
+    public static void RegisterPrefabs()
+    {
+        MpCarSpawner_MP spawner = FindAnyObjectByType<MpCarSpawner_MP>(FindObjectsInactive.Include);
+
+        if (spawner == null)
+        {
+            InteractionDebug.Log("[MP-CAR] no spawner alive - cannot register the car prefab.");
+            return;
+        }
+
+        GameObject prefab = spawner.ResolvePrefab();
+
+        InteractionDebug.Log($"[MP-CAR] prefab registration refreshed " +
+                             $"(prefab={(prefab != null ? prefab.name : "MISSING")}, " +
+                             $"server={NetworkServer.active}, client={NetworkClient.active}).");
     }
 
     private void Update()
@@ -135,6 +155,8 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (prefab == null) return;
 
         PruneLiveCars();
+
+        if (liveCars.Count >= Mathf.Max(1, maxConcurrent)) return;
 
         Transform lane = PickFreeLane();
         if (lane == null) return;

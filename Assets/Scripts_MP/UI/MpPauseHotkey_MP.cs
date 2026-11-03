@@ -1,5 +1,7 @@
 using System.Reflection;
 using Mirror;
+using TMPro;
+using UnityEngine.EventSystems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -35,6 +37,7 @@ public class MpPauseHotkey_MP : MonoBehaviour
         DisableSpBinding(menu);
 
         if (ChatUI.IsAnyOpen || ChatUI.EscapeHandledRecently) return;
+        if (TextInputFocused()) return;
 
         if (!EscapePressed()) return;
         if (Time.unscaledTime - lastToggleTime < 0.2f) return;
@@ -79,6 +82,17 @@ public class MpPauseHotkey_MP : MonoBehaviour
         Cursor.visible = nowPaused;
 
         Debug.Log($"[MP-PAUSE] ESC -> {(nowPaused ? "paused" : "resumed")}");
+    }
+
+    private static bool TextInputFocused()
+    {
+        EventSystem system = EventSystem.current;
+        if (system == null) return false;
+
+        GameObject selected = system.currentSelectedGameObject;
+        if (selected == null) return false;
+
+        return selected.GetComponent<TMP_InputField>() != null;
     }
 
     private static bool EscapePressed()

@@ -12,6 +12,8 @@ public class PlayerListEntryUI : MonoBehaviour
 
     [SerializeField] int maxNameLength = 16;
 
+    private Color playerColor = new Color(0.95f, 0.95f, 0.95f, 1f);
+
     public void SetName(string name)
     {
         if (string.IsNullOrEmpty(name)) name = "Player";
@@ -22,8 +24,16 @@ public class PlayerListEntryUI : MonoBehaviour
         if (nameText != null) nameText.text = name;
     }
 
+    public void SetPlayerColor(Color color) => playerColor = color;
+
     public void UpdateColor(bool isHost, bool isReady)
     {
-        nameText.color = isHost ? HostColor : (isReady ? ReadyColor : NotReadyColor);
+        if (nameText == null) return;
+
+        nameText.color = playerColor;
+
+        if (isHost) nameText.fontStyle = FontStyles.Bold;
+        else if (isReady) nameText.fontStyle = FontStyles.Underline;
+        else nameText.fontStyle = FontStyles.Normal;
     }
 }

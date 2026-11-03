@@ -8045,7 +8045,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6237379467555682905
 Transform:
   m_ObjectHideFlags: 0
@@ -10715,13 +10715,13 @@ MonoBehaviour:
   interactableMask:
     serializedVersion: 2
     m_Bits: 2112
-  detectionInterval: 0.1
-  forwardDistance: 0.5
-  forwardRadius: 0.15
-  groundForwardOffset: 0.15
-  groundHeight: 0.5
-  groundDistance: 0.55
-  groundRadius: 0.25
+  detectionInterval: 0.05
+  forwardDistance: 1.4
+  forwardRadius: 0.25
+  groundForwardOffset: 0.65
+  groundHeight: 0.8
+  groundDistance: 1.3
+  groundRadius: 0.35
   interactCooldown: 1
 --- !u!114 &4257319881488350
 MonoBehaviour:

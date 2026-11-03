@@ -107,13 +107,13 @@ public class DogSync_MP : NetworkBehaviour
     {
         if (dog == null)
         {
-            DogStateMachine dogStateMachine = GetComponentInChildren<DogStateMachine>(true);
+            DogStateMachine dogStateMachine = transform.root.GetComponentInChildren<DogStateMachine>(true);
             if (dogStateMachine != null) dog = dogStateMachine.transform;
         }
 
         if (dog == null)
         {
-            dog = transform.Find("DogPackage/Dog");
+            dog = transform.root.Find("DogPackage/Dog");
 
             if (dog == null)
                 Debug.LogWarning("[MP-DOG] dog transform not found - dog sync is disabled.");
@@ -121,13 +121,13 @@ public class DogSync_MP : NetworkBehaviour
 
         if (mailMan == null)
         {
-            MailManController mailManController = GetComponentInChildren<MailManController>(true);
+            MailManController mailManController = transform.root.GetComponentInChildren<MailManController>(true);
             if (mailManController != null) mailMan = mailManController.transform;
         }
 
         if (mailMan == null)
         {
-            mailMan = transform.Find("MailManPackage/MailMan");
+            mailMan = transform.root.Find("MailManPackage/MailMan");
 
             if (mailMan == null)
                 Debug.LogWarning("[MP-DOG] mail man transform not found - mail man sync is disabled.");

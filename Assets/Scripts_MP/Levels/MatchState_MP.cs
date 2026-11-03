@@ -30,6 +30,8 @@ public class MatchState_MP : MonoBehaviour
     private float nextTimeAt;
     private float nextScoreAt;
 
+    private float nextTimeLogAt;
+
     private float lastRemaining;
     private double lastServerTime;
     private bool lastActive;
@@ -100,6 +102,13 @@ public class MatchState_MP : MonoBehaviour
         lastRemaining = time != null ? time.GetCurrentTime() : 0f;
         lastServerTime = NetworkTime.time;
         lastActive = time != null && time.IsTimerActive();
+
+        if (Time.unscaledTime >= nextTimeLogAt)
+        {
+            nextTimeLogAt = Time.unscaledTime + 2f;
+            InteractionDebug.Log($"[MP-TIME] host broadcast remaining={lastRemaining:0.0} active={lastActive} " +
+                                 $"manager={(time != null ? "ok" : "MISSING")}");
+        }
 
         NetworkServer.SendToAll(new TimeMessage
         {

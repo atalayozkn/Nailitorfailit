@@ -46,6 +46,52 @@ public class MpAudioListenerGuard : MonoBehaviour
 
     public void Enforce()
     {
+        EnforceListeners();
+        EnforceCameras();
+    }
+
+    private void EnforceCameras()
+    {
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (cameras.Length <= 1) return;
+
+        Camera preferred = null;
+
+        if (NetworkClient.active && NetworkClient.localPlayer != null)
+            preferred = NetworkClient.localPlayer.GetComponentInChildren<Camera>(true);
+
+        if (preferred == null)
+        {
+            foreach (Camera candidate in cameras)
+            {
+                if (candidate == null || !candidate.enabled || !candidate.gameObject.activeInHierarchy) continue;
+                preferred = candidate;
+                break;
+            }
+        }
+
+        if (preferred == null) return;
+
+        int disabledCount = 0;
+
+        foreach (Camera camera in cameras)
+        {
+            if (camera == null) continue;
+
+            bool shouldBeOn = camera == preferred;
+            if (camera.enabled == shouldBeOn) continue;
+
+            camera.enabled = shouldBeOn;
+            if (!shouldBeOn) disabledCount++;
+        }
+
+        if (disabledCount > 0 && logChanges)
+            Debug.Log($"[MP-CAM] kept one camera ('{preferred.gameObject.name}'), disabled {disabledCount} " +
+                      $"other(s) ({cameras.Length} found).");
+    }
+
+    private void EnforceListeners()
+    {
         AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         if (listeners.Length <= 1) return;
 

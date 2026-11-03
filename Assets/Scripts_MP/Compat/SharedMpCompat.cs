@@ -205,6 +205,18 @@ public static class MpSharedCompat
         if (onInteract != null) onInteract.Invoke();
     }
 
+    private static readonly System.Collections.Generic.Dictionary<Cutter, float> spawnStartedAt =
+        new System.Collections.Generic.Dictionary<Cutter, float>();
+
+    private static bool SpawnWatchdogExpired(Cutter cutter)
+    {
+        if (!spawnStartedAt.TryGetValue(cutter, out float startedAt)) return true;
+        if (Time.time - startedAt < 6f) return false;
+
+        spawnStartedAt.Remove(cutter);
+        return true;
+    }
+
     public static void ServerInteract(this Cutter cutter, NetworkIdentity requester)
     {
         if (cutter == null) return;
@@ -213,7 +225,17 @@ public static class MpSharedCompat
         SetField(cutter, "interactionHandler", handler);
         if (handler == null) return;
 
-        if (GetField(cutter, "isSpawning", false)) return;
+        if (GetField(cutter, "isSpawning", false))
+        {
+            if (!SpawnWatchdogExpired(cutter))
+            {
+                InteractionDebug.Log($"[MP-CUTTER] '{cutter.name}': still spawning, interact ignored.");
+                return;
+            }
+
+            InteractionDebug.Log($"[MP-CUTTER] '{cutter.name}': spawn flag was stuck - reset.");
+            SetField(cutter, "isSpawning", false);
+        }
 
         Generator_Prototype generator = GetField<Generator_Prototype>(cutter, "connectedGenerator");
         float perProcessCost = GetField(cutter, "perProcessCost", 0f);
@@ -224,7 +246,12 @@ public static class MpSharedCompat
             return;
         }
 
-        if (!generator.HasEnoughEnergy(perProcessCost)) return;
+        if (!generator.HasEnoughEnergy(perProcessCost))
+        {
+            InteractionDebug.Log($"[MP-CUTTER] '{cutter.name}': generator has no energy left " +
+                                 $"(needs {perProcessCost}).");
+            return;
+        }
 
         if (!GetField(cutter, "isObjectPlaced", false))
         {
@@ -291,6 +318,7 @@ public static class MpSharedCompat
         }
 
         SetField(cutter, "isSpawning", true);
+        spawnStartedAt[cutter] = Time.time;
 
         CarriableObject_SP objectToConsume = placedObject;
         CarriableType objectType = placedObject.carriableType;
@@ -348,12 +376,21 @@ public static class MpSharedCompat
 
         for (int i = 0; i < spawnCount; i++)
         {
-            UnityEngine.Object.Instantiate(objectToSpawn, position, Quaternion.identity);
+            GameObject spawned = UnityEngine.Object.Instantiate(objectToSpawn, position, Quaternion.identity);
+
+            if (NetworkServer.active && spawned.TryGetComponent(out NetworkIdentity identity))
+            {
+                if (!NetworkClient.GetPrefab(identity.assetId, out _)) NetworkClient.RegisterPrefab(objectToSpawn);
+
+                NetworkServer.Spawn(spawned);
+            }
+
             if (onSpawn != null) onSpawn.Invoke();
             if (i < spawnCount - 1) yield return wait;
         }
 
         SetField(cutter, "isSpawning", false);
+        spawnStartedAt.Remove(cutter);
     }
 
     public static void ServerInteract(this Mixer mixer, NetworkIdentity requester)
@@ -544,7 +581,15 @@ public static class MpSharedCompat
         Vector3 position = productSpawnPoint != null ? productSpawnPoint.position : mixer.transform.position;
         Quaternion rotation = productSpawnPoint != null ? productSpawnPoint.rotation : mixer.transform.rotation;
 
-        UnityEngine.Object.Instantiate(formula.ProductPrefab, position, rotation);
+        GameObject productPrefab = MpPrefabResolver.Resolve(formula.ProductPrefab);
+        GameObject instance = UnityEngine.Object.Instantiate(productPrefab, position, rotation);
+
+        if (NetworkServer.active && instance.TryGetComponent(out NetworkIdentity identity))
+        {
+            if (!NetworkClient.GetPrefab(identity.assetId, out _)) NetworkClient.RegisterPrefab(productPrefab);
+
+            NetworkServer.Spawn(instance);
+        }
     }
 
     public static void ServerInteract(this Constructor constructor, NetworkIdentity requester)
@@ -772,8 +817,10 @@ public static class MpSharedCompat
 
         GameObject obj = UnityEngine.Object.Instantiate(objectPrefab, position, rotation);
 
-        if (NetworkServer.active && obj.TryGetComponent<NetworkIdentity>(out _))
+        if (NetworkServer.active && obj.TryGetComponent(out NetworkIdentity shopIdentity))
         {
+            if (!NetworkClient.GetPrefab(shopIdentity.assetId, out _)) NetworkClient.RegisterPrefab(objectPrefab);
+
             NetworkServer.Spawn(obj);
 
             if (obj.TryGetComponent(out CarriableObject_MP carriableMp))
@@ -836,11 +883,16 @@ public static class MpSharedCompat
         UnityEvent onInteract = GetField<UnityEvent>(spawner, "onInteractEvent");
         if (onInteract != null) onInteract.Invoke();
 
-        GameObject instance = UnityEngine.Object.Instantiate(MpPrefabResolver.Resolve(prefab), null);
+        GameObject spawnPrefab = MpPrefabResolver.Resolve(prefab);
+        GameObject instance = UnityEngine.Object.Instantiate(spawnPrefab, null);
         instance.transform.SetParent(null);
 
         if (NetworkServer.active && instance.TryGetComponent(out NetworkIdentity identity))
+        {
+            if (!NetworkClient.GetPrefab(identity.assetId, out _)) NetworkClient.RegisterPrefab(spawnPrefab);
+
             NetworkServer.Spawn(instance);
+        }
 
         SetField(spawner, "spawnedObjectCount", Mathf.Min(maxCount, spawnedCount + 1));
 
@@ -883,6 +935,12 @@ public static class MpSharedCompat
 
         SetField(manager, "currentTime", currentTime);
         SetField(manager, "isActive", active);
+
+        if (Time.unscaledTime >= TimeHudLog.NextAt)
+        {
+            TimeHudLog.NextAt = Time.unscaledTime + 2f;
+            InteractionDebug.Log($"[MP-TIME] client apply remaining={remaining:0.0} -> {currentTime:0.0} active={active}");
+        }
 
         Call(manager, "UpdateUI");
 
@@ -1077,4 +1135,10 @@ public static class MpSharedCompat
 
         return null;
     }
+}
+
+
+public static class TimeHudLog
+{
+    public static float NextAt;
 }
