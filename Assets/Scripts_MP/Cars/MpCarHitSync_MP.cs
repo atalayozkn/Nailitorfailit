@@ -14,10 +14,14 @@ public class MpCarHitSync_MP : NetworkBehaviour
     [Tooltip("Log every hit and despawn.")]
     [SerializeField] private bool logActions = true;
 
+    [Tooltip("Server-side overlap distance that counts as a hit, even if no physics contact is reported.")]
+    [SerializeField] private float hitRadius = 1.25f;
+
     private static readonly FieldInfo MaxLifeTimeField =
         typeof(Car_Active).GetField("maxLifeTime", BindingFlags.Instance | BindingFlags.NonPublic);
 
     private float nextMissLogAt;
+    private float nextProximityCheck;
 
     private Car_Active carActive;
     private Rigidbody body;
@@ -83,7 +87,14 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
     private void Update()
     {
-        if (isServer) return;
+        if (isServer)
+        {
+            if (Time.unscaledTime < nextProximityCheck) return;
+
+            nextProximityCheck = Time.unscaledTime + 0.1f;
+            ServerCheckProximity();
+            return;
+        }
 
         if (Time.unscaledTime < nextSampleAt) return;
 
@@ -114,6 +125,36 @@ public class MpCarHitSync_MP : NetworkBehaviour
         NetworkServer.Destroy(gameObject);
     }
 
+    private void ServerCheckProximity()
+    {
+        Vector3 center = transform.position + Vector3.up * 0.6f;
+        float radiusSqr = hitRadius * hitRadius;
+
+        foreach (PlayerScripts.PlayerNetwork_MP player in
+                 FindObjectsByType<PlayerScripts.PlayerNetwork_MP>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (player == null || player.isDead) continue;
+
+            Collider playerCollider = player.GetComponentInChildren<Collider>(true);
+            Vector3 closest = playerCollider != null ? playerCollider.bounds.ClosestPoint(center) : player.transform.position;
+
+            if ((closest - center).sqrMagnitude > radiusSqr) continue;
+
+            InteractionDebug.Log($"[MP-CAR-HIT] '{name}' proximity hit on '{player.name}' " +
+                                 $"(distance {Vector3.Distance(closest, center):0.00}) - death requested.");
+
+            player.RequestDeath();
+            KeepAliveAfterHit();
+            return;
+        }
+    }
+
+    private void KeepAliveAfterHit()
+    {
+        CancelInvoke(nameof(ServerDespawn));
+        Invoke(nameof(ServerDespawn), 4f);
+    }
+
     private void OnTriggerEnter(Collider other) => ServerTryHit(other);
 
     private void OnCollisionEnter(Collision collision) => ServerTryHit(collision.collider);
@@ -142,5 +183,6 @@ public class MpCarHitSync_MP : NetworkBehaviour
                              $"mask {whatIsPlayer.value}) death requested.");
 
         player.RequestDeath();
+        KeepAliveAfterHit();
     }
 }

@@ -106,13 +106,32 @@ public class MpCarSpawner_MP : MonoBehaviour
                 foreach (CarController_Prototype controller in
                          root.GetComponentsInChildren<CarController_Prototype>(true))
                 {
-                    if (!controller.enabled) continue;
-
+                    controller.StopAllCoroutines();
                     controller.enabled = false;
+
+                    int silenced = 0;
+
+                    foreach (Car_Active pooled in controller.GetComponentsInChildren<Car_Active>(true))
+                    {
+                        if (pooled == null || !pooled.gameObject.activeSelf) continue;
+
+                        pooled.gameObject.SetActive(false);
+                        silenced++;
+                    }
 
                     if (logActions)
                         InteractionDebug.Log($"[MP-CAR] local traffic '{controller.name}' disabled " +
-                                             "(the server spawns the networked cars).");
+                                             $"(stopped coroutines, silenced {silenced} pooled car(s)) - " +
+                                             "the server spawns the networked cars.");
+                }
+
+                foreach (Car_Active scattered in root.GetComponentsInChildren<Car_Active>(true))
+                {
+                    if (scattered == null) continue;
+                    if (scattered.GetComponent<NetworkIdentity>() != null) continue;
+                    if (!scattered.gameObject.activeSelf) continue;
+
+                    scattered.gameObject.SetActive(false);
                 }
             }
         }

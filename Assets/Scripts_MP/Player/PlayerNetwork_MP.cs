@@ -303,13 +303,25 @@ namespace PlayerScripts
 
         private void OnDeadChanged(bool oldValue, bool newValue)
         {
-            if (visualRoot != null) visualRoot.SetActive(!newValue);
-
-            if (!newValue && isOwned && playerStateMachine != null)
+            if (playerStateMachine == null)
             {
-                playerStateMachine.enabled = false;
-                playerStateMachine.enabled = true;
+                if (visualRoot != null) visualRoot.SetActive(!newValue);
+                return;
             }
+
+            if (newValue)
+            {
+                playerStateMachine.SetDeathReason(DeathReason.Car);
+                playerStateMachine.ChangeToDeadState();
+                return;
+            }
+
+            playerStateMachine.SetDead(false);
+            playerStateMachine.ForceUpdateIdle();
+
+            if (playerStateMachine.playerRenderer != null) playerStateMachine.playerRenderer.enabled = true;
+            if (visualRoot != null) visualRoot.SetActive(true);
+            if (isOwned && movement != null) movement.enabled = true;
         }
 
         #endregion
