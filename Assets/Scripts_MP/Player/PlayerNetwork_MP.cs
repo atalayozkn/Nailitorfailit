@@ -259,6 +259,12 @@ namespace PlayerScripts
             CmdRequestDeath();
         }
 
+        [ClientRpc]
+        public void RpcPlayHitReaction()
+        {
+            if (playerStateMachine != null) playerStateMachine.ChangeToStunnedState();
+        }
+
         [Command]
         private void CmdRequestDeath()
         {

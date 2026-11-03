@@ -143,7 +143,8 @@ public class MpCarHitSync_MP : NetworkBehaviour
             InteractionDebug.Log($"[MP-CAR-HIT] '{name}' proximity hit on '{player.name}' " +
                                  $"(distance {Vector3.Distance(closest, center):0.00}) - death requested.");
 
-            player.RequestDeath();
+            player.RpcPlayHitReaction();
+            StartCoroutine(DelayedDeath(player, 0.35f));
             KeepAliveAfterHit();
             return;
         }
@@ -182,7 +183,15 @@ public class MpCarHitSync_MP : NetworkBehaviour
         InteractionDebug.Log($"[MP-CAR-HIT] '{name}' -> '{player.name}' (layer {other.gameObject.layer}, " +
                              $"mask {whatIsPlayer.value}) death requested.");
 
-        player.RequestDeath();
+        player.RpcPlayHitReaction();
+        StartCoroutine(DelayedDeath(player, 0.35f));
         KeepAliveAfterHit();
+    }
+
+    private System.Collections.IEnumerator DelayedDeath(PlayerScripts.PlayerNetwork_MP player, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (player != null && !player.isDead) player.RequestDeath();
     }
 }

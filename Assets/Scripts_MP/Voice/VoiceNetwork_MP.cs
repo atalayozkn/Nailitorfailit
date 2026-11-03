@@ -186,7 +186,7 @@ public class VoiceNetwork_MP : MonoBehaviour
         var payload = new byte[length];
         System.Array.Copy(readBuffer, payload, (int)length);
 
-        NetworkClient.Send(new VoicePacket { data = payload }, Channels.Unreliable);
+        NetworkClient.Send(new VoicePacket { data = payload }, Channels.Reliable);
 
         if (logVoice)
             InteractionDebug.Log($"[VOICE] sent {length} byte(s).");
@@ -203,7 +203,7 @@ public class VoiceNetwork_MP : MonoBehaviour
         {
             if (conn == null || conn == sender || !conn.isReady) continue;
 
-            conn.Send(relay, Channels.Unreliable);
+            conn.Send(relay, Channels.Reliable);
         }
     }
 
