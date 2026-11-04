@@ -457,6 +457,7 @@ GameObject:
   - component: {fileID: 8126764855258698004}
   - component: {fileID: 4616531861886626115}
   - component: {fileID: 7670341714500694285}
+  - component: {fileID: 4815162342000111003}
   m_Layer: 6
   m_Name: FloorTile_Brick
   m_TagString: Untagged
@@ -499,6 +500,7 @@ MonoBehaviour:
   processHelper: {fileID: 2485439435971705678}
   objectHealth: {fileID: 4616531861886626115}
   puddleHelper: {fileID: 8126764855258698004}
+  tileWetness: {fileID: 4815162342000111003}
   connectedConstructor: {fileID: 0}
   isFloorTile: 0
   onHoverOnEvent:
@@ -895,3 +897,26 @@ ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 4315139718080537876, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
   m_PrefabInstance: {fileID: 5494626447143135448}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4815162342000111003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3702848958471816001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
+  tileRenderer: {fileID: 935131198953310698}
+  surfaceHelper: {fileID: 8126764855258698004}
+  gainPerParticle: 0.05
+  drainPerSecond: 0.04
+  wetThreshold: 0.5
+  dryThreshold: 0.3
+  slipperyWhenWet: 0
+  fragileWhenWet: 0
+  swellAmount: 0
+  electrifiedDuration: 4
+  wetTint: {r: 0.55, g: 0.6, b: 0.7, a: 1}

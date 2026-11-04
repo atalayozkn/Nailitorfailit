@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 8876022540176167925}
   - component: {fileID: 5445056546197578908}
   - component: {fileID: 8540796979670033540}
+  - component: {fileID: 4815162342000111002}
   m_Layer: 6
   m_Name: FloorTile_Glass
   m_TagString: Fragile
@@ -167,6 +168,7 @@ MonoBehaviour:
   interactableType: 1
   processHelper: {fileID: 8436504013798781889}
   puddleHelper: {fileID: 8876022540176167925}
+  tileWetness: {fileID: 4815162342000111002}
   objectHealth: {fileID: 5445056546197578908}
   connectedConstructor: {fileID: 0}
   isFloorTile: 0
@@ -873,5 +875,33 @@ PrefabInstance:
 --- !u!4 &6476119162694754141 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
+  m_PrefabInstance: {fileID: 6797468321336277174}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4815162342000111002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4313914034839401795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
+  tileRenderer: {fileID: 4815162342000111004}
+  surfaceHelper: {fileID: 8876022540176167925}
+  gainPerParticle: 0.05
+  drainPerSecond: 0.02
+  wetThreshold: 0.5
+  dryThreshold: 0.3
+  slipperyWhenWet: 1
+  fragileWhenWet: 0
+  swellAmount: 0
+  electrifiedDuration: 4
+  wetTint: {r: 0.55, g: 0.6, b: 0.7, a: 1}
+--- !u!23 &4815162342000111004 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
   m_PrefabInstance: {fileID: 6797468321336277174}
   m_PrefabAsset: {fileID: 0}

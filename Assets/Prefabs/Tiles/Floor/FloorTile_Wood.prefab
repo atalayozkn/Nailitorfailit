@@ -235,6 +235,7 @@ GameObject:
   - component: {fileID: 8170036723875961871}
   - component: {fileID: 1471740856514523208}
   - component: {fileID: 1055449415981703988}
+  - component: {fileID: 4815162342000111001}
   m_Layer: 6
   m_Name: FloorTile_Wood
   m_TagString: Wood
@@ -277,6 +278,8 @@ MonoBehaviour:
   processHelper: {fileID: 3794889449714605320}
   fireHelper: {fileID: 2994732837391265765}
   puddleHelper: {fileID: 878603287883803129}
+  tileWetness: {fileID: 4815162342000111001}
+  objectHealth: {fileID: 8170036723875961871}
   connectedConstructor: {fileID: 0}
   isFloorTile: 1
   onHoverOnEvent:
@@ -928,3 +931,26 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
   m_PrefabInstance: {fileID: 7512450708227321278}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4815162342000111001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
+  tileRenderer: {fileID: 9187347345860718906}
+  surfaceHelper: {fileID: 878603287883803129}
+  gainPerParticle: 0.05
+  drainPerSecond: 0.08
+  wetThreshold: 0.5
+  dryThreshold: 0.3
+  slipperyWhenWet: 0
+  fragileWhenWet: 1
+  swellAmount: 0.4
+  electrifiedDuration: 4
+  wetTint: {r: 0.55, g: 0.6, b: 0.7, a: 1}
