@@ -22,6 +22,8 @@ public class RainController_Prototype : MonoBehaviour
 
     private float currentInterval;
 
+    public bool IsRaining { get; private set; }
+
     public void StartRainProcess()
     {
         StartCoroutine(RainRoutine());
@@ -32,6 +34,7 @@ public class RainController_Prototype : MonoBehaviour
         ResetPuddleList();
         float rainDuration = Random.Range(minRainDuration, maxRainDuration);
         float elapsedTime = 0f;
+        IsRaining = true;
         onRainStartEvent?.Invoke();
 
         while (elapsedTime < rainDuration)
@@ -42,6 +45,7 @@ public class RainController_Prototype : MonoBehaviour
             elapsedTime += currentInterval;
         }
 
+        IsRaining = false;
         onRainStopEvent?.Invoke();
         availablePuddles.Clear();
     }

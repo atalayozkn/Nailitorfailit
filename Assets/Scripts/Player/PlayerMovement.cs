@@ -50,6 +50,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float stepCheckDistance = 0.15f;
     [Tooltip("Max height gained per physics step, smooths the climb.")]
     [SerializeField] private float stepClimbPerFrame = 0.08f;
+    [Tooltip("Forward distance per physics step when moving onto the ledge after the climb.")]
+    [SerializeField] private float stepForwardPerFrame = 0.04f;
 
     [Header("GroundCheck Settings")]
     [SerializeField] private LayerMask whatIsGround;
@@ -80,6 +82,9 @@ public class PlayerMovement : MonoBehaviour
     private bool isStepping;
     private float stepTargetY;
     private Vector3 stepDirection;
+    private float stepRadius;
+    private float stepForwardRemaining;
+    private float surfaceSpeedMultiplier = 1f;
 
     private void Awake()
     {
@@ -130,6 +135,12 @@ public class PlayerMovement : MonoBehaviour
         HandleMovement();
         HandleStepUp();
         HandleRotation();
+    }
+
+    // Mud puddles slow the player down, 1 is normal speed.
+    public void SetSurfaceSpeedMultiplier(float multiplier)
+    {
+        surfaceSpeedMultiplier = multiplier;
     }
 
     private void GroundCheck()
@@ -234,7 +245,7 @@ public class PlayerMovement : MonoBehaviour
         if (!ShouldApplyForce()) return;
 
         Vector3 moveDirection = GetMovementDirection();
-        float force = moveForce;
+        float force = moveForce * surfaceSpeedMultiplier;
         moveCost = baseMoveCost;
 
         if (isSprinting)
@@ -288,9 +299,13 @@ public class PlayerMovement : MonoBehaviour
     // Lifts the player onto low ledges (curbs, sidewalks) instead of getting stuck against them.
     // The climb keeps a target height and finishes over a few physics steps: once we are lifted the
     // short ground ray stops reaching the lower ground, so it can not depend on isGrounded.
+    private const float StepSettleMargin = 0.05f;
+    private const float StepHeightTolerance = 0.015f;
+
     private void HandleStepUp()
     {
-        if (!isInputPresent || isSlipping)
+        // Releasing the input mid-step still finishes it, otherwise the player drops back off the edge.
+        if (isSlipping || (!isInputPresent && !isStepping))
         {
             isStepping = false;
             return;
@@ -326,30 +341,48 @@ public class PlayerMovement : MonoBehaviour
         isStepping = true;
         stepTargetY = top.point.y + 0.02f;
         stepDirection = direction;
+        stepRadius = radius;
+        stepForwardRemaining = radius + StepSettleMargin;
         ContinueStepUp();
     }
 
     private void ContinueStepUp()
     {
+        // Drop the downward velocity so gravity does not pull us back off the edge.
+        if (rb.linearVelocity.y < 0f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+
         float remaining = stepTargetY - rb.position.y;
-        if (remaining <= 0f)
+        if (remaining > StepHeightTolerance)
         {
-            // On top: nudge forward so the capsule settles on the ledge instead of its edge.
-            rb.position += stepDirection * 0.05f;
+            rb.position += Vector3.up * Mathf.Min(remaining, stepClimbPerFrame);
+            return;
+        }
+
+        // On top: carry the capsule's center over the ledge. Walking force alone is too weak to get
+        // it there before gravity pulls the rounded bottom back off the edge; sprinting only made it on momentum.
+        bool isBlocked = Physics.Raycast(rb.position + Vector3.up * 0.05f, stepDirection, stepRadius + StepSettleMargin, whatIsGround, QueryTriggerInteraction.Ignore);
+        if (stepForwardRemaining <= 0f || isBlocked)
+        {
             isStepping = false;
             return;
         }
 
-        rb.position += Vector3.up * Mathf.Min(remaining, stepClimbPerFrame);
-        // Drop the downward velocity so gravity does not pull us back off the edge.
-        if (rb.linearVelocity.y < 0f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        float move = Mathf.Min(stepForwardRemaining, stepForwardPerFrame);
+        stepForwardRemaining -= move;
+        Vector3 position = rb.position;
+        position.y = Mathf.Max(position.y, stepTargetY);
+        rb.position = position + stepDirection * move;
     }
 
     private void HandleJump()
     {
         if (!isGrounded) return;
         if (isJumping) return;
-        if (interactHandler.IsCarrying()) return;
+        if (interactHandler.IsCarrying())
+        {
+            WarningManager.Show("You can not jump while carrying");
+            return;
+        }
         onJumpEvent?.Invoke();
         SetJumping(true);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
