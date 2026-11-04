@@ -1,16 +1,18 @@
+using Flammables;
 using Interactions;
 using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
 
-public class BrickTile : MonoBehaviour, IInteractable, IWettable
+public class BrickTile : MonoBehaviour, IInteractable, IWettable, INearbyFireReceiver
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
     [SerializeField] private InteractionProcessHelper processHelper;
     [SerializeField] private ObjectHealth objectHealth;
     [SerializeField] private PuddleHelper puddleHelper;
+    [SerializeField] private TileWetness tileWetness;
     [SerializeField] private Constructor connectedConstructor;
     [SerializeField] private bool isFloorTile;
 
@@ -32,13 +34,14 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
         gameObject.layer = LayerMask.NameToLayer("Interaction");
     }
     #region INTERACTABLE
-    public void OnInteract()
+    public bool OnInteract()
     {
-        if (currentPhase == ConstructionPhase.Complete) return;
-        if (interactionHandler.IsCarrying()) return;
+        if (currentPhase == ConstructionPhase.Complete) return false;
+        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Put your item down first");
         processHelper.Process();
 
         if (processHelper.IsCompleted()) CompleteConstruction();
+        return true;
     }
     public void OnHoverOn()
     {
@@ -53,13 +56,28 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     #region Water Related
     public void OnWaterContact()
     {
+        if (!NetworkModeHelper.IsNetworked) return; // Singleplayer water comes from particle hits, see TileWetness.
         if (!isFloorTile) return;
         puddleHelper.StartPuddleProcess();
     }
     public void OnElectrocute()
     {
+        if (!NetworkModeHelper.IsNetworked)
+        {
+            tileWetness.Electrify();
+            return;
+        }
         if (!isFloorTile) return;
         puddleHelper.ElectrocutePuddle();
+    }
+    #endregion
+
+    #region Fire
+    // Brick never catches fire, but enough nearby fires still wear it down.
+    public void OnNearbyFire()
+    {
+        if (currentPhase == ConstructionPhase.Construction) return;
+        objectHealth.DealDamage();
     }
     #endregion
 
@@ -68,6 +86,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable
     {
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
+        tileWetness.SetCanCollect(true);
         connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()

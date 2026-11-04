@@ -18,8 +18,10 @@ public class ObjectHealth : MonoBehaviour
 
     private int maxHealth;
     private int currentHealth;
+    private bool isDead;
     private void OnEnable()
     {
+        isDead = false;
         maxHealth = objectData.objectHealth;
         currentHealth = maxHealth; //Anlık can değeri max değere eşitlenir.
     }
@@ -29,6 +31,8 @@ public class ObjectHealth : MonoBehaviour
     }
     public void DealDamage()
     {
+        if (isDead) return; // Still burning during the discard delay; dying twice would corrupt the room counter.
+
         currentHealth--; //Şuanki sistemde 1 hasar vurmak yeterli. Gerekirse Script'i güncelleriz.
 
         if (currentHealth <= 0) //Öldüyse vurma efektini kullanmadan çıkıyoruz ve ölme efektini oynuyoruz.
@@ -41,6 +45,7 @@ public class ObjectHealth : MonoBehaviour
     }
     private void Die()
     {
+        isDead = true;
         //Burada oynatacağımız eventler için bir delay ekliyoruz. Particle oynattık ama vakit vermedi isek particle da silinecektir.
         currentHealth = 0;
         onDiscardEvent?.Invoke(); 
@@ -52,6 +57,6 @@ public class ObjectHealth : MonoBehaviour
     }
     public float GetCurrentHealthPercent()
     {
-        return currentHealth/maxHealth;
+        return (float)currentHealth / maxHealth;
     }
 }

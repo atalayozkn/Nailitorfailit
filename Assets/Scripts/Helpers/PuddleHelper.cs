@@ -58,6 +58,14 @@ public class PuddleHelper : MonoBehaviour
 
     #endregion
 
+    // Singleplayer TileWetness uses the puddle trigger directly, without the puddle visual or its life cycle.
+    public void SetSurfaceState(bool slippery, bool electrified)
+    {
+        triggerCollider.enabled = slippery || electrified;
+        slipHelper.SetActivity(slippery);
+        electrocuteHelper.SetActivity(electrified);
+    }
+
     #region PuddleAppear/Disappear Related
     public void StartPuddleProcess()
     {

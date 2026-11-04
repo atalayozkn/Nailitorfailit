@@ -14,8 +14,19 @@ public class ElectrocuteHelper : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
+        TryElectrocute(other);
+    }
+    // A tile can become electrified while the player is already standing on it.
+    private void OnTriggerStay(Collider other)
+    {
+        TryElectrocute(other);
+    }
+    private void TryElectrocute(Collider other)
+    {
         if (!isElectrified) return;
-        if (other.gameObject.layer != targetMask) return;
+        // Multiplayer keeps its current behaviour, electrified water isn't synced there.
+        if (NetworkModeHelper.IsNetworked) return;
+        if ((targetMask.value & (1 << other.gameObject.layer)) == 0) return;
         if (other.gameObject.TryGetComponent<PlayerStateMachine>(out var stateMachine))
         {
             stateMachine.SetDeathReason(DeathReason.Electricty);
