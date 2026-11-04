@@ -27,6 +27,12 @@ public class MaterialColorChangeHelper : MonoBehaviour
         initialColor = material.GetColor(targetParameter);
     }
 
+    // For scripts that set the colour at runtime: hovering off returns to this colour instead of the one from Awake.
+    public void SetInitialColor(Color color)
+    {
+        initialColor = color;
+    }
+
     public void ChangeToColor()
     {
         if (!material.HasProperty(targetParameter)) return;
