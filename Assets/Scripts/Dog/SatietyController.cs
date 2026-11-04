@@ -50,6 +50,10 @@ public class SatietyController : MonoBehaviour
     {
         slider.value = currentSatiety;
     }
+    public float GetPercentSatiety()
+    {
+        return currentSatiety / maxSatiety * 100f;
+    }
     public void GainSatiety(int amount)
     {
         currentSatiety += amount;

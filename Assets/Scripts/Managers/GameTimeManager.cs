@@ -85,6 +85,11 @@ public class GameTimeManager : MonoBehaviour
         UpdateUI();
         onTimeIncreaseEvent?.Invoke();
     }
+    public void BindTimerText(TextMeshProUGUI text)
+    {
+        timerText = text;
+        UpdateUI();
+    }
     public float GetCurrentTime()
     {
         return currentTime;

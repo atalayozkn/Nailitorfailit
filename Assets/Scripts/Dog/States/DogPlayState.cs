@@ -49,7 +49,7 @@ public class DogPlayState : DogBaseState
         if (counter > playTime)
         {
             //Only get aggressive about an item the dog actually played with.
-            if (hasPickedUp && stateMachine.favorController.GetPercentFavor() <= 50)
+            if (hasPickedUp && stateMachine.GetAttitudePercent() <= 50)
             {
                 stateMachine.SetCurrentCarriable(currentCarriable);
                 stateMachine.ChangeToAggresiveState();

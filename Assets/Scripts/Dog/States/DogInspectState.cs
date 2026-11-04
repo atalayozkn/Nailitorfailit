@@ -22,7 +22,7 @@ public class DogInpectState : DogBaseState
         counter = 0f;
         stateMachine.movementHandler.StopAllMovement();
 
-        if (stateMachine.favorController.GetPercentFavor() > 60f && stateMachine.patrolCounter >= 3)
+        if (stateMachine.GetAttitudePercent() > 60f && stateMachine.patrolCounter >= 3)
         {
             stateMachine.TriggerPatrolCounter(false);
             stateMachine.ChangeToAidState();
@@ -79,13 +79,13 @@ public class DogInpectState : DogBaseState
 
         if (counter > animDuration)
         {
-            if (currentResult == ResultType.MailMan && stateMachine.favorController.GetPercentFavor() < 75)
+            if (currentResult == ResultType.MailMan && stateMachine.GetAttitudePercent() < 75)
             {
                 stateMachine.SetChaseTarget(currentTarget);
                 stateMachine.ChangeToChaseState();
                 return;
             }
-            if (currentResult == ResultType.Player && stateMachine.favorController.GetPercentFavor() < 60)
+            if (currentResult == ResultType.Player && stateMachine.GetAttitudePercent() < 60)
             {
                 stateMachine.SetPlayTarget(currentTarget);
                 stateMachine.ChangeToPlayState();

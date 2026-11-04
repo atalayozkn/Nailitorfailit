@@ -4,6 +4,13 @@ using UnityEngine.AI;
 using UnityEngine.Events;
 public class DogStateMachine : StateMachine_Dog
 {
+    public enum DogMood
+    {
+        Loyal,
+        Restless,
+        Rebellious
+    }
+
     public enum DogState
     {
         Idle,
@@ -55,6 +62,12 @@ public class DogStateMachine : StateMachine_Dog
     [field: Header("Unity Events")]
     [field: SerializeField] public UnityEvent onBark { get; private set; }
     [field: SerializeField] public UnityEvent onSadness { get; private set; }
+
+    // Above LoyalAttitude the dog brings gifts (DogInpectState); at RebelliousAttitude and below it wrecks what it steals (DogPlayState).
+    private const float LoyalAttitude = 60f;
+    private const float RebelliousAttitude = 50f;
+    private const float HungrySatiety = 40f;
+    private const float VeryHungrySatiety = 20f;
 
     private void OnEnable()
     {
@@ -127,6 +140,26 @@ public class DogStateMachine : StateMachine_Dog
         if (currentDogState == DogState.Sleep) return;
         currentDogState = DogState.Sleep;
         SwitchState(new DogSleepState(this));
+    }
+    // Favor, held down by hunger: a hungry dog can not stay in a good mood however much it likes the player.
+    public float GetAttitudePercent()
+    {
+        float attitude = favorController.GetPercentFavor();
+
+        // Hunger is not synced in multiplayer, the dog keeps its favor-only behaviour there.
+        if (NetworkModeHelper.IsNetworked) return attitude;
+
+        float satiety = satietyController.GetPercentSatiety();
+        if (satiety <= VeryHungrySatiety) return Mathf.Min(attitude, RebelliousAttitude);
+        if (satiety <= HungrySatiety) return Mathf.Min(attitude, LoyalAttitude);
+        return attitude;
+    }
+    public DogMood GetMood()
+    {
+        float attitude = GetAttitudePercent();
+        if (attitude > LoyalAttitude) return DogMood.Loyal;
+        if (attitude > RebelliousAttitude) return DogMood.Restless;
+        return DogMood.Rebellious;
     }
     public void SetMoveTarget(Transform target)
     {
