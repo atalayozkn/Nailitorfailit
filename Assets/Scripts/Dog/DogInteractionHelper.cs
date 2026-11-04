@@ -13,12 +13,13 @@ public class DogInteractionHelper : MonoBehaviour,IInteractable
 
 
     private bool isInteracted = false;
-    public void OnInteract()
+    public bool OnInteract()
     {
-        if (isInteracted) return;
+        if (isInteracted) return WarningManager.Reject("The dog was just petted");
         isInteracted = true;
         Invoke(nameof(ReverseInteractionLock), 15f);
         stateMachine.ChangeToAffectionState();
+        return true;
     }
     public void OnHoverOn()
     {

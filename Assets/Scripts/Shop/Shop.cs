@@ -26,20 +26,21 @@ public class Shop : MonoBehaviour, IInteractable
     }
 
     #region INTERACTION
-    public void OnInteract()
+    public bool OnInteract()
     {
-        if (!CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
-        if (interactionHandler != null && !interactionHandler.IsCarrying())
-        {
-            var obj = Instantiate(objectPrefab,spawnTransform.position,spawnTransform.rotation);
-            CurrencyManager.Instance.SpendCurrency(cost);
-            onPurchaseEvent?.Invoke();
+        if (!CurrencyManager.Instance.HasEnoughCurrency(cost)) return WarningManager.Reject("Not enough money");
+        if (interactionHandler == null || interactionHandler.IsCarrying()) return WarningManager.Reject("Your hands are full");
 
-            if (obj.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
-            {
-                carriable.SnapToRightHand();   
-            }
+        var obj = Instantiate(objectPrefab,spawnTransform.position,spawnTransform.rotation);
+        CurrencyManager.Instance.SpendCurrency(cost);
+        onPurchaseEvent?.Invoke();
+
+        if (obj.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
+        {
+            carriable.SnapToRightHand();
         }
+
+        return true;
     }
     public void OnHoverOn()
     {

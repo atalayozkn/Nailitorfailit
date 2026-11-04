@@ -43,7 +43,11 @@ public class PlayerUseHandler : MonoBehaviour
             currentUseType = currentUsable.UseType;
             stateMachine.ChangeToUseState();
         }
-        else currentUsable = null;
+        else
+        {
+            currentUsable = null;
+            WarningManager.Show("Nothing to use");
+        }
     }
     public IUsable GetCurrentUsable()
     {

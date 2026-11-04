@@ -34,16 +34,18 @@ public class Generator_Prototype : MonoBehaviour, IInteractable
     }
 
     #region Interactable
-    public void OnInteract()
+    public bool OnInteract()
     {
         CarriableType type = interactionHandler.GetCurrentCarriableType();
-        if (type != CarriableType.Oil) return;
+        if (type != CarriableType.Oil) return WarningManager.Reject("The generator needs oil");
 
         CarriableObject_SP currentCarriable = interactionHandler.GetCurrentCarriable();
-        if (currentCarriable == null) return;
+        if (currentCarriable == null) return false;
+        if (currentEnergy >= maxEnergy) return WarningManager.Reject("The generator is already full");
 
         currentCarriable.OnConsume();
         GainEnergy(perOilGainAmount);
+        return true;
     }
     public void OnHoverOn()
     {

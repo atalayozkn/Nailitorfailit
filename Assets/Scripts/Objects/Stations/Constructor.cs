@@ -9,6 +9,7 @@ namespace ItemScript
         [Header("Component References")]
         [SerializeField] private RoomController roomController;
         [SerializeField] private GameObject bluePrintObject;
+        [SerializeField] private BlueprintVisual blueprintVisual;
         [SerializeField] private InteractableType interactableType;
         [SerializeField] private Collider interactionCollider;
         [SerializeField] private CarriableType acceptedType;
@@ -39,22 +40,26 @@ namespace ItemScript
         {
             interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         }
-        public void OnInteract()
+        public bool OnInteract()
         {
+            if (isBuilt) return false;
             var carriable = interactionHandler.GetCurrentCarriable();
-            if (carriable == null) return;
-            if (carriable.isRawMaterial) return;
+            if (carriable == null) return WarningManager.Reject($"This spot needs a {acceptedType} tile");
+            if (carriable.isRawMaterial) return WarningManager.Reject("Process this material first");
             currentCarriableType = interactionHandler.GetCurrentCarriableType();
-            if (currentCarriableType != acceptedType) return;
+            if (currentCarriableType != acceptedType) return WarningManager.Reject($"This spot needs a {acceptedType} tile");
             Construct(currentCarriableType);
             onInteractEvent.Invoke();
+            return true;
         }
         public void OnHoverOn()
         {
+            if (blueprintVisual != null) blueprintVisual.SetHovered(true);
             onHoverOnEvent?.Invoke();
         }
         public void OnHoverOff()
         {
+            if (blueprintVisual != null) blueprintVisual.SetHovered(false);
             onHoverOffEvent?.Invoke();
         }
         private void Construct(CarriableType type)
@@ -111,10 +116,25 @@ namespace ItemScript
         public void SetAcceptedType(CarriableType type)
         {
             acceptedType = type;
+            if (blueprintVisual != null) blueprintVisual.Refresh();
         }
         public CarriableType GetAcceptedType()
         {
             return acceptedType;
+        }
+        // The mesh of the tile this slot builds for the given material, used by the blueprint ghost.
+        public Renderer GetTileRenderer(CarriableType type)
+        {
+            GameObject tile = null;
+            switch (type)
+            {
+                case CarriableType.Wood: tile = woodObject; break;
+                case CarriableType.Brick: tile = brickObject; break;
+                case CarriableType.Glass: tile = glassObject; break;
+            }
+
+            if (tile == null || !tile.TryGetComponent<TileWetness>(out var wetness)) return null;
+            return wetness.TileRenderer;
         }
         public float GetCurrentHealthPercent()
         {

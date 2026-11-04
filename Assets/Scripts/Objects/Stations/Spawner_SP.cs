@@ -30,20 +30,24 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     {
         interactionHandler = FindAnyObjectByType<PlayerInteractionHandler>();
     }
-    public void OnInteract()
+    public bool OnInteract()
     {
         if (isTutorial) objective.CompleteCondition();
 
-        if (interactionHandler.IsCarrying() || isOnCooldown)
+        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Your hands are full");
+        if (isOnCooldown)
         {
             //Request Impossible Action SFX
-            return;
+            return false;
         }
+
+        if (objectPrefab == null || spawnedObjectCount >= maxCount) return WarningManager.Reject("Use the ones you already have first");
 
         isOnCooldown = true;
         onInteractEvent?.Invoke();
         SpawnObject();
         Invoke(nameof(ReverseCooldown), interactCooldown);
+        return true;
     }
     private void ReverseCooldown()
     {

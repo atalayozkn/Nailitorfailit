@@ -49,19 +49,16 @@ public class Cutter : MonoBehaviour, IInteractable
 
     #region INTERACTABLE
 
-    public void OnInteract()
+    public bool OnInteract()
     {
-        if (isSpawning) return;
+        if (isSpawning) return WarningManager.Reject("The cutter is busy");
 
-        if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return;
+        // Loading doesn't need power, only the processing does.
+        if (!isObjectPlaced) return RegisterToStation();
 
-        if (!isObjectPlaced)
-        {
-            RegisterToStation();
-            return;
-        }
+        if (interactionHandler.IsCarrying()) return WarningManager.Reject("The cutter is already loaded");
 
-        if (interactionHandler.IsCarrying()) return;
+        if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return WarningManager.Reject("No power! Refuel the generator", true);
 
         connectedGenerator.ConsumeEnergy(perProcessCost);
 
@@ -71,6 +68,8 @@ public class Cutter : MonoBehaviour, IInteractable
         {
             SpawnObjects();
         }
+
+        return true;
     }
 
     public void OnHoverOn()
@@ -87,12 +86,12 @@ public class Cutter : MonoBehaviour, IInteractable
 
     #region UTILITIES
 
-    private void RegisterToStation()
+    private bool RegisterToStation()
     {
         CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
-        if (carriable == null) return;
-        if (!carriable.isRawMaterial) return;
-        if (!IsCarriableTypeAccepted(carriable.carriableType)) return;
+        if (carriable == null) return WarningManager.Reject("Bring raw material to the cutter");
+        if (!carriable.isRawMaterial) return WarningManager.Reject("This is already processed");
+        if (!IsCarriableTypeAccepted(carriable.carriableType)) return WarningManager.Reject("The cutter can not process this");
 
         placedObject = carriable;
         carriable.SetOccupied();
@@ -100,6 +99,7 @@ public class Cutter : MonoBehaviour, IInteractable
         PlaceObject();
         interactionHandler.ClearCarriedObject();
         processHelper.ResetProcess();
+        return true;
     }
     private bool IsCarriableTypeAccepted(CarriableType type) { return Array.Exists(acceptedCarriableTypes, acceptedType => acceptedType == type); }
 

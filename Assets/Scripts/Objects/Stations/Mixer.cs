@@ -47,13 +47,13 @@ public class Mixer : MonoBehaviour, IInteractable
 
     #region Interactable
 
-    public void OnInteract()
+    public bool OnInteract()
     {
         CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
-        if (carriable == null) return;
+        if (carriable == null) return WarningManager.Reject("Bring ingredients to the mixer");
 
         CarriableType carriableType = interactionHandler.GetCurrentCarriableType();
-        if (!AcceptsCarriableType(carriableType)) return;
+        if (!AcceptsCarriableType(carriableType)) return WarningManager.Reject("The mixer does not accept this");
 
         if (firstCarriable == null)
         {
@@ -72,10 +72,11 @@ public class Mixer : MonoBehaviour, IInteractable
         }
         else
         {
-            return;
+            return WarningManager.Reject("The mixer is full");
         }
 
         PlaceObject(carriable);
+        return true;
     }
     public void OnHoverOn()
     {
@@ -116,21 +117,28 @@ public class Mixer : MonoBehaviour, IInteractable
             thirdCarriable
         };
     }
-    public void CompareFormula()
+    public bool CompareFormula()
     {
         CarriableObject_SP[] storedObjects = GetStoredObjects();
+
+        // An empty mixer has nothing to do.
+        if (firstCarriable == null && secondCarriable == null && thirdCarriable == null) return WarningManager.Reject("The mixer is empty");
 
         // We cannot compare an incomplete mixer.
         if (firstCarriable == null || secondCarriable == null || thirdCarriable == null)
         {
+            WarningManager.Show("The mixer needs 3 ingredients");
             DropStoredItems();
-            return;
+            return true;
         }
 
         MixerFormulaSO matchedFormula = FindMatchingFormula(storedObjects);
 
-        if (matchedFormula != null) ProduceResult(matchedFormula);
-        else DropStoredItems();
+        if (matchedFormula != null) return ProduceResult(matchedFormula);
+
+        WarningManager.Show("No recipe for these ingredients");
+        DropStoredItems();
+        return true;
     }
 
     private MixerFormulaSO FindMatchingFormula(CarriableObject_SP[] storedObjects)
@@ -147,16 +155,18 @@ public class Mixer : MonoBehaviour, IInteractable
         return null;
     }
 
-    private void ProduceResult(MixerFormulaSO formula)
+    private bool ProduceResult(MixerFormulaSO formula)
     {
-        if (formula == null) return;
+        if (formula == null) return false;
         //Check for Energy
-        if (!connectedGenerator.HasEnoughEnergy(processCost)) return;
+        if (!connectedGenerator.HasEnoughEnergy(processCost)) return WarningManager.Reject("No power! Refuel the generator");
+        connectedGenerator.ConsumeEnergy(processCost);
 
         // First remove the ingredients.
         DestroyStoredItems();
         // Spawn the result.
         SpawnProduct(formula);
+        return true;
     }
 
     private void SpawnProduct(MixerFormulaSO formula)

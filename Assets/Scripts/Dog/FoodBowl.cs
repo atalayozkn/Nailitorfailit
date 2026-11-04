@@ -28,16 +28,19 @@ public class FoodBowl : MonoBehaviour, IInteractable
         slider.maxValue = maxFood;
         UpdateUI();
     }
-    public void OnInteract()
+    public bool OnInteract()
     {
         var carriableType = interactionHandler.GetCurrentCarriableType();
-        if (carriableType == CarriableType.PetFood)
-        {
-            var currentCarriable = interactionHandler.GetCurrentCarriable();
-            currentCarriable.OnConsume();
+        if (carriableType != CarriableType.PetFood) return WarningManager.Reject("The bowl needs pet food");
 
-            FillBowl(perFillAmount);
-        }
+        var currentCarriable = interactionHandler.GetCurrentCarriable();
+        if (currentCarriable == null) return false;
+        if (currentFood >= maxFood) return WarningManager.Reject("The food bowl is already full");
+
+        currentCarriable.OnConsume();
+
+        FillBowl(perFillAmount);
+        return true;
     }
     public void OnHoverOn()
     {

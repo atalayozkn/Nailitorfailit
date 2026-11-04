@@ -12,7 +12,8 @@
     {
         InteractableType InteractableType { get; }
 
-        void OnInteract();
+        // Returns true when the interaction actually did something. The player only plays the interact animation then.
+        bool OnInteract();
 
         void OnHoverOn();
 

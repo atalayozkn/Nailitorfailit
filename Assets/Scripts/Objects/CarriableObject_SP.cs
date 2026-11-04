@@ -38,15 +38,16 @@ namespace ItemScript
 
         #region INTERACTABLE
 
-        public void OnInteract()
+        public bool OnInteract()
         {
             if (isConsumed)
             {
-                return;
+                return false;
             }
 
             SnapToCarryTransform();
             onInteractEvent?.Invoke();
+            return true;
         }
         public void OnHoverOn()
         {

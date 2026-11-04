@@ -50,11 +50,12 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
     // Player Generator ile etkileþime girdiðinde çalýþýr.
     // TryAddCarriedFuel() ile taþýnan yakýtý kontrol eder ve yakýt baþarýyla eklenirse onInteractEvent'i tetikler.
-    public void OnInteract()
+    public bool OnInteract()
     {
-        if (!TryAddCarriedFuel()) return;
+        if (!TryAddCarriedFuel()) return false;
 
         onInteractEvent?.Invoke();
+        return true;
     }
 
     // Player Generator üzerine baktýðýnda veya hover baþladýðýnda çalýþýr.
@@ -79,17 +80,17 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (carriedObject == null)
         {
-            Debug.Log("Generatorün yakýta ihtiyacý var.");
+            WarningManager.Show("The generator needs oil");
             return false;
         }
 
         if (carriedObject.carriableType != CarriableType.Oil)
         {
-            Debug.Log("Bu obje Generator yakýtý deðil.");
+            WarningManager.Show("The generator needs oil");
             return false;
         }
 
-        if (!AddEnergy(oilEnergyAmount)) return false;
+        if (!AddEnergy(oilEnergyAmount)) return WarningManager.Reject("The generator is already full");
 
         carriedObject.OnConsume();
         return true;

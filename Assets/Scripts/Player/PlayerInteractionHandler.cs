@@ -45,6 +45,7 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     private bool isCarrying;
     private bool isInteractOnCooldown;
+    private bool hasActedThisPress;
     private bool isActive;
 
     private Coroutine detectionRoutine;
@@ -70,10 +71,13 @@ public class PlayerInteractionHandler : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
+        if (!interactAction.action.IsPressed()) hasActedThisPress = false;
         if (isInteractOnCooldown) return;
         if (interactAction.action.IsPressed())
         {
+            WarningManager.IsMuted = hasActedThisPress;
             HandleInteract();
+            WarningManager.IsMuted = false;
             isInteractOnCooldown = true;
             Invoke(nameof(ResetInteractCooldown), interactCooldown);
         }
@@ -115,16 +119,22 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     private void HandleInteract()
     {
-        if (currentCarriable == null && currentInteractable == null) return;
+        if (currentCarriable == null && currentInteractable == null)
+        {
+            StopInteractAnimation();
+            return;
+        }
 
         if (currentCarriable != null && currentInteractable == null)
         {
+            hasActedThisPress = true;
             currentCarriable.OnDrop();
             return;
         }
 
         if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
         {
+            hasActedThisPress = true;
             currentCarriable.OnDrop();
             currentInteractable.OnInteract();
             return;
@@ -132,12 +142,22 @@ public class PlayerInteractionHandler : MonoBehaviour
 
         if (currentCarriable == null && currentInteractableType == InteractableType.Grabbable)
         {
+            hasActedThisPress = true;
             currentInteractable.OnInteract();
             return;
         }
 
-        currentInteractable.OnInteract();
-        stateMachine.ChangeToInteractState();
+        if (currentInteractable.OnInteract())
+        {
+            hasActedThisPress = true;
+            stateMachine.ChangeToInteractState();
+        }
+        else StopInteractAnimation();
+    }
+    // Holding the input keeps the state alive, so a blocked repeat has to end the animation too.
+    private void StopInteractAnimation()
+    {
+        if (stateMachine.currentPlayerState == PlayerStates.Interacting) stateMachine.ChangeToIdleState();
     }
     #region UTILITIES
     private IInteractable FindForwardInteractable()

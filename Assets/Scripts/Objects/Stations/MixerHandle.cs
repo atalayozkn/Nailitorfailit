@@ -10,9 +10,9 @@ public class MixerHandle : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onHoverOnEvent;
     [SerializeField] private UnityEvent onHoverOffEvent;
     public InteractableType InteractableType => interactableType;
-    public void OnInteract()
+    public bool OnInteract()
     {
-        connectedMixer.CompareFormula();
+        return connectedMixer.CompareFormula();
     }
     public void OnHoverOn()
     {
