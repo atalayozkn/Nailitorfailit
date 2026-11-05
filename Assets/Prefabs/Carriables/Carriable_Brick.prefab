@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6607223535352835464}
   - component: {fileID: 8684526647547955195}
   - component: {fileID: 4249530769672492423}
+  - component: {fileID: 6587409018862039248}
   m_Layer: 6
   m_Name: Carriable_Brick
   m_TagString: Untagged
@@ -90,7 +91,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6587409018862039248}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -157,6 +170,26 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.08682218, y: 0.028621033, z: 0.091051035}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6587409018862039248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6479617406932401784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: f9570d0c4ab3d644290529d4e0170d1e, type: 3}
+  - {fileID: 8300000, guid: bea516ead7102dc4a859f50e0e9881b7, type: 3}
+  - {fileID: 8300000, guid: fbddbd32ea08da14baedfb376ef03dce, type: 3}
+  volume: 0.6
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1 &7064255788318713893
 GameObject:
   m_ObjectHideFlags: 0

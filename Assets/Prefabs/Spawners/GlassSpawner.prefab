@@ -8,11 +8,12 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 5092454159237977381}
   - component: {fileID: 2249435436413248}
   - component: {fileID: 5986761464300776}
-  - component: {fileID: 5092454159237977381}
   - component: {fileID: 2508413572803792234}
   - component: {fileID: 1366674802896381496}
+  - component: {fileID: 2961495608745193388}
   m_Layer: 6
   m_Name: GlassSpawner
   m_TagString: Untagged
@@ -38,6 +39,38 @@ Transform:
   - {fileID: 5678236285097577104}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2249435436413248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 576674950357254568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &5986761464300776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 576674950357254568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f730751bc952d3eb92d2cf9d0aa160, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Spawner_MP
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!65 &2508413572803792234
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -73,7 +106,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSpawner_SP
   interactableType: 2
   objectPrefab: {fileID: 2451140924364856572, guid: cb9224b51eb0f5548ae9167ca86e6c3a, type: 3}
-  spawnPoint: {fileID: 3171844834042574796}
+  interactCooldown: 0
+  isTutorial: 0
+  objective: {fileID: 0}
   maxCount: 15
   onHoverOnEvent:
     m_PersistentCalls:
@@ -107,7 +142,37 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2961495608745193388}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &2961495608745193388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 576674950357254568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 998d3d139b48ec9479756ef8cec6acf8, type: 3}
+  volume: 0.7
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1 &1177483454117679609
 GameObject:
   m_ObjectHideFlags: 0
@@ -349,6 +414,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
   targetRenderer: {fileID: 4175590399854569948}
+  skinnedRenderer: {fileID: 0}
+  isSkinnedMesh: 0
+  targetParameter: _BaseColor
   targetColor: {r: 0.44459772, g: 0.9716981, b: 0.95167565, a: 0}
 --- !u!1 &5360301879416327345
 GameObject:
@@ -483,27 +551,3 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5092454159237977381}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2249435436413248
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 576674950357254568}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
---- !u!114 &5986761464300776
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 576674950357254568}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4f730751bc952d3eb92d2cf9d0aa160, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Spawner_MP

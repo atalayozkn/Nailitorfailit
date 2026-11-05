@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 1471740856514523208}
   - component: {fileID: 1055449415981703988}
   - component: {fileID: 4815162342000111001}
+  - component: {fileID: 6753680028464176308}
   m_Layer: 6
   m_Name: FloorTile_Wood
   m_TagString: Wood
@@ -282,6 +283,9 @@ MonoBehaviour:
   objectHealth: {fileID: 8170036723875961871}
   connectedConstructor: {fileID: 0}
   isFloorTile: 1
+  pressureDamageDelay: 1
+  isTutorial: 0
+  objective: {fileID: 0}
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
@@ -341,15 +345,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 8936307841734079148}
   maxProcessAmount: 100
   processPerInteract: 100
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &2994732837391265765
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -364,6 +359,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FireHelper
   objectHealth: {fileID: 8170036723875961871}
   fireHitInterval: 1
+  singleplayerHitInterval: 3
+  spreadInterval: 6
+  neighbourRadius: 1.2
   onFireStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -419,6 +417,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 6753680028464176308}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onDiscardEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -458,6 +468,47 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.1, z: 1}
   m_Center: {x: 0, y: -0.05, z: 0}
+--- !u!114 &4815162342000111001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
+  tileRenderer: {fileID: 9187347345860718906}
+  surfaceHelper: {fileID: 878603287883803129}
+  gainPerParticle: 0.03
+  drainPerSecond: 0.08
+  wetThreshold: 0.5
+  dryThreshold: 0.3
+  slipperyWhenWet: 0
+  fragileWhenWet: 1
+  swellAmount: 0.4
+  electrifiedDuration: 4
+--- !u!114 &6753680028464176308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2835028531961472917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 1e9420cebda14744ebff9bce3fe5f154, type: 3}
+  - {fileID: 8300000, guid: a6fd2dfa59bac164192c6843c42a20f0, type: 3}
+  volume: 0.45
+  pitchJitter: 0.06
+  spatial: 0.7
+  minInterval: 0.35
 --- !u!1 &5344979551643064024
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,25 +982,3 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
   m_PrefabInstance: {fileID: 7512450708227321278}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4815162342000111001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2835028531961472917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
-  tileRenderer: {fileID: 9187347345860718906}
-  surfaceHelper: {fileID: 878603287883803129}
-  gainPerParticle: 0.03
-  drainPerSecond: 0.08
-  wetThreshold: 0.5
-  dryThreshold: 0.3
-  slipperyWhenWet: 0
-  fragileWhenWet: 1
-  swellAmount: 0.4
-  electrifiedDuration: 4

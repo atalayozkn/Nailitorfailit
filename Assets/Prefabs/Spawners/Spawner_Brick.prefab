@@ -251,6 +251,7 @@ GameObject:
   - component: {fileID: 353124983037805528}
   - component: {fileID: 8308373936129263673}
   - component: {fileID: 3954178054040668355}
+  - component: {fileID: 5154094145944855667}
   m_Layer: 6
   m_Name: Spawner_Brick
   m_TagString: Untagged
@@ -291,6 +292,8 @@ MonoBehaviour:
   interactableType: 2
   objectPrefab: {fileID: 6479617406932401784, guid: db8a644b407721e4fb6dbd35386bbcf4, type: 3}
   interactCooldown: 0
+  isTutorial: 0
+  objective: {fileID: 0}
   maxCount: 15
   onHoverOnEvent:
     m_PersistentCalls:
@@ -324,7 +327,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5154094145944855667}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &8308373936129263673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,6 +376,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.21714, y: 2.2363162, z: 1.0035019}
   m_Center: {x: 0, y: -0.17511487, z: -0.13834095}
+--- !u!114 &5154094145944855667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7313507888434762851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 8f1f48a58e2b45f4ba3e5c5c8c082dfd, type: 3}
+  volume: 0.7
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1 &7875536954883287049
 GameObject:
   m_ObjectHideFlags: 0

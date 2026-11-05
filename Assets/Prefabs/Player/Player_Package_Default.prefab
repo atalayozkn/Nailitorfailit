@@ -1458,6 +1458,7 @@ GameObject:
   - component: {fileID: 9024314289590810009}
   - component: {fileID: 6487889633804539665}
   - component: {fileID: 5870101108906743381}
+  - component: {fileID: 5842908428834715698}
   m_Layer: 6
   m_Name: MailBox
   m_TagString: Untagged
@@ -1527,7 +1528,19 @@ MonoBehaviour:
         m_CallState: 2
   onTriggerEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5842908428834715698}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   alertColor: {r: 1, g: 0.85, b: 0.1, a: 1}
   alertFontSize: 10
   alertHeight: 0.6
@@ -1572,6 +1585,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.24160169, y: 0.83436966, z: 0.5631523}
   m_Center: {x: 0.005379878, y: 0.41519904, z: -0.027668104}
+--- !u!114 &5842908428834715698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1224759524737667981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 81b4db3e91cbdb24cb5d0a6350a59c7c, type: 3}
+  volume: 0.75
+  pitchJitter: 0.06
+  spatial: 0.3
+  minInterval: 0.5
 --- !u!1 &1306636645830800190
 GameObject:
   m_ObjectHideFlags: 0

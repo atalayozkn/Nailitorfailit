@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 5690831074371721665}
   - component: {fileID: 3506129535933248831}
   - component: {fileID: 1446772030668657773}
+  - component: {fileID: 6071999846458691942}
   m_Layer: 6
   m_Name: Spawner_Cement
   m_TagString: Untagged
@@ -82,6 +83,8 @@ MonoBehaviour:
   interactableType: 2
   objectPrefab: {fileID: 6479617406932401784, guid: ee232cd9b53d723459a366df13abc2c0, type: 3}
   interactCooldown: 1
+  isTutorial: 0
+  objective: {fileID: 0}
   maxCount: 10
   onHoverOnEvent:
     m_PersistentCalls:
@@ -115,7 +118,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6071999846458691942}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &3506129535933248831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,6 +167,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.2313514, y: 1.2633431, z: 0.4999441}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6071999846458691942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125192666328773998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 8c21a0e0ad34e0f4da6da39436ca6dbb, type: 3}
+  volume: 0.7
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1001 &564691056384846497
 PrefabInstance:
   m_ObjectHideFlags: 0

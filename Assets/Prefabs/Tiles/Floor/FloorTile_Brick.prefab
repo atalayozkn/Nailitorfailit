@@ -106,6 +106,7 @@ MonoBehaviour:
   targetRenderer: {fileID: 935131198953310698}
   skinnedRenderer: {fileID: 0}
   isSkinnedMesh: 0
+  targetParameter: _BaseColor
   targetColor: {r: 0.0141509175, g: 1, b: 1, a: 0}
 --- !u!1 &304471373831443858
 GameObject:
@@ -458,6 +459,7 @@ GameObject:
   - component: {fileID: 4616531861886626115}
   - component: {fileID: 7670341714500694285}
   - component: {fileID: 4815162342000111003}
+  - component: {fileID: 5241010971105023139}
   m_Layer: 6
   m_Name: FloorTile_Brick
   m_TagString: Untagged
@@ -538,15 +540,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 2368438559109140015}
   maxProcessAmount: 100
   processPerInteract: 100
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &8126764855258698004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -596,6 +589,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 5241010971105023139}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onDiscardEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -620,6 +625,47 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.9805777, y: 0.11673533, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4815162342000111003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3702848958471816001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
+  tileRenderer: {fileID: 935131198953310698}
+  surfaceHelper: {fileID: 8126764855258698004}
+  gainPerParticle: 0.03
+  drainPerSecond: 0.04
+  wetThreshold: 0.5
+  dryThreshold: 0.3
+  slipperyWhenWet: 0
+  fragileWhenWet: 0
+  swellAmount: 0
+  electrifiedDuration: 4
+--- !u!114 &5241010971105023139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3702848958471816001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: c4d646165e331fe4a9565aa95e9d95ad, type: 3}
+  - {fileID: 8300000, guid: fcf3da7f9d337a243835d9f865196daf, type: 3}
+  volume: 0.45
+  pitchJitter: 0.06
+  spatial: 0.7
+  minInterval: 0.35
 --- !u!1 &5207667471117751384
 GameObject:
   m_ObjectHideFlags: 0
@@ -897,25 +943,3 @@ ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 4315139718080537876, guid: edc28910a40bbc1489e2ade58911216b, type: 3}
   m_PrefabInstance: {fileID: 5494626447143135448}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4815162342000111003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3702848958471816001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TileWetness
-  tileRenderer: {fileID: 935131198953310698}
-  surfaceHelper: {fileID: 8126764855258698004}
-  gainPerParticle: 0.03
-  drainPerSecond: 0.04
-  wetThreshold: 0.5
-  dryThreshold: 0.3
-  slipperyWhenWet: 0
-  fragileWhenWet: 0
-  swellAmount: 0
-  electrifiedDuration: 4

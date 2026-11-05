@@ -251,6 +251,7 @@ GameObject:
   - component: {fileID: 265452741569917803}
   - component: {fileID: 3307866932930886243}
   - component: {fileID: 3954178054040668355}
+  - component: {fileID: 2620912663016575003}
   m_Layer: 6
   m_Name: Spawner_Wood
   m_TagString: Untagged
@@ -291,6 +292,8 @@ MonoBehaviour:
   interactableType: 2
   objectPrefab: {fileID: 6479617406932401784, guid: 8620bfa3661c9524797c89ca580773ce, type: 3}
   interactCooldown: 1
+  isTutorial: 0
+  objective: {fileID: 0}
   maxCount: 10
   onHoverOnEvent:
     m_PersistentCalls:
@@ -324,7 +327,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2620912663016575003}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &3307866932930886243
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,6 +376,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.98591703, y: 1.6064564, z: 0.5557591}
   m_Center: {x: 0, y: 0.28285688, z: 0.064792454}
+--- !u!114 &2620912663016575003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7313507888434762851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 68095a96efdd8144b81f107d999c9a4a, type: 3}
+  volume: 0.7
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1 &9132837691654836453
 GameObject:
   m_ObjectHideFlags: 0

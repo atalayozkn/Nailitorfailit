@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3239250498459162461}
   - component: {fileID: 8856137422227487216}
   - component: {fileID: 402098030351482629}
+  - component: {fileID: 170315492667603664}
   m_Layer: 0
   m_Name: TrapVehicle
   m_TagString: Untagged
@@ -166,10 +167,41 @@ MonoBehaviour:
   vehicleRespawnDelay: 3
   onTrapTriggeredEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 170315492667603664}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onVehicleTrapEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &170315492667603664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2982316935585212026}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: 0ef286ec22caace498532610a54af69f, type: 3}
+  - {fileID: 8300000, guid: 9e4f53fa414476e4b8cc44c216adb03b, type: 3}
+  volume: 0.7
+  pitchJitter: 0.06
+  spatial: 0.3
+  minInterval: 1
 --- !u!1001 &6294084381029639614
 PrefabInstance:
   m_ObjectHideFlags: 0

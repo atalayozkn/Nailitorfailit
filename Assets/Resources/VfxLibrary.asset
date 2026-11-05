@@ -21,6 +21,12 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 67205d2915794ca4d8818f2cf72b6c63, type: 3}
+    - {fileID: 8300000, guid: 258a52b9cbb07ab42a05c2b54c72aced, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 1
     prefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
     scale: 0.14
@@ -28,6 +34,14 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 1b701e7f95e2bf14390e066e51656ff9, type: 3}
+    - {fileID: 8300000, guid: d6e7a770588470649a83f0e7fae8e163, type: 3}
+    - {fileID: 8300000, guid: 2fe9a77cee58e024eaef8f7d1cf7a1cd, type: 3}
+    - {fileID: 8300000, guid: c0104a23670de3b48a3bf528ca6d9d14, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 2
     prefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
     scale: 0.25
@@ -35,6 +49,11 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 6ae6ac76f2e9375458c6b86e927c89a7, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.3
   - id: 3
     prefab: {fileID: 8791802859087666345, guid: ae07f2a45f14a82428409cfe410e6002, type: 3}
     scale: 0.8
@@ -42,6 +61,11 @@ MonoBehaviour:
     lifetime: 3
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 08c82906efbb81a478a856f36da16932, type: 3}
+    volume: 0.85
+    pitchJitter: 0
+    spatial: 0
   - id: 4
     prefab: {fileID: 141433446842962269, guid: 9fe8f8b3288e45a44af36ff8aa04486e, type: 3}
     scale: 0.15
@@ -49,6 +73,13 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 93ec4f99407a5ec43890571c284bc5c4, type: 3}
+    - {fileID: 8300000, guid: 508279d6f70d95547a6b2a481f0eea7c, type: 3}
+    - {fileID: 8300000, guid: 84f342b53f0da884fb2491f47ce6133d, type: 3}
+    volume: 0.6
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 5
     prefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
     scale: 0.15
@@ -56,6 +87,11 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 6a674fde8778def479b3e049a94fa8f1, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 6
     prefab: {fileID: 141433446842962269, guid: 9fe8f8b3288e45a44af36ff8aa04486e, type: 3}
     scale: 0.25
@@ -63,6 +99,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: bcb1acbbef1a43b4e97bc441d92a240b, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 7
     prefab: {fileID: 8547867254204328264, guid: cf378989e15716e40a61692dcd97e628, type: 3}
     scale: 0.25
@@ -70,6 +111,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: e1493db5bae4eec4dbeed9a55bd3b73e, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 8
     prefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
     scale: 0.12
@@ -77,6 +123,13 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: a7b9c5621a2fa1b4fbf2a84364f4d6b8, type: 3}
+    - {fileID: 8300000, guid: cf2b4317b867ad344893746d8d4ee5ad, type: 3}
+    - {fileID: 8300000, guid: 98c44b9a10d5cef40ad626dd4ba7095b, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 9
     prefab: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
     scale: 0.12
@@ -84,6 +137,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 0f8e9b51accfa964f9c8f981f136299b, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 10
     prefab: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
     scale: 0.3
@@ -91,6 +149,11 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 1
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 0c3e6e569edf0884d832c35b731655f5, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.7
   - id: 11
     prefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
     scale: 1.1
@@ -98,6 +161,11 @@ MonoBehaviour:
     lifetime: 0
     hideSmoke: 1
     tint: {r: 1, g: 0.28, b: 0.04, a: 1}
+    sounds:
+    - {fileID: 8300000, guid: c76c64aca5564a54a996de6ff0837fb9, type: 3}
+    volume: 0.45
+    pitchJitter: 0
+    spatial: 0.85
   - id: 12
     prefab: {fileID: 141433446842962269, guid: 9fe8f8b3288e45a44af36ff8aa04486e, type: 3}
     scale: 0.2
@@ -105,6 +173,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: c6abd0ed1b48a5e4f8b25c75bf2a11c2, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 13
     prefab: {fileID: 2353600328335836179, guid: ceec7516237b4104b94300043ca39784, type: 3}
     scale: 0.3
@@ -112,6 +185,11 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 1ca7ba9233fcc764b85081e850ce5d30, type: 3}
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 14
     prefab: {fileID: 3432958286849152088, guid: 87ee7299dd44ed747af24dbb91bcd33b, type: 3}
     scale: 0.35
@@ -119,6 +197,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: df7c0d460651c7246897061805865344, type: 3}
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 15
     prefab: {fileID: 888444077320411739, guid: 0c2509361b13505428ce788b7f846686, type: 3}
     scale: 0.35
@@ -126,6 +209,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 5c1cd52a13602504fb50a73274dac020, type: 3}
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 16
     prefab: {fileID: 8585649807550039280, guid: 224c4574d4d272a4b92df19ede61b338, type: 3}
     scale: 0.5
@@ -133,6 +221,11 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: d23306aa7c2335b42a42bd39fa4f4158, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.7
   - id: 17
     prefab: {fileID: 5137123306192418792, guid: 5a8d99fb95262ea458a7b580f2a1611c, type: 3}
     scale: 0.2
@@ -140,6 +233,10 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 18
     prefab: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
     scale: 0.15
@@ -147,6 +244,12 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 0b6889c4d3ee3244a8b87d6a666ccef0, type: 3}
+    - {fileID: 8300000, guid: ed17d8e232272c541b5cd85ebafc5bc9, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.7
   - id: 19
     prefab: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
     scale: 0.25
@@ -154,6 +257,11 @@ MonoBehaviour:
     lifetime: 0
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 70867f591333ab5408fbcde791f261cd, type: 3}
+    volume: 0.4
+    pitchJitter: 0
+    spatial: 0.85
   - id: 20
     prefab: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
     scale: 0.2
@@ -161,6 +269,11 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 14552df3c8acb5c4196a0c23ecefb443, type: 3}
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.2
   - id: 21
     prefab: {fileID: 6294508013172393196, guid: 043176b6a68be2b43b073aaaa4782c7d, type: 3}
     scale: 1
@@ -168,6 +281,10 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 1
     tint: {r: 1, g: 0.28, b: 0.04, a: 1}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 22
     prefab: {fileID: 119183615461286708, guid: 141e1779869c79845bd243610f187f47, type: 3}
     scale: 0.3
@@ -175,6 +292,10 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 23
     prefab: {fileID: 8205706795460263314, guid: 326e86d5729c54e479798cacab220bb2, type: 3}
     scale: 0.3
@@ -182,6 +303,10 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 24
     prefab: {fileID: 7305185502956871417, guid: 85b062a5517cf8345bb6784ffbed4877, type: 3}
     scale: 0.3
@@ -189,6 +314,10 @@ MonoBehaviour:
     lifetime: 0
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 25
     prefab: {fileID: 1590415177872986601, guid: acdb90624a404aa438447006f1026065, type: 3}
     scale: 0.35
@@ -196,6 +325,10 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 26
     prefab: {fileID: 3280519133390621005, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
     scale: 0.4
@@ -203,6 +336,10 @@ MonoBehaviour:
     lifetime: 0
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 27
     prefab: {fileID: 4425129568585013132, guid: bbeeb0ddc21369746aaaae5c5c1c09cf, type: 3}
     scale: 0.2
@@ -210,6 +347,11 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 2c2b5ebc5f6468b4aae6c293df846224, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.2
   - id: 28
     prefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
     scale: 0.3
@@ -217,6 +359,10 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 29
     prefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
     scale: 0.15
@@ -224,6 +370,10 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 30
     prefab: {fileID: 2883797502249945402, guid: 1e54877675f6e4a46ad7ca7c4d7a5bf6, type: 3}
     scale: 0.5
@@ -231,6 +381,12 @@ MonoBehaviour:
     lifetime: 1.2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 4921a5927e3770946a2484dc7e06e00e, type: 3}
+    - {fileID: 8300000, guid: d29a7094d0f45574ebb197ae9c68bdc6, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 31
     prefab: {fileID: 1652143759095011289, guid: e2c1ac940434a5242b54d72b66654687, type: 3}
     scale: 0.3
@@ -238,6 +394,11 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: bac6b1770a824ac49a5aa458f531f351, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 32
     prefab: {fileID: 8487402871801164198, guid: 90375796f996bff4cabed66da5e558cb, type: 3}
     scale: 0.25
@@ -245,6 +406,12 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: a220d9717fad4e144a06d1edd74d4aac, type: 3}
+    - {fileID: 8300000, guid: e55ec778dc004054a86656ffa5d865cd, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 33
     prefab: {fileID: 6855314210357232287, guid: 7c2a9b83b809a0848915fabd9596b68b, type: 3}
     scale: 0.2
@@ -252,6 +419,11 @@ MonoBehaviour:
     lifetime: 2
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 83dfa7ee9609c89409640196da2dcb7e, type: 3}
+    volume: 0.6
+    pitchJitter: 0.06
+    spatial: 0.5
   - id: 34
     prefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
     scale: 0.15
@@ -259,6 +431,11 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 0fa637d8ea29d3f4ca7f69cd45f8d523, type: 3}
+    volume: 0.7
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 35
     prefab: {fileID: 1652143759095011289, guid: e2c1ac940434a5242b54d72b66654687, type: 3}
     scale: 0.3
@@ -266,6 +443,11 @@ MonoBehaviour:
     lifetime: 1.5
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: dc6fad55d1c0b504dbe6b5ad405bfdb7, type: 3}
+    volume: 0.75
+    pitchJitter: 0.06
+    spatial: 0.3
   - id: 36
     prefab: {fileID: 8791802859087666345, guid: ae07f2a45f14a82428409cfe410e6002, type: 3}
     scale: 1.2
@@ -273,6 +455,11 @@ MonoBehaviour:
     lifetime: 4
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 14a2f4ee99968134bbcd075f208e2539, type: 3}
+    volume: 0.85
+    pitchJitter: 0
+    spatial: 0
   - id: 37
     prefab: {fileID: 3432958286849152088, guid: 87ee7299dd44ed747af24dbb91bcd33b, type: 3}
     scale: 0.6
@@ -280,6 +467,10 @@ MonoBehaviour:
     lifetime: 1
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6
   - id: 38
     prefab: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
     scale: 0.5
@@ -287,3 +478,7 @@ MonoBehaviour:
     lifetime: 6
     hideSmoke: 0
     tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds: []
+    volume: 0.8
+    pitchJitter: 0.06
+    spatial: 0.6

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 558372330420327357}
   - component: {fileID: 5963858519709273936}
   - component: {fileID: 8244983260450214431}
+  - component: {fileID: 6091445376011253632}
   m_Layer: 6
   m_Name: Carriable_Glass_Processed
   m_TagString: Untagged
@@ -90,7 +91,19 @@ MonoBehaviour:
         m_CallState: 2
   onInteractEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6091445376011253632}
+        m_TargetAssemblyTypeName: SfxCue, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onConsumeEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -157,6 +170,26 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 7131936121395262526}
   isMeshRenderer: 1
+--- !u!114 &6091445376011253632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2451140924364856572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2734a5b9eac2f634899205134174abe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxCue
+  clips:
+  - {fileID: 8300000, guid: f9570d0c4ab3d644290529d4e0170d1e, type: 3}
+  - {fileID: 8300000, guid: bea516ead7102dc4a859f50e0e9881b7, type: 3}
+  - {fileID: 8300000, guid: fbddbd32ea08da14baedfb376ef03dce, type: 3}
+  volume: 0.6
+  pitchJitter: 0.06
+  spatial: 0.6
+  minInterval: 0.08
 --- !u!1 &3987331191415104635
 GameObject:
   m_ObjectHideFlags: 0
