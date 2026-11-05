@@ -1,59 +1,71 @@
-using ItemScript;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
-// Shows what a floor slot needs through color coding: a see-through copy of the tile's shape in the material's color,
-// and (singleplayer) a pulse while the player carries the matching tile.
+// Shows a floor slot as a hologram of the real tile. An empty slot draws a copy of the tile's meshes; once a tile is placed
+// its own renderers wear the hologram, which dissolves as it gets nailed down and gives the real materials back when finished.
+// Reads the tile every frame instead of being told, because multiplayer places and completes tiles through its own path.
 public class BlueprintVisual : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Constructor constructor;
+    [SerializeField] private ItemScript.Constructor constructor;
     [SerializeField] private MeshRenderer ghostRenderer;
-    [SerializeField] private MaterialColorChangeHelper hoverHelper;
+    [SerializeField] private Material hologramMaterial;
 
-    [Header("Colors")]
-    [SerializeField] private Color woodColor = new Color(1f, 0.75f, 0.15f, 1f);
-    [SerializeField] private Color brickColor = new Color(0.9f, 0.15f, 0.1f, 1f);
-    [SerializeField] private Color glassColor = new Color(0.2f, 0.85f, 1f, 1f);
-
-    [Header("Alpha")]
-    [SerializeField] private float idleAlpha = 0.45f;
-    [SerializeField] private float otherMaterialAlpha = 0.2f;
-    [SerializeField] private float pulseMinAlpha = 0.35f;
-    [SerializeField] private float pulseMaxAlpha = 0.9f;
+    [Header("Empty Slot")]
+    [SerializeField] private float otherMaterialAlpha = 0.45f;
+    [SerializeField] private float pulseMaxHighlight = 0.6f;
     [SerializeField] private float pulseSpeed = 5f;
 
+    [Header("Reveal")]
+    [SerializeField, Range(0f, 1f)] private float placedReveal = 0.2f;
+    [SerializeField] private float revealSpeed = 2f;
+
+    [Header("Highlight")]
+    [SerializeField] private float highlightSpeed = 8f;
+
+    private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+    private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int RevealId = Shader.PropertyToID("_Reveal");
+    private static readonly int AlphaScaleId = Shader.PropertyToID("_AlphaScale");
+    private static readonly int HighlightId = Shader.PropertyToID("_Highlight");
+
+    private readonly List<GameObject> ghostParts = new();
+    private readonly List<Material> ghostMaterials = new();
+    private readonly List<Material> tileMaterials = new();
+    private readonly List<(MeshRenderer renderer, Material[] original)> swappedRenderers = new();
 
     private PlayerInteractionHandler interactionHandler;
-    private Material material;
-    private GameObject ghostTile;
-    private Color baseColor;
+    private GameObject currentTile;
+    private IBuildableTile currentBuildable;
+    private float reveal;
+    private float highlight;
     private bool isReady;
     private bool isHovered;
 
     private void Start()
     {
-        material = ghostRenderer.material;
         if (!NetworkModeHelper.IsNetworked) interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
 
         isReady = true;
         Refresh();
     }
-    private void Update()
+    private void OnDestroy()
     {
-        if (isHovered || interactionHandler == null) return;
+        DestroyMaterials(ghostMaterials);
+        DestroyMaterials(tileMaterials);
+    }
+    // Late so a tile placed this frame never renders once with its real materials.
+    private void LateUpdate()
+    {
+        if (!isReady) return;
 
-        float alpha = idleAlpha;
-        if (interactionHandler.IsCarrying())
-        {
-            alpha = interactionHandler.GetCurrentCarriable() != null
-                    && !interactionHandler.GetCurrentCarriable().isRawMaterial
-                    && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType()
-                ? Mathf.Lerp(pulseMinAlpha, pulseMaxAlpha, (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f)
-                : otherMaterialAlpha;
-        }
+        GameObject tile = constructor.GetActiveTile();
+        if (tile != currentTile) OnTileChanged(tile);
 
-        material.SetColor(BaseColorId, new Color(baseColor.r, baseColor.g, baseColor.b, alpha));
+        if (currentTile == null) UpdateGhost();
+        else if (swappedRenderers.Count > 0) UpdatePlacedTile();
     }
     public void SetHovered(bool condition)
     {
@@ -63,52 +75,173 @@ public class BlueprintVisual : MonoBehaviour
     {
         if (!isReady) return;
 
-        CarriableType type = constructor.GetAcceptedType();
-
-        baseColor = GetColor(type);
-        Color idleColor = new Color(baseColor.r, baseColor.g, baseColor.b, idleAlpha);
-        material.SetColor(BaseColorId, idleColor);
-        if (hoverHelper != null) hoverHelper.SetInitialColor(idleColor);
-
-        RefreshGhostTile(type);
+        RebuildGhost();
     }
-    private void RefreshGhostTile(CarriableType type)
+    private void UpdateGhost()
     {
-        Renderer source = constructor.GetTileRenderer(type);
-        MeshFilter sourceFilter = source != null ? source.GetComponent<MeshFilter>() : null;
+        float alphaScale = 1f;
+        float target = isHovered ? 1f : 0f;
 
-        // Keeps the plain slab when the tile has no mesh to copy.
-        if (sourceFilter == null)
+        if (!isHovered && interactionHandler != null && interactionHandler.IsCarrying())
         {
-            ghostRenderer.enabled = true;
-            if (ghostTile != null) ghostTile.SetActive(false);
+            bool matches = interactionHandler.GetCurrentCarriable() != null
+                && !interactionHandler.GetCurrentCarriable().isRawMaterial
+                && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType();
+
+            if (matches) target = (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
+            else alphaScale = otherMaterialAlpha;
+        }
+
+        highlight = Mathf.MoveTowards(highlight, target, highlightSpeed * Time.deltaTime);
+        ApplyTo(ghostMaterials, 0f, alphaScale, highlight);
+    }
+    private void UpdatePlacedTile()
+    {
+        if (currentBuildable.IsBuildComplete)
+        {
+            RestoreTile();
+            isHovered = false;
+            highlight = 0f;
             return;
         }
 
-        if (ghostTile == null)
-        {
-            ghostTile = new GameObject("GhostTile", typeof(MeshFilter), typeof(MeshRenderer));
-            ghostTile.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        }
-
-        ghostTile.SetActive(true);
-        ghostTile.transform.SetParent(null);
-        ghostTile.transform.SetPositionAndRotation(source.transform.position, source.transform.rotation);
-        ghostTile.transform.localScale = source.transform.lossyScale;
-        ghostTile.transform.SetParent(transform, true);
-
-        ghostTile.GetComponent<MeshFilter>().sharedMesh = sourceFilter.sharedMesh;
-        ghostTile.GetComponent<MeshRenderer>().sharedMaterial = material;
-
-        ghostRenderer.enabled = false;
+        float target = Mathf.Lerp(placedReveal, 1f, currentBuildable.BuildProgress);
+        reveal = Mathf.MoveTowards(reveal, target, revealSpeed * Time.deltaTime);
+        highlight = Mathf.MoveTowards(highlight, isHovered ? 1f : 0f, highlightSpeed * Time.deltaTime);
+        ApplyTo(tileMaterials, reveal, 1f, highlight);
     }
-    private Color GetColor(CarriableType type)
+    private void OnTileChanged(GameObject tile)
     {
-        switch (type)
+        RestoreTile();
+
+        currentTile = tile;
+        currentBuildable = tile != null ? tile.GetComponent<IBuildableTile>() : null;
+        reveal = 0f;
+        highlight = 0f;
+
+        if (currentBuildable != null && !currentBuildable.IsBuildComplete) HologramiseTile(tile);
+    }
+    private void HologramiseTile(GameObject tile)
+    {
+        foreach (MeshRenderer visible in GetVisibleRenderers(tile))
         {
-            case CarriableType.Brick: return brickColor;
-            case CarriableType.Glass: return glassColor;
-            default: return woodColor;
+            Material[] original = visible.sharedMaterials;
+            Material[] holograms = new Material[original.Length];
+            for (int i = 0; i < original.Length; i++)
+            {
+                holograms[i] = CreateHologram(original[i]);
+                tileMaterials.Add(holograms[i]);
+            }
+
+            swappedRenderers.Add((visible, original));
+            visible.sharedMaterials = holograms;
         }
+    }
+    private void RestoreTile()
+    {
+        foreach (var (renderer, original) in swappedRenderers)
+        {
+            if (renderer != null) renderer.sharedMaterials = original;
+        }
+
+        swappedRenderers.Clear();
+        DestroyMaterials(tileMaterials);
+    }
+    private void RebuildGhost()
+    {
+        foreach (GameObject part in ghostParts) Destroy(part);
+        ghostParts.Clear();
+        DestroyMaterials(ghostMaterials);
+
+        GameObject tile = constructor.GetTileObject(constructor.GetAcceptedType());
+        if (tile != null)
+        {
+            foreach (MeshRenderer source in GetVisibleRenderers(tile)) CreateGhostPart(source);
+        }
+
+        // Keeps the plain slab when the tile has no mesh to copy.
+        ghostRenderer.enabled = ghostParts.Count == 0;
+        if (ghostRenderer.enabled)
+        {
+            Material slab = CreateHologram(null);
+            ghostMaterials.Add(slab);
+            ghostRenderer.sharedMaterial = slab;
+        }
+    }
+    private void CreateGhostPart(MeshRenderer source)
+    {
+        if (!source.TryGetComponent<MeshFilter>(out var sourceFilter) || sourceFilter.sharedMesh == null) return;
+
+        // A statically batched tile only has the merged mesh of its whole batch left to copy.
+        if (source.isPartOfStaticBatch)
+        {
+            Debug.LogWarning($"{source.name} is static batched, so its blueprint falls back to a slab. Clear Batching Static on the tile mesh.", source);
+            return;
+        }
+
+        GameObject part = new GameObject("GhostTile", typeof(MeshFilter), typeof(MeshRenderer));
+        part.transform.SetPositionAndRotation(source.transform.position, source.transform.rotation);
+        part.transform.localScale = source.transform.lossyScale;
+        part.transform.SetParent(ghostRenderer.transform, true);
+        part.GetComponent<MeshFilter>().sharedMesh = sourceFilter.sharedMesh;
+
+        Material[] sources = source.sharedMaterials;
+        Material[] holograms = new Material[sources.Length];
+        for (int i = 0; i < sources.Length; i++)
+        {
+            holograms[i] = CreateHologram(sources[i]);
+            ghostMaterials.Add(holograms[i]);
+        }
+
+        MeshRenderer partRenderer = part.GetComponent<MeshRenderer>();
+        partRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        partRenderer.sharedMaterials = holograms;
+        ghostParts.Add(part);
+    }
+    private Material CreateHologram(Material source)
+    {
+        Material hologram = new Material(hologramMaterial);
+        if (source == null) return hologram;
+
+        int textureId = source.HasProperty(BaseMapId) ? BaseMapId : MainTexId;
+        if (source.HasProperty(textureId) && source.GetTexture(textureId) != null)
+        {
+            hologram.SetTexture(BaseMapId, source.GetTexture(textureId));
+            hologram.SetTextureScale(BaseMapId, source.GetTextureScale(textureId));
+            hologram.SetTextureOffset(BaseMapId, source.GetTextureOffset(textureId));
+        }
+        if (source.HasProperty(BaseColorId)) hologram.SetColor(BaseColorId, source.GetColor(BaseColorId));
+
+        return hologram;
+    }
+    // The meshes the tile really shows: FloorConstruct swaps in its own brick mesh, so TileWetness.TileRenderer can be missing.
+    private static List<MeshRenderer> GetVisibleRenderers(GameObject tile)
+    {
+        List<MeshRenderer> visible = new();
+        foreach (MeshRenderer candidate in tile.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            if (!candidate.enabled || !candidate.gameObject.activeSelf) continue;
+
+            // The old puddle plane is part of the tile but isn't its surface.
+            PuddleHelper puddle = candidate.GetComponentInParent<PuddleHelper>(true);
+            if (puddle != null && puddle.transform != tile.transform) continue;
+
+            visible.Add(candidate);
+        }
+        return visible;
+    }
+    private static void ApplyTo(List<Material> materials, float revealAmount, float alphaScale, float highlightAmount)
+    {
+        foreach (Material material in materials)
+        {
+            material.SetFloat(RevealId, revealAmount);
+            material.SetFloat(AlphaScaleId, alphaScale);
+            material.SetFloat(HighlightId, highlightAmount);
+        }
+    }
+    private static void DestroyMaterials(List<Material> materials)
+    {
+        foreach (Material material in materials) Destroy(material);
+        materials.Clear();
     }
 }

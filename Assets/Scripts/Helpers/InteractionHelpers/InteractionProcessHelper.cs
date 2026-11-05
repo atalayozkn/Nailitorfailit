@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Events;
 
 public class InteractionProcessHelper : MonoBehaviour
 {
@@ -10,10 +9,7 @@ public class InteractionProcessHelper : MonoBehaviour
     [SerializeField] private float maxProcessAmount = 100f;
     [SerializeField] private float processPerInteract = 25f;
 
-    [Header("Events")]
-    [SerializeField] private UnityEvent onConstructionStarted;
-    [SerializeField] private UnityEvent onConstructionProgress;
-    [SerializeField] private UnityEvent onConstructionCompleted;
+    public float NormalizedProgress => maxProcessAmount > 0f ? Mathf.Clamp01(currentProcess / maxProcessAmount) : 0f;
 
     private float currentProcess;
     private bool isCompleted;
