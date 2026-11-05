@@ -1,0 +1,205 @@
+pipes: Pipe_Bedroom2 at (3.00, 0.05, -11.00), Pipe_Bathroom at (-3.00, 0.05, -11.00)
+built Bedroom2: Brick=5,Wood=4
+built Bathroom: Glass=8,Brick=1
+
+=== WATER Bedroom2 pipe at (3.00, 0.05, -11.00)
+particle: name=ParticleEffect_WaterSpray_PlaceHolder simSpace=Local speed=5 life=1.8 collisionEnabled=True type=World msg=True mask=320 pos=(3.00, 0.35, -11.00)
+t= 0 particles=   0 maxParticleDist=0.0 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t= 1 particles=  14 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.07 max0.10] B[n6 avg0.09 max0.30] G[n8 avg0.00 max0.00]
+t= 2 particles=  12 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.20 max0.26] B[n6 avg0.17 max0.71] G[n8 avg0.00 max0.00]
+t= 3 particles=  14 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.27 max0.30] B[n6 avg0.28 max0.99] G[n8 avg0.00 max0.00]
+t= 4 particles=  12 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.40 max0.49] B[n6 avg0.28 max0.99] G[n8 avg0.00 max0.00]
+t= 5 particles=  11 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.48 max0.56] B[n6 avg0.35 max1.00] G[n8 avg0.00 max0.00]
+t= 6 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.44 max0.51] B[n6 avg0.33 max0.97] G[n8 avg0.00 max0.00]
+t= 7 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.36 max0.43] B[n6 avg0.30 max0.93] G[n8 avg0.00 max0.00]
+t= 8 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.28 max0.35] B[n6 avg0.26 max0.89] G[n8 avg0.00 max0.00]
+t= 9 particles=   0 maxParticleDist=1.1 wetTiles= 8 tileReach=1.4 W[n4 avg0.20 max0.27] B[n6 avg0.23 max0.85] G[n8 avg0.00 max0.00]
+t=10 particles=   0 maxParticleDist=1.1 wetTiles= 7 tileReach=1.4 W[n4 avg0.13 max0.19] B[n6 avg0.21 max0.81] G[n8 avg0.00 max0.00]
+t=11 particles=   0 maxParticleDist=1.1 wetTiles= 6 tileReach=1.4 W[n4 avg0.07 max0.11] B[n6 avg0.18 max0.77] G[n8 avg0.00 max0.00]
+t=12 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.4 W[n4 avg0.01 max0.03] B[n6 avg0.16 max0.73] G[n8 avg0.00 max0.00]
+t=13 particles=   0 maxParticleDist=1.1 wetTiles= 3 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.14 max0.69] G[n8 avg0.00 max0.00]
+t=14 particles=   0 maxParticleDist=1.1 wetTiles= 2 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.13 max0.65] G[n8 avg0.00 max0.00]
+t=15 particles=   0 maxParticleDist=1.1 wetTiles= 2 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.11 max0.61] G[n8 avg0.00 max0.00]
+t=16 particles=   0 maxParticleDist=1.1 wetTiles= 2 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.10 max0.57] G[n8 avg0.00 max0.00]
+t=17 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.09 max0.53] G[n8 avg0.00 max0.00]
+t=18 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.08 max0.49] G[n8 avg0.00 max0.00]
+t=19 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.07 max0.45] G[n8 avg0.00 max0.00]
+t=20 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.07 max0.41] G[n8 avg0.00 max0.00]
+t=21 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.06 max0.37] G[n8 avg0.00 max0.00]
+t=22 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.05 max0.33] G[n8 avg0.00 max0.00]
+t=23 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.05 max0.29] G[n8 avg0.00 max0.00]
+t=24 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.04 max0.25] G[n8 avg0.00 max0.00]
+t=25 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.03 max0.21] G[n8 avg0.00 max0.00]
+t=26 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.03 max0.17] G[n8 avg0.00 max0.00]
+t=27 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.02 max0.13] G[n8 avg0.00 max0.00]
+t=28 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.01 max0.09] G[n8 avg0.00 max0.00]
+t=29 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.01 max0.05] G[n8 avg0.00 max0.00]
+t=30 particles=   0 maxParticleDist=1.1 wetTiles= 1 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.01] G[n8 avg0.00 max0.00]
+t=31 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=32 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=33 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=34 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=35 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=36 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=37 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=38 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=39 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t=40 particles=   0 maxParticleDist=1.1 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+end nearest tiles: 0.0m=0.00; 1.0m=0.00; 1.0m=0.00; 1.0m=0.00; 1.0m=0.00; 1.4m=0.00; 1.4m=0.00; 1.4m=0.00; 1.4m=0.00; 5.0m=0.00
+
+=== WATER Bathroom pipe at (-3.00, 0.05, -11.00)
+particle: name=ParticleEffect_WaterSpray_PlaceHolder simSpace=Local speed=5 life=1.8 collisionEnabled=True type=World msg=True mask=320 pos=(-3.00, 0.35, -11.00)
+t= 0 particles=   0 maxParticleDist=0.0 wetTiles= 0 tileReach=0.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.00 max0.00]
+t= 1 particles=  12 maxParticleDist=1.0 wetTiles= 8 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.04 max0.21] G[n8 avg0.10 max0.26]
+t= 2 particles=  11 maxParticleDist=1.0 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.08 max0.47] G[n8 avg0.24 max0.57]
+t= 3 particles=  14 maxParticleDist=1.0 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.11 max0.67] G[n8 avg0.36 max0.88]
+t= 4 particles=  12 maxParticleDist=1.0 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.15 max0.87] G[n8 avg0.50 max1.00]
+t= 5 particles=  11 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.17 max1.00] G[n8 avg0.57 max1.00]
+t= 6 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.16 max0.96] G[n8 avg0.57 max0.99]
+t= 7 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.15 max0.92] G[n8 avg0.55 max0.97]
+t= 8 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.15 max0.88] G[n8 avg0.53 max0.95]
+t= 9 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.14 max0.84] G[n8 avg0.51 max0.93]
+t=10 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.13 max0.80] G[n8 avg0.49 max0.91]
+t=11 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.13 max0.76] G[n8 avg0.47 max0.89]
+t=12 particles=   0 maxParticleDist=1.1 wetTiles= 9 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.12 max0.72] G[n8 avg0.45 max0.86]
+t=13 particles=   0 maxParticleDist=1.1 wetTiles= 8 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.11 max0.68] G[n8 avg0.43 max0.84]
+t=14 particles=   0 maxParticleDist=1.1 wetTiles= 8 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.11 max0.64] G[n8 avg0.41 max0.82]
+t=15 particles=   0 maxParticleDist=1.1 wetTiles= 7 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.10 max0.60] G[n8 avg0.40 max0.80]
+t=16 particles=   0 maxParticleDist=1.1 wetTiles= 6 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.09 max0.56] G[n8 avg0.38 max0.78]
+t=17 particles=   0 maxParticleDist=1.1 wetTiles= 6 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.09 max0.52] G[n8 avg0.37 max0.76]
+t=18 particles=   0 maxParticleDist=1.1 wetTiles= 6 tileReach=1.4 W[n4 avg0.00 max0.00] B[n6 avg0.08 max0.48] G[n8 avg0.36 max0.74]
+t=19 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.07 max0.44] G[n8 avg0.34 max0.72]
+t=20 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.07 max0.40] G[n8 avg0.33 max0.70]
+t=21 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.06 max0.36] G[n8 avg0.32 max0.68]
+t=22 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.05 max0.32] G[n8 avg0.31 max0.66]
+t=23 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.05 max0.28] G[n8 avg0.30 max0.64]
+t=24 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.04 max0.24] G[n8 avg0.29 max0.62]
+t=25 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.03 max0.20] G[n8 avg0.28 max0.60]
+t=26 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.03 max0.16] G[n8 avg0.27 max0.58]
+t=27 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.02 max0.12] G[n8 avg0.26 max0.56]
+t=28 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.01 max0.08] G[n8 avg0.25 max0.54]
+t=29 particles=   0 maxParticleDist=1.1 wetTiles= 5 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.01 max0.04] G[n8 avg0.24 max0.52]
+t=30 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.23 max0.50]
+t=31 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.22 max0.48]
+t=32 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.21 max0.46]
+t=33 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.20 max0.44]
+t=34 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.19 max0.42]
+t=35 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.18 max0.40]
+t=36 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.17 max0.38]
+t=37 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.16 max0.36]
+t=38 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.15 max0.34]
+t=39 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.14 max0.32]
+t=40 particles=   0 maxParticleDist=1.1 wetTiles= 4 tileReach=1.0 W[n4 avg0.00 max0.00] B[n6 avg0.00 max0.00] G[n8 avg0.13 max0.30]
+end nearest tiles: 0.0m=0.00; 1.0m=0.14; 1.0m=0.28; 1.0m=0.28; 1.0m=0.28; 1.4m=0.00; 1.4m=0.00; 1.4m=0.00; 1.4m=0.00; 5.0m=0.00
+
+=== FIRE start at (3.00, 0.05, -10.00), wood tiles=4
+  [ 0s] (4.0,-10.0) Brick health 100% -> 95%
+  [ 0s] (3.0,-10.0) Wood IGNITED
+  [ 0s] (3.0,-10.0) Wood health 100% -> 80%
+  [ 0s] (2.0,-10.0) Brick health 100% -> 95%
+  [ 0s] (3.0,-11.0) Brick health 100% -> 95%
+t= 0 burning=1 destroyed=0
+t= 1 burning=1 destroyed=0
+t= 2 burning=1 destroyed=0
+  [ 3s] (4.0,-10.0) Brick health 95% -> 85%
+  [ 3s] (3.0,-10.0) Wood health 80% -> 60%
+  [ 3s] (2.0,-10.0) Brick health 95% -> 90%
+  [ 3s] (4.0,-11.0) Wood IGNITED
+  [ 3s] (4.0,-11.0) Wood health 100% -> 80%
+  [ 3s] (3.0,-11.0) Brick health 95% -> 85%
+  [ 3s] (4.0,-12.0) Brick health 100% -> 95%
+t= 3 burning=2 destroyed=0
+t= 4 burning=2 destroyed=0
+t= 5 burning=2 destroyed=0
+  [ 6s] (4.0,-10.0) Brick health 85% -> 75%
+  [ 6s] (3.0,-10.0) Wood health 60% -> 40%
+  [ 6s] (2.0,-10.0) Brick health 90% -> 85%
+  [ 6s] (4.0,-11.0) Wood health 80% -> 60%
+  [ 6s] (3.0,-11.0) Brick health 85% -> 70%
+  [ 6s] (4.0,-12.0) Brick health 95% -> 85%
+  [ 6s] (3.0,-12.0) Wood IGNITED
+  [ 6s] (3.0,-12.0) Wood health 100% -> 80%
+  [ 6s] (2.0,-12.0) Brick health 100% -> 95%
+t= 6 burning=3 destroyed=0
+t= 7 burning=3 destroyed=0
+t= 8 burning=3 destroyed=0
+  [ 9s] (4.0,-10.0) Brick health 75% -> 65%
+  [ 9s] (3.0,-10.0) Wood health 40% -> 20%
+  [ 9s] (2.0,-10.0) Brick health 85% -> 75%
+  [ 9s] (4.0,-11.0) Wood health 60% -> 40%
+  [ 9s] (3.0,-11.0) Brick health 70% -> 50%
+  [ 9s] (2.0,-11.0) Wood IGNITED
+  [ 9s] (2.0,-11.0) Wood health 100% -> 80%
+  [ 9s] (4.0,-12.0) Brick health 85% -> 75%
+  [ 9s] (3.0,-12.0) Wood health 80% -> 60%
+  [ 9s] (2.0,-12.0) Brick health 95% -> 85%
+t= 9 burning=4 destroyed=0
+t=10 burning=4 destroyed=0
+t=11 burning=4 destroyed=0
+  [12s] (4.0,-10.0) Brick health 65% -> 55%
+  [12s] (3.0,-10.0) Wood health 20% -> 0%
+  [12s] (2.0,-10.0) Brick health 75% -> 65%
+  [12s] (4.0,-11.0) Wood health 40% -> 20%
+  [12s] (3.0,-11.0) Brick health 50% -> 30%
+  [12s] (2.0,-11.0) Wood health 80% -> 60%
+  [12s] (4.0,-12.0) Brick health 75% -> 65%
+  [12s] (3.0,-12.0) Wood health 60% -> 40%
+  [12s] (2.0,-12.0) Brick health 85% -> 75%
+t=12 burning=4 destroyed=0
+t=13 burning=4 destroyed=0
+  [14s] (3.0,-10.0) Wood fire stopped
+  [14s] (3.0,-10.0) Wood DESTROYED, slot reopened
+t=14 burning=3 destroyed=1
+  [15s] (4.0,-10.0) Brick health 55% -> 50%
+  [15s] (2.0,-10.0) Brick health 65% -> 60%
+  [15s] (4.0,-11.0) Wood health 20% -> 0%
+  [15s] (3.0,-11.0) Brick health 30% -> 15%
+  [15s] (2.0,-11.0) Wood health 60% -> 40%
+  [15s] (4.0,-12.0) Brick health 65% -> 55%
+  [15s] (3.0,-12.0) Wood health 40% -> 20%
+  [15s] (2.0,-12.0) Brick health 75% -> 65%
+t=15 burning=3 destroyed=1
+t=16 burning=3 destroyed=1
+  [17s] (4.0,-11.0) Wood fire stopped
+  [17s] (4.0,-11.0) Wood DESTROYED, slot reopened
+t=17 burning=2 destroyed=2
+  [18s] (2.0,-10.0) Brick health 60% -> 55%
+  [18s] (3.0,-11.0) Brick health 15% -> 5%
+  [18s] (2.0,-11.0) Wood health 40% -> 20%
+  [18s] (4.0,-12.0) Brick health 55% -> 50%
+  [18s] (3.0,-12.0) Wood health 20% -> 0%
+  [18s] (2.0,-12.0) Brick health 65% -> 55%
+t=18 burning=2 destroyed=2
+t=19 burning=2 destroyed=2
+  [20s] (3.0,-12.0) Wood fire stopped
+  [20s] (3.0,-12.0) Wood DESTROYED, slot reopened
+t=20 burning=1 destroyed=3
+  [20s] EXTINGUISHER used on (2.00, 0.05, -11.00)
+  [21s] (2.0,-11.0) Wood fire stopped
+t=21 burning=0 destroyed=3
+t=22 burning=0 destroyed=3
+t=23 burning=0 destroyed=3
+t=24 burning=0 destroyed=3
+t=25 burning=0 destroyed=3
+t=26 burning=0 destroyed=3
+t=27 burning=0 destroyed=3
+t=28 burning=0 destroyed=3
+t=29 burning=0 destroyed=3
+t=30 burning=0 destroyed=3
+t=31 burning=0 destroyed=3
+t=32 burning=0 destroyed=3
+t=33 burning=0 destroyed=3
+t=34 burning=0 destroyed=3
+t=35 burning=0 destroyed=3
+t=36 burning=0 destroyed=3
+t=37 burning=0 destroyed=3
+t=38 burning=0 destroyed=3
+t=39 burning=0 destroyed=3
+t=40 burning=0 destroyed=3
+t=41 burning=0 destroyed=3
+t=42 burning=0 destroyed=3
+
+gallery order: 0=TilePlaced, 1=TileNail, 2=TileFinished, 3=RoomFinished, 4=CutterCutting, 5=ProductOut, 6=MixerDone, 7=MixerFail, 8=Refuel, 9=OutOfPower, 10=FireIgnite, 11=FireBurn, 12=FireOut, 13=TileDestroyedWood, 14=TileDestroyedBrick, 15=TileDestroyedGlass, 16=PipeBurst, 17=WoodSwell, 18=SocketSpark, 19=TileElectrified, 20=PlayerElectrocuted, 21=PlayerBurned, 22=CarHit, 23=PlayerSlip, 24=PlayerStun, 25=PlayerDrink, 26=PlayerEnergised, 27=PlayerDrained, 28=PlayerRespawn, 29=DogEat, 30=DogPet, 31=DogGift, 32=DogRebel, 33=DogMoodWorse, 34=BowlFill, 35=MailCollect, 36=Victory, 37=PoleImpact, 38=PuddleElectrified
+
+flame/state mismatches: 0
+logged errors: 1
