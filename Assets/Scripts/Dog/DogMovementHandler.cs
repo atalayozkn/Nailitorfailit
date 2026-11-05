@@ -20,6 +20,9 @@ public class DogMovementHandler : MonoBehaviour
     private bool shouldRun;
     private Coroutine moveRoutine;
 
+    private const float StallTimeout = 2.5f;
+    private const float StallProgressDistance = 0.1f;
+
     public static readonly int runHash = Animator.StringToHash("Run");
     public static readonly int walkHash = Animator.StringToHash("Walk");
     private void Awake()
@@ -139,11 +142,32 @@ public class DogMovementHandler : MonoBehaviour
         isMoving = true;
         agent.isStopped = false;
         Vector3 position = virtualTarget.position;
+        Vector3 lastProgressPosition = transform.position;
+        float stalledTime = 0f;
 
         while ((agent.pathPending || agent.remainingDistance > agent.stoppingDistance) && virtualTarget != null)
         {
             position = virtualTarget.position;
             agent.SetDestination(position);
+
+            // Without this, a blocked agent never reaches the stopping distance and its state waits forever.
+            if ((transform.position - lastProgressPosition).sqrMagnitude >= StallProgressDistance * StallProgressDistance)
+            {
+                lastProgressPosition = transform.position;
+                stalledTime = 0f;
+            }
+            else
+            {
+                stalledTime += Time.deltaTime;
+                if (stalledTime >= StallTimeout)
+                {
+                    Debug.LogWarning($"[DogMovement] Stalled at {transform.position} going to {position}. " +
+                                     $"Path={agent.pathStatus}, remaining={agent.remainingDistance:F2}, " +
+                                     $"onNavMesh={agent.isOnNavMesh}, target={virtualTarget.name}", this);
+                    break;
+                }
+            }
+
             yield return null;
         }
 

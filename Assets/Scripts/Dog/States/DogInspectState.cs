@@ -22,7 +22,7 @@ public class DogInpectState : DogBaseState
         counter = 0f;
         stateMachine.movementHandler.StopAllMovement();
 
-        if (stateMachine.GetAttitudePercent() > 60f && stateMachine.patrolCounter >= 3)
+        if (stateMachine.GetAttitudePercent() > 60f && stateMachine.patrolCounter >= 3 && stateMachine.HasNeededDrop())
         {
             stateMachine.TriggerPatrolCounter(false);
             stateMachine.ChangeToAidState();

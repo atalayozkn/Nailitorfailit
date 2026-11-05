@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ItemScript;
 using UnityEngine;
 using UnityEngine.AI;
@@ -218,13 +219,46 @@ public class DogStateMachine : StateMachine_Dog
         if (chaseTarget != null || movementHandler.CheckDistanceToBed() <= maxChaseDistance) return true;
         else return false;
     }
+    public bool HasNeededDrop()
+    {
+        return GetNeededDrops().Count > 0;
+    }
+    // The drops an unbuilt slot in this level still accepts. Includes slots in hidden wall structures, which are needed later.
+    // Multiplayer keeps its full list.
+    private List<GameObject> GetNeededDrops()
+    {
+        List<GameObject> needed = new();
+        if (possibleDrops == null) return needed;
+        if (NetworkModeHelper.IsNetworked)
+        {
+            needed.AddRange(possibleDrops);
+            return needed;
+        }
+
+        HashSet<CarriableType> neededTypes = new();
+        foreach (Constructor constructor in FindObjectsByType<Constructor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (!constructor.IsBuilt()) neededTypes.Add(constructor.GetAcceptedType());
+        }
+
+        foreach (GameObject drop in possibleDrops)
+        {
+            if (drop != null && drop.TryGetComponent<CarriableObject_SP>(out var carriable) && neededTypes.Contains(carriable.carriableType)) needed.Add(drop);
+        }
+        return needed;
+    }
     public void SpawnObject()
     {
+        currentCarriable = null;
+
+        List<GameObject> neededDrops = GetNeededDrops();
+        if (neededDrops.Count == 0) return;
+
         // Pick random index
-        int randomIndex = Random.Range(0, possibleDrops.Length);
+        int randomIndex = Random.Range(0, neededDrops.Count);
 
         // Select prefab
-        GameObject selectedObj = possibleDrops[randomIndex];
+        GameObject selectedObj = neededDrops[randomIndex];
 
         // Instantiate under carryTransform
         GameObject obj = Instantiate(selectedObj,dropTransform.position,dropTransform.rotation);

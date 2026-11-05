@@ -8,8 +8,8 @@ public class DogMoodUI : MonoBehaviour
     [SerializeField] private DogStateMachine stateMachine;
 
     [Header("Layout")]
-    [SerializeField] private Vector2 labelPosition = new Vector2(-711f, -290f);
-    [SerializeField] private Vector2 labelSize = new Vector2(420f, 50f);
+    [SerializeField] private Vector2 labelPosition = new Vector2(-699f, -240f);
+    [SerializeField] private Vector2 labelSize = new Vector2(165f, 60f);
     [SerializeField] private float fontSize = 28f;
 
     [Header("Colors")]
@@ -39,6 +39,8 @@ public class DogMoodUI : MonoBehaviour
         moodText.raycastTarget = false;
         moodText.outlineWidth = 0.2f;
         moodText.outlineColor = Color.black;
+
+        if (!NetworkModeHelper.IsNetworked) DogStateIcon.Create(stateMachine);
     }
     private void Update()
     {
@@ -49,21 +51,22 @@ public class DogMoodUI : MonoBehaviour
         DogStateMachine.DogMood mood = stateMachine.GetMood();
         if (hasMood && mood == currentMood) return;
 
+        if (hasMood && mood > currentMood) VfxManager.Play(VfxId.DogMoodWorse, stateMachine.transform.position);
         hasMood = true;
         currentMood = mood;
 
         switch (mood)
         {
             case DogStateMachine.DogMood.Loyal:
-                moodText.text = "Loyal: bringing you gifts";
+                moodText.text = "Loyal";
                 moodText.color = loyalColor;
                 break;
             case DogStateMachine.DogMood.Restless:
-                moodText.text = "Restless: watch your items";
+                moodText.text = "Restless";
                 moodText.color = restlessColor;
                 break;
             case DogStateMachine.DogMood.Rebellious:
-                moodText.text = "Rebellious: up to no good";
+                moodText.text = "Rebellious";
                 moodText.color = rebelliousColor;
                 break;
         }
