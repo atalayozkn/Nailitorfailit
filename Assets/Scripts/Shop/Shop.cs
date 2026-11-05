@@ -3,7 +3,7 @@ using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Shop : MonoBehaviour, IInteractable
+public class Shop : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType = InteractableType.Shop;
@@ -28,8 +28,8 @@ public class Shop : MonoBehaviour, IInteractable
     #region INTERACTION
     public bool OnInteract()
     {
-        if (!CurrencyManager.Instance.HasEnoughCurrency(cost)) return WarningManager.Reject("Not enough money");
-        if (interactionHandler == null || interactionHandler.IsCarrying()) return WarningManager.Reject("Your hands are full");
+        if (!CurrencyManager.Instance.HasEnoughCurrency(cost)) return false;
+        if (interactionHandler == null || interactionHandler.IsCarrying()) return false;
 
         var obj = Instantiate(objectPrefab,spawnTransform.position,spawnTransform.rotation);
         CurrencyManager.Instance.SpendCurrency(cost);
@@ -41,6 +41,13 @@ public class Shop : MonoBehaviour, IInteractable
         }
 
         return true;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        string name = LookAtText.ItemName(objectPrefab, "Shop");
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.CanAfford(cost)) return LookAtInfo.Blocked(name, $"Not enough money ({cost})");
+        if (carried != null) return LookAtInfo.Blocked(name, "Your hands are full");
+        return LookAtInfo.Ready(name, $"Buy ({cost})");
     }
     public void OnHoverOn()
     {

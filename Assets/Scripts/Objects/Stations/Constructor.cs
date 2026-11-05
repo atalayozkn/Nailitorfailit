@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace ItemScript
 {
-    public class Constructor : MonoBehaviour, IInteractable
+    public class Constructor : MonoBehaviour, IInteractable, ILookAtInfo
     {
         [Header("Component References")]
         [SerializeField] private RoomController roomController;
@@ -44,28 +44,44 @@ namespace ItemScript
         {
             if (isBuilt) return false;
             var carriable = interactionHandler.GetCurrentCarriable();
-            if (carriable == null) return WarningManager.Reject($"This spot needs a {acceptedType} tile");
-            if (carriable.isRawMaterial) return WarningManager.Reject("Process this material first");
+            if (carriable == null) return false;
+            if (carriable.isRawMaterial) return false;
             currentCarriableType = interactionHandler.GetCurrentCarriableType();
-            if (currentCarriableType != acceptedType) return WarningManager.Reject($"This spot needs a {acceptedType} tile");
+            if (currentCarriableType != acceptedType) return false;
             Construct(currentCarriableType);
             onInteractEvent.Invoke();
             return true;
         }
+        public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+        {
+            if (isBuilt) return default;
+            string material = LookAtText.MaterialName(acceptedType);
+            string name = $"{material} Tile Spot";
+            if (carried == null) return LookAtInfo.Blocked(name, $"Needs a {material} tile");
+            if (carried.isRawMaterial) return LookAtInfo.Blocked(name, "Process this material first");
+            if (carried.carriableType != acceptedType) return LookAtInfo.Blocked(name, $"Needs a {material} tile");
+            return LookAtInfo.Ready(name, "Place tile");
+        }
         public void OnHoverOn()
         {
-            if (blueprintVisual != null) blueprintVisual.SetHovered(true);
+            SetBlueprintHovered(true);
             onHoverOnEvent?.Invoke();
         }
         public void OnHoverOff()
         {
-            if (blueprintVisual != null) blueprintVisual.SetHovered(false);
+            SetBlueprintHovered(false);
             onHoverOffEvent?.Invoke();
+        }
+        // Also called by a placed tile, which stays a hologram until it is nailed down.
+        public void SetBlueprintHovered(bool condition)
+        {
+            if (blueprintVisual != null) blueprintVisual.SetHovered(condition);
         }
         private void Construct(CarriableType type)
         {
             if (isBuilt) return;
             isBuilt = true;
+            VfxManager.Play(VfxId.TilePlaced, transform.position);
 
             if (isTutorial) objective?.CompleteCondition();
 
@@ -122,19 +138,24 @@ namespace ItemScript
         {
             return acceptedType;
         }
-        // The mesh of the tile this slot builds for the given material, used by the blueprint ghost.
-        public Renderer GetTileRenderer(CarriableType type)
+        // The tile this slot builds for the given material, used by the blueprint hologram.
+        public GameObject GetTileObject(CarriableType type)
         {
-            GameObject tile = null;
             switch (type)
             {
-                case CarriableType.Wood: tile = woodObject; break;
-                case CarriableType.Brick: tile = brickObject; break;
-                case CarriableType.Glass: tile = glassObject; break;
+                case CarriableType.Wood: return woodObject;
+                case CarriableType.Brick: return brickObject;
+                case CarriableType.Glass: return glassObject;
+                default: return null;
             }
-
-            if (tile == null || !tile.TryGetComponent<TileWetness>(out var wetness)) return null;
-            return wetness.TileRenderer;
+        }
+        // The tile placed in this slot, or null while it is empty.
+        public GameObject GetActiveTile()
+        {
+            if (woodObject != null && woodObject.activeSelf) return woodObject;
+            if (brickObject != null && brickObject.activeSelf) return brickObject;
+            if (glassObject != null && glassObject.activeSelf) return glassObject;
+            return null;
         }
         public float GetCurrentHealthPercent()
         {

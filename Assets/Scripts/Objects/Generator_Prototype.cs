@@ -3,7 +3,7 @@ using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Generator_Prototype : MonoBehaviour, IInteractable
+public class Generator_Prototype : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("References")]
     [SerializeField] private UISliderHelper sliderHelper;
@@ -37,15 +37,23 @@ public class Generator_Prototype : MonoBehaviour, IInteractable
     public bool OnInteract()
     {
         CarriableType type = interactionHandler.GetCurrentCarriableType();
-        if (type != CarriableType.Oil) return WarningManager.Reject("The generator needs oil");
+        if (type != CarriableType.Oil) return false;
 
         CarriableObject_SP currentCarriable = interactionHandler.GetCurrentCarriable();
         if (currentCarriable == null) return false;
-        if (currentEnergy >= maxEnergy) return WarningManager.Reject("The generator is already full");
+        if (currentEnergy >= maxEnergy) return false;
 
         currentCarriable.OnConsume();
+        VfxManager.Play(VfxId.Refuel, transform.position);
         GainEnergy(perOilGainAmount);
         return true;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Generator";
+        if (carried == null || carried.carriableType != CarriableType.Oil) return LookAtInfo.Blocked(name, "Needs oil");
+        if (currentEnergy >= maxEnergy) return LookAtInfo.Blocked(name, "Already full");
+        return LookAtInfo.Ready(name, "Add oil");
     }
     public void OnHoverOn()
     {
@@ -58,12 +66,18 @@ public class Generator_Prototype : MonoBehaviour, IInteractable
     #endregion
 
     #region EnergyRelated
+    // Same check as HasEnoughEnergy, without its out-of-power effects. Safe to poll.
+    public bool HasEnergyFor(float amount)
+    {
+        return currentEnergy - amount >= 0;
+    }
     public bool HasEnoughEnergy(float amount)
     {
         if (currentEnergy - amount >= 0) return true;
         else
         {
             onInsufficientEnergyEvent?.Invoke();
+            VfxManager.Play(VfxId.OutOfPower, transform.position);
             return false;
         }
     }

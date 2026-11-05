@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
 
-public class BrickTile : MonoBehaviour, IInteractable, IWettable, INearbyFireReceiver
+public class BrickTile : MonoBehaviour, IInteractable, ILookAtInfo, IWettable, INearbyFireReceiver, IBuildableTile
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
@@ -21,6 +21,8 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable, INearbyFireRec
     [SerializeField] private UnityEvent onHoverOffEvent;
 
     public InteractableType InteractableType => interactableType;
+    public float BuildProgress => processHelper.NormalizedProgress;
+    public bool IsBuildComplete => currentPhase == ConstructionPhase.Complete;
     private ConstructionPhase currentPhase;
     private PlayerInteractionHandler interactionHandler;
 
@@ -37,18 +39,28 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable, INearbyFireRec
     public bool OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return false;
-        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Put your item down first");
+        if (interactionHandler.IsCarrying()) return false;
         processHelper.Process();
+        VfxManager.Play(VfxId.TileNail, transform.position);
 
         if (processHelper.IsCompleted()) CompleteConstruction();
         return true;
     }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        if (currentPhase == ConstructionPhase.Complete) return default;
+        const string name = "Brick Tile";
+        if (carried != null) return LookAtInfo.Blocked(name, "Put your item down first");
+        return LookAtInfo.Ready(name, "Nail down");
+    }
     public void OnHoverOn()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(true);
         onHoverOnEvent?.Invoke();
     }
     public void OnHoverOff()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(false);
         onHoverOffEvent?.Invoke();
     }
     #endregion
@@ -87,6 +99,7 @@ public class BrickTile : MonoBehaviour, IInteractable, IWettable, INearbyFireRec
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
         tileWetness.SetCanCollect(true);
+        VfxManager.Play(VfxId.TileFinished, transform.position);
         connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()

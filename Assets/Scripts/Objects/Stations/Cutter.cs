@@ -5,7 +5,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Cutter : MonoBehaviour, IInteractable
+public class Cutter : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
@@ -51,18 +51,19 @@ public class Cutter : MonoBehaviour, IInteractable
 
     public bool OnInteract()
     {
-        if (isSpawning) return WarningManager.Reject("The cutter is busy");
+        if (isSpawning) return false;
 
         // Loading doesn't need power, only the processing does.
         if (!isObjectPlaced) return RegisterToStation();
 
-        if (interactionHandler.IsCarrying()) return WarningManager.Reject("The cutter is already loaded");
+        if (interactionHandler.IsCarrying()) return false;
 
         if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return WarningManager.Reject("No power! Refuel the generator", true);
 
         connectedGenerator.ConsumeEnergy(perProcessCost);
 
         processHelper.Process();
+        VfxManager.Play(VfxId.CutterCutting, placementTransform.position);
 
         if (processHelper.IsCompleted())
         {
@@ -70,6 +71,22 @@ public class Cutter : MonoBehaviour, IInteractable
         }
 
         return true;
+    }
+
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Cutter";
+        if (isSpawning) return LookAtInfo.Blocked(name, "The cutter is busy");
+        if (!isObjectPlaced)
+        {
+            if (carried == null) return LookAtInfo.Blocked(name, "Bring raw material");
+            if (!carried.isRawMaterial) return LookAtInfo.Blocked(name, "This is already processed");
+            if (!IsCarriableTypeAccepted(carried.carriableType)) return LookAtInfo.Blocked(name, "Can not process this");
+            return LookAtInfo.Ready(name, $"Load {LookAtText.ItemName(carried)}");
+        }
+        if (carried != null) return LookAtInfo.Blocked(name, "Already loaded");
+        if (connectedGenerator != null && !connectedGenerator.HasEnergyFor(perProcessCost)) return LookAtInfo.Blocked(name, "No power! Refuel the generator");
+        return LookAtInfo.Ready(name, "Cut");
     }
 
     public void OnHoverOn()
@@ -89,9 +106,9 @@ public class Cutter : MonoBehaviour, IInteractable
     private bool RegisterToStation()
     {
         CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
-        if (carriable == null) return WarningManager.Reject("Bring raw material to the cutter");
-        if (!carriable.isRawMaterial) return WarningManager.Reject("This is already processed");
-        if (!IsCarriableTypeAccepted(carriable.carriableType)) return WarningManager.Reject("The cutter can not process this");
+        if (carriable == null) return false;
+        if (!carriable.isRawMaterial) return false;
+        if (!IsCarriableTypeAccepted(carriable.carriableType)) return false;
 
         placedObject = carriable;
         carriable.SetOccupied();
@@ -165,6 +182,7 @@ public class Cutter : MonoBehaviour, IInteractable
         for (int i = 0; i < spawnCount; i++)
         {
             Instantiate(objectToSpawn, spawnTransform.position, Quaternion.identity);
+            VfxManager.Play(VfxId.ProductOut, spawnTransform.position);
             onSpawnEvent?.Invoke();
             if (i < spawnCount - 1) yield return wait;
         }

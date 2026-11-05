@@ -1,9 +1,10 @@
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class FoodBowl : MonoBehaviour, IInteractable
+public class FoodBowl : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
@@ -31,16 +32,24 @@ public class FoodBowl : MonoBehaviour, IInteractable
     public bool OnInteract()
     {
         var carriableType = interactionHandler.GetCurrentCarriableType();
-        if (carriableType != CarriableType.PetFood) return WarningManager.Reject("The bowl needs pet food");
+        if (carriableType != CarriableType.PetFood) return false;
 
         var currentCarriable = interactionHandler.GetCurrentCarriable();
         if (currentCarriable == null) return false;
-        if (currentFood >= maxFood) return WarningManager.Reject("The food bowl is already full");
+        if (currentFood >= maxFood) return false;
 
         currentCarriable.OnConsume();
 
         FillBowl(perFillAmount);
+        VfxManager.Play(VfxId.BowlFill, transform.position);
         return true;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Food Bowl";
+        if (carried == null || carried.carriableType != CarriableType.PetFood) return LookAtInfo.Blocked(name, "Needs pet food");
+        if (currentFood >= maxFood) return LookAtInfo.Blocked(name, "Already full");
+        return LookAtInfo.Ready(name, "Fill");
     }
     public void OnHoverOn()
     {

@@ -53,6 +53,11 @@ public class CurrencyManager : MonoBehaviour
         UpdateUI();
     }
 
+    // Same check as HasEnoughCurrency, without rejecting on the HUD. Safe to poll.
+    public bool CanAfford(int amount)
+    {
+        return currentValue >= amount;
+    }
     public bool HasEnoughCurrency(int amount)
     {
         if (currentValue >= amount) return true;

@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace ItemScript
 {
-    public class CarriableObject_SP :MonoBehaviour, IInteractable, ISpawnable
+    public class CarriableObject_SP :MonoBehaviour, IInteractable, ILookAtInfo, ISpawnable
     {
         [Header("References")]
         [SerializeField] private InteractableType interactableType;
@@ -48,6 +48,12 @@ namespace ItemScript
             SnapToCarryTransform();
             onInteractEvent?.Invoke();
             return true;
+        }
+        public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+        {
+            if (isConsumed || isOccupied) return default;
+            bool isHoldingOther = interactionHandler != null && interactionHandler.IsCarrying();
+            return LookAtInfo.Ready(LookAtText.ItemName(this), isHoldingOther ? "Swap" : "Carry");
         }
         public void OnHoverOn()
         {

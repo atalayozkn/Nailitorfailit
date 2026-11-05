@@ -1,10 +1,11 @@
 using System.Collections;
 using Interactions;
+using ItemScript;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class MailBox : MonoBehaviour, IInteractable
+public class MailBox : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [SerializeField] private InteractableType interactableType;
     [SerializeField] private float timeRewardAmount;
@@ -37,11 +38,17 @@ public class MailBox : MonoBehaviour, IInteractable
     #region Interactable
     public bool OnInteract()
     {
-        if (!isMailPresent) return WarningManager.Reject("No mail yet");
+        if (!isMailPresent) return false;
         isMailPresent = false;
+        VfxManager.Play(VfxId.MailCollect, transform.position);
         StopAlert();
         GameTimeManager.Instance.IncreaseRoundTime(timeRewardAmount);
         return true;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Mailbox";
+        return isMailPresent ? LookAtInfo.Ready(name, "Collect mail") : LookAtInfo.Blocked(name, "No mail yet");
     }
     public void OnHoverOn()
     {

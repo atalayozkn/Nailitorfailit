@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
 
-public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable, IBreakable
+public class WoodTile : MonoBehaviour, IInteractable, ILookAtInfo, IFlammable, IWettable, IBreakable, IBuildableTile
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
@@ -27,6 +27,8 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable, IBr
     [SerializeField] private UnityEvent onHoverOffEvent;
 
     public InteractableType InteractableType => interactableType;
+    public float BuildProgress => processHelper.NormalizedProgress;
+    public bool IsBuildComplete => currentPhase == ConstructionPhase.Complete;
 
     private ConstructionPhase currentPhase;
     private bool canDealDamage;
@@ -46,17 +48,27 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable, IBr
     public bool OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return false;
-        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Put your item down first");
+        if (interactionHandler.IsCarrying()) return false;
         processHelper.Process();
+        VfxManager.Play(VfxId.TileNail, transform.position);
         if (processHelper.IsCompleted()) CompleteConstruction();
         return true;
     }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        if (currentPhase == ConstructionPhase.Complete) return default;
+        const string name = "Wood Tile";
+        if (carried != null) return LookAtInfo.Blocked(name, "Put your item down first");
+        return LookAtInfo.Ready(name, "Nail down");
+    }
     public void OnHoverOn()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(true);
         onHoverOnEvent?.Invoke();
     }
     public void OnHoverOff()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(false);
         onHoverOffEvent?.Invoke();
     }
 
@@ -72,6 +84,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable, IBr
     public void OnFireStop()
     {
         if (currentPhase == ConstructionPhase.Construction) return;
+        if (fireHelper.IsBurning()) VfxManager.Play(VfxId.FireOut, transform.position);
         fireHelper.StopFire();
     }
     #endregion
@@ -120,6 +133,7 @@ public class WoodTile : MonoBehaviour, IInteractable, IFlammable, IWettable, IBr
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
         tileWetness.SetCanCollect(true);
+        VfxManager.Play(VfxId.TileFinished, transform.position);
         connectedConstructor.ReportCompletion();
     }
     public bool IsBurning()

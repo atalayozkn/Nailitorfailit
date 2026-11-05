@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
 
-public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable, INearbyFireReceiver
+public class GlassTile : MonoBehaviour, IInteractable, ILookAtInfo, IWettable, IBreakable, INearbyFireReceiver, IBuildableTile
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType;
@@ -25,6 +25,8 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable, IN
     [SerializeField] private UnityEvent onHoverOffEvent;
 
     public InteractableType InteractableType => interactableType;
+    public float BuildProgress => processHelper.NormalizedProgress;
+    public bool IsBuildComplete => currentPhase == ConstructionPhase.Complete;
     private ConstructionPhase currentPhase;
 
     private bool canDealDamage;
@@ -44,17 +46,27 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable, IN
     public bool OnInteract()
     {
         if (currentPhase == ConstructionPhase.Complete) return false;
-        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Put your item down first");
+        if (interactionHandler.IsCarrying()) return false;
         processHelper.Process();
+        VfxManager.Play(VfxId.TileNail, transform.position);
         if (processHelper.IsCompleted()) CompleteConstruction();
         return true;
     }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        if (currentPhase == ConstructionPhase.Complete) return default;
+        const string name = "Glass Tile";
+        if (carried != null) return LookAtInfo.Blocked(name, "Put your item down first");
+        return LookAtInfo.Ready(name, "Nail down");
+    }
     public void OnHoverOn()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(true);
         onHoverOnEvent?.Invoke();
     }
     public void OnHoverOff()
     {
+        if (connectedConstructor != null) connectedConstructor.SetBlueprintHovered(false);
         onHoverOffEvent?.Invoke();
     }
     #endregion
@@ -112,6 +124,7 @@ public class GlassTile : MonoBehaviour, IInteractable, IWettable, IBreakable, IN
         gameObject.layer = LayerMask.NameToLayer("Ground");
         currentPhase = ConstructionPhase.Complete;
         tileWetness.SetCanCollect(true);
+        VfxManager.Play(VfxId.TileFinished, transform.position);
         connectedConstructor.ReportCompletion();
     }
     public ConstructionPhase GetCurrentPhase()

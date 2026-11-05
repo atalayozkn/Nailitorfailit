@@ -1,8 +1,9 @@
 using Interactions;
+using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class MixerHandle : MonoBehaviour, IInteractable
+public class MixerHandle : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [SerializeField] private float mixDuration;
     [SerializeField] private InteractableType interactableType = InteractableType.Station;
@@ -13,6 +14,10 @@ public class MixerHandle : MonoBehaviour, IInteractable
     public bool OnInteract()
     {
         return connectedMixer.CompareFormula();
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        return connectedMixer != null ? connectedMixer.GetHandleLookAtInfo() : default;
     }
     public void OnHoverOn()
     {

@@ -3,7 +3,7 @@ using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Mixer : MonoBehaviour, IInteractable
+public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("References")]
     [SerializeField] private InteractableType interactableType = InteractableType.Station;
@@ -50,10 +50,10 @@ public class Mixer : MonoBehaviour, IInteractable
     public bool OnInteract()
     {
         CarriableObject_SP carriable = interactionHandler.GetCurrentCarriable();
-        if (carriable == null) return WarningManager.Reject("Bring ingredients to the mixer");
+        if (carriable == null) return false;
 
         CarriableType carriableType = interactionHandler.GetCurrentCarriableType();
-        if (!AcceptsCarriableType(carriableType)) return WarningManager.Reject("The mixer does not accept this");
+        if (!AcceptsCarriableType(carriableType)) return false;
 
         if (firstCarriable == null)
         {
@@ -72,11 +72,28 @@ public class Mixer : MonoBehaviour, IInteractable
         }
         else
         {
-            return WarningManager.Reject("The mixer is full");
+            return false;
         }
 
         PlaceObject(carriable);
         return true;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Mixer";
+        if (carried == null) return LookAtInfo.Blocked(name, "Bring ingredients");
+        if (!AcceptsCarriableType(carried.carriableType)) return LookAtInfo.Blocked(name, "Does not accept this");
+        if (firstCarriable != null && secondCarriable != null && thirdCarriable != null) return LookAtInfo.Blocked(name, "The mixer is full");
+        return LookAtInfo.Ready(name, $"Add {LookAtText.ItemName(carried)}");
+    }
+    // Mirrors CompareFormula without running it.
+    public LookAtInfo GetHandleLookAtInfo()
+    {
+        const string name = "Mixer Handle";
+        if (firstCarriable == null && secondCarriable == null && thirdCarriable == null) return LookAtInfo.Blocked(name, "The mixer is empty");
+        if (firstCarriable == null || secondCarriable == null || thirdCarriable == null) return LookAtInfo.Ready(name, "Eject ingredients");
+        if (FindMatchingFormula(GetStoredObjects()) != null && connectedGenerator != null && !connectedGenerator.HasEnergyFor(processCost)) return LookAtInfo.Blocked(name, "No power! Refuel the generator");
+        return LookAtInfo.Ready(name, "Mix");
     }
     public void OnHoverOn()
     {
@@ -122,7 +139,7 @@ public class Mixer : MonoBehaviour, IInteractable
         CarriableObject_SP[] storedObjects = GetStoredObjects();
 
         // An empty mixer has nothing to do.
-        if (firstCarriable == null && secondCarriable == null && thirdCarriable == null) return WarningManager.Reject("The mixer is empty");
+        if (firstCarriable == null && secondCarriable == null && thirdCarriable == null) return false;
 
         // We cannot compare an incomplete mixer.
         if (firstCarriable == null || secondCarriable == null || thirdCarriable == null)
@@ -136,6 +153,7 @@ public class Mixer : MonoBehaviour, IInteractable
 
         if (matchedFormula != null) return ProduceResult(matchedFormula);
 
+        VfxManager.Play(VfxId.MixerFail, placementTransform.position);
         WarningManager.Show("No recipe for these ingredients");
         DropStoredItems();
         return true;
@@ -173,6 +191,8 @@ public class Mixer : MonoBehaviour, IInteractable
     {
         if (formula == null || formula.ProductPrefab == null) return;
         Instantiate(formula.ProductPrefab, productSpawnPoint.position, productSpawnPoint.rotation);
+        onSpawnEvent?.Invoke();
+        VfxManager.Play(VfxId.MixerDone, productSpawnPoint.position);
     }
     private void DestroyStoredItems()
     {

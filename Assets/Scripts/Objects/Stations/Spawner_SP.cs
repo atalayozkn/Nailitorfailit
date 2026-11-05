@@ -3,7 +3,7 @@ using ItemScript;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class ObjectSpawner : MonoBehaviour, IInteractable
+public class ObjectSpawner : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [SerializeField] private InteractableType interactableType;
     public InteractableType InteractableType => interactableType;
@@ -34,14 +34,14 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     {
         if (isTutorial) objective.CompleteCondition();
 
-        if (interactionHandler.IsCarrying()) return WarningManager.Reject("Your hands are full");
+        if (interactionHandler.IsCarrying()) return false;
         if (isOnCooldown)
         {
             //Request Impossible Action SFX
             return false;
         }
 
-        if (objectPrefab == null || spawnedObjectCount >= maxCount) return WarningManager.Reject("Use the ones you already have first");
+        if (objectPrefab == null || spawnedObjectCount >= maxCount) return false;
 
         isOnCooldown = true;
         onInteractEvent?.Invoke();
@@ -52,6 +52,13 @@ public class ObjectSpawner : MonoBehaviour, IInteractable
     private void ReverseCooldown()
     {
         isOnCooldown = false;
+    }
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        string name = LookAtText.ItemName(objectPrefab, "Supply");
+        if (carried != null) return LookAtInfo.Blocked(name, "Your hands are full");
+        if (objectPrefab == null || spawnedObjectCount >= maxCount) return LookAtInfo.Blocked(name, "Use the ones you already have first");
+        return LookAtInfo.Ready(name, "Carry");
     }
     public void OnHoverOn()
     {

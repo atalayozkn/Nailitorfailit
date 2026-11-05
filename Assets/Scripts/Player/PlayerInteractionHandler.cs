@@ -37,6 +37,9 @@ public class PlayerInteractionHandler : MonoBehaviour
     [SerializeField] private float interactCooldown = 1.0f;
     [SerializeField] private float useCooldown = 1.0f;
 
+    // A press on the current target did nothing.
+    public event System.Action InteractBlocked;
+
     private IInteractable currentInteractable;
     private InteractableType currentInteractableType;
 
@@ -51,6 +54,11 @@ public class PlayerInteractionHandler : MonoBehaviour
     private Coroutine detectionRoutine;
 
     private readonly RaycastHit[] hits = new RaycastHit[12];
+    private void Start()
+    {
+        // Multiplayer routes interaction itself, the look-at panel is singleplayer only.
+        if (!NetworkModeHelper.IsNetworked) LookAtInfoUI.Create(this);
+    }
     private void OnEnable()
     {
         interactAction.action.Enable();
@@ -152,7 +160,12 @@ public class PlayerInteractionHandler : MonoBehaviour
             hasActedThisPress = true;
             stateMachine.ChangeToInteractState();
         }
-        else StopInteractAnimation();
+        else
+        {
+            StopInteractAnimation();
+            // Holding the input after a success is not a mistake, same rule as WarningManager.IsMuted.
+            if (!hasActedThisPress) InteractBlocked?.Invoke();
+        }
     }
     // Holding the input keeps the state alive, so a blocked repeat has to end the animation too.
     private void StopInteractAnimation()
@@ -239,6 +252,31 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (currentCarriable == null) return;
         currentCarriable.OnDrop();
+    }
+    // What the look-at panel should show right now. False when there is nothing to show.
+    public bool TryGetLookAtInfo(out LookAtInfo info)
+    {
+        info = default;
+        if (!isActive || !enabled || stateMachine.currentPlayerState == PlayerStates.Dead) return false;
+
+        if (currentInteractable is UnityEngine.Object target && target != null)
+        {
+            if (!(currentInteractable is ILookAtInfo provider)) return false;
+
+            // HandleInteract drops the carried item before grabbing, so grabbables see empty hands.
+            CarriableObject_SP carried = currentInteractableType == InteractableType.Grabbable ? null : currentCarriable;
+            info = provider.GetLookAtInfo(carried);
+            return !string.IsNullOrEmpty(info.Name);
+        }
+
+        if (currentCarriable == null) return false;
+        info = LookAtInfo.Ready(LookAtText.ItemName(currentCarriable), "Drop");
+        return true;
+    }
+    public string GetInteractBindingLabel(bool gamepad)
+    {
+        // Without the interaction prefix: the action has a Hold on it, but Update fires on press.
+        return interactAction.action.GetBindingDisplayString(InputBinding.MaskByGroup(gamepad ? "Gamepad" : "Keyboard&Mouse"), InputBinding.DisplayStringOptions.DontIncludeInteractions);
     }
     public void SetActivity(bool condition)
     {

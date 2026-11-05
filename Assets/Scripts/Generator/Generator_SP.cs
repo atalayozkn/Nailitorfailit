@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class Generator_SP : MonoBehaviour, IInteractable
+public class Generator_SP : MonoBehaviour, IInteractable, ILookAtInfo
 {
     [Header("Interaction")]
     [SerializeField] private InteractableType interactableType;
@@ -60,6 +60,14 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
     // Player Generator üzerine baktýðýnda veya hover baþladýðýnda çalýþýr.
     // onHoverOnEvent eventini tetikler.
+    public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
+    {
+        const string name = "Generator";
+        if (carried == null || carried.carriableType != CarriableType.Oil) return LookAtInfo.Blocked(name, "Needs oil");
+        if (currentEnergy >= maxEnergy) return LookAtInfo.Blocked(name, "Already full");
+        return LookAtInfo.Ready(name, "Add oil");
+    }
+
     public void OnHoverOn()
     {
         onHoverOnEvent?.Invoke();
@@ -80,17 +88,15 @@ public class Generator_SP : MonoBehaviour, IInteractable
 
         if (carriedObject == null)
         {
-            WarningManager.Show("The generator needs oil");
             return false;
         }
 
         if (carriedObject.carriableType != CarriableType.Oil)
         {
-            WarningManager.Show("The generator needs oil");
             return false;
         }
 
-        if (!AddEnergy(oilEnergyAmount)) return WarningManager.Reject("The generator is already full");
+        if (!AddEnergy(oilEnergyAmount)) return false;
 
         carriedObject.OnConsume();
         return true;
