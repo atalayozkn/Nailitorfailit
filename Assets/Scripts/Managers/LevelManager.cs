@@ -36,7 +36,7 @@ public class LevelManager : MonoBehaviour
 
         remainingRoomCount--;
 
-        CurrencyManager.Instance.GainCurrency(roomCurrencyReward); //Currency Reward
+        CurrencyManager.Instance?.GainCurrency(roomCurrencyReward); //Currency Reward
         GameTimeManager.Instance.IncreaseRoundTime(roomTimeReward); //Time Reward
 
         if (remainingRoomCount <= 0)
@@ -66,24 +66,37 @@ public class LevelManager : MonoBehaviour
         EndLevel();
         onDefeatEvent?.Invoke();
 
-        if (!CurrencyManager.Instance.HasEnoughCurrency(50))
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(50))
         {
             //Play Backrupcy
             //Delay
         }
+
+        ShowScoreTally(false);
     }
     private void Victory()
     {
         EndLevel();
         onVictoryEvent?.Invoke();
+        VfxManager.Play(VfxId.Victory, FindFirstObjectByType<PlayerStateMachine>().transform.position);
         int score = ScoreManager.Instance.CalculateScore();
 
         //Probably delay will be added here
 
-        CurrencyManager.Instance.GainCurrency(score);
+        CurrencyManager.Instance?.GainCurrency(score);
 
         // Save progress right away so the next level is unlocked even if the player quits from here.
         GameManager.Instance?.CompleteCurrentLevel();
+
+        ShowScoreTally(true);
+    }
+    // The end events above have just opened Panel_GameEnd, the tally plays on top of it. Multiplayer keeps its own end screen.
+    private void ShowScoreTally(bool isVictory)
+    {
+        if (NetworkModeHelper.IsNetworked || ScoreManager.Instance == null) return;
+
+        ScoreTallyUI tally = FindFirstObjectByType<ScoreTallyUI>();
+        if (tally != null) tally.Play(ScoreManager.Instance.BuildReport(isVictory));
     }
 
 }

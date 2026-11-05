@@ -12,12 +12,15 @@ public class GameTimeManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float maxRoundTime;
     [SerializeField] private float roundStartTimer = 5f;
+    [SerializeField] private float lowTimeWarning = 30f;
+    [SerializeField] private Color lowTimeColor = new Color(1f, 0.2f, 0.15f, 1f);
 
     [Header("Events")]
     [SerializeField] private UnityEvent onTimeIncreaseEvent;
 
     private float currentTime;
     private bool isActive;
+    private Color timerColor = Color.white;
 
     private void Awake()
     {
@@ -69,6 +72,7 @@ public class GameTimeManager : MonoBehaviour
         int seconds = Mathf.FloorToInt(currentTime % 60f);
 
         timerText.text = $"{minutes:00}:{seconds:00}";
+        if (!NetworkModeHelper.IsNetworked) timerText.color = currentTime <= lowTimeWarning ? lowTimeColor : timerColor;
     }
     private void NotifyGameEnd()
     {
@@ -88,6 +92,7 @@ public class GameTimeManager : MonoBehaviour
     public void BindTimerText(TextMeshProUGUI text)
     {
         timerText = text;
+        timerColor = text.color;
         UpdateUI();
     }
     public float GetCurrentTime()
