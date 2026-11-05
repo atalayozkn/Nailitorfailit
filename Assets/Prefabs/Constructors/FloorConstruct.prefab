@@ -11,8 +11,6 @@ GameObject:
   - component: {fileID: 3173422496830565315}
   - component: {fileID: 5321808769169760083}
   - component: {fileID: 7539372653814668049}
-  - component: {fileID: 4829129867746912995}
-  - component: {fileID: 4815162342000111005}
   m_Layer: 0
   m_Name: GhostMesh
   m_TagString: Untagged
@@ -92,23 +90,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4829129867746912995
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2499015782262911686}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 7539372653814668049}
-  skinnedRenderer: {fileID: 0}
-  isSkinnedMesh: 0
-  targetParameter: _BaseColor
-  targetColor: {r: 0.95400834, g: 1, b: 0.051886797, a: 0}
 --- !u!1 &3384688927841875903
 GameObject:
   m_ObjectHideFlags: 0
@@ -155,6 +136,7 @@ GameObject:
   - component: {fileID: 3927039132535552457}
   - component: {fileID: 3972734422527669319}
   - component: {fileID: 434870937798017280}
+  - component: {fileID: 4815162342000111005}
   m_Layer: 6
   m_Name: FloorConstruct
   m_TagString: Wood
@@ -207,34 +189,10 @@ MonoBehaviour:
   objective: {fileID: 0}
   onHoverOnEvent:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4829129867746912995}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   onHoverOffEvent:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4829129867746912995}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -768,10 +726,6 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 5950412608375162343, guid: 553ee7a7d696f1343b8e6f5d1544184e, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483647
-      objectReference: {fileID: 0}
     - target: {fileID: 7805146663333680621, guid: 553ee7a7d696f1343b8e6f5d1544184e, type: 3}
       propertyPath: connectedConstructor
       value: 
@@ -879,7 +833,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2499015782262911686}
+  m_GameObject: {fileID: 4505486642224199176}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e8d51b7c2a94d17b6f03a8e5c1d7f22, type: 3}
@@ -887,4 +841,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlueprintVisual
   constructor: {fileID: 3927039132535552457}
   ghostRenderer: {fileID: 7539372653814668049}
-  hoverHelper: {fileID: 4829129867746912995}
+  hologramMaterial: {fileID: 2100000, guid: 9c4a7d15e3f24b68a2d0817b6e5f3c42, type: 2}

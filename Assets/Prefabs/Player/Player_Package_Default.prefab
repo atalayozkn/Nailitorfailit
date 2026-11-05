@@ -1528,6 +1528,14 @@ MonoBehaviour:
   onTriggerEvent:
     m_PersistentCalls:
       m_Calls: []
+  alertColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  alertFontSize: 10
+  alertHeight: 0.6
+  minShakeInterval: 1
+  maxShakeInterval: 2
+  shakeDuration: 0.4
+  shakeAngle: 8
+  shakeSpeed: 35
 --- !u!114 &6487889633804539665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2569,6 +2577,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4815162342000111011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694446778639770286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83f6c21d4e74a95a0c7e2f1d6b3a911, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameTimerDisplay
 --- !u!1 &1796628296203888548
 GameObject:
   m_ObjectHideFlags: 0
@@ -4454,6 +4474,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6564497978067124938}
+  - component: {fileID: 8712527895320559590}
   m_Layer: 5
   m_Name: Panel_GameEnd
   m_TagString: Untagged
@@ -4484,6 +4505,36 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8712527895320559590
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3563146639176581596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998149876f15e9f469563fa9bf926af7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreTallyUI
+  boardSize: {x: 860, y: 820}
+  boardPosition: {x: -490, y: 0}
+  maxRowHeight: 76
+  endScreenPosition: {x: 500, y: 0}
+  endScreenScale: 0.62
+  rowSlideTime: 0.22
+  minCountTime: 0.3
+  maxCountTime: 0.7
+  stampTime: 0.16
+  rowPause: 0.12
+  finalGradePause: 0.35
+  endScreenRevealTime: 0.35
+  dimColor: {r: 0, g: 0, b: 0, a: 0.8}
+  boardColor: {r: 0.87, g: 0.64, b: 0.4, a: 1}
+  boardEdgeColor: {r: 0.15, g: 0.09, b: 0.05, a: 1}
+  textColor: {r: 0.13, g: 0.08, b: 0.04, a: 1}
+  gainColor: {r: 0.05, g: 0.42, b: 0.12, a: 1}
+  cutColor: {r: 0.72, g: 0.08, b: 0.05, a: 1}
 --- !u!1 &3700904308445375389
 GameObject:
   m_ObjectHideFlags: 0
@@ -9847,6 +9898,7 @@ MonoBehaviour:
   <possibleDrops>k__BackingField:
   - {fileID: 6479617406932401784, guid: 4cf9bf6b5946a0345b0aed02ea5222fb, type: 3}
   - {fileID: 6479617406932401784, guid: 3a69bfb3e9c6a504280f63b339b81471, type: 3}
+  - {fileID: 2451140924364856572, guid: 0c3151d814f447049b6a51a03ec182ae, type: 3}
   <dropTransform>k__BackingField: {fileID: 9075466640299138306}
   <itemDropTransfom>k__BackingField: {fileID: 7704406649515489681}
   <perEatConsumption>k__BackingField: 25
@@ -10533,6 +10585,7 @@ MonoBehaviour:
   maxStepHeight: 0.45
   stepCheckDistance: 0.15
   stepClimbPerFrame: 0.08
+  stepForwardPerFrame: 0.04
   whatIsGround:
     serializedVersion: 2
     m_Bits: 320
@@ -12551,6 +12604,25 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &4815162342000111012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7906794149219536347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e15a7d93c0b24f68b4d1a6c8f2e70c22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DogMoodUI
+  stateMachine: {fileID: 2429684298596722257}
+  labelPosition: {x: -699, y: -240}
+  labelSize: {x: 165, y: 60}
+  fontSize: 28
+  loyalColor: {r: 0.35, g: 0.9, b: 0.4, a: 1}
+  restlessColor: {r: 1, g: 0.75, b: 0.15, a: 1}
+  rebelliousColor: {r: 1, g: 0.25, b: 0.2, a: 1}
 --- !u!1 &8044330351874113207
 GameObject:
   m_ObjectHideFlags: 0
@@ -17039,28 +17111,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400080, guid: e4e4e65154b099848b7e4ff34cf82ae3, type: 3}
   m_PrefabInstance: {fileID: 5021276434202726578}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4815162342000111011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1694446778639770286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b83f6c21d4e74a95a0c7e2f1d6b3a911, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameTimerDisplay
---- !u!114 &4815162342000111012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7906794149219536347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e15a7d93c0b24f68b4d1a6c8f2e70c22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DogMoodUI
-  stateMachine: {fileID: 2429684298596722257}

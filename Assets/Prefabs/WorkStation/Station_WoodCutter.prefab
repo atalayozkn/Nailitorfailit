@@ -628,15 +628,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 4456850146704909037}
   maxProcessAmount: 100
   processPerInteract: 10
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &4456850146704909037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -691,7 +682,7 @@ Transform:
   m_GameObject: {fileID: 9132837691654836453}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 0.014000058, z: -0.27499998}
+  m_LocalPosition: {x: -0.19999981, y: 0.39, z: -0.70000017}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

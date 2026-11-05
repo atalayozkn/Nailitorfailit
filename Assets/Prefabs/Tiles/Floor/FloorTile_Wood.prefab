@@ -945,7 +945,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TileWetness
   tileRenderer: {fileID: 9187347345860718906}
   surfaceHelper: {fileID: 878603287883803129}
-  gainPerParticle: 0.05
+  gainPerParticle: 0.03
   drainPerSecond: 0.08
   wetThreshold: 0.5
   dryThreshold: 0.3
@@ -953,4 +953,3 @@ MonoBehaviour:
   fragileWhenWet: 1
   swellAmount: 0.4
   electrifiedDuration: 4
-  wetTint: {r: 0.55, g: 0.6, b: 0.7, a: 1}
