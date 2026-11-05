@@ -46,6 +46,7 @@ public enum VfxId
 }
 
 
+// Each entry can also carry a sound (VfxLibrary.Entry.sounds), played through Sfx.
 // Plays gameplay effects from one place, so the tile and station prefabs don't each carry their own copies.
 // Singleplayer only: multiplayer has no sync for these and keeps its current visuals.
 public static class VfxManager
@@ -77,11 +78,15 @@ public static class VfxManager
     {
         GameObject effect = Spawn(id, position, null, out VfxLibrary.Entry entry);
         if (effect != null) UnityEngine.Object.Destroy(effect, entry.lifetime);
+        if (entry != null) Sfx.Play(entry.sounds, position, entry.volume, entry.pitchJitter, entry.spatial);
     }
     // Stays on the target until Stop is called with what this returns.
     public static GameObject PlayLoop(VfxId id, Transform target)
     {
-        return Spawn(id, target.position, target, out _);
+        GameObject effect = Spawn(id, target.position, target, out VfxLibrary.Entry entry);
+        // The loop sound lives on the effect, so Stop silences it too.
+        if (effect != null && entry.sounds != null && entry.sounds.Length > 0) Sfx.AttachLoop(effect, entry.sounds[0], entry.volume);
+        return effect;
     }
     public static void Stop(GameObject effect)
     {
@@ -91,7 +96,16 @@ public static class VfxManager
     {
         entry = null;
         if (NetworkModeHelper.IsNetworked || Library == null) return null;
-        if (!entries.TryGetValue(id, out entry) || entry.prefab == null) return null;
+        if (!entries.TryGetValue(id, out entry)) return null;
+        if (entry.prefab == null)
+        {
+            // Sound-only entries still need a host for their loop.
+            if (entry.sounds == null || entry.sounds.Length == 0) return null;
+            var host = new GameObject(id + " Sound");
+            host.transform.position = position + entry.offset;
+            if (parent != null) host.transform.SetParent(parent, true);
+            return host;
+        }
 
         GameObject effect = UnityEngine.Object.Instantiate(entry.prefab, position + entry.offset, Quaternion.identity);
         // Without Hierarchy mode a particle system ignores its transform's scale.

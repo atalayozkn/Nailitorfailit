@@ -19,6 +19,14 @@ public class VfxLibrary : ScriptableObject
         public bool hideSmoke;
         [Tooltip("Tints the main particle system. Leave alpha at 0 to keep the plugin colors.")]
         public Color tint = new Color(1f, 1f, 1f, 0f);
+
+        [Header("Sound")]
+        [Tooltip("One is picked at random each time. Looping effects use the first clip as a loop.")]
+        public AudioClip[] sounds;
+        [Range(0f, 1f)] public float volume = 0.8f;
+        [Range(0f, 0.3f)] public float pitchJitter = 0.06f;
+        [Tooltip("0 = flat (stingers, celebrations), 1 = fully positional.")]
+        [Range(0f, 1f)] public float spatial = 0.6f;
     }
 
     public Material wetOverlayMaterial;

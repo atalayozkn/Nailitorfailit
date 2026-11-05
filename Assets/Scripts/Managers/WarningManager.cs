@@ -46,6 +46,7 @@ public class WarningManager : MonoBehaviour
         if (IsMuted && !ignoreMute) return;
 
         if (Instance == null) CreateInstance();
+        SfxBootstrap.PlayWarning();
         Instance.Play(message);
     }
     // For interactions: warns and returns false, so a receiver can write "return WarningManager.Reject(...)".
