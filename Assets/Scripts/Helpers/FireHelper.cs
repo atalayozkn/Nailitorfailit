@@ -26,6 +26,7 @@ public class FireHelper : MonoBehaviour
     private readonly List<WoodTile> spreadTargets = new();
     private Coroutine fireRoutine;
     private bool isBurning;
+    private GameObject burnEffect;
     private int tileMask;
 
     private void Awake()
@@ -35,6 +36,7 @@ public class FireHelper : MonoBehaviour
     private void OnEnable()
     {
         isBurning = false;
+        VfxManager.Stop(burnEffect);
         if (fireRoutine != null) StopCoroutine(fireRoutine);
         fireRoutine = null;
     }
@@ -47,6 +49,8 @@ public class FireHelper : MonoBehaviour
         if (isBurning) return;
         isBurning = true;
         onFireStarted?.Invoke();
+        VfxManager.Play(VfxId.FireIgnite, transform.position);
+        burnEffect = VfxManager.PlayLoop(VfxId.FireBurn, transform);
         fireRoutine = StartCoroutine(FireRoutine());
     }
     public void StopFire()
@@ -54,6 +58,7 @@ public class FireHelper : MonoBehaviour
         if (!isBurning) return;
 
         isBurning = false;
+        VfxManager.Stop(burnEffect);
 
         if (fireRoutine != null)
         {

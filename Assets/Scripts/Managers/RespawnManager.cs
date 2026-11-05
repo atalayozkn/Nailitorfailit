@@ -20,6 +20,7 @@ public class RespawnManager : MonoBehaviour
         }
 
         playerStateMachine.transform.position = spawnPoint.position;
+        VfxManager.Play(VfxId.PlayerRespawn, spawnPoint.position);
         playerStateMachine.ForceUpdateIdle();
     }
 }

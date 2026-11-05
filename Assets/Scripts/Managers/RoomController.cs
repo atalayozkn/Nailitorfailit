@@ -36,6 +36,7 @@ public class RoomController : MonoBehaviour
         {
             isCompleted = true;
             wallStructure.SetActive(true);
+            VfxManager.Play(VfxId.RoomFinished, transform.position);
             NotifyLevelManager();
         }
     }

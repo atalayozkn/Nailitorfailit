@@ -10,6 +10,7 @@ public class DogAggresiveState : DogBaseState
     private float animDuration;
     public override void Enter()
     {
+        VfxManager.Play(VfxId.DogRebel, stateMachine.transform.position);
         counter = 0f;
         stateMachine.animator.CrossFadeInFixedTime(aggresiveHash, 0.1f);
     }

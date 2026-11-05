@@ -8,6 +8,7 @@ public class DogAffectionState : DogBaseState
     private float animDuration = 3.0f;
     public override void Enter()
     {
+        VfxManager.Play(VfxId.DogPet, stateMachine.transform.position);
         counter = 0;
         stateMachine.animator.CrossFadeInFixedTime(affectionHash,0f);
         stateMachine.favorController.GainFavor(stateMachine.perPetFavorGain);

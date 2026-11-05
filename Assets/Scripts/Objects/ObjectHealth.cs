@@ -46,10 +46,18 @@ public class ObjectHealth : MonoBehaviour
     private void Die()
     {
         isDead = true;
+        PlayDestroyedEffect();
         //Burada oynatacağımız eventler için bir delay ekliyoruz. Particle oynattık ama vakit vermedi isek particle da silinecektir.
         currentHealth = 0;
         onDiscardEvent?.Invoke(); 
         Invoke(nameof(DeactivateObject), discardDelay);
+    }
+    private void PlayDestroyedEffect()
+    {
+        VfxId id = VfxId.TileDestroyedWood;
+        if (TryGetComponent<BrickTile>(out _)) id = VfxId.TileDestroyedBrick;
+        else if (TryGetComponent<GlassTile>(out _)) id = VfxId.TileDestroyedGlass;
+        VfxManager.Play(id, transform.position);
     }
     private void DeactivateObject()
     {

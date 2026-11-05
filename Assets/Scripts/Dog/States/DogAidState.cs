@@ -25,6 +25,13 @@ public class DogAidState : DogBaseState
             //Spawn Object
             hasSpawned = true;
             stateMachine.SpawnObject();
+
+            // The last slot that needed it may have been filled during the search.
+            if (stateMachine.currentCarriable == null)
+            {
+                stateMachine.ChangeToIdleState();
+                return;
+            }
         }
 
         if (!hasTargetSet)
@@ -40,6 +47,7 @@ public class DogAidState : DogBaseState
         if (stateMachine.movementHandler.IsMoving()) return;
 
         DropCarriable(stateMachine.itemDropTransfom);
+        VfxManager.Play(VfxId.DogGift, stateMachine.itemDropTransfom.position);
         stateMachine.ChangeToIdleState();
     }
     public override void FixedTick(float fixedDeltaTime)

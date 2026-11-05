@@ -1,0 +1,123 @@
+using System.Collections.Generic;
+using CartoonFX;
+using UnityEngine;
+
+public enum VfxId
+{
+    TilePlaced,
+    TileNail,
+    TileFinished,
+    RoomFinished,
+    CutterCutting,
+    ProductOut,
+    MixerDone,
+    MixerFail,
+    Refuel,
+    OutOfPower,
+    FireIgnite,
+    FireBurn,
+    FireOut,
+    TileDestroyedWood,
+    TileDestroyedBrick,
+    TileDestroyedGlass,
+    PipeBurst,
+    WoodSwell,
+    SocketSpark,
+    TileElectrified,
+    PlayerElectrocuted,
+    PlayerBurned,
+    CarHit,
+    PlayerSlip,
+    PlayerStun,
+    PlayerDrink,
+    PlayerEnergised,
+    PlayerDrained,
+    PlayerRespawn,
+    DogEat,
+    DogPet,
+    DogGift,
+    DogRebel,
+    DogMoodWorse,
+    BowlFill,
+    MailCollect,
+    Victory,
+    PoleImpact,
+    PuddleElectrified,
+}
+
+
+// Plays gameplay effects from one place, so the tile and station prefabs don't each carry their own copies.
+// Singleplayer only: multiplayer has no sync for these and keeps its current visuals.
+public static class VfxManager
+{
+    private const string LibraryPath = "VfxLibrary";
+
+    private static VfxLibrary library;
+    private static Dictionary<VfxId, VfxLibrary.Entry> entries;
+
+    public static Material WetOverlayMaterial => Library != null ? Library.wetOverlayMaterial : null;
+
+    private static VfxLibrary Library
+    {
+        get
+        {
+            if (library == null)
+            {
+                library = Resources.Load<VfxLibrary>(LibraryPath);
+                entries = new Dictionary<VfxId, VfxLibrary.Entry>();
+                if (library != null)
+                {
+                    foreach (VfxLibrary.Entry entry in library.entries) entries[entry.id] = entry;
+                }
+            }
+            return library;
+        }
+    }
+    public static void Play(VfxId id, Vector3 position)
+    {
+        GameObject effect = Spawn(id, position, null, out VfxLibrary.Entry entry);
+        if (effect != null) UnityEngine.Object.Destroy(effect, entry.lifetime);
+    }
+    // Stays on the target until Stop is called with what this returns.
+    public static GameObject PlayLoop(VfxId id, Transform target)
+    {
+        return Spawn(id, target.position, target, out _);
+    }
+    public static void Stop(GameObject effect)
+    {
+        if (effect != null) UnityEngine.Object.Destroy(effect);
+    }
+    private static GameObject Spawn(VfxId id, Vector3 position, Transform parent, out VfxLibrary.Entry entry)
+    {
+        entry = null;
+        if (NetworkModeHelper.IsNetworked || Library == null) return null;
+        if (!entries.TryGetValue(id, out entry) || entry.prefab == null) return null;
+
+        GameObject effect = UnityEngine.Object.Instantiate(entry.prefab, position + entry.offset, Quaternion.identity);
+        // Without Hierarchy mode a particle system ignores its transform's scale.
+        foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ParticleSystem.MainModule main = particles.main;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+        }
+
+        // These run for every small game action: no room-wide light flash or camera shake.
+        foreach (Light effectLight in effect.GetComponentsInChildren<Light>(true)) effectLight.enabled = false;
+        if (effect.TryGetComponent<CFXR_Effect>(out var cfxr)) cfxr.cameraShake.enabled = false;
+        if (entry.hideSmoke)
+        {
+            foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                if (particles.name.IndexOf("Smoke", System.StringComparison.OrdinalIgnoreCase) >= 0) particles.gameObject.SetActive(false);
+            }
+        }
+        if (entry.tint.a > 0f && effect.TryGetComponent<ParticleSystem>(out var mainSystem))
+        {
+            ParticleSystem.MainModule mainModule = mainSystem.main;
+            mainModule.startColor = entry.tint;
+        }
+        effect.transform.localScale = Vector3.one * entry.scale;
+        if (parent != null) effect.transform.SetParent(parent, true);
+        return effect;
+    }
+}

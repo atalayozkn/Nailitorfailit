@@ -19,6 +19,7 @@ public class ElectricalHazard_Prototype : MonoBehaviour
     public void OnTrigger()
     {
         onTriggerEvent?.Invoke();
+        VfxManager.Play(VfxId.SocketSpark, muzzleTransform.position);
 
         Collider[] colliders = Physics.OverlapBox(muzzleTransform.position, halfDimensions, muzzleTransform.rotation, targetLayer);
         if (colliders.Length == 0) return;

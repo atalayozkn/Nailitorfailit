@@ -9,6 +9,7 @@ public class PlayerSlippingState : PlayerBaseState
         stateMachine.animator.CrossFadeInFixedTime(slipHash, 0f);
         stateMachine.movementHandler.SetSlipping(true);
         stateMachine.startSlipEvent?.Invoke();
+        VfxManager.Play(VfxId.PlayerSlip, stateMachine.transform.position);
 
         var carriable = stateMachine.interactionHandler.GetCurrentCarriable();
         if (carriable != null) carriable.OnDrop(true);

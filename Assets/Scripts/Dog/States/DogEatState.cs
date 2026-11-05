@@ -49,6 +49,7 @@ public class DogEatState : DogBaseState
         {
             stateMachine.foodBowl.ConsumeFood(stateMachine.perEatConsumption);
             stateMachine.satietyController.GainSatiety(stateMachine.perEatGain);
+            VfxManager.Play(VfxId.DogEat, stateMachine.transform.position);
             stateMachine.animator.CrossFadeInFixedTime(eatHash, 0.1f);
         }
         else

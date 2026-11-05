@@ -20,15 +20,18 @@ public class PlayerDeadState : PlayerBaseState
         {
             case DeathReason.Car:
                 stateMachine.carDeathEvent?.Invoke();
+                VfxManager.Play(VfxId.CarHit, stateMachine.transform.position);
                 stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;
             case DeathReason.Fire:
                 stateMachine.fireDeathEvent?.Invoke();
+                VfxManager.Play(VfxId.PlayerBurned, stateMachine.transform.position);
                 stateMachine.animator.CrossFadeInFixedTime(FireDeathHash, 0f);
                 stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;
             case DeathReason.Electricty:
                 stateMachine.electricityDeathEvent?.Invoke();
+                VfxManager.Play(VfxId.PlayerElectrocuted, stateMachine.transform.position);
                 stateMachine.animator.CrossFadeInFixedTime(ElectricityDeathHash, 0f);
                 stateMachine.respawnManager.RespawnPlayer(stateMachine);
                 break;

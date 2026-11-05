@@ -35,6 +35,7 @@ namespace PlayerScripts
         private float currentEnergy;
         private Coroutine chargeRoutine;
         private bool isEnergised;
+        private GameObject energisedEffect;
         private float costMultiplier;
 
         private void OnEnable()
@@ -122,6 +123,7 @@ namespace PlayerScripts
         private void BecomeEnergised()
         {
             isEnergised = true;
+            if (energisedEffect == null) energisedEffect = VfxManager.PlayLoop(VfxId.PlayerEnergised, transform);
             onEnergisedEvent?.Invoke();
             CancelInvoke(nameof(ReverseEnergised));
             Invoke(nameof(ReverseEnergised),energisedDuration);
@@ -130,6 +132,7 @@ namespace PlayerScripts
         private void BecomeDrained()
         {
             costMultiplier = drainedMultiplier;
+            VfxManager.Play(VfxId.PlayerDrained, transform.position);
             onDrainedEvent?.Invoke();
             CancelInvoke(nameof(ReverseDrained));
             Invoke(nameof(ReverseDrained),drainedDuration);
@@ -146,6 +149,7 @@ namespace PlayerScripts
         private void ReverseEnergised()
         {
             isEnergised = false;
+            VfxManager.Stop(energisedEffect);
             onEnergiseReversedEvent?.Invoke();
         }
 

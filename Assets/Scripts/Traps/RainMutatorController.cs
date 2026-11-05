@@ -299,6 +299,8 @@ public class RainMutatorController : MonoBehaviour
             yield return null;
         }
 
+        VfxManager.Play(VfxId.PoleImpact, impact);
+        VfxManager.Play(VfxId.PuddleElectrified, impact);
         List<RainPuddle> electrified = new();
         foreach (RainPuddle puddle in pool)
         {

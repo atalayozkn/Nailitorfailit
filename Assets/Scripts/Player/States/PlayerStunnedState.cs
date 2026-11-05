@@ -5,10 +5,12 @@ using UnityEngine.EventSystems;
 public class PlayerStunnedState : PlayerBaseState
 {
     private float counterTime;
+    private GameObject stunEffect;
     private float stunDuration = 3f;
     public PlayerStunnedState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stunEffect = VfxManager.PlayLoop(VfxId.PlayerStun, stateMachine.transform);
         stateMachine.onStunStartEvent?.Invoke();
         stateMachine.UpdateMoveDirection();
 
@@ -45,6 +47,7 @@ public class PlayerStunnedState : PlayerBaseState
     }
     public override void Exit()
     {
+        VfxManager.Stop(stunEffect);
         stateMachine.onStunEndEvent?.Invoke();
 
         foreach (var col in stateMachine.ragdollColliders)

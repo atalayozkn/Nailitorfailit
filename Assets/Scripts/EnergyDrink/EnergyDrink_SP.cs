@@ -29,6 +29,7 @@ public class EnergyDrink_SP : MonoBehaviour, IUsable
         if (isUsed) return;
         isUsed = true;
 
+        VfxManager.Play(VfxId.PlayerDrink, playerStamina.transform.position);
         playerStamina.GainEnergy(energyRestoreAmount);
         onUseEvent?.Invoke();
         carriableObject.OnConsume();
