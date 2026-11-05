@@ -11315,6 +11315,32 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6440649670476563057, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
   m_PrefabInstance: {fileID: 377079755}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &377079758 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3425385453841205007, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+  m_PrefabInstance: {fileID: 377079755}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 760ff4ea040e95b42a07c3dc41fdda5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerScripts.PlayerMovement
+--- !u!1 &377079759 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4371028732207547541, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+  m_PrefabInstance: {fileID: 377079755}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &377079760 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 127587873563672706, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+  m_PrefabInstance: {fileID: 377079755}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &377079761 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3563146639176581596, guid: 343bc60bab77c2a4194bb82eeeca6916, type: 3}
+  m_PrefabInstance: {fileID: 377079755}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &378886324
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -37206,6 +37232,8 @@ MonoBehaviour:
   timerText: {fileID: 0}
   maxRoundTime: 420
   roundStartTimer: 5
+  lowTimeWarning: 30
+  lowTimeColor: {r: 1, g: 0.2, b: 0.15, a: 1}
   onTimeIncreaseEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -58386,7 +58414,7 @@ MonoBehaviour:
   onVictoryEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 377079761}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
         m_Mode: 6
@@ -58398,10 +58426,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-  onDefeatEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 377079760}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
         m_Mode: 6
@@ -58412,6 +58437,81 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 377079756}
+        m_TargetAssemblyTypeName: PlayerStateMachine, Assembly-CSharp
+        m_MethodName: OpenCursor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 377079758}
+        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
+        m_MethodName: SetActivity
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onDefeatEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 377079761}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 377079759}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 377079756}
+        m_TargetAssemblyTypeName: PlayerStateMachine, Assembly-CSharp
+        m_MethodName: OpenCursor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 377079758}
+        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
+        m_MethodName: SetActivity
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
         m_CallState: 2
 --- !u!4 &1927222220
 Transform:
