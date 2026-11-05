@@ -327,7 +327,9 @@ public class PlayerMovement : MonoBehaviour
         float reach = radius + stepCheckDistance;
 
         // Something blocks us just above the floor...
-        if (!Physics.Raycast(feet + Vector3.up * 0.05f, direction, reach, whatIsGround, QueryTriggerInteraction.Ignore)) return;
+        if (!Physics.Raycast(feet + Vector3.up * 0.05f, direction, out RaycastHit blocker, reach, whatIsGround, QueryTriggerInteraction.Ignore)) return;
+        // Ramps are walked up normally, and lifting the player onto them would fight the slope.
+        if (blocker.collider.GetComponent<SidewalkRamp>() != null) return;
         // ...but nothing at step height, so it is a ledge and not a wall.
         if (Physics.Raycast(feet + Vector3.up * (maxStepHeight + 0.05f), direction, reach + 0.1f, whatIsGround, QueryTriggerInteraction.Ignore)) return;
 
