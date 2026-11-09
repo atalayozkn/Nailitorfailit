@@ -115,6 +115,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 2620968493471566690}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &1686381825833318834
 GameObject:
   m_ObjectHideFlags: 0
@@ -544,6 +545,7 @@ MonoBehaviour:
   firstImage: {fileID: 7068758598465715973}
   secondImage: {fileID: 5569563151212743503}
   thirdImage: {fileID: 6532973110441361848}
+  letterColor: {r: 0.1, g: 0.1, b: 0.1, a: 1}
 --- !u!114 &2708339733633974601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -559,6 +561,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 6282760033123832880}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!65 &7403700604569385522
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -719,6 +722,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8644694931191523752}
     m_Modifications:
+    - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.17314623
+      objectReference: {fileID: 0}
+    - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.1143558
+      objectReference: {fileID: 0}
+    - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.37571895
+      objectReference: {fileID: 0}
     - target: {fileID: 3676466552961158558, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

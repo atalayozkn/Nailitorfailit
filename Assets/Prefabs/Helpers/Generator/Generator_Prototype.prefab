@@ -198,6 +198,7 @@ GameObject:
   - component: {fileID: 1440456441275001098}
   - component: {fileID: 3746715748603378428}
   - component: {fileID: 3090584525112134895}
+  - component: {fileID: 1923432557929365675}
   m_Layer: 5
   m_Name: Canvas_World_Generator
   m_TagString: Untagged
@@ -212,8 +213,8 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2620513976071910601}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.56}
+  m_LocalRotation: {x: 0.58778524, y: -0, z: -0, w: 0.809017}
+  m_LocalPosition: {x: 0, y: 0, z: -0.1731461}
   m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -222,7 +223,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0.07699871, y: 0.25}
+  m_AnchoredPosition: {x: -0.114355594, y: 0.37571898}
   m_SizeDelta: {x: 400, y: 1000}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &1440456441275001098
@@ -288,6 +289,18 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &1923432557929365675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2620513976071910601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 905976cc1776f774da550e179193ea97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraFacingUI
 --- !u!1 &5915745794428707400
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,6 +450,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 5357045065082456615}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!65 &3442225097088593789
 BoxCollider:
   m_ObjectHideFlags: 0

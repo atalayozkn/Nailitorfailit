@@ -128,6 +128,7 @@ GameObject:
   - component: {fileID: 8540796979670033540}
   - component: {fileID: 4815162342000111002}
   - component: {fileID: 724964933145330754}
+  - component: {fileID: 8993547624988829575}
   m_Layer: 6
   m_Name: FloorTile_Glass
   m_TagString: Fragile
@@ -177,13 +178,13 @@ MonoBehaviour:
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 8993547624988829575}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -192,13 +193,13 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 8993547624988829575}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -330,7 +331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a1c9e42d3b84f06a5e21c7d90f3b611, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TileWetness
-  tileRenderer: {fileID: 5302109835273872434}
+  tileRenderer: {fileID: 0}
   surfaceHelper: {fileID: 8876022540176167925}
   gainPerParticle: 0.03
   drainPerSecond: 0.02
@@ -359,6 +360,22 @@ MonoBehaviour:
   pitchJitter: 0.06
   spatial: 0.7
   minInterval: 0.35
+--- !u!114 &8993547624988829575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4313914034839401795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &4635074482296737305
 GameObject:
   m_ObjectHideFlags: 0
@@ -917,11 +934,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
---- !u!23 &5302109835273872434 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}
-  m_PrefabInstance: {fileID: 6797468321336277174}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6476119162694754141 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aaa8d5b8d813d9f44a2ef312cb055c5f, type: 3}

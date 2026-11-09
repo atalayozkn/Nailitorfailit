@@ -274,6 +274,7 @@ GameObject:
   - component: {fileID: 5854593456700457773}
   - component: {fileID: 1189498225734135599}
   - component: {fileID: 4840596198925022461}
+  - component: {fileID: 7685337484584704614}
   m_Layer: 0
   m_Name: BrickWall
   m_TagString: Untagged
@@ -314,13 +315,39 @@ MonoBehaviour:
   processHelper: {fileID: 2770920192714245499}
   objectHealth: {fileID: 1189498225734135599}
   puddleHelper: {fileID: 0}
+  tileWetness: {fileID: 0}
+  connectedConstructor: {fileID: 0}
   isFloorTile: 0
   onHoverOnEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 7685337484584704614}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onHoverOffEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 7685337484584704614}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2770920192714245499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -336,15 +363,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 5854593456700457773}
   maxProcessAmount: 100
   processPerInteract: 50
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &5854593456700457773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -401,6 +419,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.15657894, z: 1.505166}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7685337484584704614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2576657057858181299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &2967518534204786702
 GameObject:
   m_ObjectHideFlags: 0
@@ -547,12 +581,13 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 7559842654472181205}
   - component: {fileID: 1391070057471165}
   - component: {fileID: 5659538608376773}
-  - component: {fileID: 7559842654472181205}
   - component: {fileID: 281562012354391158}
   - component: {fileID: 1839324846158345800}
   - component: {fileID: 4602258355351289640}
+  - component: {fileID: 400261164311428829}
   m_Layer: 6
   m_Name: WallConstruct
   m_TagString: Untagged
@@ -579,6 +614,38 @@ Transform:
   - {fileID: 1204130303043374904}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1391070057471165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4505486642224199176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &5659538608376773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4505486642224199176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2aa82ac5a2546e1a730083e6172f99e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Constructor_MP
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!114 &281562012354391158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -593,6 +660,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScript.Constructor
   roomController: {fileID: 0}
   bluePrintObject: {fileID: 5218742291934528437}
+  blueprintVisual: {fileID: 0}
   interactableType: 1
   interactionCollider: {fileID: 4602258355351289640}
   acceptedType: 1
@@ -602,16 +670,18 @@ MonoBehaviour:
   brickHealth: {fileID: 1189498225734135599}
   glassObject: {fileID: 6337889381878460358}
   glassHealth: {fileID: 5008129358725488767}
+  isTutorial: 0
+  objective: {fileID: 0}
   onHoverOnEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 9194302056786443596}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ChangeToColor
+      - m_Target: {fileID: 400261164311428829}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -620,13 +690,13 @@ MonoBehaviour:
   onHoverOffEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 9194302056786443596}
-        m_TargetAssemblyTypeName: MaterialColorChangeHelper, Assembly-CSharp
-        m_MethodName: ReverseToInitialColor
+      - m_Target: {fileID: 400261164311428829}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -669,6 +739,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.086446, y: 1.5356586, z: 0.3011864}
   m_Center: {x: 0, y: 0.75508755, z: 0}
+--- !u!114 &400261164311428829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4505486642224199176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &4587020814376373443
 GameObject:
   m_ObjectHideFlags: 0
@@ -680,7 +766,6 @@ GameObject:
   - component: {fileID: 5682402967633404113}
   - component: {fileID: 704285730517580236}
   - component: {fileID: 7075704801676770360}
-  - component: {fileID: 9153508844953527289}
   m_Layer: 0
   m_Name: Mesh
   m_TagString: Untagged
@@ -760,20 +845,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &9153508844953527289
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4587020814376373443}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 7075704801676770360}
-  targetColor: {r: 0, g: 1, b: 0.90737987, a: 0}
 --- !u!1 &4915621387714055535
 GameObject:
   m_ObjectHideFlags: 0
@@ -821,7 +892,6 @@ GameObject:
   - component: {fileID: 4651157317610066707}
   - component: {fileID: 3777636823215823971}
   - component: {fileID: 6220613384727874816}
-  - component: {fileID: 9194302056786443596}
   m_Layer: 0
   m_Name: GhostMesh
   m_TagString: Untagged
@@ -901,20 +971,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &9194302056786443596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5218742291934528437}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 6220613384727874816}
-  targetColor: {r: 0.99765027, g: 1, b: 0, a: 0.6745098}
 --- !u!1 &5629082799821519800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,6 +1096,7 @@ GameObject:
   - component: {fileID: 2550737661764973141}
   - component: {fileID: 5008129358725488767}
   - component: {fileID: 842036858231598005}
+  - component: {fileID: 1023901175203167573}
   m_Layer: 0
   m_Name: GlassWall
   m_TagString: Untagged
@@ -1079,15 +1136,41 @@ MonoBehaviour:
   interactableType: 1
   processHelper: {fileID: 5944888851153481550}
   puddleHelper: {fileID: 0}
+  tileWetness: {fileID: 0}
   objectHealth: {fileID: 5008129358725488767}
+  connectedConstructor: {fileID: 0}
   isFloorTile: 0
   pressureDamageDelay: 1
   onHoverOnEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1023901175203167573}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onHoverOffEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1023901175203167573}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &5944888851153481550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1103,15 +1186,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 2550737661764973141}
   maxProcessAmount: 100
   processPerInteract: 50
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &2550737661764973141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1168,6 +1242,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.15657894, z: 1.505166}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1023901175203167573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6337889381878460358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &6417799308723370863
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,7 +1304,6 @@ GameObject:
   - component: {fileID: 988169415271397416}
   - component: {fileID: 4970198726816170248}
   - component: {fileID: 2162496796919937521}
-  - component: {fileID: 468016394640116763}
   m_Layer: 0
   m_Name: Mesh
   m_TagString: Untagged
@@ -1294,20 +1383,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &468016394640116763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6795004782460827958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 2162496796919937521}
-  targetColor: {r: 0, g: 1, b: 0.90737987, a: 0}
 --- !u!1 &7108298458573489753
 GameObject:
   m_ObjectHideFlags: 0
@@ -1421,7 +1496,6 @@ GameObject:
   - component: {fileID: 5356906971137828862}
   - component: {fileID: 8703760303737949046}
   - component: {fileID: 5487602215821093705}
-  - component: {fileID: 3560133449751324194}
   m_Layer: 0
   m_Name: Mesh
   m_TagString: Untagged
@@ -1501,20 +1575,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3560133449751324194
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7525697484407962324}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c519027e20a3f0041a42795eb03ca117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialColorChangeHelper
-  targetRenderer: {fileID: 5487602215821093705}
-  targetColor: {r: 0, g: 1, b: 0.90737987, a: 0}
 --- !u!1 &7688800056707385110
 GameObject:
   m_ObjectHideFlags: 0
@@ -2012,6 +2072,7 @@ GameObject:
   - component: {fileID: 1232004240090752832}
   - component: {fileID: 4266450288851381205}
   - component: {fileID: 629825614383327551}
+  - component: {fileID: 4526539241505101930}
   m_Layer: 0
   m_Name: WoodWall
   m_TagString: Untagged
@@ -2052,13 +2113,43 @@ MonoBehaviour:
   processHelper: {fileID: 78145904076394488}
   fireHelper: {fileID: 1232004240090752832}
   puddleHelper: {fileID: 0}
+  tileWetness: {fileID: 0}
+  objectHealth: {fileID: 0}
+  connectedConstructor: {fileID: 0}
   isFloorTile: 0
+  pressureDamageDelay: 1
+  isTutorial: 0
+  objective: {fileID: 0}
   onHoverOnEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 4526539241505101930}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: HighlightMaterial
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onHoverOffEvent:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 4526539241505101930}
+        m_TargetAssemblyTypeName: HighlightHelper, Assembly-CSharp
+        m_MethodName: ReverseHighlight
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &78145904076394488
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2074,15 +2165,6 @@ MonoBehaviour:
   canvasHelper: {fileID: 6186626898142630977}
   maxProcessAmount: 100
   processPerInteract: 50
-  onConstructionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onConstructionCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &6186626898142630977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2111,6 +2193,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FireHelper
   objectHealth: {fileID: 4266450288851381205}
   fireHitInterval: 1
+  singleplayerHitInterval: 3
+  spreadInterval: 6
+  neighbourRadius: 1.2
   onFireStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -2159,6 +2244,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.15657894, z: 1.505166}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4526539241505101930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8860050374474224155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &9110954506393942470
 GameObject:
   m_ObjectHideFlags: 0
@@ -2234,27 +2335,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1391070057471165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4505486642224199176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
---- !u!114 &5659538608376773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4505486642224199176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2aa82ac5a2546e1a730083e6172f99e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Constructor_MP

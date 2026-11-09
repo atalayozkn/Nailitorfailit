@@ -579,7 +579,7 @@ MonoBehaviour:
   woodProduct: {fileID: 6479617406932401784, guid: 4cf9bf6b5946a0345b0aed02ea5222fb, type: 3}
   glassProduct: {fileID: 2451140924364856572, guid: 0c3151d814f447049b6a51a03ec182ae, type: 3}
   brickProduct: {fileID: 6479617406932401784, guid: 3a69bfb3e9c6a504280f63b339b81471, type: 3}
-  perProcessCost: 5
+  perProcessCost: 25
   onSpawnEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -657,6 +657,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 6396287096811695421}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!1 &9132837691654836453
 GameObject:
   m_ObjectHideFlags: 0
@@ -836,15 +837,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.525
+      value: -0.1731461
       objectReference: {fileID: 0}
     - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -0.088
+      value: -0.114355564
       objectReference: {fileID: 0}
     - target: {fileID: 2548489367775070822, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.219
+      value: 0.375719
       objectReference: {fileID: 0}
     - target: {fileID: 2620513976071910601, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -992,6 +993,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 7574255950109367082}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!4 &6069510879728401807 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8610352859265100930, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
