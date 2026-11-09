@@ -31,6 +31,7 @@ public class PauseMenu : MonoBehaviour
         {
             GamePauseManager.Instance.SetPause(false);
         }
+        CursorManager.Release(this);
     }
     private void Start()
     {
@@ -50,14 +51,8 @@ public class PauseMenu : MonoBehaviour
         GamePauseManager.Instance.SetPause(pause);
         pauseMenu.SetActive(pause);
 
-        if (stateMachine == null)
-        {
-            Debug.LogWarning("PauseMenu: PlayerStateMachine reference is missing.", this);
-            return;
-        }
-
-        if (pause) stateMachine.OpenCursor();
-        else stateMachine.CloseCursor();
+        if (pause) CursorManager.Show(this);
+        else CursorManager.Release(this);
     }
 
     public void Resume()

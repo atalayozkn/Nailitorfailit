@@ -55,6 +55,7 @@ public class ScoreTallyUI : MonoBehaviour, IPointerClickHandler
     {
         if (state != TallyState.Idle) return;
 
+        CursorManager.Show(this); // the end screen has buttons; the cursor stays until the scene changes
         // Draw over the HUD, which sits after this panel on the canvas.
         transform.SetAsLastSibling();
         HideEndScreen();

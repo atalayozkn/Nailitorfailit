@@ -13,6 +13,9 @@ public class MainMenu : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button continueButton;
 
+    private void OnEnable() => CursorManager.Show(this);
+    private void OnDisable() => CursorManager.Release(this);
+
     public void SetActivity(bool condition)
     {
         menuRoot.SetActive(condition);

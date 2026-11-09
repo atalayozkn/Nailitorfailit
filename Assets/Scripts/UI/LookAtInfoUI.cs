@@ -13,7 +13,8 @@ public class LookAtInfoUI : MonoBehaviour
     // Keeps the panel from flickering when the target drops out for a moment at the edge of the reach.
     private const float HideDelay = 0.15f;
 
-    private const float PanelMargin = 32f;
+    // Offset from the screen centre, nudge it here if it sits on top of the player.
+    private static readonly Vector2 PanelOffset = Vector2.zero;
     private const float PanelHeight = 84f;
     private const float PanelPadding = 18f;
     private const float NameFontSize = 28f;
@@ -67,8 +68,9 @@ public class LookAtInfoUI : MonoBehaviour
         handler.InteractBlocked += OnInteractBlocked;
 
         panelRect = GetComponent<RectTransform>();
-        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(1f, 0f);
-        panelRect.anchoredPosition = new Vector2(-PanelMargin, PanelMargin);
+        // Screen centre so it is noticed; the bottom-right corner now holds the inventory bar.
+        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = PanelOffset;
         panelRect.sizeDelta = new Vector2(PanelHeight, PanelHeight);
 
         canvasGroup = GetComponent<CanvasGroup>();
@@ -100,7 +102,7 @@ public class LookAtInfoUI : MonoBehaviour
         text.fontSize = fontSize;
         text.fontStyle = style;
         text.color = color;
-        text.alignment = TextAlignmentOptions.MidlineRight;
+        text.alignment = TextAlignmentOptions.Midline;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
         return text;
