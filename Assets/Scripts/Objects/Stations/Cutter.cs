@@ -27,7 +27,7 @@ public class Cutter : MonoBehaviour, IInteractable, ILookAtInfo
     [SerializeField] private GameObject brickProduct;
 
     [Header("Consumption Settings")]
-    [SerializeField] private float perProcessCost = 5f;
+    [SerializeField] private float perProcessCost = 25f;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onSpawnEvent;
@@ -58,9 +58,12 @@ public class Cutter : MonoBehaviour, IInteractable, ILookAtInfo
 
         if (interactionHandler.IsCarrying()) return false;
 
-        if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return WarningManager.Reject("No power! Refuel the generator", true);
-
-        connectedGenerator.ConsumeEnergy(perProcessCost);
+        // A cut takes several presses but is paid once, on the first press, so a full tank gives a fixed number of cuts.
+        if (!IsCutStarted())
+        {
+            if (!connectedGenerator.HasEnoughEnergy(perProcessCost)) return WarningManager.Reject("No power! Refuel the generator", true);
+            connectedGenerator.ConsumeEnergy(perProcessCost);
+        }
 
         processHelper.Process();
         VfxManager.Play(VfxId.CutterCutting, placementTransform.position);
@@ -85,9 +88,11 @@ public class Cutter : MonoBehaviour, IInteractable, ILookAtInfo
             return LookAtInfo.Ready(name, $"Load {LookAtText.ItemName(carried)}");
         }
         if (carried != null) return LookAtInfo.Blocked(name, "Already loaded");
-        if (connectedGenerator != null && !connectedGenerator.HasEnergyFor(perProcessCost)) return LookAtInfo.Blocked(name, "No power! Refuel the generator");
+        if (!IsCutStarted() && connectedGenerator != null && !connectedGenerator.HasEnergyFor(perProcessCost)) return LookAtInfo.Blocked(name, "No power! Refuel the generator");
         return LookAtInfo.Ready(name, "Cut");
     }
+
+    private bool IsCutStarted() => processHelper.NormalizedProgress > 0f;
 
     public void OnHoverOn()
     {

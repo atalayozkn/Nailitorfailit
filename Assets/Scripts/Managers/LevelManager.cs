@@ -5,7 +5,7 @@ public class LevelManager : MonoBehaviour
 {
 
     [SerializeField] private int roomCurrencyReward = 10;
-    [SerializeField] private int roomTimeReward = 60;
+    [SerializeField] private int roomTimeReward = 90;
 
     [SerializeField] private UnityEvent onVictoryEvent;
     [SerializeField] private UnityEvent onDefeatEvent;
