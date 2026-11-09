@@ -17,6 +17,13 @@ public class EmoteListener : MonoBehaviour
     {
         if (!isActive) return;
 
+        bool paused = GamePauseManager.Instance != null && GamePauseManager.Instance.IsPaused;
+        if (paused)
+        {
+            wheel.Cancel();
+            return;
+        }
+
         if (emoteAction.action.WasPressedThisFrame())
         {
             wheel.SetActivity(true);
