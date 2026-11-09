@@ -287,7 +287,8 @@ public static partial class StyleTestBuilder
                 if (Convertible(m)) sources.Add(m);
 
         // Spawned tiles, cars and carriables use these.
-        foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs" }))
+        // Prefabs_MP too: the levels are shared with multiplayer, which spawns its own copies.
+        foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs", "Assets/Prefabs_MP" }))
         {
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
             if (go == null) continue;
@@ -407,7 +408,7 @@ public static partial class StyleTestBuilder
             holder = ScriptableObject.CreateInstance<FoliageMeshHolder>();
             AssetDatabase.CreateAsset(holder, meshPath);
         }
-        var cache = AssetDatabase.LoadAllAssetsAtPath(meshPath).OfType<Mesh>().ToDictionary(m => m.name);
+        var cache = AssetDatabase.LoadAllAssetsAtPath(meshPath).OfType<Mesh>().GroupBy(m => m.name).ToDictionary(g => g.Key, g => g.First()); // earlier test builds left duplicate names
 
         int count = 0;
         foreach (var f in Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -765,6 +766,21 @@ public static partial class StyleTestBuilder
 
     static void ApplyVolumeAndCamera()
     {
+        ApplyVolume();
+
+        var cm = Object.FindFirstObjectByType<CinemachineCamera>();
+        var lens = cm.Lens;
+        lens.FieldOfView = 42f;
+        cm.Lens = lens;
+        PrefabUtility.RecordPrefabInstancePropertyModifications(cm);
+        var follow = cm.GetComponent<CinemachineFollow>();
+        follow.FollowOffset = new Vector3(0, 12.5f, -11.5f);
+        PrefabUtility.RecordPrefabInstancePropertyModifications(follow);
+    }
+
+    // Post volume and camera post-processing only; leaves the gameplay framing alone.
+    static void ApplyVolume()
+    {
         string path = Gen + "/WarmVolume.asset";
         var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
         if (profile == null)
@@ -811,15 +827,7 @@ public static partial class StyleTestBuilder
         var camData = cam.GetComponent<UniversalAdditionalCameraData>();
         camData.renderPostProcessing = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(camData);
-
-        var cm = Object.FindFirstObjectByType<CinemachineCamera>();
-        var lens = cm.Lens;
-        lens.FieldOfView = 42f;
-        cm.Lens = lens;
-        PrefabUtility.RecordPrefabInstancePropertyModifications(cm);
-        var follow = cm.GetComponent<CinemachineFollow>();
-        follow.FollowOffset = new Vector3(0, 12.5f, -11.5f);
-        PrefabUtility.RecordPrefabInstancePropertyModifications(follow);
+        EditorUtility.SetDirty(camData);
     }
 
     // ---------- Capture ----------

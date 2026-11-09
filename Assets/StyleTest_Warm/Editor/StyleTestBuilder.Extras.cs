@@ -60,7 +60,7 @@ public static partial class StyleTestBuilder
             SetStyle(m, Tex("PaintNoise"), 0.2f);
         });
 
-        var holder = AssetDatabase.LoadAssetAtPath<FoliageMeshHolder>(Gen + "/FoliageMeshes.asset");
+        var holder = AssetDatabase.LoadAssetAtPath<FoliageMeshHolder>(MeshHolderPath);
         var cache = new Dictionary<string, Mesh>();
         foreach (var f in Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -380,14 +380,14 @@ public static partial class StyleTestBuilder
 
         var dirt = AssetDatabase.LoadAssetAtPath<TerrainLayer>(Gen + "/Layer_Dirt.terrainlayer");
         var grass = AssetDatabase.LoadAssetAtPath<TerrainLayer>(Gen + "/Layer_Grass.terrainlayer");
-        dirt.diffuseTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(TexDir + "/Ground_Dirt.png");
-        grass.diffuseTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(TexDir + "/Ground_Grass.png");
-        EditorUtility.SetDirty(dirt);
-        EditorUtility.SetDirty(grass);
+        if (dirt != null) { dirt.diffuseTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(TexDir + "/Ground_Dirt.png"); EditorUtility.SetDirty(dirt); }
+        if (grass != null) { grass.diffuseTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(TexDir + "/Ground_Grass.png"); EditorUtility.SetDirty(grass); }
         return missing;
     }
 
     // Starts over from the untouched Level_01. keepPainted skips the slow texture filter.
+    // The real levels now reference the generated materials, textures and meshes, so only the test's own
+    // terrain, detail and tree assets are deleted here; everything else is rebuilt in place (same GUIDs).
     public static string Rebuild(bool keepPainted)
     {
         materialSetup.Clear();
@@ -399,8 +399,10 @@ public static partial class StyleTestBuilder
             {
                 string p = AssetDatabase.GUIDToAssetPath(guid);
                 if (AssetDatabase.IsValidFolder(p)) continue;
-                if (p.StartsWith(TexDir + "/")) { if (keepPainted || !Path.GetFileName(p).StartsWith("Painted_")) continue; }
-                AssetDatabase.DeleteAsset(p);
+                string file = Path.GetFileName(p);
+                bool testOnly = p.StartsWith(Gen + "/Terrain_") || file.StartsWith("Detail_") || file.StartsWith("Tree_Terrain_") || file.StartsWith("Layer_");
+                if (testOnly && !p.StartsWith(MatDir + "/")) AssetDatabase.DeleteAsset(p);
+                else if (!keepPainted && p.StartsWith(TexDir + "/Painted_")) AssetDatabase.DeleteAsset(p);
             }
         }
         paintedByHash.Clear();

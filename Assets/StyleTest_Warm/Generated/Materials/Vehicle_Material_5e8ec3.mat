@@ -11,10 +11,11 @@ Material:
   m_Shader: {fileID: 4800000, guid: 9b701f05850d60e448e41d1f8357dac6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _EMISSION
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -28,7 +29,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: baedc89545b970043a2ebc520dfd8115, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PaintNoise:
@@ -38,8 +39,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _Cutoff: 0.5
-    - _PaintScale: 0.35
-    - _PaintStrength: 0.6
+    - _PaintScale: 0.55
+    - _PaintStrength: 0.42
     - _RampOffset: 0.05
     - _RampSoft: 0.22
     - _RimPower: 4
@@ -48,8 +49,8 @@ Material:
     - _WindSpeed: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 0.17999998, g: 0.09999997, b: 0.049999982, a: 1}
-    - _ShadowTint: {r: 0.19999996, g: 0.13999996, b: 0.29999998, a: 1}
+    - _EmissionColor: {r: 1.8443025, g: 1.8443025, b: 1.8443025, a: 1}
+    - _RimColor: {r: 0.2, g: 0.11, b: 0.05, a: 1}
+    - _ShadowTint: {r: 0.27, g: 0.19, b: 0.36, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

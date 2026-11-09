@@ -9,7 +9,14 @@ using UnityEngine.Rendering.Universal;
 // Pond, butterflies, birds, chirps, cloud shadows and pollen motes for the warm style test.
 public static partial class StyleTestBuilder
 {
-    static readonly Vector3 HutCenter = new Vector3(-19.5f, 0f, 10f);
+    static readonly Vector3 DefaultHutCenter = new Vector3(-19.5f, 0f, 10f);
+    // Centre of the yard the ambience gathers around. The level applier points it at each level's house.
+    static Vector3 HutCenter = DefaultHutCenter;
+    // Set by the level applier to place the pond itself; null searches near the Level_01 hut.
+    static Vector3? pondCenter;
+    // Set by the level applier so each scene keeps its own generated meshes.
+    static string meshHolderOverride;
+    static string MeshHolderPath => meshHolderOverride ?? Gen + "/FoliageMeshes.asset";
     const float PondRadius = 2.6f;
 
     // Material settings, re-applied by path once every import has finished. Imports during the
@@ -49,7 +56,7 @@ public static partial class StyleTestBuilder
     }
 
     static void AddMesh(Mesh mesh) =>
-        AssetDatabase.AddObjectToAsset(mesh, AssetDatabase.LoadAssetAtPath<FoliageMeshHolder>(Gen + "/FoliageMeshes.asset"));
+        AssetDatabase.AddObjectToAsset(mesh, AssetDatabase.LoadAssetAtPath<FoliageMeshHolder>(MeshHolderPath));
 
     static Mesh BuildMesh(string name, List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<Vector2> wind, List<int> t)
     {
@@ -92,7 +99,7 @@ public static partial class StyleTestBuilder
         var terrain = Object.FindFirstObjectByType<Terrain>();
         var data = terrain.terrainData;
         var origin = terrain.transform.position;
-        var center = FindPondSpot(terrain);
+        var center = pondCenter ?? FindPondSpot(terrain);
         if (float.IsNegativeInfinity(center.x)) return "pond=noSpace";
 
         // The terrain sits at its minimum height here, so it cannot be dug; the water lies on top and
@@ -149,6 +156,13 @@ public static partial class StyleTestBuilder
         block.AddComponent<MeshCollider>().sharedMesh = capsuleMesh;
         block.GetComponent<MeshCollider>().convex = true;
         block.transform.localPosition = new Vector3(0, -0.8f, 0);
+        // Carve the baked NavMesh too, so the dog, mailman and other agents path around the water.
+        var carve = block.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+        carve.shape = UnityEngine.AI.NavMeshObstacleShape.Capsule;
+        carve.radius = PondRadius * 0.9f;
+        carve.height = 1.6f;
+        carve.center = new Vector3(0, 0.8f, 0);
+        carve.carving = true;
 
         // Shore stones.
         var stoneMat = NewMat("Stone", surface, m =>
