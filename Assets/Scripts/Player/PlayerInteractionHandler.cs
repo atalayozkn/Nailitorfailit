@@ -40,6 +40,17 @@ public class PlayerInteractionHandler : MonoBehaviour
     // A press on the current target did nothing.
     public event System.Action InteractBlocked;
 
+    // Singleplayer carry inventory. The item in the active slot is the one in hand (currentCarriable),
+    // the others are stowed: hidden, still parented to the player, and ignored by weight and station checks.
+    // Multiplayer syncs a single carried item per player, so there only slot 0 is ever used.
+    public const int InventorySize = 3;
+    private static readonly string[] SlotActionNames = { "Slot1", "Slot2", "Slot3" };
+    private readonly CarriableObject_SP[] slots = new CarriableObject_SP[InventorySize];
+    private readonly InputAction[] slotActions = new InputAction[InventorySize];
+    private InputAction nextSlotAction;
+    private InputAction previousSlotAction;
+    private int activeSlot;
+
     private IInteractable currentInteractable;
     private InteractableType currentInteractableType;
 
@@ -57,17 +68,24 @@ public class PlayerInteractionHandler : MonoBehaviour
     private void Start()
     {
         // Multiplayer routes interaction itself, the look-at panel is singleplayer only.
-        if (!NetworkModeHelper.IsNetworked) LookAtInfoUI.Create(this);
+        // So is the carry inventory bar.
+        if (!NetworkModeHelper.IsNetworked)
+        {
+            LookAtInfoUI.Create(this);
+            InventoryUI.Create(this);
+        }
     }
     private void OnEnable()
     {
         interactAction.action.Enable();
+        EnableSlotActions(true);
         isActive = true;
         detectionRoutine = StartCoroutine(TargetDetectionRoutine());
     }
     private void OnDisable()
     {
         interactAction.action.Disable();
+        EnableSlotActions(false);
         if (detectionRoutine != null)
         {
             StopCoroutine(detectionRoutine);
@@ -79,6 +97,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
+        HandleSlotInput();
         if (!interactAction.action.IsPressed()) hasActedThisPress = false;
         if (isInteractOnCooldown) return;
         if (interactAction.action.IsPressed())
@@ -113,7 +132,9 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (interactable == currentInteractable) return;
 
-        currentInteractable?.OnHoverOff();
+        // A hover error on one object must not stop the detection coroutine, or targeting freezes for good.
+        try { currentInteractable?.OnHoverOff(); }
+        catch (System.Exception e) { Debug.LogException(e); }
         currentInteractable = interactable;
 
         if (currentInteractable == null)
@@ -123,7 +144,8 @@ public class PlayerInteractionHandler : MonoBehaviour
         }
 
         currentInteractableType = currentInteractable.InteractableType;
-        currentInteractable.OnHoverOn();
+        try { currentInteractable.OnHoverOn(); }
+        catch (System.Exception e) { Debug.LogException(e); }
     }
     private void HandleInteract()
     {
@@ -143,7 +165,8 @@ public class PlayerInteractionHandler : MonoBehaviour
         if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
         {
             hasActedThisPress = true;
-            currentCarriable.OnDrop();
+            // With a free slot the held item is stowed by RegisterCarriedObject, otherwise it is swapped out.
+            if (PickupWouldSwap()) currentCarriable.OnDrop();
             currentInteractable.OnInteract();
             return;
         }
@@ -229,6 +252,8 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
+        PlaceInInventory(carriable);
+
         currentCarriable = carriable;
         currentCarriableType = carriable.carriableType;
         isCarrying = true;
@@ -240,11 +265,15 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     public void ClearCarriedObject()
     {
+        if (currentCarriable != null) RemoveFromSlots(currentCarriable);
+        else slots[activeSlot] = null;
+
         currentCarriable = null;
         currentCarriableType = default;
         isCarrying = false;
         useHandler.ClearCurrentUsable();
-        if (stateMachine.currentPlayerState != PlayerStates.Slipping && stateMachine.currentPlayerState != PlayerStates.Using && stateMachine.currentPlayerState != PlayerStates.Dead) stateMachine.ForceUpdateIdle();
+        PlayerStates state = stateMachine.currentPlayerState;
+        if (state != PlayerStates.Slipping && state != PlayerStates.Using && state != PlayerStates.Dead && state != PlayerStates.Stunned) stateMachine.ForceUpdateIdle();
         pressureHandler.SetHeavy(false);
     }
     // Drops whatever the player is holding where it currently is (used on death so it doesn't respawn with the player).
@@ -252,6 +281,52 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         if (currentCarriable == null) return;
         currentCarriable.OnDrop();
+    }
+    // Called by a carriable leaving the player (drop, throw, consume). A stowed item only frees its own slot,
+    // so the item in hand stays put. Multiplayer keeps the old single-item behaviour.
+    public void ReleaseCarried(CarriableObject_SP carriable)
+    {
+        if (!UsesInventory || carriable == currentCarriable)
+        {
+            ClearCarriedObject();
+            return;
+        }
+
+        // Not held and not stowed: nothing of the player's to clear.
+        if (RemoveFromSlots(carriable)) carriable.SetStowed(false);
+    }
+    // Death: every carried item stays at the death spot. Stowed ones get a small toss so they don't stack inside each other.
+    public void DropAllCarried()
+    {
+        for (int i = 0; i < InventorySize; i++)
+        {
+            CarriableObject_SP stowed = slots[i];
+            if (stowed == null || stowed == currentCarriable) continue;
+            stowed.OnDrop(true);
+            slots[i] = null;
+        }
+        DropCarriedObject();
+    }
+    // Stun / car hit: the item in hand flies off, stowed items stay in the inventory.
+    public void ThrowHeldObject()
+    {
+        if (currentCarriable == null) return;
+        currentCarriable.OnDrop(true);
+    }
+    // True when picking something up now would drop the held item instead of stowing it.
+    public bool PickupWouldSwap()
+    {
+        if (currentCarriable == null) return false;
+        return !UsesInventory || FirstEmptySlot() < 0;
+    }
+    public int GetActiveSlot()
+    {
+        return activeSlot;
+    }
+    public CarriableObject_SP GetSlotItem(int index)
+    {
+        if (index < 0 || index >= InventorySize) return null;
+        return slots[index];
     }
     // What the look-at panel should show right now. False when there is nothing to show.
     public bool TryGetLookAtInfo(out LookAtInfo info)
@@ -286,6 +361,126 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         isInteractOnCooldown = false;
     }
+    #endregion
+
+    #region INVENTORY
+
+    private bool UsesInventory => !NetworkModeHelper.IsNetworked;
+
+    // The slot actions live in the same map as Interact, so no extra inspector wiring is needed.
+    private void EnableSlotActions(bool condition)
+    {
+        InputActionMap map = interactAction != null ? interactAction.action.actionMap : null;
+        if (map == null) return;
+
+        for (int i = 0; i < InventorySize; i++)
+        {
+            if (slotActions[i] == null) slotActions[i] = map.FindAction(SlotActionNames[i]);
+        }
+        if (nextSlotAction == null) nextSlotAction = map.FindAction("NextSlot");
+        if (previousSlotAction == null) previousSlotAction = map.FindAction("PreviousSlot");
+
+        foreach (InputAction action in slotActions) SetActionEnabled(action, condition);
+        SetActionEnabled(nextSlotAction, condition);
+        SetActionEnabled(previousSlotAction, condition);
+    }
+    private static void SetActionEnabled(InputAction action, bool condition)
+    {
+        if (action == null) return;
+        if (condition) action.Enable();
+        else action.Disable();
+    }
+    private void HandleSlotInput()
+    {
+        if (!UsesInventory) return;
+
+        for (int i = 0; i < InventorySize; i++)
+        {
+            if (slotActions[i] != null && slotActions[i].WasPressedThisFrame())
+            {
+                SelectSlot(i);
+                return;
+            }
+        }
+        if (nextSlotAction != null && nextSlotAction.WasPressedThisFrame()) SelectSlot((activeSlot + 1) % InventorySize);
+        else if (previousSlotAction != null && previousSlotAction.WasPressedThisFrame()) SelectSlot((activeSlot + InventorySize - 1) % InventorySize);
+    }
+    // Only from calm states: switching mid-use, mid-interaction or while ragdolled would break their animations.
+    private bool CanSwitchSlot()
+    {
+        PlayerStates state = stateMachine.currentPlayerState;
+        return state == PlayerStates.Idle || state == PlayerStates.Navigation || state == PlayerStates.OnAir;
+    }
+    public void SelectSlot(int index)
+    {
+        if (!UsesInventory || index < 0 || index >= InventorySize || index == activeSlot) return;
+        if (!CanSwitchSlot()) return;
+
+        if (currentCarriable != null) currentCarriable.SetStowed(true);
+        activeSlot = index;
+
+        CarriableObject_SP next = slots[index];
+        if (next != null)
+        {
+            next.SetStowed(false);
+            RegisterCarriedObject(next);
+        }
+        else if (currentCarriable != null)
+        {
+            // The stowed item keeps its slot, so ClearCarriedObject must not see it as the held one.
+            currentCarriable = null;
+            ClearCarriedObject();
+        }
+    }
+    // Puts a newly carried item in a slot and makes that slot active. The held item, if any, is stowed.
+    private void PlaceInInventory(CarriableObject_SP carriable)
+    {
+        if (!UsesInventory)
+        {
+            slots[activeSlot] = carriable;
+            return;
+        }
+
+        int existing = System.Array.IndexOf(slots, carriable);
+        if (existing >= 0)
+        {
+            activeSlot = existing;
+            return;
+        }
+
+        if (currentCarriable != null && currentCarriable != carriable)
+        {
+            // Callers that skip HandleInteract still get the swap rule when the inventory is full.
+            if (FirstEmptySlot() < 0) currentCarriable.OnDrop();
+            else currentCarriable.SetStowed(true);
+        }
+
+        int target = slots[activeSlot] == null ? activeSlot : FirstEmptySlot();
+        if (target < 0) target = activeSlot;
+        slots[target] = carriable;
+        activeSlot = target;
+    }
+    // Destroyed items read as null here, so their slot frees up on its own.
+    private int FirstEmptySlot()
+    {
+        for (int i = 0; i < InventorySize; i++)
+        {
+            if (slots[i] == null) return i;
+        }
+        return -1;
+    }
+    private bool RemoveFromSlots(CarriableObject_SP carriable)
+    {
+        bool removed = false;
+        for (int i = 0; i < InventorySize; i++)
+        {
+            if (slots[i] != carriable) continue;
+            slots[i] = null;
+            removed = true;
+        }
+        return removed;
+    }
+
     #endregion
 
     #region DEBUG

@@ -17,6 +17,8 @@ namespace ItemScript
         [Header("Settings")]
         [SerializeField] private float dropForce = 1f;
         [SerializeField] private float throwMultiplier = 0.1f;
+        [Tooltip("Upward speed (m/s) added to a throw so it arcs over low fences. Mass independent, so it is the same for every item.")]
+        [SerializeField] private float throwUpwardSpeed = 5f;
         [SerializeField] private float objectDiscardDelay = 3.0f;
 
         [Header("Events")]
@@ -52,8 +54,9 @@ namespace ItemScript
         public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
         {
             if (isConsumed || isOccupied) return default;
-            bool isHoldingOther = interactionHandler != null && interactionHandler.IsCarrying();
-            return LookAtInfo.Ready(LookAtText.ItemName(this), isHoldingOther ? "Swap" : "Carry");
+            // With a free inventory slot the held item is stowed, so only a full inventory swaps.
+            bool wouldSwap = interactionHandler != null && interactionHandler.PickupWouldSwap();
+            return LookAtInfo.Ready(LookAtText.ItemName(this), wouldSwap ? "Swap" : "Carry");
         }
         public void OnHoverOn()
         {
@@ -123,7 +126,7 @@ namespace ItemScript
                 rb.AddForce(direction * dropForce, ForceMode.Impulse);
             }
 
-            interactionHandler.ClearCarriedObject();
+            interactionHandler.ReleaseCarried(this);
         }
         public void OnThrow(float force)
         {
@@ -138,7 +141,8 @@ namespace ItemScript
             float adjustedForce = force * throwMultiplier;
             Vector3 direction = interactionHandler.transform.forward;
             rb.AddForce(direction * adjustedForce, ForceMode.Impulse);
-            interactionHandler.ClearCarriedObject();
+            rb.AddForce(Vector3.up * throwUpwardSpeed, ForceMode.VelocityChange);
+            interactionHandler.ReleaseCarried(this);
         }
         public void OnConsume()
         {
@@ -147,9 +151,24 @@ namespace ItemScript
 
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
-            interactionHandler.ClearCarriedObject();
+            interactionHandler.ReleaseCarried(this);
 
+            HideConsumed();
             Destroy(gameObject, objectDiscardDelay);
+        }
+        // Gone from view at once; the object itself lives on for the discard delay so its sounds can finish.
+        private void HideConsumed()
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+                if (!(r is ParticleSystemRenderer)) r.enabled = false;
+            foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = false;
+            foreach (var canvas in GetComponentsInChildren<Canvas>(true)) canvas.enabled = false;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
         }
         #endregion
 
@@ -168,7 +187,7 @@ namespace ItemScript
             //Clear from player if Player is holding this.
             if (interactionHandler.GetCurrentCarriable() == this)
             {
-                interactionHandler.ClearCarriedObject();
+                interactionHandler.ReleaseCarried(this);
             }
 
             //Attach to new target.
@@ -206,6 +225,7 @@ namespace ItemScript
             spawnerObject?.ReduceCounter();
             onConsumeEvent?.Invoke();
             isOccupied = false;
+            HideConsumed();
             Destroy(gameObject, objectDiscardDelay);
         }
         #endregion
@@ -230,6 +250,59 @@ namespace ItemScript
         {
             if (condition == objectRenderer.enabled) return;
             objectRenderer.enabled = condition;
+        }
+
+        // Inventory: a stowed item rides along with the player but is not drawn.
+        // Renderers are toggled instead of SetActive, because OnEnable resets state on some items (extinguisher fuel).
+        public bool IsStowed { get; private set; }
+        private readonly System.Collections.Generic.List<Renderer> stowedRenderers = new();
+        private readonly System.Collections.Generic.List<Canvas> stowedCanvases = new();
+        private const string HoverGlowName = "__HoverGlow";
+
+        public void SetStowed(bool stowed)
+        {
+            if (stowed == IsStowed) return;
+            IsStowed = stowed;
+
+            if (stowed)
+            {
+                stowedRenderers.Clear();
+                stowedCanvases.Clear();
+                foreach (var r in GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!r.enabled || r.name == HoverGlowName) continue;
+                    stowedRenderers.Add(r);
+                    r.enabled = false;
+                }
+                foreach (var canvas in GetComponentsInChildren<Canvas>(true))
+                {
+                    if (!canvas.enabled) continue;
+                    stowedCanvases.Add(canvas);
+                    canvas.enabled = false;
+                }
+                return;
+            }
+
+            foreach (var r in stowedRenderers) if (r != null) r.enabled = true;
+            foreach (var canvas in stowedCanvases) if (canvas != null) canvas.enabled = true;
+            stowedRenderers.Clear();
+            stowedCanvases.Clear();
+        }
+        // The meshes that make up the item's normal look, for the inventory icon. Works while stowed too.
+        public void GetIconRenderers(System.Collections.Generic.List<Renderer> result)
+        {
+            result.Clear();
+            if (IsStowed)
+            {
+                foreach (var r in stowedRenderers)
+                    if (r is MeshRenderer || r is SkinnedMeshRenderer) result.Add(r);
+                return;
+            }
+            foreach (var r in GetComponentsInChildren<Renderer>(false))
+            {
+                if (!r.enabled || r.name == HoverGlowName) continue;
+                if (r is MeshRenderer || r is SkinnedMeshRenderer) result.Add(r);
+            }
         }
     }
 

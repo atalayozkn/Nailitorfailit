@@ -75,7 +75,7 @@ public class InfoPopup : MonoBehaviour
             GamePauseManager.Instance.SetPause(true);
             pausedByPopup = true;
         }
-        FindFirstObjectByType<PlayerStateMachine>()?.OpenCursor();
+        CursorManager.Show(this);
     }
 
     // Small line at the bottom of the paper (e.g. how to reopen the pop-up). Empty hides it.
@@ -115,7 +115,7 @@ public class InfoPopup : MonoBehaviour
 
         if (pausedByPopup && GamePauseManager.Instance != null) GamePauseManager.Instance.SetPause(false);
         pausedByPopup = false;
-        FindFirstObjectByType<PlayerStateMachine>()?.CloseCursor();
+        CursorManager.Release(this);
 
         var callback = onClosed;
         onClosed = null;

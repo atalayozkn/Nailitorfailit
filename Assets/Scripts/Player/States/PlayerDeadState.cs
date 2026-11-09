@@ -7,8 +7,8 @@ public class PlayerDeadState : PlayerBaseState
     public PlayerDeadState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
-        // Leave the held item at the death spot instead of carrying it along to the respawn point.
-        stateMachine.interactionHandler.DropCarriedObject();
+        // Leave every carried item at the death spot instead of carrying them along to the respawn point.
+        stateMachine.interactionHandler.DropAllCarried();
 
         stateMachine.playerRenderer.enabled = false;
         stateMachine.movementHandler.enabled = false;

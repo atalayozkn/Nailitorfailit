@@ -14,6 +14,9 @@ public class PlayerStunnedState : PlayerBaseState
         stateMachine.onStunStartEvent?.Invoke();
         stateMachine.UpdateMoveDirection();
 
+        // A hit knocks the held item loose, otherwise it stays glued to the ragdoll's hand (oil bug).
+        stateMachine.interactionHandler.ThrowHeldObject();
+
         //Stopping Inputs & Disabling Animator
         stateMachine.movementHandler.SetActivity(false);
         stateMachine.interactionHandler.SetActivity(false);
