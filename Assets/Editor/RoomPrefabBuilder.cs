@@ -210,6 +210,7 @@ public static class RoomPrefabBuilder
         roof.transform.SetParent(root, false);
         roof.AddComponent<MeshFilter>().sharedMesh = source.sharedMesh;
         roof.AddComponent<MeshRenderer>().sharedMaterials = source.GetComponent<MeshRenderer>().sharedMaterials;
+        roof.AddComponent<DitherOccluder>(); // no collider, so the camera dither needs this to fade it over the player
 
         // Every roof mesh has its ridge along mesh X. All ridges must run the same way so neighbouring
         // rooms form clean valleys: along the room's longer side, and along Z on square rooms.

@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 7424496582518038351}
   - component: {fileID: 5477687008642366201}
   - component: {fileID: 6567061102627501003}
+  - component: {fileID: 1458262060086801072}
   m_Layer: 0
   m_Name: RoofMesh
   m_TagString: Untagged
@@ -122,3 +123,15 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1458262060086801072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7928561420389535416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a48df609e82edcd4cb0408d4518102d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DitherOccluder

@@ -121,6 +121,27 @@ public class CameraDitherHelper : MonoBehaviour
                 ditheredRenderers.Add(renderer, ApplyDither(renderer));
         }
 
+        // Collider-less occluders (roofs): test the camera-player segment against their bounds.
+        Vector3 toPlayer = point2 - point1;
+        float distance = toPlayer.magnitude;
+        if (distance > 0.001f)
+        {
+            var ray = new Ray(point1, toPlayer / distance);
+            foreach (var renderer in DitherOccluder.Renderers)
+            {
+                if (renderer == null || currentRenderers.Contains(renderer)) continue;
+                // Skip ones switched off by gameplay, but keep tracking ones this helper hid itself.
+                if (!renderer.gameObject.activeInHierarchy || (!renderer.enabled && !ditheredRenderers.ContainsKey(renderer))) continue;
+                var bounds = renderer.bounds;
+                bounds.Expand(castRadius * 2f);
+                if (!bounds.IntersectRay(ray, out float hit) || hit > distance) continue;
+
+                currentRenderers.Add(renderer);
+                if (!ditheredRenderers.ContainsKey(renderer))
+                    ditheredRenderers.Add(renderer, ApplyDither(renderer));
+            }
+        }
+
         // No longer obstructing
         releaseBuffer.Clear();
         foreach (var renderer in ditheredRenderers.Keys)
