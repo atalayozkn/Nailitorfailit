@@ -211,41 +211,63 @@ public static class RoomPrefabBuilder
         roof.AddComponent<MeshFilter>().sharedMesh = source.sharedMesh;
         roof.AddComponent<MeshRenderer>().sharedMaterials = source.GetComponent<MeshRenderer>().sharedMaterials;
 
-        // Roof meshes are long along X; turn them when the room is deeper than wide.
-        Vector3 meshSize = source.sharedMesh.bounds.size;
-        bool turn = depth > width && meshSize.x > meshSize.z;
-        roof.transform.localRotation = Quaternion.Euler(0f, turn ? 90f : 0f, 0f);
+        // Every roof mesh has its ridge along mesh X. All ridges must run the same way so neighbouring
+        // rooms form clean valleys: along the room's longer side, and along Z on square rooms.
+        bool ridgeAlongZ = depth >= width;
+        roof.transform.localRotation = Quaternion.Euler(0f, ridgeAlongZ ? 90f : 0f, 0f);
 
-        // Scale so the roof covers the outer walls plus overhang along both axes.
-        float outerLong = Mathf.Max(width, depth) + OuterOffset * 2f + 0.1f;
-        float outerShort = Mathf.Min(width, depth) + OuterOffset * 2f + 0.1f;
-        float meshLong = Mathf.Max(meshSize.x, meshSize.z);
-        float meshShort = Mathf.Min(meshSize.x, meshSize.z);
-        float scale = Mathf.Max((outerLong + RoofOverhang) / meshLong, (outerShort + RoofOverhang) / meshShort);
-        roof.transform.localScale = Vector3.one * scale;
+        // Across the ridge: cover the outer walls plus overhang, uniform scale (keeps the artist's pitch).
+        // Along the ridge: stop exactly at the tile edge (no gable overhang) so rooms placed end to end meet flush
+        // instead of overlapping near-coplanar surfaces, which would flicker.
+        Vector3 meshSize = source.sharedMesh.bounds.size;
+        float alongRidge = ridgeAlongZ ? depth : width;
+        float acrossRidge = (ridgeAlongZ ? width : depth) + OuterOffset * 2f + 0.1f;
+        float scale = (acrossRidge + RoofOverhang) / meshSize.z;
+        float ridgeScale = alongRidge / meshSize.x;
+        roof.transform.localScale = new Vector3(ridgeScale, scale, scale);
 
         // The meshes carry decorations hanging below the eaves, so plain bounds are useless for alignment.
-        // Use the roof surface instead: eave = lowest vertex on the outer edge, footprint = vertices above it.
-        GetRoofFrame(source.sharedMesh, roof.transform, out Vector3 footprintCenter, out float eaveY);
+        // Use the roof surface instead: eave = underside band spanning the footprint, footprint = vertices above it.
+        // Refine both scales against the measured surface footprint, then align.
+        for (int pass = 0; pass < 2; pass++)
+        {
+            GetRoofFrame(source.sharedMesh, roof.transform, out _, out _, out Vector3 surfaceSize);
+            float surfAlong = ridgeAlongZ ? surfaceSize.z : surfaceSize.x;
+            float surfAcross = ridgeAlongZ ? surfaceSize.x : surfaceSize.z;
+            var s = roof.transform.localScale;
+            if (surfAlong > 0.001f) s.x *= alongRidge / surfAlong;
+            if (surfAcross > 0.001f) { float k = (acrossRidge + RoofOverhang) / surfAcross; s.y *= k; s.z *= k; }
+            roof.transform.localScale = s;
+        }
+        GetRoofFrame(source.sharedMesh, roof.transform, out Vector3 footprintCenter, out float eaveY, out _);
         roof.transform.localPosition += new Vector3(-footprintCenter.x, wallTop - 0.02f - eaveY, -footprintCenter.z);
         return true;
     }
 
-    private static void GetRoofFrame(Mesh mesh, Transform roof, out Vector3 footprintCenter, out float eaveY)
+    private static void GetRoofFrame(Mesh mesh, Transform roof, out Vector3 footprintCenter, out float eaveY, out Vector3 surfaceSize)
     {
         Matrix4x4 m = Matrix4x4.TRS(roof.localPosition, roof.localRotation, roof.localScale);
         Vector3[] verts = mesh.vertices.Select(v => m.MultiplyPoint3x4(v)).ToArray();
 
         float minX = verts.Min(v => v.x), maxX = verts.Max(v => v.x);
         float minZ = verts.Min(v => v.z), maxZ = verts.Max(v => v.z);
-        float edgeX = (maxX - minX) * 0.05f, edgeZ = (maxZ - minZ) * 0.05f;
 
-        var edge = verts.Where(v => v.x < minX + edgeX || v.x > maxX - edgeX || v.z < minZ + edgeZ || v.z > maxZ - edgeZ).ToList();
-        eaveY = edge.Count > 0 ? edge.Min(v => v.y) : verts.Min(v => v.y);
+        // Eave = underside of the roof: the lowest thin height band whose vertices span most of the footprint
+        // in both directions. Downpipes and gutters hang lower but are narrow, so they never qualify.
+        eaveY = verts.Min(v => v.y);
+        const float band = 0.03f;
+        float spanX = maxX - minX, spanZ = maxZ - minZ;
+        foreach (var group in verts.GroupBy(v => Mathf.FloorToInt(v.y / band)).OrderBy(g => g.Key))
+        {
+            float gx = group.Max(v => v.x) - group.Min(v => v.x);
+            float gz = group.Max(v => v.z) - group.Min(v => v.z);
+            if (gx > spanX * 0.6f && gz > spanZ * 0.6f) { eaveY = group.Min(v => v.y); break; }
+        }
 
         float cut = eaveY - 0.01f;
         var surface = verts.Where(v => v.y >= cut).ToList();
         footprintCenter = new Vector3((surface.Min(v => v.x) + surface.Max(v => v.x)) * 0.5f, 0f, (surface.Min(v => v.z) + surface.Max(v => v.z)) * 0.5f);
+        surfaceSize = new Vector3(surface.Max(v => v.x) - surface.Min(v => v.x), surface.Max(v => v.y) - eaveY, surface.Max(v => v.z) - surface.Min(v => v.z));
     }
 
     #endregion
