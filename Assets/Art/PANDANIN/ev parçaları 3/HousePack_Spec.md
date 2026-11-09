@@ -53,7 +53,7 @@ Size column = **W × H × D in metres** (Unity X × Y × Z). Tris are approximat
 | Name | Purpose | W × H × D | Notes |
 |---|---|---|---|
 | `Wall_Plain` | Solid 1 m wall segment | 1.00 × 2.50 × 0.10 | Repeat along a line for long walls |
-| `Wall_Window` | 1 m wall with built-in window (glass + sill) | 1.00 × 2.50 × 0.26 | Depth includes the outside sill |
+| `Wall_Window` | 1 m wall with built-in window (glass + sill) | 1.00 × 2.50 × 0.26 | Wall body centred on the pivot (±0.05 m) like `Wall_Plain`; the sill sticks out on the outside only |
 | `Wall_DoorLintel_1m` | **Door slot filler**: plaster above a 1.0 × 1.95 m door, fits one 1 m wall slot | 1.00 × 0.55 × 0.10 | Pivot at **floor level** (bottom-centre of the slot); geometry spans y 1.95–2.50. Place exactly like `Wall_Plain`, then add `Door_Frame_A` + a door panel in the same slot |
 | `Wall_DoorOpening` | Wall with 1.0 × 1.95 m door hole, **1.40 m wide** | 1.40 × 2.50 × 0.10 | Does **not** fit a 1 m slot; use `Wall_DoorLintel_1m` for slot-based rooms |
 | `Wall_CornerTrim` | Corner post to hide wall joints | 0.15 × 2.50 × 0.15 | Place on every outside corner |
@@ -103,12 +103,14 @@ X**, so neighbours along the ridge meet without overlap. Shingle UVs are world-a
 |---|---|---|---|
 | `Roof_Gable_3x3` | One-piece roof for a 3 × 3 m room, gable ends included | 3.00 × 1.29 × 3.96 | Eaves overhang 0.30 m on the two slope sides |
 | `Roof_Gable_3x6` | One-piece roof for a 3 × 6 m room (6 m along X) | 6.00 × 1.29 × 3.96 | Same, ridge along the 6 m side |
-| `Roof_Gable_3x3_NoEave` | As above, eaves cut back to cover the wall only | 3.00 × 1.13 × 3.26 | Use when another room touches a slope side |
-| `Roof_Gable_3x6_NoEave` | As above for 3 × 6 | 6.00 × 1.13 × 3.26 | |
+| `Roof_Gable_3x3_NoEave` | As above, **no eaves**: stops at the wall centre line (±1.50 m) | 3.00 × 1.01 × 3.00 | Use when another room touches a slope side |
+| `Roof_Gable_3x6_NoEave` | As above for 3 × 6 | 6.00 × 1.01 × 3.00 | |
 | `Roof3_Section_1m` | Modular roof slice: both slopes + ridge + gutters, 1 m long | 1.00 × 1.28 × 3.96 | Middle slices of a roof |
 | `Roof3_SectionEdgeL_1m` | Slice with barge board on its **−X** end | 1.00 × 1.29 × 3.96 | First slice of a run |
 | `Roof3_SectionEdgeR_1m` | Slice with barge board on its **+X** end | 1.00 × 1.29 × 3.96 | Last slice of a run (no mirroring needed) |
-| `Roof3_Section_1m_NoEave` / `EdgeL` / `EdgeR` `_NoEave` | Same three slices with 0.05 m eaves | 1.00 × 1.12–1.13 × 3.18–3.26 | For rooms that touch on a slope side |
+| `Roof3_Section_1m_NoEave` / `EdgeL` / `EdgeR` `_NoEave` | Same three slices with **no eaves**, ending at the wall centre line | 1.00 × 1.00–1.01 × 2.99 | For rooms that touch on a slope side; two neighbours form a clean valley over the shared wall |
+
+Mapping to the requested names (`HousePack_Requirements.md` R1): `Roof_Panel_1m_3m` → `Roof3_Section_1m` (one slice covers **both** slopes), `Roof_EdgePanel_1m_3m` → `Roof3_SectionEdgeL_1m` / `EdgeR`, `Roof_GableEnd_3m` → `Roof3_GableEnd`, `Roof_Panel_1m_NoEave` → `Roof3_Section_1m_NoEave`. Ridge cap is built into the slices, so `Roof_Ridge_1m` is not needed with them.
 | `Roof3_GableEnd` | Triangle gable wall for the 3 m span | 0.10 × 0.90 × 3.10 | Pivot at its base centre on the wall top; place at y = 2.5 on the end wall line, 0.05 m inside the room |
 
 Room recipes (room centre = pivot of the roof):
@@ -247,4 +249,6 @@ stone block, small wall panel) are now **bottom-centre**. Remaining intentional 
 - All roof pivots moved to wall top; downpipes removed from `Roof_Gable_4x4`, `Roof_Hip_8x6`, `Roof_Shed_4x3`, `Roof_Porch_6x3`.
 - `Roof_Panel_1m` / `Roof_EdgePanel_1m` resized to exactly 1.00 m (were 1.04 / 1.10 → overlapped and flickered).
 - Shingle textures on all roofs now use a 1 m world-aligned tile.
+- `_NoEave` roofs now stop exactly at the wall centre line (R5); `Wall_Window` body re-centred on its pivot (W3).
+- `Door_Panel_E` kept for now (D4 says it can be removed; Unity rotation of `Door_Panel_D` does the same).
 - Not yet verified in Unity: that the outside faces point to local +Z. Wall inside faces are finished plaster on both sides (checked in Blender).
