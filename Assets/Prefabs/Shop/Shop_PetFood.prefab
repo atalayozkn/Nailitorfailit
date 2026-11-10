@@ -185,27 +185,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.x
-      value: 1.0141754
+      value: 0.53542346
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.y
-      value: 1.1122344
+      value: 0.55820715
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.z
-      value: 0.70343524
+      value: 0.32911536
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.x
-      value: -0.020467103
+      value: 0.08341416
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.y
-      value: 0.5509156
+      value: 0.6111363
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.z
-      value: -0.005116403
+      value: -0.004639849
       objectReference: {fileID: 0}
     - target: {fileID: 6604952132181727388, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_SizeDelta.x
@@ -280,6 +280,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7267517159524795000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       insertIndex: 2
       addedObject: {fileID: 3568176709453457103}
+    - targetCorrespondingSourceObject: {fileID: 7267517159524795000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6416248432542456809}
   m_SourcePrefab: {fileID: 100100000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
 --- !u!4 &2240316996555752950 stripped
 Transform:
@@ -306,3 +309,24 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 4475422334814508225}
   isMeshRenderer: 1
+  includeAllParts: 1
+--- !u!114 &6416248432542456809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3011375498502142927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 586c9f17a2a0a154ba74fab4d4cce3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldIndicator
+  glyph: $
+  icon: {fileID: 0}
+  color: {r: 0.95, g: 0.72, b: 0.18, a: 1}
+  pulse: 0
+  worldOffset: {x: 0, y: 1.923163, z: 0}
+  groupKey: Shop
+  shownOnStart: 1
+  hideWithinDistance: 4

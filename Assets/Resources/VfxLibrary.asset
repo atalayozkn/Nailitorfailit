@@ -20,6 +20,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 67205d2915794ca4d8818f2cf72b6c63, type: 3}
@@ -33,6 +35,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 1b701e7f95e2bf14390e066e51656ff9, type: 3}
@@ -48,6 +52,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 6ae6ac76f2e9375458c6b86e927c89a7, type: 3}
@@ -60,6 +66,8 @@ MonoBehaviour:
     offset: {x: 0, y: 2.5, z: 0}
     lifetime: 3
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 08c82906efbb81a478a856f36da16932, type: 3}
@@ -72,6 +80,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 93ec4f99407a5ec43890571c284bc5c4, type: 3}
@@ -86,6 +96,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 6a674fde8778def479b3e049a94fa8f1, type: 3}
@@ -98,6 +110,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: bcb1acbbef1a43b4e97bc441d92a240b, type: 3}
@@ -110,6 +124,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.8, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: e1493db5bae4eec4dbeed9a55bd3b73e, type: 3}
@@ -122,6 +138,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.5, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: a7b9c5621a2fa1b4fbf2a84364f4d6b8, type: 3}
@@ -136,6 +154,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.5, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 0f8e9b51accfa964f9c8f981f136299b, type: 3}
@@ -148,6 +168,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1.5
     hideSmoke: 1
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 0c3e6e569edf0884d832c35b731655f5, type: 3}
@@ -159,7 +181,9 @@ MonoBehaviour:
     scale: 1.1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
-    hideSmoke: 1
+    hideSmoke: 0
+    smokeSize: 0.45
+    smokeTint: {r: 0.33, g: 0.31, b: 0.3, a: 0.5}
     tint: {r: 1, g: 0.28, b: 0.04, a: 1}
     sounds:
     - {fileID: 8300000, guid: c76c64aca5564a54a996de6ff0837fb9, type: 3}
@@ -172,6 +196,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: c6abd0ed1b48a5e4f8b25c75bf2a11c2, type: 3}
@@ -184,6 +210,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 1ca7ba9233fcc764b85081e850ce5d30, type: 3}
@@ -196,6 +224,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: df7c0d460651c7246897061805865344, type: 3}
@@ -208,6 +238,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 5c1cd52a13602504fb50a73274dac020, type: 3}
@@ -220,6 +252,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: d23306aa7c2335b42a42bd39fa4f4158, type: 3}
@@ -232,6 +266,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.05, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -243,6 +279,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 0b6889c4d3ee3244a8b87d6a666ccef0, type: 3}
@@ -256,6 +294,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.15, z: 0}
     lifetime: 0
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 70867f591333ab5408fbcde791f261cd, type: 3}
@@ -268,6 +308,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 14552df3c8acb5c4196a0c23ecefb443, type: 3}
@@ -280,6 +322,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     lifetime: 1.5
     hideSmoke: 1
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 0.28, b: 0.04, a: 1}
     sounds: []
     volume: 0.8
@@ -291,6 +335,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1.2, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -302,6 +348,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.05, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -313,6 +361,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1.5, z: 0}
     lifetime: 0
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -324,6 +374,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -335,6 +387,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.05, z: 0}
     lifetime: 0
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -346,6 +400,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 2c2b5ebc5f6468b4aae6c293df846224, type: 3}
@@ -358,6 +414,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.5, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -369,6 +427,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -380,6 +440,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1, z: 0}
     lifetime: 1.2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 4921a5927e3770946a2484dc7e06e00e, type: 3}
@@ -393,6 +455,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: bac6b1770a824ac49a5aa458f531f351, type: 3}
@@ -405,6 +469,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.3, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: a220d9717fad4e144a06d1edd74d4aac, type: 3}
@@ -418,6 +484,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1.1, z: 0}
     lifetime: 2
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 83dfa7ee9609c89409640196da2dcb7e, type: 3}
@@ -430,6 +498,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.2, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 0fa637d8ea29d3f4ca7f69cd45f8d523, type: 3}
@@ -442,6 +512,8 @@ MonoBehaviour:
     offset: {x: 0, y: 1, z: 0}
     lifetime: 1.5
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: dc6fad55d1c0b504dbe6b5ad405bfdb7, type: 3}
@@ -454,6 +526,8 @@ MonoBehaviour:
     offset: {x: 0, y: 3, z: 0}
     lifetime: 4
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds:
     - {fileID: 8300000, guid: 14a2f4ee99968134bbcd075f208e2539, type: 3}
@@ -466,6 +540,8 @@ MonoBehaviour:
     offset: {x: 0, y: 0.1, z: 0}
     lifetime: 1
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
@@ -477,8 +553,56 @@ MonoBehaviour:
     offset: {x: 0, y: 0.15, z: 0}
     lifetime: 6
     hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
     tint: {r: 1, g: 1, b: 1, a: 0}
     sounds: []
     volume: 0.8
     pitchJitter: 0.06
     spatial: 0.6
+  - id: 39
+    prefab: {fileID: 8205706795460263314, guid: 326e86d5729c54e479798cacab220bb2, type: 3}
+    scale: 0.25
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 1
+    hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
+    tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: d23306aa7c2335b42a42bd39fa4f4158, type: 3}
+    volume: 0.25
+    pitchJitter: 0.08
+    spatial: 0.9
+  - id: 40
+    prefab: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
+    scale: 0.08
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0.8
+    hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
+    tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 0b6889c4d3ee3244a8b87d6a666ccef0, type: 3}
+    - {fileID: 8300000, guid: ed17d8e232272c541b5cd85ebafc5bc9, type: 3}
+    volume: 0.3
+    pitchJitter: 0.08
+    spatial: 0.9
+  - id: 41
+    prefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
+    scale: 0.14
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 1
+    hideSmoke: 0
+    smokeSize: 1
+    smokeTint: {r: 1, g: 1, b: 1, a: 0}
+    tint: {r: 1, g: 1, b: 1, a: 0}
+    sounds:
+    - {fileID: 8300000, guid: 1b701e7f95e2bf14390e066e51656ff9, type: 3}
+    - {fileID: 8300000, guid: d6e7a770588470649a83f0e7fae8e163, type: 3}
+    - {fileID: 8300000, guid: 2fe9a77cee58e024eaef8f7d1cf7a1cd, type: 3}
+    - {fileID: 8300000, guid: c0104a23670de3b48a3bf528ca6d9d14, type: 3}
+    volume: 0.7
+    pitchJitter: 0.08
+    spatial: 0.9

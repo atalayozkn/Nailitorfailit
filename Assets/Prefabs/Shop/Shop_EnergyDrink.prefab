@@ -189,23 +189,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.x
-      value: 1.0176153
+      value: 0.5298311
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.y
-      value: 1.1122347
+      value: 0.5670459
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Size.z
-      value: 0.6853399
+      value: 0.3724526
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.x
-      value: 0.0068223476
+      value: 0.08209809
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.y
-      value: -0.45540088
+      value: -0.405719
       objectReference: {fileID: 0}
     - target: {fileID: 5706697181855917297, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       propertyPath: m_Center.z
@@ -298,6 +298,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7267517159524795000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
       insertIndex: 2
       addedObject: {fileID: 1188794279873411295}
+    - targetCorrespondingSourceObject: {fileID: 7267517159524795000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3501169936989803005}
   m_SourcePrefab: {fileID: 100100000, guid: f030e2c3a16dd8744821ff93f1e2ef52, type: 3}
 --- !u!4 &2240316996555752950 stripped
 Transform:
@@ -324,3 +327,24 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 6087626064537420779}
   isMeshRenderer: 1
+  includeAllParts: 1
+--- !u!114 &3501169936989803005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3011375498502142927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 586c9f17a2a0a154ba74fab4d4cce3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldIndicator
+  glyph: $
+  icon: {fileID: 0}
+  color: {r: 0.95, g: 0.72, b: 0.18, a: 1}
+  pulse: 0
+  worldOffset: {x: 0, y: 0.6, z: 0}
+  groupKey: Shop
+  shownOnStart: 1
+  hideWithinDistance: 4

@@ -4936,7 +4936,11 @@ GameObject:
   m_Component:
   - component: {fileID: 4772151309299374023}
   - component: {fileID: 5671437314192711451}
-  m_Layer: 0
+  - component: {fileID: 3221969419779984741}
+  - component: {fileID: 4345600814401796915}
+  - component: {fileID: 6408082127212998451}
+  - component: {fileID: 7735038577775485052}
+  m_Layer: 6
   m_Name: Electric_Socket
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4973,6 +4977,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ac00a3741b8105469c5d379f9e90430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElectricalHazard_Prototype
+  telegraphDuration: 7.5
+  activeDuration: 0
+  repairableWhileActive: 0
+  warningInterval: 0.6
+  glowPulseInterval: 0.3
+  repairCollider: {fileID: 3221969419779984741}
+  highlight: {fileID: 4345600814401796915}
+  xray: {fileID: 6408082127212998451}
+  indicator: {fileID: 7735038577775485052}
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
@@ -4994,6 +5007,78 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   isDebugMode: 1
+--- !u!65 &3221969419779984741
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5772881201167195899}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.7, y: 0.8, z: 0.6}
+  m_Center: {x: 0, y: 0.1, z: 0.3}
+--- !u!114 &4345600814401796915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5772881201167195899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b3f8f86ce8fa64e908f22d3304a0c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightHelper
+  skinnedMeshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 0}
+  isMeshRenderer: 1
+  includeAllParts: 1
+--- !u!114 &6408082127212998451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5772881201167195899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3edb7322a242ffb4e812a6f83c835b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XRayOverlay
+  idleColor: {r: 1, g: 0.95, b: 0.85, a: 0.22}
+  warningColor: {r: 1, g: 0.55, b: 0.1, a: 0.85}
+  pulseSpeed: 8
+--- !u!114 &7735038577775485052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5772881201167195899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 586c9f17a2a0a154ba74fab4d4cce3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldIndicator
+  glyph: '!'
+  icon: {fileID: 0}
+  color: {r: 0.96, g: 0.5, b: 0.1, a: 1}
+  pulse: 1
+  worldOffset: {x: 0, y: 1, z: 0}
+  groupKey: 
+  shownOnStart: 0
+  hideWithinDistance: 0
 --- !u!1 &6647357247554704914
 GameObject:
   m_ObjectHideFlags: 0
