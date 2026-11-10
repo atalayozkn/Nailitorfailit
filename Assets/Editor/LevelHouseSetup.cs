@@ -29,6 +29,7 @@ public static class LevelHouseSetup
         public CarriableType primary;
         public CarriableType secondary;
         public float ratio = 0.3f;
+        public bool noEave;               // house pack: eave-less roof, for rooms whose slope meets another room
     }
 
     // A socket / pipe spot: socket sits on the inside of a wall slot, pipe under the room's floor.
@@ -49,6 +50,7 @@ public static class LevelHouseSetup
         public bool hasMixer;             // mixer + cement + brick piles
         public bool hasGlass;             // glass pile
         public bool hasFire;              // fire extinguisher sold in the shop
+        public bool housePack;            // build the house from the artist's house pack (*_Pack room prefabs)
         public int seed;
         public List<RoomDef> rooms;
         public List<HazardSpot> sockets = new List<HazardSpot>();
@@ -94,6 +96,7 @@ public static class LevelHouseSetup
         living.doors = new List<RoomLayout.DoorPlacement> { Door(Side.South, 1, true), Door(Side.West, 1), Door(Side.West, 4) };
         bed.prefab = "Room_3x3"; bed.center = new Vector2(-1.5f, 1.5f); bed.openSides = new List<Side> { Side.East };
         bath.prefab = "Room_3x3_B"; bath.center = new Vector2(-1.5f, -1.5f); bath.openSides = new List<Side> { Side.East, Side.North };
+        bed.noEave = bath.noEave = true; // their slope meets the living room's slope (house pack)
         return new List<RoomDef> { living, bed, bath };
     }
 
@@ -104,6 +107,7 @@ public static class LevelHouseSetup
         living.doors = new List<RoomLayout.DoorPlacement> { Door(Side.South, 1, true), Door(Side.West, 4), Door(Side.East, 4) };
         bed.prefab = "Room_3x3"; bed.center = new Vector2(-3f, 1.5f); bed.openSides = new List<Side> { Side.East };
         bath.prefab = "Room_3x3_B"; bath.center = new Vector2(3f, 1.5f); bath.openSides = new List<Side> { Side.West };
+        bed.noEave = bath.noEave = true;
         return new List<RoomDef> { living, bed, bath };
     }
 
@@ -115,6 +119,7 @@ public static class LevelHouseSetup
         bed.center = new Vector2(-3f, 1.5f);
         bath.center = new Vector2(-3f, -1.5f);
         bed2.prefab = "Room_3x3"; bed2.center = new Vector2(3f, bed2AtFront ? -1.5f : 1.5f); bed2.openSides = new List<Side> { Side.West };
+        bed2.noEave = true;
         living.doors.Add(Door(Side.East, bed2AtFront ? 1 : 4));
         rooms.Add(bed2);
         return rooms;
@@ -131,22 +136,22 @@ public static class LevelHouseSetup
         return new List<LevelDef>
         {
             // L1: all-wood house. New: cars and shops.
-            new LevelDef { scene = "Assets/Scenes/Level_01.unity", houseOpenPositiveZ = false, seed = 1,
+            new LevelDef { scene = "Assets/Scenes/Level_01.unity", houseOpenPositiveZ = false, seed = 1, housePack = true,
                 rooms = LShape(R("LivingRoom", Pattern.AllPrimary, W), R("Bedroom", Pattern.AllPrimary, W), R("Bathroom", Pattern.AllPrimary, W)) },
             // L2: wooden house again. New: electrical fire (sockets) + fire extinguisher shop.
-            new LevelDef { scene = "Assets/Scenes/Level_02.unity", houseOpenPositiveZ = true, hasFire = true, seed = 2,
+            new LevelDef { scene = "Assets/Scenes/Level_02.unity", housePack = true, houseOpenPositiveZ = true, hasFire = true, seed = 2,
                 rooms = TShape(R("LivingRoom", Pattern.AllPrimary, W), R("Bedroom", Pattern.AllPrimary, W), R("Bathroom", Pattern.AllPrimary, W)),
                 sockets = { new HazardSpot("LivingRoom", Side.East, 1), new HazardSpot("Bedroom", Side.North, 1) } },
             // L3: wood + brick. New: mixer, cement and brick piles.
-            new LevelDef { scene = "Assets/Scenes/Level_03.unity", houseOpenPositiveZ = true, mirror = true, hasMixer = true, hasFire = true, seed = 3,
+            new LevelDef { scene = "Assets/Scenes/Level_03.unity", housePack = true, houseOpenPositiveZ = true, mirror = true, hasMixer = true, hasFire = true, seed = 3,
                 rooms = LShape(R("LivingRoom", Pattern.HalfSplit, W, B), R("Bedroom", Pattern.AllPrimary, B), R("Bathroom", Pattern.Checker, W, B)),
                 sockets = { new HazardSpot("LivingRoom", Side.East, 3), new HazardSpot("Bedroom", Side.North, 1) } },
             // L4: four rooms. New: glass.
-            new LevelDef { scene = "Assets/Scenes/Level_04.unity", houseOpenPositiveZ = false, hasMixer = true, hasGlass = true, hasFire = true, seed = 4,
+            new LevelDef { scene = "Assets/Scenes/Level_04.unity", housePack = true, houseOpenPositiveZ = false, hasMixer = true, hasGlass = true, hasFire = true, seed = 4,
                 rooms = FourRooms(R("LivingRoom", Pattern.Random, W, G, 0.3f), R("Bedroom", Pattern.Checker, W, B), R("Bathroom", Pattern.Border, B, G), R("Bedroom2", Pattern.AllPrimary, B), false),
                 sockets = { new HazardSpot("LivingRoom", Side.North, 1), new HazardSpot("Bathroom", Side.South, 1) } },
             // L5: four rooms, everything. New: leaking water pipes (no rain).
-            new LevelDef { scene = "Assets/Scenes/Level_05.unity", houseOpenPositiveZ = true, mirror = true, hasMixer = true, hasGlass = true, hasFire = true, seed = 5,
+            new LevelDef { scene = "Assets/Scenes/Level_05.unity", housePack = true, houseOpenPositiveZ = true, mirror = true, hasMixer = true, hasGlass = true, hasFire = true, seed = 5,
                 rooms = FourRooms(R("LivingRoom", Pattern.Checker, B, G), R("Bedroom", Pattern.HalfSplit, W, G), R("Bathroom", Pattern.Border, B, G), R("Bedroom2", Pattern.Random, W, B, 0.4f), true),
                 sockets = { new HazardSpot("LivingRoom", Side.North, 1), new HazardSpot("Bedroom", Side.North, 1) },
                 pipes = { new HazardSpot("Bathroom"), new HazardSpot("Bedroom2") } },
@@ -180,6 +185,39 @@ public static class LevelHouseSetup
             return;
         }
         Setup(level);
+    }
+
+    // Rebuilds only the house (and its hazards) in the active level, leaving stations and shops as they are.
+    // The first time, the existing house is kept as a disabled "House_Old" root for comparison.
+    [MenuItem("Tools/NailIt/Rebuild House Only In Active Level")]
+    public static void RebuildHouseActive()
+    {
+        var scene = EditorSceneManager.GetActiveScene();
+        var level = Levels().FirstOrDefault(l => l.scene == scene.path);
+        if (level == null)
+        {
+            Debug.LogWarning("LevelHouseSetup: active scene is not one of the 5 level scenes.");
+            return;
+        }
+        var marker = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).FirstOrDefault(t => t.name == "HouseCenter");
+        if (marker == null)
+        {
+            Debug.LogError($"LevelHouseSetup: {level.scene} needs a HouseCenter marker.");
+            return;
+        }
+
+        var roots = scene.GetRootGameObjects();
+        var current = roots.FirstOrDefault(g => g.name == HouseRootName);
+        if (current != null && !roots.Any(g => g.name == HouseRootName + "_Old"))
+        {
+            current.name = HouseRootName + "_Old";
+            current.SetActive(false);
+        }
+
+        var house = BuildHouse(scene, level, marker);
+        WireControllers(scene, BuildHazards(level, house));
+        EditorSceneManager.MarkSceneDirty(scene);
+        Debug.Log($"LevelHouseSetup: rebuilt the house in {scene.name} ({level.rooms.Count} rooms{(level.housePack ? ", house pack" : "")}).");
     }
 
     // Sets up one level in its (already open) scene. Returns false when markers are missing.
@@ -227,9 +265,10 @@ public static class LevelHouseSetup
         // Front door is on house-local -Z, turn it toward the road.
         house.transform.rotation = Quaternion.Euler(0f, level.houseOpenPositiveZ ? 180f : 0f, 0f);
 
+        var footprints = level.housePack ? Footprints(level) : null;
         foreach (var def in level.rooms)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RoomsDir + def.prefab + ".prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RoomsDir + def.prefab + (level.housePack ? "_Pack" : "") + ".prefab");
             var room = (GameObject)PrefabUtility.InstantiatePrefab(prefab, house.transform);
             room.name = def.label;
 
@@ -247,7 +286,9 @@ public static class LevelHouseSetup
             room.transform.localPosition = new Vector3(c.x, 0f, c.y);
             room.transform.localRotation = Quaternion.identity;
 
-            room.GetComponent<RoomLayout>().Configure(openSides, doors);
+            var layout = room.GetComponent<RoomLayout>();
+            var windows = level.housePack ? Windows(layout, c, openSides, doors, footprints) : null;
+            layout.Configure(openSides, doors, windows, level.housePack && def.noEave);
             var recipe = room.GetComponent<RoomMaterialRecipe>();
             recipe.Setup(def.pattern, def.primary, def.secondary, def.ratio, level.seed * 10 + level.rooms.IndexOf(def));
             // Script changes on prefab instances are only kept as overrides when recorded.
@@ -255,6 +296,41 @@ public static class LevelHouseSetup
             PrefabUtility.RecordPrefabInstancePropertyModifications(room.GetComponent<RoomLayout>());
         }
         return house.transform;
+    }
+
+    // House-local footprint (x, z) of every room, used to tell outside walls from walls shared with a neighbour.
+    private static List<Rect> Footprints(LevelDef level)
+    {
+        var rects = new List<Rect>();
+        foreach (var def in level.rooms)
+        {
+            var layout = AssetDatabase.LoadAssetAtPath<GameObject>(RoomsDir + def.prefab + "_Pack.prefab")?.GetComponent<RoomLayout>();
+            if (layout == null) continue;
+            float x = level.mirror ? -def.center.x : def.center.x;
+            rects.Add(new Rect(x - layout.Width * 0.5f, def.center.y - layout.Depth * 0.5f, layout.Width, layout.Depth));
+        }
+        return rects;
+    }
+
+    // One window in the middle of every outside wall (two on 6 m walls), skipping door slots.
+    private static List<RoomLayout.WindowPlacement> Windows(RoomLayout layout, Vector2 center, List<Side> openSides, List<RoomLayout.DoorPlacement> doors, List<Rect> footprints)
+    {
+        var windows = new List<RoomLayout.WindowPlacement>();
+        foreach (Side side in System.Enum.GetValues(typeof(Side)))
+        {
+            if (openSides.Contains(side)) continue;
+            int count = layout.GetSlotCount(side);
+            int[] picks = count % 2 == 1 ? new[] { count / 2 } : count >= 6 ? new[] { 1, count - 2 } : new[] { count / 2 };
+            foreach (int i in picks)
+            {
+                if (doors.Any(d => d.side == side && d.slotIndex == i)) continue;
+                RoomPrefabBuilder.GetSlotFrame(side, i, layout.Width, layout.Depth, out Vector3 edge, out Vector3 outward, out _);
+                var probe = new Vector2(center.x + edge.x + outward.x * 0.5f, center.y + edge.z + outward.z * 0.5f);
+                if (footprints.Any(r => r.Contains(probe))) continue; // a neighbour room is on the other side
+                windows.Add(new RoomLayout.WindowPlacement { side = side, slotIndex = i });
+            }
+        }
+        return windows;
     }
 
     private static void BuildStations(UnityEngine.SceneManagement.Scene scene, LevelDef level, Transform marker, List<Transform> all)

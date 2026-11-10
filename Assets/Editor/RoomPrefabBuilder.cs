@@ -77,7 +77,7 @@ public static class RoomPrefabBuilder
 
     #region Tiles
 
-    private static GameObject[] BuildTiles(Transform root, RoomController roomController, int width, int depth)
+    internal static GameObject[] BuildTiles(Transform root, RoomController roomController, int width, int depth)
     {
         var floorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(FloorConstructPath);
         var parent = new GameObject("Tiles").transform;
@@ -153,7 +153,7 @@ public static class RoomPrefabBuilder
     }
 
     // Edge center (room local), outward normal and the rotation that makes a part's +Z face the room.
-    private static void GetSlotFrame(RoomLayout.Side side, int i, int width, int depth, out Vector3 edgeCenter, out Vector3 outward, out float rotY)
+    internal static void GetSlotFrame(RoomLayout.Side side, int i, int width, int depth, out Vector3 edgeCenter, out Vector3 outward, out float rotY)
     {
         float halfW = width * 0.5f, halfD = depth * 0.5f;
         float x = i - (width - 1) * 0.5f;
@@ -275,7 +275,7 @@ public static class RoomPrefabBuilder
 
     #region Canvas
 
-    private static TextMeshProUGUI BuildCanvas(Transform root)
+    internal static TextMeshProUGUI BuildCanvas(Transform root)
     {
         var source = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RoomCanvasSourcePath));
         PrefabUtility.UnpackPrefabInstance(source, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
