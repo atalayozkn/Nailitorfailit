@@ -35,8 +35,19 @@ namespace PlayerScripts
         private float currentEnergy;
         private Coroutine chargeRoutine;
         private bool isEnergised;
-        private GameObject energisedEffect;
         private float costMultiplier;
+        private float energisedEndTime;
+        private float lastConsumeTime = float.NegativeInfinity;
+
+        // Read by StaminaBarVisual, which shows the mode on the bar instead of an effect on the player.
+        public float Energy01 => maxEnergy > 0f ? currentEnergy / maxEnergy : 0f;
+        public float MaxEnergy => maxEnergy;
+        public bool IsEnergised => isEnergised;
+        public float EnergisedRemaining01 => isEnergised && energisedDuration > 0f ? Mathf.Clamp01((energisedEndTime - Time.time) / energisedDuration) : 0f;
+        // The empty penalty window: stamina hit zero and refills at drainedMultiplier speed.
+        public bool IsExhausted => costMultiplier > 1f;
+        public bool IsCharging => chargeRoutine != null;
+        public bool IsDraining => Time.time - lastConsumeTime < 0.35f;
 
         private void OnEnable()
         {
@@ -59,8 +70,11 @@ namespace PlayerScripts
             if (chargeRoutine != null)
             {
                 StopCoroutine(chargeRoutine);
+                chargeRoutine = null;
             }
 
+            // Walking calls this with 0 every physics step; only a real cost counts as draining.
+            if (value > 0f) lastConsumeTime = Time.time;
             currentEnergy -= value;
 
             if (currentEnergy <= 0f)
@@ -123,7 +137,7 @@ namespace PlayerScripts
         private void BecomeEnergised()
         {
             isEnergised = true;
-            if (energisedEffect == null) energisedEffect = VfxManager.PlayLoop(VfxId.PlayerEnergised, transform);
+            energisedEndTime = Time.time + energisedDuration;
             onEnergisedEvent?.Invoke();
             CancelInvoke(nameof(ReverseEnergised));
             Invoke(nameof(ReverseEnergised),energisedDuration);
@@ -132,7 +146,6 @@ namespace PlayerScripts
         private void BecomeDrained()
         {
             costMultiplier = drainedMultiplier;
-            VfxManager.Play(VfxId.PlayerDrained, transform.position);
             onDrainedEvent?.Invoke();
             CancelInvoke(nameof(ReverseDrained));
             Invoke(nameof(ReverseDrained),drainedDuration);
@@ -149,7 +162,6 @@ namespace PlayerScripts
         private void ReverseEnergised()
         {
             isEnergised = false;
-            VfxManager.Stop(energisedEffect);
             onEnergiseReversedEvent?.Invoke();
         }
 

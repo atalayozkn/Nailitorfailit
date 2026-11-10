@@ -18,7 +18,7 @@ public class CameraDitherHelper : MonoBehaviour
 
     [Header("Dither")]
     [Tooltip("Fraction of pixels removed while an object blocks the view (0 = solid, 1 = invisible).")]
-    [Range(0f, 1f)][SerializeField] private float ditherAmount = 0.6f;
+    [Range(0f, 1f)][SerializeField] private float ditherAmount = 1f;
     [Tooltip("Radius of the see-through circle around the player, as a fraction of screen height.")]
     [Range(0f, 1f)][SerializeField] private float circleRadius = 0.15f;
     [Tooltip("Width of the circle's soft edge, as a fraction of screen height.")]

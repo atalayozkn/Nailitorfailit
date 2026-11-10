@@ -65,7 +65,7 @@ public class HighlightHelper : MonoBehaviour
             {
                 if (!(r is MeshRenderer) && !(r is SkinnedMeshRenderer)) continue;
                 if (r.GetComponentInParent<IInteractable>(true) as Component != owner) continue;
-                if (r.name == OverlayName) continue;
+                if (r.name.StartsWith("__")) continue; // overlays (this glow, XRayOverlay) never glow themselves
                 result.Add(r);
             }
         }
@@ -76,7 +76,7 @@ public class HighlightHelper : MonoBehaviour
             if (assigned != null) result.Add(assigned);
             else
                 foreach (var r in GetComponentsInChildren<Renderer>(true))
-                    if ((r is MeshRenderer || r is SkinnedMeshRenderer) && r.name != OverlayName) result.Add(r);
+                    if ((r is MeshRenderer || r is SkinnedMeshRenderer) && !r.name.StartsWith("__")) result.Add(r);
         }
         return result;
     }

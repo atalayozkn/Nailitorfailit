@@ -43,6 +43,9 @@ public enum VfxId
     Victory,
     PoleImpact,
     PuddleElectrified,
+    PipeWarning,
+    SocketWarning,
+    HazardRepaired,
 }
 
 
@@ -118,12 +121,17 @@ public static class VfxManager
         // These run for every small game action: no room-wide light flash or camera shake.
         foreach (Light effectLight in effect.GetComponentsInChildren<Light>(true)) effectLight.enabled = false;
         if (effect.TryGetComponent<CFXR_Effect>(out var cfxr)) cfxr.cameraShake.enabled = false;
-        if (entry.hideSmoke)
+        foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>(true))
         {
-            foreach (ParticleSystem particles in effect.GetComponentsInChildren<ParticleSystem>(true))
+            if (particles.name.IndexOf("Smoke", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+            if (entry.hideSmoke)
             {
-                if (particles.name.IndexOf("Smoke", System.StringComparison.OrdinalIgnoreCase) >= 0) particles.gameObject.SetActive(false);
+                particles.gameObject.SetActive(false);
+                continue;
             }
+            ParticleSystem.MainModule smokeMain = particles.main;
+            if (entry.smokeSize > 0f && !Mathf.Approximately(entry.smokeSize, 1f)) smokeMain.startSizeMultiplier *= entry.smokeSize;
+            if (entry.smokeTint.a > 0f) smokeMain.startColor = entry.smokeTint;
         }
         if (entry.tint.a > 0f && effect.TryGetComponent<ParticleSystem>(out var mainSystem))
         {

@@ -13,9 +13,11 @@ public class BlueprintVisual : MonoBehaviour
     [SerializeField] private Material hologramMaterial;
 
     [Header("Empty Slot")]
-    [SerializeField] private float otherMaterialAlpha = 0.45f;
     [SerializeField] private float pulseMaxHighlight = 0.6f;
     [SerializeField] private float pulseSpeed = 5f;
+    [Tooltip("Singleplayer: an empty slot is hidden unless the player carries its processed tile. Looking at it shows it this faintly.")]
+    [SerializeField, Range(0f, 1f)] private float hoverOnlyAlpha = 0.35f;
+    [SerializeField] private float fadeSpeed = 4f;
 
     [Header("Reveal")]
     [SerializeField, Range(0f, 1f)] private float placedReveal = 0.2f;
@@ -43,6 +45,8 @@ public class BlueprintVisual : MonoBehaviour
     private float highlight;
     private bool isReady;
     private bool isHovered;
+    private float ghostAlpha;
+    private bool ghostVisible = true;
 
     private void Start()
     {
@@ -79,21 +83,41 @@ public class BlueprintVisual : MonoBehaviour
     }
     private void UpdateGhost()
     {
-        float alphaScale = 1f;
-        float target = isHovered ? 1f : 0f;
-
-        if (!isHovered && interactionHandler != null && interactionHandler.IsCarrying())
+        // Multiplayer has no local handler here and keeps the always-visible blueprint.
+        if (interactionHandler == null)
         {
-            bool matches = interactionHandler.GetCurrentCarriable() != null
-                && !interactionHandler.GetCurrentCarriable().isRawMaterial
-                && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType();
-
-            if (matches) target = (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
-            else alphaScale = otherMaterialAlpha;
+            UpdateGhostAlwaysVisible();
+            return;
         }
 
+        bool matches = interactionHandler.IsCarrying()
+            && interactionHandler.GetCurrentCarriable() != null
+            && !interactionHandler.GetCurrentCarriable().isRawMaterial
+            && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType();
+
+        float targetAlpha = matches ? 1f : isHovered ? hoverOnlyAlpha : 0f;
+        float target = 0f;
+        if (matches) target = isHovered ? 1f : (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
+
+        ghostAlpha = Mathf.MoveTowards(ghostAlpha, targetAlpha, fadeSpeed * Time.deltaTime);
         highlight = Mathf.MoveTowards(highlight, target, highlightSpeed * Time.deltaTime);
-        ApplyTo(ghostMaterials, 0f, alphaScale, highlight);
+        SetGhostVisible(ghostAlpha > 0.001f);
+        ApplyTo(ghostMaterials, 0f, ghostAlpha, highlight);
+    }
+    private void UpdateGhostAlwaysVisible()
+    {
+        float target = isHovered ? 1f : 0f;
+        highlight = Mathf.MoveTowards(highlight, target, highlightSpeed * Time.deltaTime);
+        SetGhostVisible(true);
+        ApplyTo(ghostMaterials, 0f, 1f, highlight);
+    }
+    // Hidden slots are switched off, not just drawn at zero alpha, so they cost nothing.
+    private void SetGhostVisible(bool visible)
+    {
+        if (visible == ghostVisible) return;
+        ghostVisible = visible;
+        foreach (GameObject part in ghostParts) part.SetActive(visible);
+        ghostRenderer.enabled = visible && ghostParts.Count == 0;
     }
     private void UpdatePlacedTile()
     {
@@ -161,6 +185,7 @@ public class BlueprintVisual : MonoBehaviour
 
         // Keeps the plain slab when the tile has no mesh to copy.
         ghostRenderer.enabled = ghostParts.Count == 0;
+        ghostVisible = true;
         if (ghostRenderer.enabled)
         {
             Material slab = CreateHologram(null);

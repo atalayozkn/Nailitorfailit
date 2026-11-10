@@ -24,7 +24,8 @@ public class DogStateMachine : StateMachine_Dog
         Aggresive,
         Play,
         Eat,
-        Aid
+        Aid,
+        Alert
     }
 
     [field: Header("References")]
@@ -74,6 +75,35 @@ public class DogStateMachine : StateMachine_Dog
     {
         currentDogState = DogState.Play;
         patrolCounter = 0;
+        ChangeToIdleState();
+        TelegraphedHazard.WarningStarted += OnHazardWarning;
+    }
+    private void OnDisable()
+    {
+        TelegraphedHazard.WarningStarted -= OnHazardWarning;
+    }
+
+    // A loyal dog alerts the player to a hazard warning; a restless or rebellious one does not care.
+    // A sleeping, eating, gift-carrying (Aid), chasing or already alerting dog finishes what it is doing.
+    private void OnHazardWarning(TelegraphedHazard hazard)
+    {
+        if (NetworkModeHelper.IsNetworked || hazard == null) return;
+        if (GetMood() != DogMood.Loyal) return;
+        switch (currentDogState)
+        {
+            case DogState.Idle:
+            case DogState.Patrol:
+            case DogState.Inspect:
+            case DogState.Play:
+            case DogState.Affection:
+                currentDogState = DogState.Alert;
+                SwitchState(new DogAlertState(this, hazard));
+                break;
+        }
+    }
+    public void EndAlert()
+    {
+        if (currentDogState != DogState.Alert) return;
         ChangeToIdleState();
     }
     public void ChangeToIdleState()

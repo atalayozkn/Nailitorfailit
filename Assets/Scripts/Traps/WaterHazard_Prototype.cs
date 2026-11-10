@@ -2,11 +2,15 @@ using UnityEngine;
 using UnityEngine.Events;
 using Wettables;
 
-public class WaterHazard_Prototype : MonoBehaviour
+// Burst pipe: drips for telegraphDuration, then sprays water (the spray particles wet the tiles they hit).
+// Can be repaired from the first drip until the spray ends.
+public class WaterHazard_Prototype : TelegraphedHazard
 {
     [SerializeField] private LayerMask targetLayer;
     [SerializeField] private Transform muzzleTransform;
     [SerializeField] private Vector3 halfDimensions;
+    [Tooltip("The water spray, stopped early when the pipe is repaired mid-leak.")]
+    [SerializeField] private ParticleSystem spray;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onTriggerEvent;
@@ -14,7 +18,11 @@ public class WaterHazard_Prototype : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool isDebugMode;
 
-    public void OnTrigger()
+    protected override string HazardName => "Pipe";
+    protected override VfxId WarningVfx => VfxId.PipeWarning;
+    protected override Vector3 EffectPoint => muzzleTransform.position;
+
+    protected override void Fire()
     {
         onTriggerEvent?.Invoke();
         VfxManager.Play(VfxId.PipeBurst, muzzleTransform.position);
@@ -29,6 +37,10 @@ public class WaterHazard_Prototype : MonoBehaviour
                 wettable.OnWaterContact();
             }
         }
+    }
+    protected override void StopActive()
+    {
+        if (spray != null) spray.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }
 
     private void OnDrawGizmos()

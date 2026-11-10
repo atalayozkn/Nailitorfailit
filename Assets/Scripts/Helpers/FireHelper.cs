@@ -14,9 +14,19 @@ public class FireHelper : MonoBehaviour
 
     [Header("Singleplayer Fire")]
     [SerializeField] private float singleplayerHitInterval = 3f;
-    [SerializeField] private float spreadInterval = 6f;
-    [Tooltip("Reaches the 8 surrounding tiles on the 1m grid.")]
+    [SerializeField] private float spreadInterval = 10f;
+    [Tooltip("Reaches the 8 surrounding tiles on the 1m grid (glass and brick take heat from all of them).")]
     [SerializeField] private float neighbourRadius = 1.2f;
+    [Tooltip("Fire only jumps to wood whose centre is this close: the 4 edge neighbours on the 1m grid, no diagonals.")]
+    [SerializeField] private float spreadDistance = 1.1f;
+    [Tooltip("Most wood tiles burning at once in a level. New fires (spread or socket) are refused above this.")]
+    [SerializeField] private int maxConcurrentFires = 3;
+
+    // Singleplayer count of burning tiles, for the cap. Cleared on play start for domain-reload-free play mode.
+    private static int burningCount;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCount() => burningCount = 0;
+    public static bool AtFireCap(int cap) => !NetworkModeHelper.IsNetworked && burningCount >= cap;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onFireStarted;
@@ -47,7 +57,9 @@ public class FireHelper : MonoBehaviour
     public void StartFire()
     {
         if (isBurning) return;
+        if (AtFireCap(maxConcurrentFires)) return;
         isBurning = true;
+        burningCount++;
         onFireStarted?.Invoke();
         VfxManager.Play(VfxId.FireIgnite, transform.position);
         burnEffect = VfxManager.PlayLoop(VfxId.FireBurn, transform);
@@ -58,6 +70,7 @@ public class FireHelper : MonoBehaviour
         if (!isBurning) return;
 
         isBurning = false;
+        burningCount = Mathf.Max(0, burningCount - 1);
         VfxManager.Stop(burnEffect);
 
         if (fireRoutine != null)
@@ -94,6 +107,7 @@ public class FireHelper : MonoBehaviour
     {
         int count = Physics.OverlapSphereNonAlloc(transform.position, neighbourRadius, neighbours, tileMask, QueryTriggerInteraction.Ignore);
         spreadTargets.Clear();
+        Vector3 ownCenter = TryGetComponent<Collider>(out var own) ? own.bounds.center : transform.position;
 
         for (int i = 0; i < count; i++)
         {
@@ -102,10 +116,12 @@ public class FireHelper : MonoBehaviour
 
             if (neighbour.TryGetComponent<INearbyFireReceiver>(out var receiver)) receiver.OnNearbyFire();
 
-            if (neighbour.TryGetComponent<WoodTile>(out var wood) && !wood.IsBurning()) spreadTargets.Add(wood);
+            if (!neighbour.TryGetComponent<WoodTile>(out var wood) || wood.IsBurning()) continue;
+            Vector3 offset = neighbours[i].bounds.center - ownCenter;
+            if (offset.sqrMagnitude <= spreadDistance * spreadDistance) spreadTargets.Add(wood);
         }
 
-        if (shouldSpread && spreadTargets.Count > 0) spreadTargets[Random.Range(0, spreadTargets.Count)].OnFireStart();
+        if (shouldSpread && spreadTargets.Count > 0 && !AtFireCap(maxConcurrentFires)) spreadTargets[Random.Range(0, spreadTargets.Count)].OnFireStart();
     }
     public bool IsBurning()
     {

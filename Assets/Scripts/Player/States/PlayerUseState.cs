@@ -28,6 +28,7 @@ public class PlayerUseState : PlayerBaseState
             case UseType.FireExtinguisher:
                 fullDuration = 1.0f;
                 stateMachine.animator.CrossFadeInFixedTime(useFEHash, 0f);
+                (stateMachine.useHandler.GetCurrentUsable() as FireExtinguisher)?.BeginSpray();
                 break;
             default:
                 stateMachine.ChangeToIdleState();
@@ -61,6 +62,8 @@ public class PlayerUseState : PlayerBaseState
     }
     public override void Exit()
     {
+        // An interrupted use (stun, electrocution) must not leave the spray running.
+        if (currentUseType == UseType.FireExtinguisher) (stateMachine.useHandler.GetCurrentUsable() as FireExtinguisher)?.EndSpray();
         stateMachine.movementHandler.SetActivity(true);
         stateMachine.interactionHandler.SetActivity(true);
         stateMachine.useHandler.SetActivity(true);

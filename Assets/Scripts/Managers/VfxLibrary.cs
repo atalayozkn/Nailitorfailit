@@ -17,6 +17,10 @@ public class VfxLibrary : ScriptableObject
         public float lifetime = 2f;
         [Tooltip("Hides child systems with Smoke in the name, they cover the tile at this scale.")]
         public bool hideSmoke;
+        [Tooltip("Scales the start size of child systems with Smoke in the name (when not hidden).")]
+        public float smokeSize = 1f;
+        [Tooltip("Tints child systems with Smoke in the name. Leave alpha at 0 to keep the plugin colors.")]
+        public Color smokeTint = new Color(1f, 1f, 1f, 0f);
         [Tooltip("Tints the main particle system. Leave alpha at 0 to keep the plugin colors.")]
         public Color tint = new Color(1f, 1f, 1f, 0f);
 
