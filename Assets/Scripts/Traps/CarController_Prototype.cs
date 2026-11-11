@@ -6,8 +6,11 @@ public class CarController_Prototype : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameObject activeCarPrefab;
+    [Tooltip("Extra car models mixed into the traffic. Each needs a Car_Active component.")]
+    [SerializeField] private GameObject[] extraCarPrefabs;
 
     [Header("Pool Settings")]
+    [Tooltip("Total pooled cars. Raised automatically so every car model gets at least one.")]
     [SerializeField] private int activePoolSize = 4;
 
     [Header("Traffic Settings")]
@@ -19,15 +22,26 @@ public class CarController_Prototype : MonoBehaviour
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
 
+    [Header("Ground Snap")]
+    [Tooltip("Puts each car's collider bottom on the road when it spawns, so it never starts inside the ground.")]
+    [SerializeField] private bool snapToGround = true;
+    [SerializeField] private LayerMask groundMask = ~0;
+    [SerializeField] private float snapProbeUp = 2f;
+    [SerializeField] private float snapProbeDistance = 6f;
+    [SerializeField] private float groundClearance = 0.03f;
+
     private readonly List<Car_Active> activeCarPool = new();
+    private readonly Dictionary<Car_Active, float> carBottomOffsets = new();
     private Car_Active[] laneOccupants;
     private readonly List<int> freeLanes = new();
+    private readonly List<Car_Active> freeCars = new();
+    private readonly RaycastHit[] groundHits = new RaycastHit[16];
 
     private void Start()
     {
         laneOccupants = new Car_Active[spawnPoints.Length];
 
-        CreatePool(activeCarPrefab, activePoolSize, activeCarPool);
+        CreatePool(activeCarPool);
         StartCoroutine(CarRoutine());
     }
 
@@ -64,10 +78,52 @@ public class CarController_Prototype : MonoBehaviour
         }
 
         Transform spawnPoint = spawnPoints[lane];
-        car.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+        Vector3 position = spawnPoint.position;
+        if (snapToGround) position = SnapToGround(car, position);
+
+        car.transform.SetPositionAndRotation(position, spawnPoint.rotation);
 
         laneOccupants[lane] = car;
         car.gameObject.SetActive(true);
+    }
+
+    private Vector3 SnapToGround(Car_Active car, Vector3 position)
+    {
+        Vector3 origin = position + Vector3.up * snapProbeUp;
+        int count = Physics.RaycastNonAlloc(origin, Vector3.down, groundHits, snapProbeDistance, groundMask,
+            QueryTriggerInteraction.Ignore);
+
+        float bestDistance = float.MaxValue;
+        bool found = false;
+        Vector3 ground = position;
+
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit hit = groundHits[i];
+            if (!IsGround(hit.collider)) continue;
+            if (hit.distance >= bestDistance) continue;
+
+            bestDistance = hit.distance;
+            ground = hit.point;
+            found = true;
+        }
+
+        if (!found) return position;
+
+        carBottomOffsets.TryGetValue(car, out float bottom);
+        position.y = ground.y - bottom + groundClearance;
+        return position;
+    }
+
+    // Moving bodies (other cars, the player, props) are not road.
+    private static bool IsGround(Collider col)
+    {
+        if (col.CompareTag("Player")) return false;
+
+        Rigidbody body = col.attachedRigidbody;
+        if (body == null) return true;
+        if (body.GetComponent<Car_Active>() != null) return false;
+        return body.isKinematic;
     }
 
     private int GetRandomFreeLane()
@@ -96,20 +152,41 @@ public class CarController_Prototype : MonoBehaviour
         return false;
     }
 
+    // Random free car so the models mix.
     private Car_Active GetAvailableCar(List<Car_Active> pool)
     {
+        freeCars.Clear();
+
         foreach (Car_Active car in pool)
         {
-            if (!car.gameObject.activeSelf) return car;
+            if (!car.gameObject.activeSelf) freeCars.Add(car);
         }
 
-        return null;
+        if (freeCars.Count == 0) return null;
+        return freeCars[Random.Range(0, freeCars.Count)];
     }
 
-    private void CreatePool(GameObject prefab, int poolSize, List<Car_Active> pool)
+    private void CreatePool(List<Car_Active> pool)
     {
+        List<GameObject> prefabs = new();
+        if (activeCarPrefab != null) prefabs.Add(activeCarPrefab);
+
+        // Extra models are not networked, multiplayer keeps its single swapped car.
+        if (extraCarPrefabs != null && !NetworkModeHelper.IsNetworked)
+        {
+            foreach (GameObject extra in extraCarPrefabs)
+            {
+                if (extra != null && !prefabs.Contains(extra)) prefabs.Add(extra);
+            }
+        }
+
+        if (prefabs.Count == 0) return;
+
+        int poolSize = Mathf.Max(activePoolSize, prefabs.Count);
+
         for (int i = 0; i < poolSize; i++)
         {
+            GameObject prefab = prefabs[i % prefabs.Count];
             GameObject obj = Instantiate(prefab, transform);
             obj.SetActive(false);
 
@@ -120,7 +197,27 @@ public class CarController_Prototype : MonoBehaviour
                 continue;
             }
 
+            carBottomOffsets[car] = GetColliderBottom(obj);
             pool.Add(car);
         }
+    }
+
+    // Lowest point of the car's solid colliders, measured from its pivot.
+    private static float GetColliderBottom(GameObject car)
+    {
+        float bottom = float.MaxValue;
+
+        foreach (BoxCollider box in car.GetComponentsInChildren<BoxCollider>(true))
+        {
+            if (box.isTrigger) continue;
+
+            Transform t = box.transform;
+            Vector3 localBottom = box.center - Vector3.up * (box.size.y * 0.5f);
+            Vector3 world = t.TransformPoint(localBottom);
+            float y = car.transform.InverseTransformPoint(world).y * car.transform.lossyScale.y;
+            bottom = Mathf.Min(bottom, y);
+        }
+
+        return bottom == float.MaxValue ? 0f : bottom;
     }
 }

@@ -65,6 +65,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private UnityEvent onJumpEvent;
     [SerializeField] private UnityEvent onLandEvent;
 
+    // Code hooks for feel effects (foot dust, landing shake). The bool is true on water.
+    public event System.Action<bool> Stepped;
+    public event System.Action Landed;
+
     private Vector2 moveInput;
     private float maxSpeedSqr;
     private float moveCost;
@@ -156,15 +160,19 @@ public class PlayerMovement : MonoBehaviour
             {
                 stepCounter = 0f;
 
-                if (hit.collider.CompareTag("Water"))
+                bool onWater = hit.collider.CompareTag("Water");
+
+                if (onWater)
                 {
                     onWaterStepEvent?.Invoke();
-                    
+
                 }
                 else
                 {
                     onWoodStepEvent?.Invoke();
                 }
+
+                Stepped?.Invoke(onWater);
             }
         }
         else
@@ -180,7 +188,11 @@ public class PlayerMovement : MonoBehaviour
 
             SetJumping(false);
 
-            if (landedFromJump) onLandEvent?.Invoke();
+            if (landedFromJump)
+            {
+                onLandEvent?.Invoke();
+                Landed?.Invoke();
+            }
         }
 
         wasGrounded = isGrounded;

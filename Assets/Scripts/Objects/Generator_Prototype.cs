@@ -20,6 +20,12 @@ public class Generator_Prototype : MonoBehaviour, IInteractable, ILookAtInfo
     [SerializeField] private UnityEvent onHoverOffEvent;
 
     public InteractableType InteractableType => interactableType;
+    public float CurrentEnergy => currentEnergy;
+    public bool HasPower => currentEnergy > 0f;
+
+    // Fires only when the generator goes from empty to powered or back. Used by GeneratorRunningFX.
+    public event System.Action<bool> OnPowerStateChanged;
+
     private float currentEnergy;
     private PlayerInteractionHandler interactionHandler;
     private void Awake()
@@ -83,15 +89,24 @@ public class Generator_Prototype : MonoBehaviour, IInteractable, ILookAtInfo
     }
     public void ConsumeEnergy(float amount)
     {
+        bool hadPower = HasPower;
         currentEnergy -= amount;
         onConsumeEvent?.Invoke();
         UpdateUI();
+        NotifyPowerChange(hadPower);
     }
     public void GainEnergy(float amount)
     {
+        bool hadPower = HasPower;
         currentEnergy += amount;
         if (currentEnergy >= maxEnergy) currentEnergy = maxEnergy;
         UpdateUI();
+        NotifyPowerChange(hadPower);
+    }
+
+    private void NotifyPowerChange(bool hadPower)
+    {
+        if (hadPower != HasPower) OnPowerStateChanged?.Invoke(HasPower);
     }
 
     #endregion
