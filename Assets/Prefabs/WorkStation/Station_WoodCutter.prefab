@@ -683,6 +683,7 @@ MonoBehaviour:
   canvasHelper: {fileID: 4456850146704909037}
   maxProcessAmount: 100
   processPerInteract: 10
+  showBarOnEnable: 0
 --- !u!114 &4456850146704909037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -997,7 +998,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 1f23f13a171409b438392e508205a47c, type: 2}
     - target: {fileID: 5915745794428707400, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 2147483647
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7355891482755630254, guid: 539dbc0bbf029ca4296c3402e88405fd, type: 3}
       propertyPath: m_Name
