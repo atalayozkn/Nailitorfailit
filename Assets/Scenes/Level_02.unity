@@ -9128,7 +9128,7 @@ Transform:
   m_GameObject: {fileID: 370380139}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70710665, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -97.82, y: 0, z: -0.63}
+  m_LocalPosition: {x: -97.82, y: 0.55444497, z: -0.63}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12099,6 +12099,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarController_Prototype
   activeCarPrefab: {fileID: 1528929669753106114, guid: 0890630e6386cac43890b18365540851, type: 3}
+  extraCarPrefabs:
+  - {fileID: 1528929669753106114, guid: 48290222be931274aaf15382cb142d31, type: 3}
+  - {fileID: 1528929669753106114, guid: fae5aaf75b86eb44e950227d569ffd9e, type: 3}
+  - {fileID: 1528929669753106114, guid: c956d62a253acbf4d96f16f499b3217b, type: 3}
+  - {fileID: 1528929669753106114, guid: b47e4e760bc1e4b4bac5b93024776d6b, type: 3}
+  - {fileID: 1528929669753106114, guid: f70fbd2d261786d47b30fcf83bee08c6, type: 3}
   activePoolSize: 4
   activeCarInterval: 8
   laneClearTime: 0
@@ -12107,6 +12113,13 @@ MonoBehaviour:
   - {fileID: 1038579436}
   - {fileID: 0}
   - {fileID: 0}
+  snapToGround: 1
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  snapProbeUp: 2
+  snapProbeDistance: 6
+  groundClearance: 0.03
 --- !u!4 &536789195
 Transform:
   m_ObjectHideFlags: 0
@@ -13949,6 +13962,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 597063775}
+  - component: {fileID: 912345670123456782}
   m_Layer: 0
   m_Name: tren ve raylar 2
   m_TagString: Untagged
@@ -15707,6 +15721,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 667975870}
+  - component: {fileID: 912345670123456781}
   m_Layer: 0
   m_Name: tren ve raylar 1
   m_TagString: Untagged
@@ -29299,7 +29314,7 @@ Transform:
   m_GameObject: {fileID: 1038579435}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: -0, w: -0.7071068}
-  m_LocalPosition: {x: 96.89, y: 0, z: 0.58}
+  m_LocalPosition: {x: 96.89, y: 0.55444497, z: 0.58}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -59251,7 +59266,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 757425949523684324, guid: 48f6791245c9b4d3ca886e55bd0bc63d, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 2147483647
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1261595668106578481, guid: 48f6791245c9b4d3ca886e55bd0bc63d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -59267,7 +59282,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 80dc83c151731aa469a83d6cdbed02a9, type: 2}
     - target: {fileID: 7330362534831811231, guid: 48f6791245c9b4d3ca886e55bd0bc63d, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 2147483647
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -68082,3 +68097,53 @@ SceneRoots:
   - {fileID: 20744292}
   - {fileID: 453515625}
   - {fileID: 1408337915}
+--- !u!114 &912345670123456781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667975869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1320e1880e45229e49420a5086031c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  train: {fileID: 0}
+  speed: 14
+  waitBetweenPasses: {x: 10, y: 25}
+  firstPassDelay: {x: 1, y: 12}
+  reverseDirection: 0
+  extendBeyondTrack: 0
+  rollingLoop: {fileID: 8300000, guid: 58e936f7057f4c958616b1081fb2bdd7, type: 3}
+  rollingVolume: 0.8
+  rollingMaxDistance: 50
+  whistle: {fileID: 8300000, guid: ce33ad61a9c448ad8dfc6a0701b0a64b, type: 3}
+  whistleVolume: 1
+  whistleMaxDistance: 120
+  fadeTime: 0.6
+--- !u!114 &912345670123456782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 597063774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1320e1880e45229e49420a5086031c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  train: {fileID: 0}
+  speed: 14
+  waitBetweenPasses: {x: 10, y: 25}
+  firstPassDelay: {x: 1, y: 12}
+  reverseDirection: 0
+  extendBeyondTrack: 0
+  rollingLoop: {fileID: 8300000, guid: 58e936f7057f4c958616b1081fb2bdd7, type: 3}
+  rollingVolume: 0.8
+  rollingMaxDistance: 50
+  whistle: {fileID: 8300000, guid: ce33ad61a9c448ad8dfc6a0701b0a64b, type: 3}
+  whistleVolume: 1
+  whistleMaxDistance: 120
+  fadeTime: 0.6
