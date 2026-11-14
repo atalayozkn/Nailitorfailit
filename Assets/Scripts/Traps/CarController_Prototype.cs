@@ -19,6 +19,15 @@ public class CarController_Prototype : MonoBehaviour
              "Above 0 = lane is freed once the car has been alive this many seconds.")]
     [SerializeField] private float laneClearTime = 0f;
 
+    [Header("Oil Truck Hazard (singleplayer only)")]
+    [Tooltip("Leave empty to turn the hazard off. Needs Car_Active and OilTruckSpiller.")]
+    [SerializeField] private GameObject oilTruckPrefab;
+    [Tooltip("Seconds between oil trucks (random in range). Also used for the first one.")]
+    [SerializeField] private Vector2 oilTruckInterval = new(25f, 40f);
+    [Tooltip("Seconds before the first oil truck. Below 0 = use the interval.")]
+    [SerializeField] private float oilTruckFirstDelay = -1f;
+    [SerializeField] private float oilTruckRetryDelay = 0.5f;
+
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
 
@@ -36,6 +45,7 @@ public class CarController_Prototype : MonoBehaviour
     private readonly List<int> freeLanes = new();
     private readonly List<Car_Active> freeCars = new();
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
+    private Car_Active oilTruck;
 
     private void Start()
     {
@@ -43,6 +53,48 @@ public class CarController_Prototype : MonoBehaviour
 
         CreatePool(activeCarPool);
         StartCoroutine(CarRoutine());
+
+        if (CreateOilTruck()) StartCoroutine(OilTruckRoutine());
+    }
+
+    private bool CreateOilTruck()
+    {
+        if (oilTruckPrefab == null || NetworkModeHelper.IsNetworked) return false;
+
+        GameObject obj = Instantiate(oilTruckPrefab, transform);
+        obj.SetActive(false);
+
+        if (!obj.TryGetComponent(out oilTruck))
+        {
+            Debug.LogError("Oil truck prefab is missing the Car_Active component.", oilTruckPrefab);
+            Destroy(obj);
+            return false;
+        }
+
+        carBottomOffsets[oilTruck] = GetColliderBottom(obj);
+        return true;
+    }
+
+    private IEnumerator OilTruckRoutine()
+    {
+        var retry = new WaitForSeconds(oilTruckRetryDelay);
+        bool first = true;
+
+        while (true)
+        {
+            float delay = first && oilTruckFirstDelay >= 0f
+                ? oilTruckFirstDelay
+                : Random.Range(oilTruckInterval.x, oilTruckInterval.y);
+            first = false;
+            yield return new WaitForSeconds(delay);
+
+            // Wait for the previous truck to leave and for a lane with no car in it.
+            int lane = -1;
+            while (oilTruck.gameObject.activeSelf || (lane = GetRandomFreeLane()) < 0)
+                yield return retry;
+
+            SendCar(oilTruck, lane);
+        }
     }
 
     private IEnumerator CarRoutine()
