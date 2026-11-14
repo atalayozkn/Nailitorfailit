@@ -167,6 +167,16 @@ public static class FeelEffectsSetup
         AssetDatabase.SaveAssets();
     }
 
+    // Builds one car variant from any model, kept out of normal traffic (used by hazard setups).
+    public static bool BuildStandaloneVariant(string variantPath, GameObject model)
+    {
+        CarReference reference = ProcessCar(BaseCarPrefab, null, null);
+        if (reference == null || model == null) return false;
+
+        if (!File.Exists(variantPath)) AssetDatabase.CopyAsset(BaseCarPrefab, variantPath);
+        return ProcessCar(variantPath, model, reference) != null;
+    }
+
     private class CarReference
     {
         public float Bottom;   // wheel line, local Y
