@@ -129,7 +129,7 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (!SteamOnline)
         {
-            Fail(onFail, "Steam kullanilamiyor (SteamAPI hazir degil).");
+            Fail(onFail, "Steam is not available - start Steam and sign in.");
             return;
         }
 
@@ -150,7 +150,7 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (ioFailure || p.m_eResult != EResult.k_EResultOK)
         {
-            Fail(pendingFail, $"Steam lobisi olusturulamadi (result={p.m_eResult}).");
+            Fail(pendingFail, $"Could not create the Steam lobby ({p.m_eResult}). Check your internet / Steam connection.");
             return;
         }
 
@@ -179,7 +179,7 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (!SteamOnline)
         {
-            Fail(onFail, "Steam kullanilamiyor (SteamAPI hazir degil).");
+            Fail(onFail, "Steam is not available - start Steam and sign in.");
             return;
         }
 
@@ -199,26 +199,30 @@ public class SteamLobbyManager : MonoBehaviour
 
         SteamMatchmaking.AddRequestLobbyListStringFilter(codeKey, normalized, ELobbyComparison.k_ELobbyComparisonEqual);
         SteamMatchmaking.AddRequestLobbyListStringFilter(versionKey, lobbyVersion, ELobbyComparison.k_ELobbyComparisonEqual);
+        // Default search only returns nearby regions; a friend abroad would never find the code.
+        SteamMatchmaking.AddRequestLobbyListDistanceFilter(ELobbyDistanceFilter.k_ELobbyDistanceFilterWorldwide);
         SteamMatchmaking.AddRequestLobbyListResultCountFilter(20);
 
         crLobbyList?.Dispose();
         crLobbyList = CallResult<LobbyMatchList_t>.Create(OnLobbyMatchList);
         crLobbyList.Set(SteamMatchmaking.RequestLobbyList());
 
-        Debug.Log($"[STEAM-LOBBY] '{normalized}' kodu araniyor...");
+        Debug.Log($"[STEAM-LOBBY] '{normalized}' kodu araniyor... (appId={SteamUtils.GetAppID().m_AppId} " +
+                  $"steamId={SteamManager.LocalSteamId} version={lobbyVersion})");
     }
 
     private void OnLobbyMatchList(LobbyMatchList_t p, bool ioFailure)
     {
         if (ioFailure)
         {
-            Fail(joinFail, "Steam'e ulasilamadi (lobi listesi alinamadi).");
+            Fail(joinFail, "Could not reach Steam (lobby search failed). Check your internet connection.");
             return;
         }
 
         if (p.m_nLobbiesMatching == 0)
         {
-            Fail(joinFail, "Bu koda sahip bir lobi bulunamadi.");
+            Fail(joinFail, "No lobby with that code. Check the code, and that you both launch the game the same way (same Steam app).");
+            DiagnoseVisibleLobbies();
             return;
         }
 
@@ -229,11 +233,37 @@ public class SteamLobbyManager : MonoBehaviour
         JoinLobbyById(lobby, joinSuccess, joinFail);
     }
 
+    // Code search failed: list every lobby of this app that Steam shows us. 0 lobbies => app id / Steam
+    // account mismatch between host and client; lobbies listed but not ours => wrong code or old build.
+    private CallResult<LobbyMatchList_t> crDiagnose;
+
+    private void DiagnoseVisibleLobbies()
+    {
+        SteamMatchmaking.AddRequestLobbyListDistanceFilter(ELobbyDistanceFilter.k_ELobbyDistanceFilterWorldwide);
+        SteamMatchmaking.AddRequestLobbyListResultCountFilter(20);
+
+        crDiagnose?.Dispose();
+        crDiagnose = CallResult<LobbyMatchList_t>.Create((list, failed) =>
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < list.m_nLobbiesMatching && i < 10; i++)
+            {
+                CSteamID lobby = SteamMatchmaking.GetLobbyByIndex(i);
+                sb.Append($" [{SteamMatchmaking.GetLobbyData(lobby, codeKey)} v{SteamMatchmaking.GetLobbyData(lobby, versionKey)} " +
+                          $"members={SteamMatchmaking.GetNumLobbyMembers(lobby)}]");
+            }
+
+            Debug.LogWarning($"[STEAM-LOBBY] TESHIS: appId={SteamUtils.GetAppID().m_AppId} icin gorunen lobi sayisi=" +
+                             $"{(failed ? -1 : (int)list.m_nLobbiesMatching)}{sb}. 0 ise host ile ayni AppID/uygulamada degilsiniz.");
+        });
+        crDiagnose.Set(SteamMatchmaking.RequestLobbyList());
+    }
+
     public void JoinLobbyById(CSteamID lobbyId, Action onSuccess, Action<string> onFail)
     {
         if (!SteamOnline)
         {
-            Fail(onFail, "Steam kullanilamiyor (SteamAPI hazir degil).");
+            Fail(onFail, "Steam is not available - start Steam and sign in.");
             return;
         }
 
@@ -252,13 +282,13 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (ioFailure)
         {
-            Fail(joinFail, "Steam'e ulasilamadi (lobiye girilemedi).");
+            Fail(joinFail, "Could not reach Steam (joining the lobby failed). Check your internet connection.");
             return;
         }
 
         if (p.m_EChatRoomEnterResponse != (uint)EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess)
         {
-            Fail(joinFail, "Lobiye girilemedi: " + DescribeEnterResponse(p.m_EChatRoomEnterResponse));
+            Fail(joinFail, "Could not join the lobby: " + DescribeEnterResponse(p.m_EChatRoomEnterResponse));
             return;
         }
 
@@ -287,6 +317,17 @@ public class SteamLobbyManager : MonoBehaviour
         if (CurrentLobby == CSteamID.Nil)
         {
             Debug.LogWarning("[STEAM-LOBBY] Davet penceresi acilamaz: henuz bir lobi yok.");
+            return;
+        }
+
+        // The Steam overlay is not injected into the Unity Editor on Linux, nor into a game started outside Steam
+        // without the overlay hook. Then the invite dialog silently does nothing: fall back to the lobby code.
+        if (!SteamUtils.IsOverlayEnabled())
+        {
+            if (!string.IsNullOrEmpty(CurrentCode)) GUIUtility.systemCopyBuffer = CurrentCode;
+
+            Debug.LogWarning("[STEAM-LOBBY] Steam overlay is not available - lobby code copied instead of opening the invite dialog.");
+            MpNotice_MP.Info($"Steam overlay unavailable. Lobby code {CurrentCode} copied - send it to your friend.", 7f);
             return;
         }
 
@@ -396,6 +437,7 @@ public class SteamLobbyManager : MonoBehaviour
     {
         LastError = message;
         Debug.LogError("[STEAM-LOBBY] " + message);
+        MpNotice_MP.Error(message);
         onFail?.Invoke(message);
     }
 

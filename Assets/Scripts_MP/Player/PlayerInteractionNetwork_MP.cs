@@ -62,6 +62,20 @@ namespace PlayerScripts
         {
             base.OnStartLocalPlayer();
 
+            int sceneLayers = MpLevelInstaller.InteractableLayers;
+
+            if (sceneLayers != 0)
+            {
+                int widened = interactableMask.value | sceneLayers;
+
+                if (widened != interactableMask.value)
+                {
+                    interactableMask = widened;
+                    InteractionDebug.Log($"[{name}] interact mask widened to {widened} " +
+                                         $"(scene interactable layers {sceneLayers}).");
+                }
+            }
+
             InteractionDebug.Log($"[{name}] local player interaction wrapper [{InteractionDebug.Version}]");
 
             if (interactAction != null && interactAction.action != null)
@@ -74,6 +88,14 @@ namespace PlayerScripts
 
             interactAction.action.Enable();
             detectionRoutine = StartCoroutine(TargetDetectionRoutine());
+
+            // SP look-at panel, MP kaynakli: hedef adi + etkilesim etiketi (sadece sahibinde).
+            LookAtInfoUI.CreateMp(transform.root,
+                () =>
+                {
+                    return TryGetLookAtInfoMp(out LookAtInfo lookInfo) ? lookInfo : default;
+                },
+                gamepad => interactionHandlerSp.GetInteractBindingLabel(gamepad));
         }
 
         public override void OnStopLocalPlayer()
@@ -157,6 +179,29 @@ namespace PlayerScripts
             InteractionDebug.Log($"[{name}] no interactable in range " +
                                  $"(forward {forwardDistance}m/r{forwardRadius}, ground {groundDistance}m/r{groundRadius}, " +
                                  $"mask={(int)interactableMask.value})");
+        }
+
+        // Same data the SP handler feeds the look-at panel with, sourced from the MP wrapper state.
+        private bool TryGetLookAtInfoMp(out LookAtInfo info)
+        {
+            info = default;
+            if (!isLocalPlayer || stateMachine.currentPlayerState == PlayerStates.Dead) return false;
+
+            if (currentInteractable is UnityEngine.Object target && target != null)
+            {
+                if (!(currentInteractable is ILookAtInfo provider)) return false;
+
+                CarriableObject_SP carried = currentInteractableType == InteractableType.Grabbable
+                    ? null
+                    : interactionHandlerSp.GetCurrentCarriable();
+                info = provider.GetLookAtInfo(carried);
+                return !string.IsNullOrEmpty(info.Name);
+            }
+
+            CarriableObject_SP held = interactionHandlerSp.GetCurrentCarriable();
+            if (held == null) return false;
+            info = LookAtInfo.Ready(LookAtText.ItemName(held), "Drop");
+            return true;
         }
 
         private void RefreshTarget()

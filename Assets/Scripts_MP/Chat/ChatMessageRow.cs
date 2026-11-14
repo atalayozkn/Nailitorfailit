@@ -26,7 +26,8 @@ public class ChatMessageRow : MonoBehaviour
         string safeSender = string.IsNullOrWhiteSpace(sender) ? "Player" : sender;
         string safeText = text ?? string.Empty;
 
-        string hex = ColorUtility.ToHtmlStringRGB(senderColor);
+        Color nameColor = ChatNetwork.TryGetSenderColor(safeSender, out Color playerColor) ? playerColor : senderColor;
+        string hex = ColorUtility.ToHtmlStringRGB(nameColor);
         string prefix = boldSender
             ? $"<b><color=#{hex}>{safeSender}</color></b>: "
             : $"<color=#{hex}>{safeSender}</color>: ";

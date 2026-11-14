@@ -1,3 +1,4 @@
+using Steamworks;
 using System.Collections;
 using Mirror;
 using UnityEngine;
@@ -16,12 +17,27 @@ public class LobbyPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(OnColorChanged))]
     public int colorIndex;
 
+    [SyncVar(hook = nameof(OnSteamIdChanged))]
+    public ulong steamId;
+
     PlayerListEntryUI uiRow;
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        colorIndex = ((LobbyNetworkManager)NetworkManager.singleton).NextFreeColorIndex(this);
+        LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
+    }
+
+    void OnSteamIdChanged(ulong oldVal, ulong newVal) => ApplyRowData();
 
     public override void OnStartClient()
     {
 
         StartCoroutine(AddRowWhenReady());
+
+        if (isOwned && SteamManager.Initialized) CmdSetSteamId(SteamUser.GetSteamID().m_SteamID);
 
         if (isOwned && GameManager.Instance != null)
             GameManager.Instance.ShowLobbyMenu();
@@ -57,6 +73,7 @@ public class LobbyPlayer : NetworkBehaviour
 
         uiRow.SetName(displayName);
         uiRow.SetPlayerColor(MpPlayerColor_MP.ColorOf(colorIndex));
+        uiRow.SetSteamId(steamId);
         uiRow.UpdateColor(isHost, isReady);
     }
 
@@ -96,9 +113,16 @@ public class LobbyPlayer : NetworkBehaviour
     public static int ClampColor(int index) => MpPlayerColor_MP.Clamp(index);
 
     [Command]
+    public void CmdSetSteamId(ulong id)
+    {
+        steamId = id;
+    }
+
+    [Command]
     public void CmdSetColor(int index)
     {
         colorIndex = ClampColor(index);
+        LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
         InteractionDebug.Log($"[LOBBY] colour for '{playerName}' -> {colorIndex}");
     }
 

@@ -432,7 +432,7 @@ public class PlayerMovement : MonoBehaviour
         if (isJumping) return;
         if (interactHandler.IsCarrying())
         {
-            WarningManager.Show("You can not jump while carrying");
+            WarningManager.ShowLocal("You can not jump while carrying");
             return;
         }
         onJumpEvent?.Invoke();

@@ -20,7 +20,12 @@ public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
     }
 
     [Command(requiresAuthority = false)]
-    private void CmdRequestInteract(NetworkIdentity requester) => ServerHandle(requester);
+    private void CmdRequestInteract(NetworkIdentity requester, NetworkConnectionToClient sender = null)
+    {
+        // Act for the sender's own player, never for an identity the client claims.
+        if (sender != null && sender.identity != null) requester = sender.identity;
+        ServerHandle(requester);
+    }
 
     [Server]
     private void ServerHandle(NetworkIdentity requester)

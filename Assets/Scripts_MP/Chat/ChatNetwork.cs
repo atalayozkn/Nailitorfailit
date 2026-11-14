@@ -114,10 +114,26 @@ public class ChatNetwork : MonoBehaviour
         if (text.Length > maxMessageLength)
             text = text.Substring(0, maxMessageLength);
 
-        NetworkServer.SendToAll(new ChatMessage { sender = sender, text = text });
+        NetworkServer.SendToAll(new ChatMessage { sender = sender, text = text, color = LobbyNetworkManager.ColorFor(conn) });
     }
 
-    void OnClientMessage(ChatMessage msg) => AddToHistory(msg.sender, msg.text);
+    void OnClientMessage(ChatMessage msg)
+    {
+        if (!string.IsNullOrWhiteSpace(msg.sender) && msg.color >= 0) senderColors[msg.sender] = msg.color;
+        AddToHistory(msg.sender, msg.text);
+    }
+
+    // Latest known colour per sender name, so chat names follow a colour change.
+    private static readonly System.Collections.Generic.Dictionary<string, int> senderColors =
+        new System.Collections.Generic.Dictionary<string, int>();
+
+    public static bool TryGetSenderColor(string sender, out UnityEngine.Color color)
+    {
+        color = default;
+        if (string.IsNullOrWhiteSpace(sender) || !senderColors.TryGetValue(sender, out int index)) return false;
+        color = MpPlayerColor_MP.ColorOf(index);
+        return true;
+    }
 
     void AddToHistory(string sender, string text)
     {

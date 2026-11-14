@@ -39,6 +39,9 @@ namespace PlayerScripts
 
         private static readonly int emptyStateHash = Animator.StringToHash("Empty");
 
+        // Declared before isDead so it is applied first when both change in the same update.
+        [SyncVar] private int netDeathReason = (int)DeathReason.Car;
+
         [SyncVar(hook = nameof(OnDeadChanged))]
         public bool isDead;
 
@@ -106,6 +109,21 @@ namespace PlayerScripts
             movement.sprint = enabled ? sprintAction : null;
         }
 
+        // A player leaving while carrying something would destroy the carried (networked) object together
+        // with its hand transform. Unparent it first so it stays in the world for everyone.
+        public override void OnStopClient()
+        {
+            base.OnStopClient();
+
+            foreach (CarriableObject_MP carried in GetComponentsInChildren<CarriableObject_MP>(true))
+            {
+                carried.transform.SetParent(null, true);
+
+                if (carried.TryGetComponent(out Rigidbody carriedBody)) carriedBody.isKinematic = false;
+                foreach (Collider carriedCollider in carried.GetComponents<Collider>()) carriedCollider.enabled = true;
+            }
+        }
+
         public override void OnStartClient()
         {
             base.OnStartClient();
@@ -116,7 +134,10 @@ namespace PlayerScripts
 
             if (interaction != null) interaction.enabled = false;
 
-            dogAI = GetComponentInChildren<DogStateMachine>(true);
+            // This component lives on Player_Default; the dog is under the sibling DogPackage, so search
+            // from the package root (same as DogSync_MP). A child search never found it, which left the
+            // remote player's dog AI running against a disabled agent and skipped the NavMesh wait.
+            dogAI = transform.root.GetComponentInChildren<DogStateMachine>(true);
             if (dogAI != null)
             {
                 dogAI.enabled = isOwned && MpLevelInstaller.NavMeshReady;
@@ -211,6 +232,8 @@ namespace PlayerScripts
                 if (dogAI != null) dogAI.enabled = true;
             }
 
+            if (isOwned) UpdateEmoteThrow();
+
             if (!isOwned || netAnimator == null || netAnimator.runtimeAnimatorController == null) return;
 
             int hash = netAnimator.IsInTransition(0)
@@ -247,6 +270,138 @@ namespace PlayerScripts
             }
         }
 
+        // The SP state machine also runs on remote copies and crossfades on its own (e.g. RegisterCarriedObject
+        // -> ForceUpdateIdle shows CarryIdle while the owner is walking). The owner's state is the truth:
+        // re-apply it whenever the remote animator drifted. Skipped while the animator is off (ragdoll / stun).
+        private static readonly int idleStateHash = Animator.StringToHash("Idle");
+        private static readonly int carryIdleStateHash = Animator.StringToHash("CarryIdle");
+        private float emptySince = -1f;
+
+        private void LateUpdate()
+        {
+            if (netAnimator == null || !netAnimator.enabled || !netAnimator.isActiveAndEnabled) return;
+            if (netAnimator.runtimeAnimatorController == null || isDead) return;
+
+            int shown = netAnimator.IsInTransition(0)
+                ? netAnimator.GetNextAnimatorStateInfo(0).shortNameHash
+                : netAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash;
+
+            // T-pose guard (owner and remote): the controller's default "Empty" state has no motion. If the
+            // first Idle crossfade was missed (animator not ready / rebound on spawn) the player stood in a
+            // T-pose until it moved. Leave it after a short grace period.
+            if (shown == emptyStateHash)
+            {
+                if (emptySince < 0f) emptySince = Time.time;
+                if (Time.time - emptySince < 0.3f) return;
+                emptySince = -1f;
+
+                int target = !isOwned && netAnimStateHash != 0 && netAnimStateHash != emptyStateHash
+                    ? netAnimStateHash
+                    : (interaction != null && interaction.IsCarrying() ? carryIdleStateHash : idleStateHash);
+
+                if (netAnimator.HasState(0, target)) netAnimator.CrossFadeInFixedTime(target, 0.1f);
+                return;
+            }
+
+            emptySince = -1f;
+
+            if (isOwned || netAnimStateHash == 0) return;
+            if (shown == netAnimStateHash || !netAnimator.HasState(0, netAnimStateHash)) return;
+
+            netAnimator.CrossFadeInFixedTime(netAnimStateHash, 0.1f);
+        }
+
+        #endregion
+
+        #region OWNER-SIDE SPAWNS (dog Aid)
+
+        private float nextOwnerSpawnAllowed;
+
+        // The dog AI runs on its owner's machine; items it creates there must be spawned by the server.
+        public void RequestSpawnCarriable(string prefabName, Vector3 position, Quaternion rotation)
+        {
+            if (isOwned) CmdSpawnCarriable(prefabName, position, rotation);
+        }
+
+        [Command]
+        private void CmdSpawnCarriable(string prefabName, Vector3 position, Quaternion rotation)
+        {
+            // Rate limit + only registered networked carriables, so a client can't spawn arbitrary things.
+            if (Time.time < nextOwnerSpawnAllowed) return;
+            nextOwnerSpawnAllowed = Time.time + 2f;
+
+            if ((position - transform.position).sqrMagnitude > 30f * 30f) return; // must be near this player
+
+            GameObject prefab = null;
+            foreach (GameObject candidate in NetworkManager.singleton.spawnPrefabs)
+            {
+                if (candidate != null && candidate.name == prefabName && candidate.GetComponent<CarriableObject_MP>() != null)
+                {
+                    prefab = candidate;
+                    break;
+                }
+            }
+
+            if (prefab == null)
+            {
+                InteractionDebug.Log($"[MP] owner spawn refused: '{prefabName}' is not a networked carriable.");
+                return;
+            }
+
+            NetworkServer.Spawn(Instantiate(prefab, position, rotation));
+        }
+
+        #endregion
+
+        #region EMOTE THROW
+
+        // PlayerEmoteState (index 0 = Throw) throws the held item with the SP OnThrow, which is local only and
+        // clears whichever handler FindFirstObjectByType found. For networked items the owner releases it
+        // just before the SP action time and the server throws it for everyone instead.
+        private const float EmoteThrowActionTime = 1.05f;
+        private float emoteThrowAt = -1f;
+
+        private void UpdateEmoteThrow()
+        {
+            if (playerStateMachine == null) return;
+
+            bool throwing = playerStateMachine.currentPlayerState == PlayerStates.Emote &&
+                            playerStateMachine.activeEmoteIndex == 0;
+
+            if (!throwing)
+            {
+                emoteThrowAt = -1f;
+                return;
+            }
+
+            PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
+            ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
+            if (held == null || !held.TryGetComponent(out CarriableObject_MP _)) return;
+
+            if (emoteThrowAt < 0f)
+            {
+                emoteThrowAt = Time.time + EmoteThrowActionTime;
+                return;
+            }
+
+            if (Time.time < emoteThrowAt) return;
+
+            emoteThrowAt = float.MaxValue; // once per emote
+            handler.ClearCarriedObject();  // the SP state now finds nothing to throw
+            CmdThrowCarried(transform.forward);
+        }
+
+        [Command]
+        private void CmdThrowCarried(Vector3 direction)
+        {
+            foreach (CarriableObject_MP item in FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None))
+            {
+                if (item.Carrier != netIdentity) continue;
+                item.ServerThrow(netIdentity, direction);
+                return;
+            }
+        }
+
         #endregion
 
         #region LIFE / RESPAWN
@@ -254,15 +409,58 @@ namespace PlayerScripts
         public void RequestDeath()
         {
             if (isDead || respawnRoutineRunning) return;
-            if (!isOwned && !isServer) return;
 
-            CmdRequestDeath();
+            // The server may kill any player directly. Calling the [Command] from the server for a player
+            // it does not own is rejected by Mirror, which is why clients never died from server-side hits.
+            if (isServer) ServerDie();
+            else if (isOwned) CmdRequestDeath();
         }
+
+        [Server]
+        public void ServerKill(DeathReason reason)
+        {
+            netDeathReason = (int)reason;
+            ServerDie();
+        }
+
+        // The SP stun now throws the held item (PlayerStunnedState -> ThrowHeldObject) and death drops it,
+        // both locally. Drop it through the network first, so every copy's SP call finds an empty hand
+        // and the server no longer counts this player as the carrier.
+        [Server]
+        public void ServerDropHeld()
+        {
+            PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
+            ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
+            if (held != null && held.TryGetComponent(out CarriableObject_MP heldMp)) heldMp.ServerForceDrop(netIdentity);
+        }
+
+        // Stun for everyone (car bump, stun zones). Reliable RPCs keep order, so the drop lands first.
+        [Server]
+        public void ServerStun()
+        {
+            if (isDead) return;
+            ServerDropHeld();
+            RpcPlayHitReaction();
+        }
+
+        public void RequestStun()
+        {
+            if (isServer) ServerStun();
+            else if (isOwned) CmdRequestStun();
+        }
+
+        [Command]
+        private void CmdRequestStun() => ServerStun();
 
         [ClientRpc]
         public void RpcPlayHitReaction()
         {
-            if (playerStateMachine != null) playerStateMachine.ChangeToStunnedState();
+            if (playerStateMachine == null) return;
+
+            PlayerStates state = playerStateMachine.currentPlayerState;
+            if (state == PlayerStates.Stunned || state == PlayerStates.Dead || isDead) return;
+
+            playerStateMachine.ChangeToStunnedState();
         }
 
         [Command]
@@ -277,6 +475,11 @@ namespace PlayerScripts
             if (isDead || respawnRoutineRunning) return;
 
             respawnRoutineRunning = true;
+
+            // PlayerDeadState.Enter calls the SP DropCarriedObject (local only). Drop through the network
+            // first so the item lands for everyone and the server stops treating this player as its carrier.
+            ServerDropHeld();
+
             isDead = true;
 
             Transform spawnRoot = null;
@@ -317,7 +520,7 @@ namespace PlayerScripts
 
             if (newValue)
             {
-                playerStateMachine.SetDeathReason(DeathReason.Car);
+                playerStateMachine.SetDeathReason((DeathReason)netDeathReason);
                 playerStateMachine.ChangeToDeadState();
                 return;
             }

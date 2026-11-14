@@ -150,6 +150,24 @@ public static class MpSharedCompat
         return Mathf.Clamp01(currentProcess / maxProcessAmount);
     }
 
+    public static float CutterProgress(this Cutter cutter)
+    {
+        InteractionProcessHelper helper = GetField<InteractionProcessHelper>(cutter, "processHelper");
+        return helper != null ? helper.NormalizedProgress : 0f;
+    }
+
+    public static void ApplyCutterProgress(this Cutter cutter, float normalized)
+    {
+        InteractionProcessHelper helper = GetField<InteractionProcessHelper>(cutter, "processHelper");
+        if (helper != null) helper.ApplyNetworkedProgress(normalized);
+    }
+
+    public static Vector3 CutterEffectPoint(this Cutter cutter)
+    {
+        Transform placement = GetField<Transform>(cutter, "placementTransform");
+        return placement != null ? placement.position : cutter.transform.position;
+    }
+
     public static void ApplyNetworkedProgress(this InteractionProcessHelper helper, float normalized)
     {
         if (helper == null) return;
@@ -183,6 +201,20 @@ public static class MpSharedCompat
 
         ConsumeNetworked(carriable, requester);
         generator.GainEnergy(GetField(generator, "perOilGainAmount", 0f));
+        MpVfxNet_MP.ServerPlay(VfxId.Refuel, generator.transform.position);
+    }
+
+    public static float GetEnergy(this Generator_Prototype generator) => GetField(generator, "currentEnergy", 0f);
+
+    private static readonly MethodInfo GeneratorUpdateUi =
+        typeof(Generator_Prototype).GetMethod("UpdateUI", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    // Client mirror of the server's generator fuel (refuel and cutting only happen on the server).
+    public static void ApplyNetworkedEnergy(this Generator_Prototype generator, float energy)
+    {
+        if (generator == null) return;
+        SetField(generator, "currentEnergy", energy);
+        GeneratorUpdateUi?.Invoke(generator, null);
     }
 
     public static void ServerInteract(this Generator_SP generator, NetworkIdentity requester)
@@ -237,6 +269,13 @@ public static class MpSharedCompat
             SetField(cutter, "isSpawning", false);
         }
 
+        // Same order as SP Cutter.OnInteract: loading doesn't need power, only cutting does.
+        if (!GetField(cutter, "isObjectPlaced", false))
+        {
+            RegisterToStation(cutter, handler, requester);
+            return;
+        }
+
         Generator_Prototype generator = GetField<Generator_Prototype>(cutter, "connectedGenerator");
         float perProcessCost = GetField(cutter, "perProcessCost", 0f);
 
@@ -246,22 +285,23 @@ public static class MpSharedCompat
             return;
         }
 
-        if (!generator.HasEnoughEnergy(perProcessCost))
+        // SP (91dee017): a cut is paid once, on its first press; the following presses only advance it.
+        InteractionProcessHelper cutProgress = GetField<InteractionProcessHelper>(cutter, "processHelper");
+        bool cutStarted = cutProgress != null && cutProgress.NormalizedProgress > 0f;
+
+        if (!cutStarted && !generator.HasEnoughEnergy(perProcessCost))
         {
             InteractionDebug.Log($"[MP-CUTTER] '{cutter.name}': generator has no energy left " +
                                  $"(needs {perProcessCost}).");
-            return;
-        }
-
-        if (!GetField(cutter, "isObjectPlaced", false))
-        {
-            RegisterToStation(cutter, handler, requester);
+            // SP shows "No power!" to the player; here the check runs on the server, so send it to the requester.
+            MpVfxNet_MP.ServerPlay(VfxId.OutOfPower, generator.transform.position);
+            MpVfxNet_MP.ServerNotify(requester, "No power! Refuel the generator - bring Oil to it.");
             return;
         }
 
         if (handler.IsCarrying()) return;
 
-        generator.ConsumeEnergy(perProcessCost);
+        if (!cutStarted) generator.ConsumeEnergy(perProcessCost);
 
         InteractionProcessHelper processHelper = GetField<InteractionProcessHelper>(cutter, "processHelper");
         if (processHelper == null) return;
@@ -386,6 +426,7 @@ public static class MpSharedCompat
             }
 
             if (onSpawn != null) onSpawn.Invoke();
+            MpVfxNet_MP.ServerPlay(VfxId.ProductOut, position);
             if (i < spawnCount - 1) yield return wait;
         }
 
@@ -462,6 +503,8 @@ public static class MpSharedCompat
 
         if (matchedFormula == null)
         {
+            MpVfxNet_MP.ServerPlay(VfxId.MixerFail, MixerPoint(mixer, "placementTransform"));
+            MpVfxNet_MP.ServerNotify(requester, "No recipe for these ingredients");
             DropStoredItems(mixer, requester);
             return;
         }
@@ -473,6 +516,13 @@ public static class MpSharedCompat
 
         DestroyStoredItems(mixer, requester);
         SpawnMixerProduct(mixer, matchedFormula);
+        MpVfxNet_MP.ServerPlay(VfxId.MixerDone, MixerPoint(mixer, "productSpawnPoint"));
+    }
+
+    private static Vector3 MixerPoint(Mixer mixer, string field)
+    {
+        Transform point = GetField<Transform>(mixer, field);
+        return point != null ? point.position : mixer.transform.position;
     }
 
     private static bool MixerAccepts(Mixer mixer, CarriableType type)
@@ -716,7 +766,11 @@ public static class MpSharedCompat
         }
 
         PlayerInteractionHandler handler = PlayerInteractionResolver.ForIdentity(requester);
-        if (handler != null && handler.IsCarrying()) return;
+        if (handler != null && handler.IsCarrying())
+        {
+            MpVfxNet_MP.ServerNotify(requester, "Your hands are full!");
+            return;
+        }
 
         processHelper.Process();
 
@@ -734,8 +788,56 @@ public static class MpSharedCompat
         tile.gameObject.layer = LayerMask.NameToLayer("Ground");
         SetField(tile, "currentPhase", ConstructionPhase.Complete);
 
+        TileWetness wetness = GetField<TileWetness>(tile, "tileWetness");
+        if (wetness != null) wetness.SetCanCollect(true);
+
         Constructor connectedConstructor = GetField<Constructor>(tile, "connectedConstructor");
         ReportConstructorCompletion(connectedConstructor);
+    }
+
+    // Client side of a tile completion: same state as the server plus the room counter, because
+    // RoomController / LevelManager are not networked and every machine decides the round on its own.
+    public static void ApplyTileCompletedOnClient(MonoBehaviour tile)
+    {
+        if (tile == null) return;
+        if (GetField(tile, "currentPhase", ConstructionPhase.Construction) == ConstructionPhase.Complete) return;
+
+        SetField(tile, "currentPhase", ConstructionPhase.Complete);
+        tile.gameObject.layer = LayerMask.NameToLayer("Ground");
+
+        TileWetness wetness = GetField<TileWetness>(tile, "tileWetness");
+        if (wetness != null) wetness.SetCanCollect(true);
+
+        ReportConstructorCompletion(GetField<Constructor>(tile, "connectedConstructor"));
+    }
+
+    // Client side of placing a tile into a Constructor (the server ran ConstructForRequester).
+    public static void ApplyConstructorBuiltOnClient(Constructor constructor, CarriableType type)
+    {
+        if (constructor == null || GetField(constructor, "isBuilt", false)) return;
+
+        SetField(constructor, "isBuilt", true);
+
+        switch (type)
+        {
+            case CarriableType.Wood:
+                SetActive(constructor, "woodObject", true);
+                SetField(constructor, "activeHealthComponent", GetField<ObjectHealth>(constructor, "woodHealth"));
+                break;
+            case CarriableType.Brick:
+                SetActive(constructor, "brickObject", true);
+                SetField(constructor, "activeHealthComponent", GetField<ObjectHealth>(constructor, "brickHealth"));
+                break;
+            case CarriableType.Glass:
+                SetActive(constructor, "glassObject", true);
+                SetField(constructor, "activeHealthComponent", GetField<ObjectHealth>(constructor, "glassHealth"));
+                break;
+        }
+
+        SetActive(constructor, "bluePrintObject", false);
+
+        Collider interactionCollider = GetField<Collider>(constructor, "interactionCollider");
+        if (interactionCollider != null) interactionCollider.enabled = false;
     }
 
     private static float TileGetProcessNormalized(MonoBehaviour tile)
@@ -809,7 +911,11 @@ public static class MpSharedCompat
 
         int cost = GetField(shop, "cost", 0);
 
-        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost))
+        {
+            MpVfxNet_MP.ServerNotify(requester, "Not enough money!");
+            return;
+        }
 
         Transform spawnTransform = GetField<Transform>(shop, "spawnTransform");
         Vector3 position = spawnTransform != null ? spawnTransform.position : shop.transform.position;
@@ -858,7 +964,10 @@ public static class MpSharedCompat
         if (CurrencyManager_MP.Instance != null) CurrencyManager_MP.Instance.RequestSpend(itemCost);
     }
 
-    public static void SpawnForRemote(this ObjectSpawner spawner, bool requesterCarrying)
+    public static void SpawnForRemote(this ObjectSpawner spawner, bool requesterCarrying) =>
+        SpawnForRemote(spawner, requesterCarrying, null);
+
+    public static void SpawnForRemote(this ObjectSpawner spawner, bool requesterCarrying, NetworkIdentity requester)
     {
         if (spawner == null) return;
 
@@ -896,8 +1005,18 @@ public static class MpSharedCompat
 
         SetField(spawner, "spawnedObjectCount", Mathf.Min(maxCount, spawnedCount + 1));
 
-        if (instance.TryGetComponent(out ItemScript.CarriableObject_SP carriable))
+        // Hand it to the requester through the network. The SP OnInteract snapped it into whatever handler
+        // FindFirstObjectByType returned, on the server only: the wrong player "held" it, the requester's
+        // screen showed it lying on the ground, and that player could never take another one.
+        if (NetworkServer.active && instance.TryGetComponent(out CarriableObject_MP carriableMp))
+        {
+            NetworkIdentity receiver = requester != null ? requester : NetworkClient.localPlayer;
+            if (receiver != null) carriableMp.ServerGiveTo(receiver);
+        }
+        else if (instance.TryGetComponent(out ItemScript.CarriableObject_SP carriable))
+        {
             carriable.OnInteract();
+        }
 
         if (instance.TryGetComponent(out ISpawnable spawnable))
             spawnable.OnSpawn(spawner.gameObject);
@@ -933,7 +1052,15 @@ public static class MpSharedCompat
 
         float currentTime = RemainingFromNetwork(state);
 
-        SetField(manager, "currentTime", currentTime);
+        // The client's own timer keeps ticking between messages; only snap it when it really drifted
+        // (or is starting / stopping). Hard-setting every 0.25 s made the countdown jitter.
+        float localTime = GetField(manager, "currentTime", currentTime);
+        bool wasActive = GetField(manager, "isActive", false);
+        if (Mathf.Abs(localTime - currentTime) > 0.75f || wasActive != active)
+            SetField(manager, "currentTime", currentTime);
+        else
+            currentTime = localTime;
+
         SetField(manager, "isActive", active);
 
         if (Time.unscaledTime >= TimeHudLog.NextAt)
@@ -955,7 +1082,9 @@ public static class MpSharedCompat
     {
         if (!state.HasTime) return 0f;
 
-        float elapsed = (float)(NetworkTime.time - state.ServerTime);
+        // NetworkTime.time on a client is the interpolated server time (a buffer behind), so right after a
+        // message it is often *before* serverTime: a negative "elapsed" made the countdown run upwards.
+        float elapsed = Mathf.Max(0f, (float)(NetworkTime.time - state.ServerTime));
         return Mathf.Max(0f, state.Remaining - elapsed);
     }
 

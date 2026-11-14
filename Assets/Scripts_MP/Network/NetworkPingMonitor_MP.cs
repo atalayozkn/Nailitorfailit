@@ -81,6 +81,11 @@ public class NetworkPingMonitor_MP : MonoBehaviour
     public static void EnsureRegistered()
     {
         if (Instance == null) AutoSpawn();
+
+        // AutoSpawn returns early when a monitor object already exists; if that object has not run Awake yet,
+        // Instance is still null here. Throwing would abort LobbyNetworkManager.OnStartServer, so every Register()
+        // after this call (currency, match state, level net) would be skipped. (2026-11-13 host test.)
+        if (Instance == null) return;
         Instance.RegisterOnce();
     }
 

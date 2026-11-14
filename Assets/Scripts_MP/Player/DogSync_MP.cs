@@ -24,6 +24,10 @@ public class DogSync_MP : NetworkBehaviour
     private Animator dogAnimator;
     private Animator mailManAnimator;
 
+    private MailManController mailManController;
+    private MailManMovementHandler mailManMovement;
+    private bool mailManGated;
+
     private double lastSendTime;
     private double lastSnapshotStamp;
     private Vector3 lastSeenNetPos;
@@ -133,6 +137,12 @@ public class DogSync_MP : NetworkBehaviour
                 Debug.LogWarning("[MP-DOG] mail man transform not found - mail man sync is disabled.");
         }
 
+        if (mailMan != null)
+        {
+            mailMan.TryGetComponent(out mailManController);
+            mailMan.TryGetComponent(out mailManMovement);
+        }
+
         if (dog != null && mailMan != null)
             InteractionDebug.Log($"[MP-DOG] companion sync wired (dog='{dog.name}', mailMan='{mailMan.name}').");
     }
@@ -182,12 +192,78 @@ public class DogSync_MP : NetworkBehaviour
         }
     }
 
+    private void GateMailManUntilNavMesh()
+    {
+        if (mailManController == null && mailManMovement == null) return;
+
+        if (!MpLevelInstaller.NavMeshReady)
+        {
+            if (mailManController != null) mailManController.enabled = false;
+            if (mailManMovement != null) mailManMovement.enabled = false;
+
+            mailManGated = true;
+            return;
+        }
+
+        if (!mailManGated) return;
+
+        mailManGated = false;
+
+        if (mailManController != null) mailManController.enabled = true;
+        if (mailManMovement != null) mailManMovement.enabled = true;
+
+        InteractionDebug.Log("[MP-DOG] NavMesh ready - mail man movement re-enabled.");
+    }
+
+    // ---- dog bar diagnostics (owner): values, sliders and enable resets, every 15 s in Player.log ----
+    private float nextBarLogAt;
+    private float lastSatiety = -1f;
+    private int barResets;
+
+    private static float BarValue(MonoBehaviour bar, string field)
+    {
+        if (bar == null) return -1f;
+        var info = bar.GetType().GetField(field, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        object raw = info?.GetValue(bar);
+        return raw is float f ? f : raw is int i ? i : -1f;
+    }
+
+    private static string SliderOf(MonoBehaviour bar)
+    {
+        if (bar == null) return "-";
+        var info = bar.GetType().GetField("slider", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var slider = info?.GetValue(bar) as UnityEngine.UI.Slider;
+        return slider == null ? "none" : $"{slider.value:0}/{slider.maxValue:0}{(slider.gameObject.activeInHierarchy ? "" : " hidden")}";
+    }
+
+    private void LogDogBars()
+    {
+        var satiety = dog.GetComponent<SatietyController>();
+        var favor = dog.GetComponent<FavorController>();
+        var energy = dog.GetComponent<DogEnergyController>();
+
+        float s = BarValue(satiety, "currentSatiety");
+        if (lastSatiety >= 0f && s > lastSatiety + 5f) barResets++; // jumped up without a meal => OnEnable reset
+        lastSatiety = s;
+
+        if (Time.unscaledTime < nextBarLogAt) return;
+        nextBarLogAt = Time.unscaledTime + 15f;
+
+        Debug.Log($"[MP-DOG] bars: satiety={s:0} ({SliderOf(satiety)}, {(satiety != null && satiety.isActiveAndEnabled ? "on" : "OFF")}) " +
+                  $"favor={BarValue(favor, "currentFavor"):0} ({SliderOf(favor)}, {(favor != null && favor.isActiveAndEnabled ? "on" : "OFF")}) " +
+                  $"energy={BarValue(energy, "currentEnergy"):0} ({SliderOf(energy)}, {(energy != null && energy.isActiveAndEnabled ? "on" : "OFF")}) " +
+                  $"dogActive={dog.gameObject.activeInHierarchy} jumpsUp={barResets} timeScale={Time.timeScale}");
+    }
+
     private void Update()
     {
         if (dog == null) return;
 
         if (isOwned)
         {
+            GateMailManUntilNavMesh();
+            LogDogBars();
+
             if ((NetworkTime.time - lastSendTime) >= sendInterval)
             {
                 bool dogMoved = (dog.localPosition - netLocalPosition).sqrMagnitude > positionThreshold * positionThreshold

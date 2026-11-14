@@ -41,6 +41,9 @@ public class ChatInputGuard : MonoBehaviour
 
         if (!typing && useCHotkey && ChatKeyPressed())
         {
+            // In a match the chat toggle belongs to MpChatHotkey_MP (T/C); opening here too
+            // fired ActivateInputField twice and could undo the hotkey's own toggle.
+            if (MatchChatOwnedByLocal()) return;
             OpenChat();
             return;
         }
@@ -121,6 +124,19 @@ public class ChatInputGuard : MonoBehaviour
         {
             if (reference.action.enabled) reference.action.Disable();
         }
+    }
+
+    // True when the local player carries a match chat (ChatUI under its own player package);
+    // the lobby chat panel has no owner and stays handled by this guard.
+    private static bool MatchChatOwnedByLocal()
+    {
+        foreach (ChatUI chat in FindObjectsByType<ChatUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (chat == null) continue;
+            PlayerNetwork_MP owner = chat.GetComponentInParent<PlayerNetwork_MP>(true);
+            if (owner != null && owner.isOwned) return true;
+        }
+        return false;
     }
 
     private static PlayerMovement FindLocalPlayerMovement()

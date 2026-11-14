@@ -63,7 +63,8 @@ public class DogMovementHandler : MonoBehaviour
             moveRoutine = null;
         }
 
-        if (agent != null)
+        // ResetPath on a disabled / off-mesh agent only logs an error; there is no path to clear then.
+        if (agent != null && agent.isOnNavMesh)
         {
             agent.ResetPath();
         }
@@ -109,6 +110,10 @@ public class DogMovementHandler : MonoBehaviour
     public void MoveTowardsTarget()
     {
         if (virtualTarget == null && isMoving) return;
+
+        // Not placed on a NavMesh yet (e.g. spawned before the mesh was ready): SetDestination would
+        // fail and log an error every frame while the state machine keeps retrying.
+        if (virtualTarget == null || !agent.isOnNavMesh) return;
 
         if (moveRoutine != null)
         {

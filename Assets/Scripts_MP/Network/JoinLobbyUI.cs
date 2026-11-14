@@ -19,6 +19,17 @@ public class JoinLobbyUI : MonoBehaviour
     {
         if (joinButton != null) joinButton.interactable = true;
         if (statusText != null) statusText.text = string.Empty;
+        LobbyNetworkManager.SetupFailed += OnSetupFailed;
+    }
+
+    void OnDisable() => LobbyNetworkManager.SetupFailed -= OnSetupFailed;
+
+    // Joining failed: unlock right away with the reason instead of waiting for the retry timer.
+    void OnSetupFailed(string reason)
+    {
+        StopCoroutine_Unlock();
+        if (joinButton != null) joinButton.interactable = true;
+        if (statusText != null) statusText.text = reason;
     }
 
     public void PrefillInviteCode(string code)

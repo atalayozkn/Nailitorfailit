@@ -67,9 +67,29 @@ public class LobbyNetworkManager : NetworkManager
         base.OnApplicationQuit();
     }
 
+    // The transport assigned in the scene (FizzySteamworks). Dev mode swaps in KCP at runtime,
+    // so Steam paths must put this back or they would silently keep using KCP.
+    private Transport sceneTransport;
+
     public override void Awake()
     {
         base.Awake();
+
+        // Duplicate (e.g. MenuScene_MP's manager when the MpStack from the SP menu already exists): Mirror
+        // destroys it, but hand its spawn list to the survivor first. Otherwise the survivor only knows the
+        // player + car, station products stay un-networked SP objects and clients reject "_MP" spawns.
+        if (singleton != null && singleton != this)
+        {
+            foreach (GameObject prefab in spawnPrefabs)
+            {
+                if (prefab != null && !singleton.spawnPrefabs.Contains(prefab)) singleton.spawnPrefabs.Add(prefab);
+            }
+            return;
+        }
+
+        maxConnections = MaxPlayers; // also used as the Steam lobby size
+
+        sceneTransport = transport;
 
         if (gamePlayerPrefab != null && !spawnPrefabs.Contains(gamePlayerPrefab))
             spawnPrefabs.Add(gamePlayerPrefab);
@@ -94,9 +114,71 @@ public class LobbyNetworkManager : NetworkManager
         base.OnDestroy();
     }
 
+    private const string DevPrefKey = "NIOFI.MP.ForceDevTransport";
+
+    private static bool forceDevTransport;
+
+    public static bool ForceDevTransport
+    {
+        get
+        {
+#if UNITY_EDITOR
+            return UnityEditor.EditorPrefs.GetBool(DevPrefKey, false); // Steam by default; F8 toggles local KCP
+#else
+            return forceDevTransport;
+#endif
+        }
+        private set
+        {
+            forceDevTransport = value;
+
+#if UNITY_EDITOR
+            UnityEditor.EditorPrefs.SetBool(DevPrefKey, value);
+#endif
+        }
+    }
+
+    private static bool LooksLikeAddress(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+
+        string trimmed = input.Trim();
+
+        return System.Net.IPAddress.TryParse(trimmed, out _) || trimmed.Equals("localhost",
+            System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    public override void Update()
+    {
+        base.Update();
+
+        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+
+        if (keyboard == null) return;
+        if (!keyboard.f8Key.wasPressedThisFrame) return;
+
+        ForceDevTransport = !ForceDevTransport;
+
+        InteractionDebug.Log($"[DEV] forced local KCP transport {(ForceDevTransport ? "ON" : "OFF")} " +
+                             "(use this for ParrelSync / two local instances).");
+    }
+
+    // Raised when hosting / joining fails before a connection exists, so the lobby screens can re-enable
+    // their buttons and show the reason (the on-screen notice is shown by MpNotice_MP / SteamLobbyManager).
+    public static event System.Action<string> SetupFailed;
+
+    private static void ReportSetupFailure(string reason, bool showNotice)
+    {
+        Debug.LogWarning("[LOBBY] setup failed: " + reason);
+        if (showNotice) MpNotice_MP.Error(reason);
+        SetupFailed?.Invoke(reason);
+    }
+
     public void HostLobby(string password)
     {
         LobbyPassword = password;
+
+        UseSteamNameIfEmpty();
 
         ChatNetwork.ClearHistory();
 
@@ -105,13 +187,28 @@ public class LobbyNetworkManager : NetworkManager
         auth.clientPassword = password;
         auth.clientName = DesiredName;
 
+        if (ForceDevTransport)
+        {
+            StartDevHost(password);
+            return;
+        }
+
+        // No silent fallback to the local transport any more: a friend could never join that lobby.
+        if (!MpNotice_MP.CanUseSteamOnline(out string offlineReason))
+        {
+            ReportSetupFailure(offlineReason, true);
+            return;
+        }
+
         var steam = SteamLobbyManager.Instance;
 
-        if (steam == null || !SteamManager.Initialized)
+        if (steam == null)
         {
             Debug.LogError("[STEAM] SteamLobbyManager not found - could not create the lobby.");
             return;
         }
+
+        UseSceneTransport();
 
         int gen = ++setupGeneration;
         steam.CreateLobby(
@@ -132,18 +229,48 @@ public class LobbyNetworkManager : NetworkManager
 
                 StartHost();
             },
-            onFail: err => Debug.LogError("[STEAM] Could not create the lobby: " + err));
+            onFail: err => ReportSetupFailure(err, false));
+    }
+
+    private static void UseSteamNameIfEmpty()
+    {
+        if (!string.IsNullOrEmpty(DesiredName)) return;
+        if (!SteamManager.Initialized) return;
+
+        string persona = SteamFriends.GetPersonaName();
+
+        if (string.IsNullOrEmpty(persona)) return;
+
+        SetDesiredName(persona);
+        InteractionDebug.Log($"[STEAM] lobby name taken from Steam: '{persona}'");
     }
 
     public void JoinLobby(string userInput, string password)
     {
         LobbyPassword = password;
 
+        // Clients showed up as "Player 1" on the host: only HostLobby took the Steam name.
+        UseSteamNameIfEmpty();
+
         ChatNetwork.ClearHistory();
 
         var auth = (LobbyAuthenticator)authenticator;
         auth.clientPassword = password;
         auth.clientName = DesiredName;
+
+        bool devJoin = ForceDevTransport || LooksLikeAddress(userInput);
+
+        if (devJoin)
+        {
+            StartDevClient(userInput, password);
+            return;
+        }
+
+        if (!MpNotice_MP.CanUseSteamOnline(out string offlineReason))
+        {
+            ReportSetupFailure(offlineReason, true);
+            return;
+        }
 
         string input = LobbyCodeCodec.Canonicalize(userInput);
 
@@ -170,7 +297,7 @@ public class LobbyNetworkManager : NetworkManager
                     }
                     BeginSteamClient(input, gen);
                 },
-                onFail: err => Debug.LogError("[STEAM] Could not join by code: " + err));
+                onFail: err => ReportSetupFailure(err, false));
             return;
         }
 
@@ -187,11 +314,73 @@ public class LobbyNetworkManager : NetworkManager
                     }
                     BeginSteamClient(input, gen);
                 },
-                onFail: err => Debug.LogError("[STEAM] Could not join by SteamID: " + err));
+                onFail: err => ReportSetupFailure(err, false));
             return;
         }
 
-        Debug.LogError("[STEAM] Unrecognised lobby address: " + input);
+        ReportSetupFailure("That lobby code is not valid - it has 6 letters/digits (check the host's screen).", true);
+        Debug.LogError("[STEAM] Unrecognised lobby address: " + input +
+                       " - type a 6-character code, or an IP like 127.0.0.1 to use the local transport " +
+                       $"(dev mode currently {(ForceDevTransport ? "ON" : "OFF")}, press F8 to toggle).");
+    }
+
+    private const int DevPort = 7777;
+
+    private void UseSceneTransport()
+    {
+        if (sceneTransport == null) return;
+
+        // Transport.active must be set by hand: Mirror's InitializeSingleton() returns early once the
+        // singleton exists, so assigning the 'transport' field alone never reaches Transport.active.
+        bool changed = transport != sceneTransport || Transport.active != sceneTransport;
+
+        transport = sceneTransport;
+        Transport.active = sceneTransport;
+
+        if (changed)
+            InteractionDebug.Log($"[NET] transport restored to {sceneTransport.GetType().Name} for Steam.");
+    }
+
+    private KcpTransport EnsureDevTransport()
+    {
+        KcpTransport kcp = transport as KcpTransport;
+
+        if (kcp == null) kcp = GetComponent<KcpTransport>();
+        if (kcp == null) kcp = gameObject.AddComponent<KcpTransport>();
+
+        kcp.Port = DevPort;
+        transport = kcp;
+        Transport.active = kcp; // see UseSceneTransport: the field alone is not enough
+
+        return kcp;
+    }
+
+    private void StartDevHost(string password)
+    {
+        EnsureDevTransport();
+
+        LobbyPassword = password;
+        LobbyID = "DEV";
+
+        InteractionDebug.Log($"[DEV] Steam yok - yerel KCP host baslatiliyor (port {DevPort}). " +
+                             "Ikinci instance '127.0.0.1' ile baglanabilir.");
+
+        StartHost();
+    }
+
+    private void StartDevClient(string address, string password)
+    {
+        EnsureDevTransport();
+
+        string host = string.IsNullOrWhiteSpace(address) ? "127.0.0.1" : address.Trim();
+
+        networkAddress = host;
+        LobbyPassword = password;
+        LobbyID = host;
+
+        InteractionDebug.Log($"[DEV] Steam yok - yerel KCP client: {host}:{DevPort}");
+
+        StartClient();
     }
 
     public void CancelPendingSetup()
@@ -241,6 +430,8 @@ public class LobbyNetworkManager : NetworkManager
             Debug.LogError("[STEAM] Could not resolve the host SteamID - cannot start the client.");
             return;
         }
+
+        UseSceneTransport();
 
         networkAddress = hostSteamId;
         LobbyID = displayId;
@@ -313,7 +504,16 @@ public class LobbyNetworkManager : NetworkManager
         Quaternion baseRot = Quaternion.identity;
 
         GameObject marker = GameObject.Find(SpawnMarkerName);
-        if (marker != null)
+
+        if (MpLevelInstaller.HasAuthoredSpawn)
+        {
+            basePos = MpLevelInstaller.AuthoredSpawnPosition;
+            baseRot = MpLevelInstaller.AuthoredSpawnRotation;
+
+            Debug.Log($"[MP] Spawning at the authored level start {basePos} " +
+                      $"(SpawnPoint marker at {(marker != null ? marker.transform.position.ToString() : "none")}).");
+        }
+        else if (marker != null)
         {
             basePos = marker.transform.position;
             baseRot = marker.transform.rotation;
@@ -349,10 +549,8 @@ public class LobbyNetworkManager : NetworkManager
     public override void OnStartServer()
     {
         base.OnStartServer();
-        string transportName = NetworkManager.singleton.transport != null
-            ? NetworkManager.singleton.transport.GetType().Name
-            : "null";
-        string portInfo = NetworkManager.singleton.transport is KcpTransport kcp ? kcp.Port.ToString() : "n/a";
+        string transportName = Transport.active != null ? Transport.active.GetType().Name : "null";
+        string portInfo = Transport.active is KcpTransport kcp ? kcp.Port.ToString() : "n/a";
         Debug.Log($"[NET] Server started. transport={transportName} port={portInfo}");
 
         ChatNetwork.Register();
@@ -372,6 +570,7 @@ public class LobbyNetworkManager : NetworkManager
 
         ChatNetwork.Register();
         VoiceNetwork_MP.Register();
+        MpVfxNet_MP.RegisterClient();
         MpCarSpawner_MP.RegisterPrefabs();
         NetworkPingMonitor_MP.EnsureRegistered();
         CurrencyManager_MP.Register();
@@ -392,6 +591,14 @@ public class LobbyNetworkManager : NetworkManager
         {
             Debug.LogWarning($"[NET] Game already started - connection rejected: connId={conn.connectionId}");
             conn.Disconnect();
+            return;
+        }
+
+        // Host + 3. The transport limit already does this; keep it explicit in case maxConnections is edited.
+        if (NetworkServer.connections.Count > MaxPlayers)
+        {
+            Debug.LogWarning($"[NET] Lobby full ({MaxPlayers}) - connection rejected: connId={conn.connectionId}");
+            conn.Disconnect();
         }
     }
 
@@ -410,8 +617,22 @@ public class LobbyNetworkManager : NetworkManager
         if (GameManager.Instance != null) GameManager.Instance.ShowLobbyMenu();
     }
 
+    private static readonly System.Reflection.FieldInfo ConnectStateField = typeof(NetworkClient).GetField(
+        "connectState", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.NonPublic);
+
+    // Mirror keeps connectState internal. "Disconnecting" means we called StopClient/StopHost ourselves.
+    private static bool ClientIsDisconnectingLocally()
+    {
+        object state = ConnectStateField?.GetValue(null);
+        return state != null && state.ToString() == "Disconnecting";
+    }
+
     public override void OnClientDisconnect()
     {
+        // Read before base: base.OnClientDisconnect -> StopClient flips a remote drop to Disconnecting too.
+        bool localDisconnect = ClientIsDisconnectingLocally();
+
         base.OnClientDisconnect();
         Debug.LogWarning("[NET] Client connection lost.");
 
@@ -425,8 +646,20 @@ public class LobbyNetworkManager : NetworkManager
         if (!connectedOnce)
         {
             Debug.Log("[LOBBY] Could not connect; staying on the Join screen.");
+            ReportSetupFailure(Application.internetReachability == NetworkReachability.NotReachable
+                ? MpNotice_MP.Texts.NoInternet
+                : "Could not connect to the host. They may have closed the lobby, or one of you is offline.", true);
             return;
         }
+
+        // Disconnecting = we called StopClient/StopHost ourselves (Leave, Main Menu, quit): no warning then.
+        bool leftByChoice = localDisconnect || returnToMenuRequested ||
+                            quitInProgress || mode == NetworkManagerMode.Host;
+
+        if (!leftByChoice)
+            MpNotice_MP.Warning(Application.internetReachability == NetworkReachability.NotReachable
+                ? "Disconnected: your internet connection was lost."
+                : "Disconnected from the host (connection lost or the host left).");
 
         if (GameManager.Instance != null)
         {
@@ -564,6 +797,42 @@ public class LobbyNetworkManager : NetworkManager
         SteamLobbyManager.Instance?.LeaveLobby();
 
         Debug.Log("[LOBBY] Lobby state reset.");
+    }
+
+    // Colour per connection, kept after the lobby (LobbyPlayer objects are replaced by game players).
+    private static readonly Dictionary<int, int> colorByConnection = new Dictionary<int, int>();
+
+    public static void RememberColor(NetworkConnectionToClient conn, int index)
+    {
+        if (conn != null) colorByConnection[conn.connectionId] = index;
+    }
+
+    public static int ColorFor(NetworkConnectionToClient conn)
+    {
+        if (conn == null) return -1;
+        if (conn.identity != null && conn.identity.TryGetComponent(out LobbyPlayer lobbyPlayer)) return lobbyPlayer.colorIndex;
+        return colorByConnection.TryGetValue(conn.connectionId, out int index) ? index : -1;
+    }
+
+    public int NextFreeColorIndex(LobbyPlayer exclude = null)
+    {
+        bool[] used = new bool[MpPlayerColor_MP.Count];
+
+        foreach (LobbyPlayer player in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
+        {
+            if (player == null || player == exclude) continue;
+
+            int index = LobbyPlayer.ClampColor(player.colorIndex);
+
+            if (index >= 0 && index < used.Length) used[index] = true;
+        }
+
+        for (int i = 0; i < used.Length; i++)
+        {
+            if (!used[i]) return i;
+        }
+
+        return 0;
     }
 
     public bool AllClientsReady()

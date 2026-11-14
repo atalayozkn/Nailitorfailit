@@ -55,6 +55,16 @@ public class WarningManager : MonoBehaviour
         Show(message, ignoreMute);
         return false;
     }
+    // Multiplayer: local-only call sites (own player movement/use) use this; the gate above stays
+    // for the SP station paths that could otherwise run on a server for a remote player.
+    public static void ShowLocal(string message, bool ignoreMute = false)
+    {
+        if (IsMuted && !ignoreMute) return;
+
+        if (Instance == null) CreateInstance();
+        SfxBootstrap.PlayWarning();
+        Instance.Play(message);
+    }
     private static void CreateInstance()
     {
         GameObject root = new GameObject("WarningManager");

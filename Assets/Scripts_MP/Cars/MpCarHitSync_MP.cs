@@ -1,7 +1,15 @@
+using System.Collections.Generic;
 using System.Reflection;
 using Mirror;
 using UnityEngine;
+using UnityEngine.Events;
 
+// Networked version of Car_Active's hit logic, matching SP:
+//   body collision  -> Bump  (player stunned / ragdoll for 3 s)
+//   crash trigger   -> Crash (player dies, the mock player shows on the car, camera tracks the car)
+// The server decides, every machine plays the same result. Car_Active's own Bump/Crash are switched off
+// (its player mask is cleared) because Unity still delivers collision callbacks to disabled behaviours,
+// which used to trigger unsynced local deaths on clients and the mock player only on the host.
 [RequireComponent(typeof(Rigidbody))]
 public class MpCarHitSync_MP : NetworkBehaviour
 {
@@ -14,25 +22,32 @@ public class MpCarHitSync_MP : NetworkBehaviour
     [Tooltip("Log every hit and despawn.")]
     [SerializeField] private bool logActions = true;
 
-    [Tooltip("Server-side overlap distance that counts as a hit, even if no physics contact is reported.")]
+    [Tooltip("Server-side overlap distance that counts as a crash when no physics contact is reported.")]
     [SerializeField] private float hitRadius = 1.25f;
 
-    private static readonly FieldInfo MaxLifeTimeField =
-        typeof(Car_Active).GetField("maxLifeTime", BindingFlags.Instance | BindingFlags.NonPublic);
+    [Tooltip("Seconds a player is immune after any car hit (stops one hit firing 3-4 reactions).")]
+    [SerializeField] private float perPlayerHitCooldown = 2f;
 
-    private float nextMissLogAt;
-    private float nextProximityCheck;
+    private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+    private static readonly FieldInfo MaxLifeTimeField = typeof(Car_Active).GetField("maxLifeTime", Private);
+    private static readonly FieldInfo PlayerMaskField = typeof(Car_Active).GetField("whatIsPlayer", Private);
+    private static readonly FieldInfo MockPlayerField = typeof(Car_Active).GetField("mockPlayerObject", Private);
+    private static readonly FieldInfo CrashEventField = typeof(Car_Active).GetField("onCrashEvent", Private);
+
+    // Shared by all cars: one player can only be hit once per cooldown, whichever car hits.
+    private static readonly Dictionary<uint, double> lastHitAt = new Dictionary<uint, double>();
 
     private Car_Active carActive;
     private Rigidbody body;
-
-    private float nextSampleAt;
-    private Vector3 lastSamplePosition;
+    private float nextProximityCheck;
+    private bool crashed;
 
     private void Awake()
     {
         carActive = GetComponent<Car_Active>();
         body = GetComponent<Rigidbody>();
+
+        if (carActive != null && PlayerMaskField != null) PlayerMaskField.SetValue(carActive, (LayerMask)0);
     }
 
     public override void OnStartServer()
@@ -40,15 +55,7 @@ public class MpCarHitSync_MP : NetworkBehaviour
         if (carActive != null)
         {
             carActive.enabled = true;
-
-            if (MaxLifeTimeField != null)
-            {
-                MaxLifeTimeField.SetValue(carActive, 1e9f);
-
-                if (logActions)
-                    InteractionDebug.Log("[MP-CAR] SP lifetime disabled on the server car " +
-                                         "(despawn is networked now).");
-            }
+            if (MaxLifeTimeField != null) MaxLifeTimeField.SetValue(carActive, 1e9f);
         }
 
         if (body != null)
@@ -66,51 +73,27 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
         if (carActive != null) carActive.enabled = false;
 
-        NetworkIdentity identity = GetComponent<NetworkIdentity>();
-
-        InteractionDebug.Log($"[MP-CAR] client received '{name}' netId={identity?.netId} " +
-                             $"pos={transform.position}");
-
         if (body != null)
         {
             body.isKinematic = true;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
         }
-
-        nextSampleAt = Time.unscaledTime + 1f;
-        lastSamplePosition = transform.position;
-
-        InteractionDebug.Log($"[MP-CAR] client received car netId={netId} " +
-                             $"pos={transform.position} hasTransform={GetComponent<Mirror.NetworkTransformReliable>() != null}");
-    }
-
-    private void Update()
-    {
-        if (isServer)
-        {
-            if (Time.unscaledTime < nextProximityCheck) return;
-
-            nextProximityCheck = Time.unscaledTime + 0.1f;
-            ServerCheckProximity();
-            return;
-        }
-
-        if (Time.unscaledTime < nextSampleAt) return;
-
-        nextSampleAt = Time.unscaledTime + 1f;
-
-        float moved = Vector3.Distance(transform.position, lastSamplePosition);
-        lastSamplePosition = transform.position;
-
-        InteractionDebug.Log($"[MP-CAR] client car netId={netId} moved={moved:F2}m/s " +
-                             $"pos={transform.position}");
     }
 
     public override void OnStopServer()
     {
         base.OnStopServer();
         CancelInvoke(nameof(ServerDespawn));
+    }
+
+    [ServerCallback]
+    private void Update()
+    {
+        if (crashed || Time.unscaledTime < nextProximityCheck) return;
+
+        nextProximityCheck = Time.unscaledTime + 0.1f;
+        ServerCheckProximity();
     }
 
     private void ServerDespawn()
@@ -125,6 +108,17 @@ public class MpCarHitSync_MP : NetworkBehaviour
         NetworkServer.Destroy(gameObject);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (isServer) ServerHit(other, crash: true);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (isServer) ServerHit(collision.collider, crash: false);
+    }
+
+    [Server]
     private void ServerCheckProximity()
     {
         Vector3 center = transform.position + Vector3.up * 0.6f;
@@ -140,58 +134,61 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
             if ((closest - center).sqrMagnitude > radiusSqr) continue;
 
-            InteractionDebug.Log($"[MP-CAR-HIT] '{name}' proximity hit on '{player.name}' " +
-                                 $"(distance {Vector3.Distance(closest, center):0.00}) - death requested.");
-
-            player.RpcPlayHitReaction();
-            StartCoroutine(DelayedDeath(player, 0.35f));
-            KeepAliveAfterHit();
+            ServerApply(player, crash: true, "proximity");
             return;
         }
     }
 
-    private void KeepAliveAfterHit()
+    [Server]
+    private void ServerHit(Collider other, bool crash)
     {
+        if (other == null || crashed) return;
+
+        PlayerScripts.PlayerNetwork_MP player = other.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>();
+        if (player == null || player.isDead) return;
+
+        ServerApply(player, crash, crash ? "trigger" : "collision");
+    }
+
+    [Server]
+    private void ServerApply(PlayerScripts.PlayerNetwork_MP player, bool crash, string source)
+    {
+        uint id = player.netId;
+        double now = NetworkTime.time;
+
+        if (lastHitAt.TryGetValue(id, out double last) && now - last < perPlayerHitCooldown) return;
+        lastHitAt[id] = now;
+
+        if (logActions)
+            InteractionDebug.Log($"[MP-CAR-HIT] '{name}' {(crash ? "CRASH" : "bump")} on '{player.name}' ({source}).");
+
+        if (!crash)
+        {
+            player.ServerStun();
+            return;
+        }
+
+        crashed = true;
+        RpcCrash(player.netIdentity);
+        player.ServerKill(DeathReason.Car);
+
         CancelInvoke(nameof(ServerDespawn));
         Invoke(nameof(ServerDespawn), 4f);
     }
 
-    private void OnTriggerEnter(Collider other) => ServerTryHit(other);
-
-    private void OnCollisionEnter(Collision collision) => ServerTryHit(collision.collider);
-
-    private void ServerTryHit(Collider other)
+    // Same visuals as Car_Active.Crash, on every machine.
+    [ClientRpc]
+    private void RpcCrash(NetworkIdentity victim)
     {
-        if (!isServer || other == null) return;
-
-        PlayerScripts.PlayerNetwork_MP player = other.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>();
-
-        if (player == null)
+        if (carActive != null)
         {
-            if (logActions && Time.unscaledTime >= nextMissLogAt)
-            {
-                nextMissLogAt = Time.unscaledTime + 3f;
-                InteractionDebug.Log($"[MP-CAR-HIT] '{name}' touched '{other.name}' " +
-                                     $"layer={other.gameObject.layer} - not a player, ignored.");
-            }
-
-            return;
+            if (MockPlayerField?.GetValue(carActive) is GameObject mock && mock != null) mock.SetActive(true);
+            if (CrashEventField?.GetValue(carActive) is UnityEvent onCrash) onCrash.Invoke();
         }
 
-        if (player.isDead) return;
+        if (victim == null) return;
 
-        InteractionDebug.Log($"[MP-CAR-HIT] '{name}' -> '{player.name}' (layer {other.gameObject.layer}, " +
-                             $"mask {whatIsPlayer.value}) death requested.");
-
-        player.RpcPlayHitReaction();
-        StartCoroutine(DelayedDeath(player, 0.35f));
-        KeepAliveAfterHit();
-    }
-
-    private System.Collections.IEnumerator DelayedDeath(PlayerScripts.PlayerNetwork_MP player, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (player != null && !player.isDead) player.RequestDeath();
+        PlayerStateMachine stateMachine = victim.GetComponentInChildren<PlayerStateMachine>(true);
+        if (stateMachine != null) stateMachine.SetTrackTarget(transform);
     }
 }

@@ -42,6 +42,10 @@ public class MpChatHotkey_MP : MonoBehaviour
             return;
         }
 
+        // While typing, T/C/Enter are part of the message text: the hotkey must not close the
+        // chat mid-word (that locked the cursor and dropped everything the player had typed).
+        if (chat.IsTyping) return;
+
         bool open = (openOnC && keyboard.cKey.wasPressedThisFrame)
                     || (openOnT && keyboard.tKey.wasPressedThisFrame)
                     || (openOnEnter && (keyboard.enterKey.wasPressedThisFrame

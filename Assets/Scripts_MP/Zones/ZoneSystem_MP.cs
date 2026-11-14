@@ -119,12 +119,8 @@ public class ZoneSystem_MP : MonoBehaviour
                 break;
 
             case BoundaryPolicy.Stun:
-                if (player.isOwned)
-                {
-                    PlayerStateMachine stateMachine = player.GetComponent<PlayerStateMachine>();
-                    if (stateMachine != null && !stateMachine.isDead)
-                        stateMachine.ChangeToStunnedState();
-                }
+                // Networked: everyone sees the stun and the held item drops for everyone (was owner-only).
+                if (player.isOwned && !player.isDead) player.RequestStun();
                 break;
 
             case BoundaryPolicy.Kill:

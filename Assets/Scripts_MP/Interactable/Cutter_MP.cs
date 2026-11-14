@@ -7,10 +7,30 @@ public class Cutter_MP : NetworkBehaviour, IInteractionNetworkProxy
     private Cutter cutter;
     private Generator_Prototype generator;
 
+    // Generator fuel lives on the server (refuel + cutting run there); mirror it so every fuel gauge matches.
+    [SyncVar(hook = nameof(OnEnergyChanged))] private float generatorEnergy = -1f;
+    private float nextEnergyCheck;
+
     private void Awake()
     {
         cutter = GetComponent<Cutter>();
         generator = GetComponentInChildren<Generator_Prototype>(true);
+    }
+
+    [ServerCallback]
+    private void Update()
+    {
+        if (generator == null || Time.time < nextEnergyCheck) return;
+        nextEnergyCheck = Time.time + 0.2f;
+
+        float energy = generator.GetEnergy();
+        if (!Mathf.Approximately(energy, generatorEnergy)) generatorEnergy = energy;
+    }
+
+    private void OnEnergyChanged(float oldValue, float newValue)
+    {
+        if (isServer || generator == null || newValue < 0f) return;
+        generator.ApplyNetworkedEnergy(newValue);
     }
 
     public void RequestInteract(NetworkIdentity requester, Component interactable)
@@ -23,8 +43,12 @@ public class Cutter_MP : NetworkBehaviour, IInteractionNetworkProxy
     }
 
     [Command(requiresAuthority = false)]
-    private void CmdRequestInteract(NetworkIdentity requester, bool usedGenerator) =>
+    private void CmdRequestInteract(NetworkIdentity requester, bool usedGenerator, NetworkConnectionToClient sender = null)
+    {
+        // Act for the sender's own player, never for an identity the client claims.
+        if (sender != null && sender.identity != null) requester = sender.identity;
         ServerHandle(requester, usedGenerator);
+    }
 
     [Server]
     private void ServerHandle(NetworkIdentity requester, bool usedGenerator)
@@ -50,6 +74,20 @@ public class Cutter_MP : NetworkBehaviour, IInteractionNetworkProxy
             return;
         }
 
+        float before = cutter.CutterProgress();
         cutter.ServerInteract(requester);
+        float after = cutter.CutterProgress();
+
+        // Progress / effects ran on the server only, so other players never saw the cutter work.
+        if (!Mathf.Approximately(before, after)) RpcCutterFeedback(after, after > before);
+    }
+
+    [ClientRpc]
+    private void RpcCutterFeedback(float normalized, bool cut)
+    {
+        if (cutter == null) return;
+
+        if (!isServer) cutter.ApplyCutterProgress(normalized);
+        if (cut) VfxManager.Play(VfxId.CutterCutting, cutter.CutterEffectPoint());
     }
 }

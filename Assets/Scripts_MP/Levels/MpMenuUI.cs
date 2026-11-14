@@ -24,6 +24,30 @@ public class MpMenuUI : MonoBehaviour
     [SerializeField] private TMP_Text lobbyPasswordText;
     [SerializeField] private TMP_Text statusText;
 
+    private MpCopyField_MP copyId;
+    private MpCopyField_MP copyPassword;
+
+    private static MpCopyField_MP AttachCopyField(TMP_Text label)
+    {
+        if (label == null) return null;
+
+        MpCopyField_MP field = label.GetComponent<MpCopyField_MP>();
+
+        if (field == null) field = label.gameObject.AddComponent<MpCopyField_MP>();
+
+        field.Source = () =>
+        {
+            LobbyNetworkManager manager = NetworkManager.singleton as LobbyNetworkManager;
+            if (manager == null) return string.Empty;
+
+            return label == null ? string.Empty : (label.name.ToLowerInvariant().Contains("password")
+                ? manager.LobbyPassword
+                : manager.LobbyID);
+        };
+
+        return field;
+    }
+
     private GameObject runtimeRoot;
     private TMP_InputField runtimeNameInput;
     private TMP_InputField runtimeCodeInput;
@@ -46,6 +70,9 @@ public class MpMenuUI : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        copyId = AttachCopyField(lobbyIdText);
+        copyPassword = AttachCopyField(lobbyPasswordText);
+
         if (nameInput != null) nameInput.text = PlayerPrefs.GetString("mp_player_name", string.Empty);
     }
 
@@ -67,8 +94,9 @@ public class MpMenuUI : MonoBehaviour
         string info = $"Code: {nm.LobbyID}\nPassword: {nm.LobbyPassword}\n{nm.ReadySummary()}\n" +
                       $"Level: {MpLevelCatalog.Instance?.SelectedLabel()}";
 
-        if (lobbyIdText != null) lobbyIdText.text = nm.LobbyID;
-        if (lobbyPasswordText != null) lobbyPasswordText.text = nm.LobbyPassword;
+        if (lobbyIdText != null) lobbyIdText.text = copyId != null ? copyId.Format(nm.LobbyID) : nm.LobbyID;
+        if (lobbyPasswordText != null)
+            lobbyPasswordText.text = copyPassword != null ? copyPassword.Format(nm.LobbyPassword) : nm.LobbyPassword;
         if (runtimeLobbyText != null) runtimeLobbyText.text = info;
     }
 

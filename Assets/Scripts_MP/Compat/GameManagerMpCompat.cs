@@ -148,7 +148,23 @@ public static class GameManagerMpCompat
         if (parent == null) return;
 
         TMP_Text label = parent.GetComponentInChildren<TMP_Text>(true);
-        if (label != null) label.text = value;
+        if (label == null) return;
+
+        bool isPassword = parentName.ToLowerInvariant().Contains("password");
+
+        MpCopyField_MP field = label.GetComponent<MpCopyField_MP>();
+
+        if (field == null) field = label.gameObject.AddComponent<MpCopyField_MP>();
+
+        field.Source = () =>
+        {
+            LobbyNetworkManager manager = Mirror.NetworkManager.singleton as LobbyNetworkManager;
+            if (manager == null) return string.Empty;
+
+            return isPassword ? manager.LobbyPassword : manager.LobbyID;
+        };
+
+        label.text = field.Format(value);
     }
 
     private static GameObject FindSceneObject(string name)

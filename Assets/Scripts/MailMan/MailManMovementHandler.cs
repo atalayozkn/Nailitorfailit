@@ -52,6 +52,9 @@ public class MailManMovementHandler : MonoBehaviour
     }
     public void StopMovement()
     {
+        // isStopped on an inactive / off-mesh agent only logs an error (MP disables remote mail men).
+        if (!agent.isOnNavMesh) return;
+
         agent.isStopped = true;
     }
     public void SetBreakDistance(float amount)

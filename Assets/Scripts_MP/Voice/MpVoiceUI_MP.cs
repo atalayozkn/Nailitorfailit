@@ -19,6 +19,7 @@ public class MpVoiceUI_MP : MonoBehaviour
     private static void AutoSpawn()
     {
         if (instance != null) return;
+        if (FindAnyObjectByType<MpVoiceUI_MP>(FindObjectsInactive.Include) != null) return;
 
         var host = new GameObject("MpVoiceUI_MP");
         DontDestroyOnLoad(host);
@@ -34,7 +35,34 @@ public class MpVoiceUI_MP : MonoBehaviour
         }
 
         instance = this;
-        Build();
+        if (Application.isPlaying && gameObject.scene.IsValid()) DontDestroyOnLoad(gameObject);
+        BindOrBuild();
+    }
+
+    // Sahneye elle eklenmis ise koddan kurulum yapmadan mevcut hiyerarsiyi bagla (Scene Editor gorunurlugu).
+    private void BindOrBuild()
+    {
+        var canvasChild = transform.Find("Canvas");
+        if (canvasChild == null)
+        {
+            Build();
+            return;
+        }
+
+        group = canvasChild.GetComponent<CanvasGroup>();
+        var panel = canvasChild.Find("VoicePanel");
+        if (panel == null) return;
+
+        statusText = panel.Find("Status") != null ? panel.Find("Status").GetComponent<TMP_Text>() : null;
+        hintText = panel.Find("Hint") != null ? panel.Find("Hint").GetComponent<TMP_Text>() : null;
+
+        for (int i = 0; i < MaxRows; i++)
+        {
+            var row = panel.Find("Speaker" + i);
+            var dot = panel.Find("Dot" + i);
+            if (row != null) rows[i] = row.GetComponent<TMP_Text>();
+            if (dot != null) rowDots[i] = dot.GetComponent<Image>();
+        }
     }
 
     private void OnDestroy()
@@ -124,9 +152,10 @@ public class MpVoiceUI_MP : MonoBehaviour
 
         RectTransform panel = NewRect(root, "VoicePanel");
         panel.sizeDelta = new Vector2(330f, 150f);
-        panel.anchorMin = new Vector2(0f, 0f);
-        panel.anchorMax = new Vector2(0f, 0f);
-        panel.anchoredPosition = new Vector2(190f, 105f);
+        // Bottom-right: bottom-left is the dog panel (the mic status used to cover its lower bars).
+        panel.anchorMin = new Vector2(1f, 0f);
+        panel.anchorMax = new Vector2(1f, 0f);
+        panel.anchoredPosition = new Vector2(-190f, 105f);
 
         Image backdrop = panel.gameObject.AddComponent<Image>();
         backdrop.color = new Color(0.05f, 0.06f, 0.08f, 0.72f);

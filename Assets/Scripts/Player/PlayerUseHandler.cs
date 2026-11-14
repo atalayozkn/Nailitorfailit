@@ -1,5 +1,6 @@
 using Interactions;
 using ItemScript;
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -46,7 +47,13 @@ public class PlayerUseHandler : MonoBehaviour
         else
         {
             currentUsable = null;
-            WarningManager.Show("Nothing to use");
+            // Multiplayer: every copy listens to the same input action, only the owner warns.
+            if (NetworkModeHelper.IsNetworked)
+            {
+                NetworkIdentity identity = stateMachine.GetComponentInParent<NetworkIdentity>();
+                if (identity != null && !identity.isOwned) return;
+            }
+            WarningManager.ShowLocal("Nothing to use");
         }
     }
     public IUsable GetCurrentUsable()

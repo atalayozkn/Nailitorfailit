@@ -26,8 +26,12 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
     }
 
     [Command(requiresAuthority = false)]
-    private void CmdRequestInteract(NetworkIdentity requester, bool usedCrank, bool usedGenerator) =>
+    private void CmdRequestInteract(NetworkIdentity requester, bool usedCrank, bool usedGenerator, NetworkConnectionToClient sender = null)
+    {
+        // Act for the sender's own player, never for an identity the client claims.
+        if (sender != null && sender.identity != null) requester = sender.identity;
         ServerHandle(requester, usedCrank, usedGenerator);
+    }
 
     [Server]
     private void ServerHandle(NetworkIdentity requester, bool usedCrank, bool usedGenerator)

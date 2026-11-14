@@ -38,6 +38,10 @@ public class LookAtInfoUI : MonoBehaviour
     private bool isShowingBlocked;
     private float pulseElapsed = PulseDuration;
 
+    // Multiplayer: injected look-at source (PlayerInteractionNetwork_MP). Null in singleplayer.
+    private System.Func<LookAtInfo> mpSource;
+    private System.Func<bool, string> mpBindingLabel;
+
     public static void Create(PlayerInteractionHandler handler)
     {
         Canvas overlayCanvas = FindOverlayCanvas(handler);
@@ -53,6 +57,30 @@ public class LookAtInfoUI : MonoBehaviour
         panel.AddComponent<LookAtInfoUI>().Build(handler);
     }
 
+    // Multiplayer: builds the panel from the MP interaction wrapper instead of the SP handler.
+    public static void CreateMp(Transform playerRoot, System.Func<LookAtInfo> source, System.Func<bool, string> bindingLabel)
+    {
+        Canvas overlayCanvas = null;
+        foreach (Canvas canvas in playerRoot.GetComponentsInChildren<Canvas>(true))
+        {
+            if (canvas.name == OverlayCanvasName)
+            {
+                overlayCanvas = canvas;
+                break;
+            }
+        }
+        if (overlayCanvas == null)
+        {
+            Debug.LogWarning($"LookAtInfoUI: no {OverlayCanvasName} found under {playerRoot.name}, the look-at panel is disabled.");
+            return;
+        }
+
+        GameObject panel = new GameObject("LookAtInfoPanel", typeof(RectTransform), typeof(CanvasGroup));
+        panel.layer = overlayCanvas.gameObject.layer;
+        panel.transform.SetParent(overlayCanvas.transform, false);
+        panel.AddComponent<LookAtInfoUI>().BuildMp(source, bindingLabel);
+    }
+
     private static Canvas FindOverlayCanvas(PlayerInteractionHandler handler)
     {
         foreach (Canvas canvas in handler.transform.root.GetComponentsInChildren<Canvas>(true))
@@ -66,7 +94,19 @@ public class LookAtInfoUI : MonoBehaviour
     {
         handler = interactionHandler;
         handler.InteractBlocked += OnInteractBlocked;
+        InitLayout();
+    }
 
+    // Multiplayer: the MP interaction wrapper feeds the panel; no SP handler involved.
+    private void BuildMp(System.Func<LookAtInfo> source, System.Func<bool, string> bindingLabel)
+    {
+        mpSource = source;
+        mpBindingLabel = bindingLabel;
+        InitLayout();
+    }
+
+    private void InitLayout()
+    {
         panelRect = GetComponent<RectTransform>();
         // Screen centre so it is noticed; the bottom-right corner now holds the inventory bar.
         panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(0.5f, 0.5f);
@@ -138,7 +178,16 @@ public class LookAtInfoUI : MonoBehaviour
         nextRefreshTime = Time.unscaledTime + RefreshInterval;
 
         LookAtInfo info = default;
-        bool hasInfo = !NetworkModeHelper.IsNetworked && Time.timeScale > 0f && handler != null && handler.TryGetLookAtInfo(out info);
+        bool hasInfo;
+        if (mpSource != null)
+        {
+            info = Time.timeScale > 0f ? mpSource() : default;
+            hasInfo = !string.IsNullOrEmpty(info.Name);
+        }
+        else
+        {
+            hasInfo = !NetworkModeHelper.IsNetworked && Time.timeScale > 0f && handler != null && handler.TryGetLookAtInfo(out info);
+        }
 
         if (hasInfo)
         {
@@ -166,7 +215,8 @@ public class LookAtInfoUI : MonoBehaviour
 
     private void Show(LookAtInfo info)
     {
-        string actionLine = info.IsBlocked ? info.Action : $"[{handler.GetInteractBindingLabel(isUsingGamepad)}] {info.Action}";
+        string binding = mpBindingLabel != null ? mpBindingLabel(isUsingGamepad) : handler.GetInteractBindingLabel(isUsingGamepad);
+        string actionLine = info.IsBlocked ? info.Action : $"[{binding}] {info.Action}";
         Color actionColor = info.IsBlocked ? BlockedColor : ActionColor;
 
         if (nameText.text != info.Name || actionText.text != actionLine)

@@ -1,7 +1,9 @@
+using Mirror;
 using UnityEngine;
 
 // Floats an icon above the dog's head showing what it is doing, so the player can read its intentions.
-// The art lives in Resources/DogIcons, overwrite a PNG there to replace an icon. Singleplayer only, like the mail alert.
+// The art lives in Resources/DogIcons, overwrite a PNG there to replace an icon.
+// Multiplayer: visible on the owner's machine (the machine that runs the dog AI).
 public class DogStateIcon : MonoBehaviour
 {
     private const string IconFolder = "DogIcons/";
@@ -29,7 +31,8 @@ public class DogStateIcon : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (NetworkModeHelper.IsNetworked)
+        // Multiplayer: the dog AI runs on the owner's machine only, the icon follows it there.
+        if (NetworkModeHelper.IsNetworked && !DogOwnedLocally())
         {
             iconRenderer.enabled = false;
             return;
@@ -49,6 +52,11 @@ public class DogStateIcon : MonoBehaviour
         if (Camera.main != null) transform.rotation = Camera.main.transform.rotation;
     }
 
+    private bool DogOwnedLocally()
+    {
+        NetworkIdentity identity = stateMachine.GetComponentInParent<NetworkIdentity>();
+        return identity == null || identity.isOwned;
+    }
     private void MeasureHeight()
     {
         hasHeight = true;

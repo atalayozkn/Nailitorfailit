@@ -47,7 +47,29 @@ public class MpPlayerColor_MP : MonoBehaviour
         }
 
         instance = this;
-        Build();
+        if (Application.isPlaying && gameObject.scene.IsValid()) DontDestroyOnLoad(gameObject);
+        BindOrBuild();
+    }
+
+    // Prefab/scene-ekli olursa koddan kurulum yapmadan mevcut hiyerarsiyi bagla (Scene Editor gorunurlugu).
+    private void BindOrBuild()
+    {
+        var canvasChild = transform.Find("Canvas");
+        if (canvasChild == null)
+        {
+            Build();
+            return;
+        }
+
+        group = canvasChild.GetComponent<CanvasGroup>();
+        var panel = canvasChild.Find("ColorPanel");
+        if (panel == null) return;
+
+        for (int i = 0; i < swatches.Length; i++)
+        {
+            var sw = panel.Find("Swatch" + i);
+            if (sw != null) swatches[i] = sw.GetComponent<Image>();
+        }
     }
 
     private void OnDestroy()
@@ -81,7 +103,7 @@ public class MpPlayerColor_MP : MonoBehaviour
         }
     }
 
-    private void Pick(int index)
+    public void Pick(int index)
     {
         LobbyPlayer local = NetworkClient.localPlayer != null
             ? NetworkClient.localPlayer.GetComponent<LobbyPlayer>()

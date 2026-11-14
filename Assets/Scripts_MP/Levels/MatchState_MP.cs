@@ -156,6 +156,9 @@ public class MatchState_MP : MonoBehaviour
 
     private static void OnTime(TimeMessage message)
     {
+        // The host's GameTimeManager is the authority. Applying its own broadcast back onto it (through the
+        // host's local client) rewrote the running timer with a NetworkTime-based estimate: stalls and jumps.
+        if (NetworkServer.active) return;
 
         GameTimeManager.Instance?.ApplyNetworkedTime(message.remaining, message.serverTime, message.active);
     }

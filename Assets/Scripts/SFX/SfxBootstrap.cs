@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Adds menu button sounds and the level defeat stinger when a scene loads, so no scene or
-// menu prefab has to be edited. Singleplayer only.
+// menu prefab has to be edited. Sounds are per-client, so multiplayer menus get them too.
 public static class SfxBootstrap
 {
     private static SfxBank bank;
@@ -25,7 +25,7 @@ public static class SfxBootstrap
 
     private static void Hook()
     {
-        if (NetworkModeHelper.IsNetworked) return;
+        // Multiplayer too: each machine plays only what its own player does.
 
         foreach (var button in Object.FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             AddUiHook(button.gameObject);

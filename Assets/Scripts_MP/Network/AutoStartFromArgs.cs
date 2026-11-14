@@ -12,7 +12,10 @@ public class AutoStartFromArgs : MonoBehaviour
     private static void Bootstrap()
     {
         if (FindAnyObjectByType<AutoStartFromArgs>() != null) return;
-        new GameObject("AutoStartFromArgs").AddComponent<AutoStartFromArgs>();
+        // The game now starts in BootScene (loading screen + logos) before the menu: survive that scene change.
+        var go = new GameObject("AutoStartFromArgs");
+        DontDestroyOnLoad(go);
+        go.AddComponent<AutoStartFromArgs>();
     }
 
     private void Start()
@@ -38,7 +41,7 @@ public class AutoStartFromArgs : MonoBehaviour
 
         LobbyNetworkManager nm = null;
         float waited = 0f;
-        while (nm == null && waited < 10f)
+        while (nm == null && waited < 60f) // boot screens take ~10 s before the menu (and its NetworkManager) exist
         {
             nm = NetworkManager.singleton as LobbyNetworkManager;
             if (nm == null) { yield return new WaitForSeconds(0.5f); waited += 0.5f; }

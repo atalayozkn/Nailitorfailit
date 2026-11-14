@@ -86,6 +86,13 @@ public class EmoteWheel : MonoBehaviour
         isActive = true;
         canvasRoot.SetActive(true);
         CursorManager.Show(this);
+        // Multiplayer: CursorManager is singleplayer-only (no-op there); unlock directly,
+        // same path ChatUI uses, so the wheel tabs can actually be hovered.
+        if (NetworkModeHelper.IsNetworked)
+        {
+            PlayerStateMachine stateMachine = GetComponentInParent<PlayerStateMachine>();
+            if (stateMachine != null) stateMachine.OpenCursor();
+        }
         Canvas.ForceUpdateCanvases();
         MeasureWheel();
         Mouse.current?.WarpCursorPosition(center);
@@ -105,6 +112,13 @@ public class EmoteWheel : MonoBehaviour
         currentTab = null;
         canvasRoot.SetActive(false);
         CursorManager.Release(this);
+        // Multiplayer: hand the cursor back (skip when the pause menu already took it).
+        if (NetworkModeHelper.IsNetworked)
+        {
+            bool paused = GamePauseManager.Instance != null && GamePauseManager.Instance.IsPaused;
+            PlayerStateMachine stateMachine = GetComponentInParent<PlayerStateMachine>();
+            if (!paused && stateMachine != null) stateMachine.CloseCursor();
+        }
     }
 
     // Screen-space centre of the tabs and the direction to each, measured on open so any resolution works.

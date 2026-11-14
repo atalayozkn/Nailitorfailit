@@ -1,4 +1,5 @@
 using System.Collections;
+using Interactions;
 using System.Collections.Generic;
 using System.Reflection;
 using ItemScript;
@@ -56,6 +57,12 @@ public class MpLevelInstaller : MonoBehaviour
 
     private readonly List<NetworkIdentity> addedThisScene = new List<NetworkIdentity>();
 
+    public static int InteractableLayers { get; private set; }
+
+    public static bool HasAuthoredSpawn { get; private set; }
+    public static Vector3 AuthoredSpawnPosition { get; private set; }
+    public static Quaternion AuthoredSpawnRotation { get; private set; } = Quaternion.identity;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoSpawn()
     {
@@ -106,6 +113,7 @@ public class MpLevelInstaller : MonoBehaviour
         MpEndUiSuppressor_MP.Suppress(scene);
 
         addedThisScene.Clear();
+        InteractableLayers = 0;
 
         int installed = 0;
 
@@ -113,6 +121,9 @@ public class MpLevelInstaller : MonoBehaviour
         {
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
             {
+                if (t.GetComponent<IInteractable>() != null)
+                    InteractableLayers |= 1 << t.gameObject.layer;
+
                 if (TryInstallObject(t.gameObject)) installed++;
             }
         }
@@ -470,14 +481,40 @@ public class MpLevelInstaller : MonoBehaviour
         return false;
     }
 
+    // Inactive objects are NOT spawned: a NetworkIdentity added at runtime to an inactive object never ran Awake,
+    // so Mirror's NetworkBehaviours list is null -> Spawn throws, and the broken identity stays in
+    // NetworkServer.spawned, where AddObserver throws for every joining client and Mirror disconnects them.
+    // (2026-11-13: Level_01's disabled 'House_Old' floor slots did exactly that - clients were kicked on match start.)
+    // One failing spawn must also not stop the rest of the level from spawning.
     private void SpawnServerObjects()
     {
+        int skippedInactive = 0;
+
         foreach (NetworkIdentity identity in addedThisScene)
         {
             if (identity == null) continue;
             if (identity.netId != 0) continue;
 
-            NetworkServer.Spawn(identity.gameObject);
+            if (!identity.gameObject.activeInHierarchy)
+            {
+                skippedInactive++;
+                continue;
+            }
+
+            try
+            {
+                NetworkServer.Spawn(identity.gameObject);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[MP-INSTALL] spawn failed for '{PathOf(identity.transform)}': {e.Message}");
+                if (identity.netId != 0) NetworkServer.spawned.Remove(identity.netId);
+            }
+        }
+
+        if (skippedInactive > 0)
+        {
+            Debug.Log($"[MP-INSTALL] {skippedInactive} inactive object(s) not spawned (disabled in the scene).");
         }
     }
 
@@ -486,6 +523,12 @@ public class MpLevelInstaller : MonoBehaviour
         CurrencyText currencyText = null;
         TextMeshProUGUI timerText = null;
         string packagePath = null;
+
+        // Reset per scene: otherwise a level without an authored player package would spawn
+        // players at the previous level's start position.
+        HasAuthoredSpawn = false;
+        AuthoredSpawnPosition = Vector3.zero;
+        AuthoredSpawnRotation = Quaternion.identity;
 
         foreach (GameObject root in scene.GetRootGameObjects())
         {
@@ -501,6 +544,10 @@ public class MpLevelInstaller : MonoBehaviour
                 currencyText = package.GetComponentInChildren<CurrencyText>(true);
                 timerText = FindTimeCounterText(package.transform);
                 packagePath = PathOf(package.transform);
+
+                HasAuthoredSpawn = true;
+                AuthoredSpawnPosition = package.transform.position;
+                AuthoredSpawnRotation = package.transform.rotation;
 
                 PrepareAuthoredPlayer(package);
                 break;

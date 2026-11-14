@@ -17,6 +17,16 @@ public class CreateLobbyUI : MonoBehaviour
     {
         if (createButton != null) createButton.interactable = true;
         if (statusText != null) statusText.text = string.Empty;
+        LobbyNetworkManager.SetupFailed += OnSetupFailed;
+    }
+
+    void OnDisable() => LobbyNetworkManager.SetupFailed -= OnSetupFailed;
+
+    // Hosting failed (offline, Steam down...): let the player try again and say why.
+    void OnSetupFailed(string reason)
+    {
+        if (createButton != null) createButton.interactable = true;
+        if (statusText != null) statusText.text = reason;
     }
 
     void OnCreate()

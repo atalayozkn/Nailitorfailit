@@ -1,8 +1,14 @@
+using System.Collections.Generic;
 using Interactions.Networking;
 using ItemScript;
 using Mirror;
 using UnityEngine;
 
+// Server runs the SP logic (through SharedMpCompat); every result is mirrored to all machines:
+//   placing a tile into the Constructor -> RpcApplyBuilt (blueprint off, model on, collider off, VFX)
+//   nailing a tile                      -> RpcApplyTileProgress (progress bar + nail VFX)
+//   finishing a tile                    -> RpcApplyTileCompleted (phase, layer, wetness, room counter, VFX)
+// Tiles are addressed by their child-index path under this object, so equally named tiles can't collide.
 public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Constructor constructor;
@@ -14,44 +20,48 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 
     public void RequestInteract(NetworkIdentity requester, Component interactable)
     {
-        bool isTile = IsTile(interactable);
-        string tileName = isTile && interactable != null ? interactable.gameObject.name : null;
+        string tilePath = IsTile(interactable) ? PathTo(interactable.transform) : null;
 
-        if (isServer) ServerHandle(requester, isTile, tileName);
-        else CmdRequestInteract(requester, isTile, tileName);
+        if (isServer) ServerHandle(requester, tilePath);
+        else CmdRequestInteract(requester, tilePath);
     }
 
     public void RequestBuild() => RequestBuild(null);
 
     public void RequestBuild(NetworkIdentity requester)
     {
-        if (isServer) ServerHandle(requester, false, null);
-        else CmdRequestInteract(requester, false, null);
+        if (isServer) ServerHandle(requester, null);
+        else CmdRequestInteract(requester, null);
     }
 
     [Command(requiresAuthority = false)]
-    private void CmdRequestInteract(NetworkIdentity requester, bool isTile, string tileName) =>
-        ServerHandle(requester, isTile, tileName);
+    private void CmdRequestInteract(NetworkIdentity requester, string tilePath, NetworkConnectionToClient sender = null)
+    {
+        if (requester != null && sender != null && requester.connectionToClient != sender) return;
+        ServerHandle(requester, tilePath);
+    }
 
     [Server]
-    private void ServerHandle(NetworkIdentity requester, bool isTile, string tileName)
+    private void ServerHandle(NetworkIdentity requester, string tilePath)
     {
-        InteractionDebug.Log($"Constructor_MP: requester={requester?.name ?? "host"} " +
-                             $"tile={isTile} tileName='{tileName}'");
+        InteractionDebug.Log($"Constructor_MP: requester={requester?.name ?? "host"} tile='{tilePath ?? "-"}'");
 
-        if (isTile)
+        if (tilePath != null)
         {
-            Component tile = FindTile(tileName);
+            Component tile = FindTile(tilePath);
 
             if (tile == null)
             {
-                Debug.LogError($"Constructor_MP: tile '{tileName}' not found under '{name}'.", this);
+                Debug.LogError($"Constructor_MP: tile '{tilePath}' not found under '{name}'.", this);
                 return;
             }
 
-            DispatchTileServerInteract(tile, requester);
+            float before = GetTileProgress(tile);
+            bool completed = DispatchTileServerInteract(tile, requester);
+            float after = GetTileProgress(tile);
 
-            RpcApplyTileProgress(tileName, GetTileProgress(tile));
+            if (completed) RpcApplyTileCompleted(tilePath);
+            else if (!Mathf.Approximately(before, after)) RpcApplyTileProgress(tilePath, after);
             return;
         }
 
@@ -64,70 +74,99 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
         if (constructor.IsBuilt()) return;
 
         constructor.ServerInteract(requester);
+
+        if (constructor.IsBuilt()) RpcApplyBuilt((int)constructor.GetAcceptedType());
     }
 
     [ClientRpc]
-    private void RpcApplyTileProgress(string tileName, float normalized)
+    private void RpcApplyBuilt(int type)
     {
-        if (isServer) return;
+        if (constructor == null) return;
 
-        Component tile = FindTile(tileName);
-        if (tile == null) return;
+        if (!isServer) MpSharedCompat.ApplyConstructorBuiltOnClient(constructor, (CarriableType)type);
 
-        ApplyTileProgress(tile, normalized);
+        VfxManager.Play(VfxId.TilePlaced, transform.position);
     }
 
     [ClientRpc]
-    private void RpcApplyTileCompleted(string tileName)
+    private void RpcApplyTileProgress(string tilePath, float normalized)
     {
-        InteractionDebug.Log($"tile completed RPC: '{tileName}' ({(isServer ? "server" : "client")})");
-        if (isServer) return;
-
-        Component tile = FindTile(tileName);
+        Component tile = FindTile(tilePath);
         if (tile == null) return;
 
-        ApplyTileCompletedState(tile);
+        if (!isServer) ApplyTileProgress(tile, normalized);
 
-        InteractionDebug.Log($"Constructor_MP: tile '{tileName}' marked completed on this client.");
+        VfxManager.Play(VfxId.TileNail, tile.transform.position);
+    }
+
+    [ClientRpc]
+    private void RpcApplyTileCompleted(string tilePath)
+    {
+        Component tile = FindTile(tilePath);
+        if (tile == null) return;
+
+        if (!isServer) MpSharedCompat.ApplyTileCompletedOnClient((MonoBehaviour)tile);
+
+        VfxManager.Play(VfxId.TileFinished, tile.transform.position);
+
+        InteractionDebug.Log($"Constructor_MP: tile '{tilePath}' completed ({(isServer ? "server" : "client")}).");
     }
 
     private static bool IsTile(Component interactable) =>
         interactable is WoodTile || interactable is GlassTile || interactable is BrickTile;
 
-    private Component FindTile(string tileName)
+    private string PathTo(Transform target)
     {
-        foreach (Component candidate in GetComponentsInChildren<Component>(true))
+        var indices = new List<int>();
+
+        for (Transform t = target; t != null && t != transform; t = t.parent) indices.Add(t.GetSiblingIndex());
+
+        indices.Reverse();
+        return string.Join("/", indices);
+    }
+
+    private Component FindTile(string tilePath)
+    {
+        if (string.IsNullOrEmpty(tilePath)) return null;
+
+        Transform current = transform;
+
+        foreach (string part in tilePath.Split('/'))
         {
-            if (!IsTile(candidate)) continue;
-            if (!string.IsNullOrEmpty(tileName) && candidate.gameObject.name != tileName) continue;
-            return candidate;
+            if (!int.TryParse(part, out int index) || index < 0 || index >= current.childCount) return null;
+            current = current.GetChild(index);
+        }
+
+        foreach (Component candidate in current.GetComponents<Component>())
+        {
+            if (IsTile(candidate)) return candidate;
         }
 
         return null;
     }
 
-    private void DispatchTileServerInteract(Component tile, NetworkIdentity requester)
+    // Returns true when this interaction finished the tile.
+    private static bool DispatchTileServerInteract(Component tile, NetworkIdentity requester)
     {
         switch (tile)
         {
             case WoodTile wood:
+                if (wood.GetCurrentPhase() == ConstructionPhase.Complete) return false;
                 wood.ServerInteract(requester);
-                if (wood.GetCurrentPhase() == ConstructionPhase.Complete)
-                    RpcApplyTileCompleted(wood.gameObject.name);
-                break;
+                return wood.GetCurrentPhase() == ConstructionPhase.Complete;
 
             case GlassTile glass:
+                if (glass.GetCurrentPhase() == ConstructionPhase.Complete) return false;
                 glass.ServerInteract(requester);
-                if (glass.GetCurrentPhase() == ConstructionPhase.Complete)
-                    RpcApplyTileCompleted(glass.gameObject.name);
-                break;
+                return glass.GetCurrentPhase() == ConstructionPhase.Complete;
 
             case BrickTile brick:
+                if (brick.GetCurrentPhase() == ConstructionPhase.Complete) return false;
                 brick.ServerInteract(requester);
-                if (brick.GetCurrentPhase() == ConstructionPhase.Complete)
-                    RpcApplyTileCompleted(brick.gameObject.name);
-                break;
+                return brick.GetCurrentPhase() == ConstructionPhase.Complete;
         }
+
+        return false;
     }
 
     private static float GetTileProgress(Component tile)
@@ -148,16 +187,6 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
             case WoodTile wood: wood.ApplyNetworkedProgress(normalized); break;
             case GlassTile glass: glass.ApplyNetworkedProgress(normalized); break;
             case BrickTile brick: brick.ApplyNetworkedProgress(normalized); break;
-        }
-    }
-
-    private static void ApplyTileCompletedState(Component tile)
-    {
-        switch (tile)
-        {
-            case WoodTile wood: wood.ApplyCompletedState(); break;
-            case GlassTile glass: glass.ApplyCompletedState(); break;
-            case BrickTile brick: brick.ApplyCompletedState(); break;
         }
     }
 }

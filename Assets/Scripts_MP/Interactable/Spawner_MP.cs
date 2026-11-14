@@ -33,7 +33,12 @@ public class Spawner_MP : NetworkBehaviour, IInteractionNetworkProxy
     public void RequestSpawn() => RequestInteract(null, null);
 
     [Command(requiresAuthority = false)]
-    private void CmdRequestSpawn(NetworkIdentity requester) => ServerSpawn(requester);
+    private void CmdRequestSpawn(NetworkIdentity requester, NetworkConnectionToClient sender = null)
+    {
+        // Act for the sender's own player, never for an identity the client claims.
+        if (sender != null && sender.identity != null) requester = sender.identity;
+        ServerSpawn(requester);
+    }
 
     [Server]
     private void ServerSpawn(NetworkIdentity requester)
@@ -51,6 +56,6 @@ public class Spawner_MP : NetworkBehaviour, IInteractionNetworkProxy
                              $"handler={(handler != null)} carrying={requesterCarrying} " +
                              $"-> spawning={(handler == null || !requesterCarrying)}");
 
-        spawner.SpawnForRemote(requesterCarrying);
+        spawner.SpawnForRemote(requesterCarrying, requester);
     }
 }
