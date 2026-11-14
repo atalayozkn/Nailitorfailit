@@ -15,18 +15,14 @@ MonoBehaviour:
   popupId: level02_intro
   pages:
   - title: Level 2 - Fire hazard
-    body: The electrical sockets in this house are faulty. A spark sets the finished
-      wooden floor around it on fire.
+    body: The electrical sockets in this house are faulty. A spark sets the finished wooden floor around it on fire.
+    image: {fileID: 0}
+  - title: Fix it before it sparks
+    body: "A faulty socket <b>crackles</b> for a few seconds before it sparks. Walk up to it and press <b>E</b> to fix it in time - no fire at all.\n\nA loyal dog runs to you and barks at a socket that's about to go."
     image: {fileID: 0}
   - title: Put it out
-    body: 'Buy a <b>Fire Extinguisher</b> from the shop, carry it to the fire and
-      press <b>Q</b> to spray.
-
-
-      Burning tiles lose health. If a tile burns
-      for too long it breaks and you have to build it again.'
+    body: "Missed it? Buy a <b>Fire Extinguisher</b> from the shop, carry it to the fire and press <b>Q</b> to spray.\n\nBurning tiles lose health. If a tile burns for too long it breaks and you have to build it again."
     image: {fileID: 0}
   - title: Stay safe
-    body: Don't walk through the flames, and react early - a small fire is much easier
-      to handle than a burning room.
+    body: Don't walk through the flames. Fire spreads to the wooden tiles next to it, so react early - a small fire is much easier to handle than a burning room.
     image: {fileID: 0}

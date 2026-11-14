@@ -15,17 +15,14 @@ MonoBehaviour:
   popupId: level05_intro
   pages:
   - title: Level 5 - Leaking pipes
-    body: Old water pipes run under this house. Every now and then one bursts and
-      floods the floor around it.
+    body: "Old water pipes run under this house. Every now and then one bursts and floods the floor around it.\n\nA pipe <b>drips</b> before it bursts. Press <b>E</b> on it to fix it - you can still fix it while it sprays."
     image: {fileID: 0}
   - title: Wet floors
-    body: 'Puddles on the floor are slippery - you can slip and drop what you''re
-      carrying.
-
-
-      Wait for the water to dry or walk around it.'
+    body: "Water soaks into finished tiles:\n\n<b>Wood</b> swells and turns fragile - walking on it while carrying something damages it.\n<b>Glass</b> gets slippery - you slip and drop what you're carrying.\n<b>Brick</b> doesn't mind water.\n\nTiles dry on their own after a while."
     image: {fileID: 0}
   - title: Water + electricity
-    body: Keep water and sockets apart! A spark that reaches a puddle electrifies
-      it and shocks anyone standing in it.
+    body: Keep water and sockets apart! A spark electrifies the wet tiles around it, and stepping on an electrified floor is deadly.
+    image: {fileID: 0}
+  - title: Oil truck!
+    body: "Watch out for the <b>oil truck</b>. It hits as hard as any car, and it leaks oil along its whole lane as it drives.\n\nOil is <b>slippery</b> - step in it and you slip and drop what you're carrying. It stays for about 30 seconds.\n\nPress <b>Space</b> to jump over the oil."
     image: {fileID: 0}
