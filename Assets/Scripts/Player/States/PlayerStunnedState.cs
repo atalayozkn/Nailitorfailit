@@ -7,6 +7,7 @@ public class PlayerStunnedState : PlayerBaseState
     private float counterTime;
     private GameObject stunEffect;
     private float stunDuration = 3f;
+    private PlayerActiveRagdoll activeRagdoll;
     public PlayerStunnedState(PlayerStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
@@ -17,9 +18,21 @@ public class PlayerStunnedState : PlayerBaseState
         // A hit knocks the held item loose, otherwise it stays glued to the ragdoll's hand (oil bug).
         stateMachine.interactionHandler.ThrowHeldObject();
 
-        //Stopping Inputs & Disabling Animator
+        //Stopping Inputs
         stateMachine.movementHandler.SetActivity(false);
         stateMachine.interactionHandler.SetActivity(false);
+        counterTime = 0;
+
+        // Active ragdoll (test prefab only): the body is already physical, just let go of the muscles.
+        // The Animator keeps running so the stand-up can blend from the lying pose.
+        activeRagdoll = stateMachine.GetComponent<PlayerActiveRagdoll>();
+        if (activeRagdoll != null && activeRagdoll.enabled)
+        {
+            activeRagdoll.EnterLimp();
+            return;
+        }
+        activeRagdoll = null;
+
         stateMachine.animator.enabled = false;
 
         //Activation of Ragdoll
@@ -52,6 +65,15 @@ public class PlayerStunnedState : PlayerBaseState
     {
         VfxManager.Stop(stunEffect);
         stateMachine.onStunEndEvent?.Invoke();
+
+        if (activeRagdoll != null)
+        {
+            // Stand-up blend (or instant recover if the next state isn't Stand) is handled by the component.
+            activeRagdoll.ExitLimp();
+            stateMachine.movementHandler.SetActivity(true);
+            stateMachine.interactionHandler.SetActivity(true);
+            return;
+        }
 
         foreach (var col in stateMachine.ragdollColliders)
         {

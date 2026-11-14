@@ -53,6 +53,10 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Forward distance per physics step when moving onto the ledge after the climb.")]
     [SerializeField] private float stepForwardPerFrame = 0.04f;
 
+    [Header("Ramp Settings")]
+    [Tooltip("Extra push while walking up a SidewalkRamp, so walking speed climbs it without stalling.")]
+    [SerializeField] private float rampAssistMultiplier = 1.6f;
+
     [Header("GroundCheck Settings")]
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] private float checkDistance;
@@ -280,6 +284,14 @@ public class PlayerMovement : MonoBehaviour
         if (!staminaHandler.HasEnoughEnergy(moveCost)) return;
         staminaHandler.ConsumeEnergy(moveCost);
 
+        if (isGrounded && TryGetRampNormal(moveDirection, out Vector3 rampNormal))
+        {
+            // Push along the ramp surface instead of horizontally into it, plus a bit extra going up.
+            Vector3 alongRamp = Vector3.ProjectOnPlane(moveDirection, rampNormal).normalized;
+            if (alongRamp.y > 0f) force *= rampAssistMultiplier;
+            moveDirection = alongRamp;
+        }
+
         rb.AddForce(moveDirection * force, ForceMode.Force);
 
         if (isSlipping) return;
@@ -306,6 +318,32 @@ public class PlayerMovement : MonoBehaviour
         float rotationMultiplier = Mathf.Lerp(1f, maxRotationMultiplier, normalizedAngle * normalizedAngle);
 
         rb.AddTorque(transform.up * cross.y * rotateForce * rotationMultiplier, ForceMode.Acceleration);
+    }
+
+    // Finds a SidewalkRamp under the feet or just ahead of them (the capsule touches the ramp's
+    // lower edge before the ground ray reaches it, which is where walking used to stall).
+    private bool TryGetRampNormal(Vector3 direction, out Vector3 normal)
+    {
+        normal = Vector3.up;
+        Vector3 feet = rb.position;
+
+        if (Physics.Raycast(feet + Vector3.up * 0.1f, Vector3.down, out RaycastHit below, 0.3f, whatIsGround, QueryTriggerInteraction.Ignore)
+            && below.collider.GetComponent<SidewalkRamp>() != null)
+        {
+            normal = below.normal;
+            return true;
+        }
+
+        float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : 0.3f;
+        if (Physics.Raycast(feet + Vector3.up * 0.05f, direction, out RaycastHit ahead, radius + stepCheckDistance, whatIsGround, QueryTriggerInteraction.Ignore)
+            && ahead.collider.GetComponent<SidewalkRamp>() != null
+            && ahead.normal.y > 0.2f) // skip the ramp's vertical side faces
+        {
+            normal = ahead.normal;
+            return true;
+        }
+
+        return false;
     }
 
     // Lifts the player onto low ledges (curbs, sidewalks) instead of getting stuck against them.
