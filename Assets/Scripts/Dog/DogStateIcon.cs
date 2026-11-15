@@ -29,7 +29,7 @@ public class DogStateIcon : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (NetworkModeHelper.IsNetworked)
+        if (NetworkModeHelper.PresentationOff || !NetworkModeHelper.IsLocalPlayers(stateMachine.transform))
         {
             iconRenderer.enabled = false;
             return;

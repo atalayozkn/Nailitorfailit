@@ -38,6 +38,10 @@ public class LookAtInfoUI : MonoBehaviour
     private bool isShowingBlocked;
     private float pulseElapsed = PulseDuration;
 
+    // A mode that routes interaction itself (versus) supplies what the panel shows instead of the singleplayer handler.
+    public delegate bool InfoSource(out LookAtInfo info);
+    public static InfoSource Override;
+
     public static void Create(PlayerInteractionHandler handler)
     {
         Canvas overlayCanvas = FindOverlayCanvas(handler);
@@ -138,7 +142,8 @@ public class LookAtInfoUI : MonoBehaviour
         nextRefreshTime = Time.unscaledTime + RefreshInterval;
 
         LookAtInfo info = default;
-        bool hasInfo = !NetworkModeHelper.IsNetworked && Time.timeScale > 0f && handler != null && handler.TryGetLookAtInfo(out info);
+        bool hasInfo = !NetworkModeHelper.PresentationOff && Time.timeScale > 0f && handler != null
+            && (Override != null ? Override(out info) : handler.TryGetLookAtInfo(out info));
 
         if (hasInfo)
         {

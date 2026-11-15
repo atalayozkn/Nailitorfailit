@@ -42,7 +42,7 @@ public class WarningManager : MonoBehaviour
     // Shows the warning for a blocked action.
     public static void Show(string message, bool ignoreMute = false)
     {
-        if (NetworkModeHelper.IsNetworked) return;
+        if (NetworkModeHelper.PresentationOff) return;
         if (IsMuted && !ignoreMute) return;
 
         if (Instance == null) CreateInstance();

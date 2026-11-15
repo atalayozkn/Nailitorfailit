@@ -40,7 +40,7 @@ public class DogMoodUI : MonoBehaviour
         moodText.outlineWidth = 0.2f;
         moodText.outlineColor = Color.black;
 
-        if (!NetworkModeHelper.IsNetworked) DogStateIcon.Create(stateMachine);
+        if (!NetworkModeHelper.PresentationOff) DogStateIcon.Create(stateMachine);
     }
     private void Update()
     {

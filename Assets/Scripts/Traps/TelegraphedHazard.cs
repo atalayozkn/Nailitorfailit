@@ -64,7 +64,7 @@ public abstract class TelegraphedHazard : MonoBehaviour, IInteractable, ILookAtI
     // Called by the hazard controller.
     public void OnTrigger()
     {
-        if (NetworkModeHelper.IsNetworked)
+        if (NetworkModeHelper.PresentationOff)
         {
             Fire();
             return;

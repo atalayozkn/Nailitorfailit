@@ -25,7 +25,7 @@ public static class SfxBootstrap
 
     private static void Hook()
     {
-        if (NetworkModeHelper.IsNetworked) return;
+        if (NetworkModeHelper.PresentationOff) return;
 
         foreach (var button in Object.FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             AddUiHook(button.gameObject);

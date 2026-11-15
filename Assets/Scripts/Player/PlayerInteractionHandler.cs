@@ -252,6 +252,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
+        carriable.SetHolder(this);
         PlaceInInventory(carriable);
 
         currentCarriable = carriable;
@@ -365,7 +366,7 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     #region INVENTORY
 
-    private bool UsesInventory => !NetworkModeHelper.IsNetworked;
+    private bool UsesInventory => !NetworkModeHelper.PresentationOff;
 
     // The slot actions live in the same map as Interact, so no extra inspector wiring is needed.
     private void EnableSlotActions(bool condition)

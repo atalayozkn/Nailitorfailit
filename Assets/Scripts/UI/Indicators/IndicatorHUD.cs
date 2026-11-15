@@ -32,7 +32,7 @@ public class IndicatorHUD : MonoBehaviour
 
     public static void EnsureExists()
     {
-        if (instance != null || NetworkModeHelper.IsNetworked || !Application.isPlaying) return;
+        if (instance != null || NetworkModeHelper.PresentationOff || !Application.isPlaying) return;
         var go = new GameObject("IndicatorHUD");
         instance = go.AddComponent<IndicatorHUD>();
     }
@@ -59,7 +59,7 @@ public class IndicatorHUD : MonoBehaviour
         if (cam == null) cam = Camera.main;
         if (player == null)
         {
-            var handler = FindFirstObjectByType<PlayerInteractionHandler>();
+            var handler = NetworkModeHelper.LocalHandler();
             if (handler != null) player = handler.transform;
         }
 

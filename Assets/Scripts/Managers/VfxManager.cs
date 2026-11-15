@@ -98,7 +98,7 @@ public static class VfxManager
     private static GameObject Spawn(VfxId id, Vector3 position, Transform parent, out VfxLibrary.Entry entry)
     {
         entry = null;
-        if (NetworkModeHelper.IsNetworked || Library == null) return null;
+        if (NetworkModeHelper.PresentationOff || Library == null) return null;
         if (!entries.TryGetValue(id, out entry)) return null;
         if (entry.prefab == null)
         {
