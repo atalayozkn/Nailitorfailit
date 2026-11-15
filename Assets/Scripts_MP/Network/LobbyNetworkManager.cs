@@ -94,9 +94,13 @@ public class LobbyNetworkManager : NetworkManager
         base.OnDestroy();
     }
 
+    public static int MaxPlayersOverride;
+
     public void HostLobby(string password)
     {
         LobbyPassword = password;
+
+        if (MaxPlayersOverride > 0) maxConnections = MaxPlayersOverride;
 
         ChatNetwork.ClearHistory();
 
