@@ -85,8 +85,28 @@ public class GameHUD_MP : MonoBehaviour
         }
     }
 
+    private static readonly System.Reflection.FieldInfo TimerTextField =
+        typeof(GameTimeManager).GetField("timerText", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+    // SP's GameTimerDisplay binds the GameTimeManager to the timer text of EVERY HUD that starts. On the host the
+    // client's player package spawns after the host's own, so the countdown was written to the remote player's
+    // hidden HUD and the host saw it frozen. Only the owner's HUD runs this, so it always wins.
+    private void EnsureTimerBinding()
+    {
+        GameTimeManager manager = GameTimeManager.Instance;
+        if (manager == null || TimerTextField == null) return;
+
+        TextMeshProUGUI wanted = authoredTimerActive ? MpSharedCompat.AuthoredTimerText : timerText;
+        if (wanted == null || (TextMeshProUGUI)TimerTextField.GetValue(manager) == wanted) return;
+
+        manager.BindTimerText(wanted);
+        InteractionDebug.Log($"[MP-TIME] timer re-bound to the local HUD text '{wanted.transform.root.name}/{wanted.name}'.");
+    }
+
     private void Update()
     {
+        EnsureTimerBinding();
+
         if (authoredTimerActive || gameEnded || timerText == null || GameTimeManager.Instance == null) return;
 
         float remaining = GameTimeManager.Instance.GetCurrentTime();

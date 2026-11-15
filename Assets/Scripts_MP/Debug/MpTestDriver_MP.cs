@@ -110,6 +110,7 @@ public class MpTestDriver_MP : MonoBehaviour
             case "chat": return Once(() => ChatNetwork.Instance?.Send(string.Join(" ", c.Skip(1))));
             case "rtt": return Rtt(F(c, 1, 5f));
             case "report": return Once(Report);
+            case "inv": return Once(() => StartCoroutine(InvariantWatch(F(c, 1, 60f))));
             case "spawner": return InteractNearest<Spawner_MP>("spawner");
             case "cutload": return InteractNearest<Cutter_MP>("cutter");
             case "cut": return Repeat(() => InteractNearest<Cutter_MP>("cutter"), (int)F(c, 1, 6), 0.35f);
@@ -120,6 +121,12 @@ public class MpTestDriver_MP : MonoBehaviour
             case "hammer": return Hammer((int)F(c, 1, 10));
             case "flood": return Flood(F(c, 1, 10f));
             case "car": return Car(F(c, 1, 20f));
+            case "carwatch": return CarWatch(F(c, 1, 10f));
+            case "stun": return Once(() => Me()?.RequestStun());
+            case "hazards": return Once(LogHazards);
+            case "homes": return Once(LogHomes);
+            case "repair": return Once(RepairHazard);
+            case "ragwatch": return RagWatch(F(c, 1, 6f));
             case "emote": return Once(() => Sm()?.ChangeToEmoteState((int)F(c, 1, 1)));
             case "wait": return Wait(F(c, 1, 1f));
             case "quit": return Once(() => { Report(); Application.Quit(0); });
@@ -275,6 +282,101 @@ public class MpTestDriver_MP : MonoBehaviour
     }
 
     // Stand in front of the nearest moving car and report what happened (stun / death / respawn).
+    // Logs every networked car that is near a player (position, speed, kinematic flags, nearest player's state)
+    // four times a second: shows whether a car stops against a player and which machine moves what.
+    private IEnumerator CarWatch(float seconds)
+    {
+        float t0 = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - t0 < seconds)
+        {
+            PlayerNetwork_MP[] players = FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None);
+
+            foreach (MpCarHitSync_MP car in FindObjectsByType<MpCarHitSync_MP>(FindObjectsSortMode.None))
+            {
+                PlayerNetwork_MP nearest = players.OrderBy(p => Dist(p.transform, car.transform)).FirstOrDefault();
+                float d = nearest != null ? Dist(nearest.transform, car.transform) : -1f;
+                if (nearest == null || d > 12f) continue;
+
+                Rigidbody rb = car.GetComponent<Rigidbody>();
+                Rigidbody nrb = nearest.GetComponent<Rigidbody>();
+                PlayerStateMachine nsm = nearest.GetComponent<PlayerStateMachine>();
+
+                Log($"carwatch car#{car.netId} pos={car.transform.position:0.0} speed={(rb != null ? rb.linearVelocity.magnitude : -1f):0.0} " +
+                    $"kin={(rb != null && rb.isKinematic)} | player#{nearest.netId} {(nearest.isOwned ? "ME" : "remote")} dist={d:0.0} " +
+                    $"kin={(nrb != null && nrb.isKinematic)} state={nsm?.currentPlayerState} dead={nearest.isDead}");
+            }
+
+            yield return new WaitForSeconds(0.25f);
+        }
+    }
+
+    // Logs where each player's ragdoll hips are (and whether the active ragdoll runs) every 0.5 s: compare the owner's
+    // numbers with the other machine's view of the same player.
+    private IEnumerator RagWatch(float seconds)
+    {
+        float t0 = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - t0 < seconds)
+        {
+            foreach (PlayerNetwork_MP p in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+            {
+                Rigidbody hips = p.RagdollHips;
+                PlayerStateMachine sm = p.GetComponent<PlayerStateMachine>();
+                Animator anim = sm != null ? sm.animator : null;
+                Log($"ragwatch t={Time.realtimeSinceStartup - t0:0.0} player#{p.netId} {(p.isOwned ? "ME" : "remote")} state={sm?.currentPlayerState} " +
+                    $"animator={(anim != null && anim.enabled ? AnimName(anim) : "OFF")} " +
+                    $"activeRagdoll={p.ActiveRagdollRunning} hips={(hips != null ? hips.position.ToString("0.00") : "-")} hipsKin={(hips != null && hips.isKinematic)} root={p.transform.position.ToString("0.00")}");
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    // Where every player's package, dog house, food bowl and mailbox stand (do the homes overlap?).
+    private void LogHomes()
+    {
+        foreach (PlayerNetwork_MP p in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+        {
+            Transform root = p.transform.root;
+            string Pos(string name)
+            {
+                foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+                    if (t.name == name) return t.position.ToString("0.0");
+                return "-";
+            }
+
+            Log($"home player#{p.netId} {(p.isOwned ? "ME" : "remote")} root={root.position:0.0} body={p.transform.position:0.0} " +
+                $"DogHouse={Pos("DogHouse")} FoodBowl={Pos("FoodBowl")} MailBox={Pos("MailBox")} MailManPackage={Pos("MailManPackage")} Dog={Pos("Dog")}");
+        }
+    }
+
+    // Hazard states on this machine: warning phase, repairable, "!" badge shown.
+    private void LogHazards()
+    {
+        var bf = BindingFlags.Instance | BindingFlags.NonPublic;
+        foreach (TelegraphedHazard h in FindObjectsByType<TelegraphedHazard>(FindObjectsSortMode.None))
+        {
+            var indicator = typeof(TelegraphedHazard).GetField("indicator", bf)?.GetValue(h) as WorldIndicator;
+            Log($"hazard '{h.name}' {h.GetType().Name} state={typeof(TelegraphedHazard).GetField("state", bf)?.GetValue(h)} " +
+                $"repairable={h.IsRepairable} badge={(indicator != null && indicator.IsShown)} netId={h.GetComponent<NetworkIdentity>()?.netId}");
+        }
+    }
+
+    // Presses "repair" on the first hazard that is repairable here, through the real proxy path (server decides).
+    private void RepairHazard()
+    {
+        foreach (Hazard_MP h in FindObjectsByType<Hazard_MP>(FindObjectsSortMode.None))
+        {
+            TelegraphedHazard hazard = h.GetComponent<TelegraphedHazard>();
+            if (hazard == null || !hazard.IsRepairable) continue;
+
+            h.RequestInteract(NetworkClient.localPlayer, null);
+            Log($"repair requested on '{h.name}'");
+            return;
+        }
+
+        Log("repair: nothing repairable");
+    }
+
     private IEnumerator Car(float timeout)
     {
         float t0 = Time.realtimeSinceStartup;
@@ -300,6 +402,49 @@ public class MpTestDriver_MP : MonoBehaviour
         Log($"car result: states seen=[{string.Join(",", seen)}] isDead={(net != null && net.isDead)} pos={Body()?.position}");
     }
 
+
+    // Code <-> visual consistency of every carriable on THIS machine, twice a second. A violation has to persist for two
+    // samples (RPCs apply a frame late) before it is logged. Cases: plank sits in a hand but no handler holds it (visual
+    // without code), a handler holds it but it sits elsewhere (code without visual), holder differs from the server's carrier.
+    private IEnumerator InvariantWatch(float seconds)
+    {
+        var pending = new Dictionary<string, int>();
+        float t0 = Time.realtimeSinceStartup;
+        int samples = 0, logged = 0;
+        while (Time.realtimeSinceStartup - t0 < seconds)
+        {
+            samples++;
+            PlayerInteractionHandler[] handlers = FindObjectsByType<PlayerInteractionHandler>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var now = new HashSet<string>();
+
+            foreach (CarriableObject_MP c in FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None))
+            {
+                CarriableObject_SP sp = c.GetComponent<CarriableObject_SP>();
+                PlayerInteractionHandler handHolder = handlers.FirstOrDefault(h => h.GetCarryTransform() != null && c.transform.parent == h.GetCarryTransform());
+                PlayerInteractionHandler codeHolder = handlers.FirstOrDefault(h => h.GetCurrentCarriable() == sp);
+                NetworkIdentity carrier = c.Carrier;
+                string problem = null;
+
+                if (handHolder != null && codeHolder == null) problem = "VISUAL-NO-CODE (in hand of " + handHolder.transform.root.name + ", no handler holds it)";
+                else if (handHolder == null && codeHolder != null) problem = "CODE-NO-VISUAL (handler of " + codeHolder.transform.root.name + " holds it, parent=" + (c.transform.parent ? c.transform.parent.name : "-") + ")";
+                else if (handHolder != null && codeHolder != null && handHolder != codeHolder) problem = "HOLDER-MISMATCH hand=" + handHolder.transform.root.name + " code=" + codeHolder.transform.root.name;
+                else if (carrier == null && (handHolder != null || codeHolder != null)) problem = "SERVER-FREE but held locally";
+                else if (carrier != null && handHolder == null && codeHolder == null) problem = "SERVER-CARRIER=" + carrier.netId + " but nobody holds it here, parent=" + (c.transform.parent ? c.transform.parent.name : "-");
+                else if (carrier != null && handHolder != null && handHolder.GetComponentInParent<NetworkIdentity>() != carrier) problem = "CARRIER-MISMATCH server=" + carrier.netId + " hand=" + handHolder.transform.root.name;
+
+                if (problem == null) continue;
+                string key = c.netId + ":" + problem;
+                now.Add(key);
+                pending[key] = pending.TryGetValue(key, out int n) ? n + 1 : 1;
+                if (pending[key] == 2) { logged++; Log($"INV #{c.netId} {c.name}: {problem}"); }
+            }
+
+            foreach (string k in pending.Keys.Where(k => !now.Contains(k)).ToList()) pending.Remove(k);
+            yield return new WaitForSeconds(0.5f);
+        }
+        Log($"INV done: {samples} samples, {logged} violations");
+    }
+
     // ------------------------------------------------------------------ report
 
     private void Report()
@@ -314,7 +459,9 @@ public class MpTestDriver_MP : MonoBehaviour
             PlayerStateMachine sm = p.GetComponent<PlayerStateMachine>();
             PlayerInteractionHandler h = p.GetComponent<PlayerInteractionHandler>();
             Log($"  player #{p.netId} {(p.isOwned ? "ME" : "remote")} state={sm?.currentPlayerState} anim={AnimName(a)} " +
-                $"carrying={(h != null && h.IsCarrying())} item={(h?.GetCurrentCarriable() ? h.GetCurrentCarriable().name : "-")} dead={p.isDead} pos={p.transform.position}");
+                $"carrying={(h != null && h.IsCarrying())} item={(h?.GetCurrentCarriable() ? h.GetCurrentCarriable().name : "-")} " +
+                $"inHand=[{string.Join(",", (h != null && h.GetCarryTransform() != null ? h.GetCarryTransform().GetComponentsInChildren<CarriableObject_MP>(true) : new CarriableObject_MP[0]).Select(x => x.name + "#" + x.netId))}] " +
+                $"dead={p.isDead} pos={p.transform.position}");
         }
 
         // Dog bars: which controller runs, its value, and which HUD slider it writes to (and what that shows).

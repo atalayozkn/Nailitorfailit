@@ -53,6 +53,7 @@ public class MpLevelInstaller : MonoBehaviour
         (typeof(Shop),               new[] { typeof(Shop_MP) },                                         "shop",        false),
         (typeof(ShopIndex),          new[] { typeof(ShopIndex_MP) },                                    "shop-index",  false),
         (typeof(Generator_SP),       new[] { typeof(Generator_MP) },                                    "generator",   true),
+        (typeof(TelegraphedHazard),  new[] { typeof(Hazard_MP) },                                       "hazard",      false),
     };
 
     private readonly List<NetworkIdentity> addedThisScene = new List<NetworkIdentity>();
@@ -127,6 +128,8 @@ public class MpLevelInstaller : MonoBehaviour
                 if (TryInstallObject(t.gameObject)) installed++;
             }
         }
+
+        MpHazardScheduler_MP.BindScene(scene);
 
         EnsureNavMesh(scene);
         EnsureLevelData(scene);

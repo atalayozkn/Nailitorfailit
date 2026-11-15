@@ -135,8 +135,14 @@ public static class MpSharedCompat
         UnityEvent onConsume = GetField<UnityEvent>(carriable, "onConsumeEvent");
         if (onConsume != null) onConsume.Invoke();
 
-        PlayerInteractionHandler handler = PlayerInteractionResolver.Local();
-        if (handler != null) handler.ClearCarriedObject();
+        // Only the handler that actually holds this item lets go of it. This used to clear the LOCAL player's
+        // handler on every machine: when someone else's cutter/station consumed an item, the host (or client)
+        // lost the plank it was carrying in code while the plank stayed in its hand (visual without code).
+        foreach (PlayerInteractionHandler holder in UnityEngine.Object.FindObjectsByType<PlayerInteractionHandler>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (holder != null && holder.GetCurrentCarriable() == carriable) holder.ClearCarriedObject();
+        }
     }
 
     public static float GetNormalized(this InteractionProcessHelper helper)
@@ -183,7 +189,27 @@ public static class MpSharedCompat
 
         canvasHelper.UpdateUI(currentProcess);
 
-        if (currentProcess >= maxProcessAmount) canvasHelper.SetActivity(false);
+        // The cutter keeps its bar hidden until material is loaded (ResetProcess runs on the server only), and a
+        // finished process hides it like InteractionProcessHelper.Process does. Clients showed neither.
+        if (currentProcess >= maxProcessAmount)
+        {
+            SetField(helper, "isCompleted", true);
+            canvasHelper.SetActivity(false);
+        }
+        else
+        {
+            canvasHelper.SetActivity(true);
+        }
+    }
+
+    // A raw material was loaded into a station on the server: show the cutter's bar (at 0) on the clients too.
+    public static void OnLoadedIntoStationClient(NetworkIdentity station)
+    {
+        Cutter cutter = station != null ? station.GetComponent<Cutter>() : null;
+        if (cutter == null) return;
+
+        InteractionProcessHelper helper = GetField<InteractionProcessHelper>(cutter, "processHelper");
+        if (helper != null) helper.ResetProcess();
     }
 
     public static void ServerInteract(this Generator_Prototype generator, NetworkIdentity requester)
@@ -504,7 +530,6 @@ public static class MpSharedCompat
         if (matchedFormula == null)
         {
             MpVfxNet_MP.ServerPlay(VfxId.MixerFail, MixerPoint(mixer, "placementTransform"));
-            MpVfxNet_MP.ServerNotify(requester, "No recipe for these ingredients");
             DropStoredItems(mixer, requester);
             return;
         }
@@ -766,11 +791,7 @@ public static class MpSharedCompat
         }
 
         PlayerInteractionHandler handler = PlayerInteractionResolver.ForIdentity(requester);
-        if (handler != null && handler.IsCarrying())
-        {
-            MpVfxNet_MP.ServerNotify(requester, "Your hands are full!");
-            return;
-        }
+        if (handler != null && handler.IsCarrying()) return;
 
         processHelper.Process();
 
@@ -801,6 +822,10 @@ public static class MpSharedCompat
     {
         if (tile == null) return;
         if (GetField(tile, "currentPhase", ConstructionPhase.Construction) == ConstructionPhase.Complete) return;
+
+        // The completing hit only sends "completed", never progress 1.0: the bar stayed on screen on clients.
+        InteractionProcessHelper finished = GetField<InteractionProcessHelper>(tile, "processHelper");
+        if (finished != null) finished.ApplyNetworkedProgress(1f);
 
         SetField(tile, "currentPhase", ConstructionPhase.Complete);
         tile.gameObject.layer = LayerMask.NameToLayer("Ground");
@@ -911,11 +936,7 @@ public static class MpSharedCompat
 
         int cost = GetField(shop, "cost", 0);
 
-        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost))
-        {
-            MpVfxNet_MP.ServerNotify(requester, "Not enough money!");
-            return;
-        }
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
 
         Transform spawnTransform = GetField<Transform>(shop, "spawnTransform");
         Vector3 position = spawnTransform != null ? spawnTransform.position : shop.transform.position;
@@ -1134,10 +1155,14 @@ public static class MpSharedCompat
 
     public static bool HasAuthoredTimeHud { get; private set; }
 
+    // The authored HUD timer text. SP's GameTimerDisplay re-binds the manager to every spawned HUD, so the owner re-asserts this.
+    public static TextMeshProUGUI AuthoredTimerText { get; private set; }
+
     public static void BindAuthoredPlayerHud(CurrencyText currencyText, TextMeshProUGUI timerText)
     {
         HasAuthoredMoneyHud = currencyText != null && CurrencyManager.Instance != null;
         HasAuthoredTimeHud = timerText != null && GameTimeManager.Instance != null;
+        AuthoredTimerText = HasAuthoredTimeHud ? timerText : null;
 
         if (HasAuthoredMoneyHud)
         {

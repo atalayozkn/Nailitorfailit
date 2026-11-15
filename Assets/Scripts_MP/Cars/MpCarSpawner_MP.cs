@@ -181,6 +181,12 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (lane == null) return;
 
         GameObject car = Instantiate(prefab, lane.position, lane.rotation);
+
+        // Road start = this lane's spawn point, road end = where the road leaves the map (found from the lane on the
+        // opposite side). The car is removed when it passes the end instead of after a fixed time mid-road.
+        if (TryFindRoadEnd(lane, out Vector3 roadEnd) && car.TryGetComponent(out MpCarHitSync_MP route))
+            route.SetRoute(roadEnd, lane.forward);
+
         NetworkServer.Spawn(car);
 
         liveCars.Add(car);
@@ -189,6 +195,31 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (logActions)
             InteractionDebug.Log($"[MP-CAR] server spawn '{car.name}' lane='{lane.name}' " +
                                  $"netId={car.GetComponent<NetworkIdentity>()?.netId} (total {spawnedTotal})");
+    }
+
+    // The lane facing the opposite way on (almost) the same line marks the far end of the road.
+    private bool TryFindRoadEnd(Transform lane, out Vector3 end)
+    {
+        end = default;
+        float bestLateral = float.MaxValue;
+
+        foreach (Transform other in lanes)
+        {
+            if (other == null || other == lane) continue;
+            if (Vector3.Dot(other.forward, lane.forward) > -0.9f) continue;
+
+            Vector3 delta = other.position - lane.position;
+            float along = Vector3.Dot(delta, lane.forward);
+            if (along < 20f) continue;
+
+            float lateral = (delta - lane.forward * along).magnitude;
+            if (lateral > 12f || lateral >= bestLateral) continue;
+
+            bestLateral = lateral;
+            end = lane.position + lane.forward * along;
+        }
+
+        return bestLateral < float.MaxValue;
     }
 
     private Transform PickFreeLane()

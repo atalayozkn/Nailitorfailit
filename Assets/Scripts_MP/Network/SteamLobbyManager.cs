@@ -320,17 +320,6 @@ public class SteamLobbyManager : MonoBehaviour
             return;
         }
 
-        // The Steam overlay is not injected into the Unity Editor on Linux, nor into a game started outside Steam
-        // without the overlay hook. Then the invite dialog silently does nothing: fall back to the lobby code.
-        if (!SteamUtils.IsOverlayEnabled())
-        {
-            if (!string.IsNullOrEmpty(CurrentCode)) GUIUtility.systemCopyBuffer = CurrentCode;
-
-            Debug.LogWarning("[STEAM-LOBBY] Steam overlay is not available - lobby code copied instead of opening the invite dialog.");
-            MpNotice_MP.Info($"Steam overlay unavailable. Lobby code {CurrentCode} copied - send it to your friend.", 7f);
-            return;
-        }
-
         SteamFriends.ActivateGameOverlayInviteDialog(CurrentLobby);
     }
 

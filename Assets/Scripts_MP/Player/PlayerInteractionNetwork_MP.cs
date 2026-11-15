@@ -90,6 +90,8 @@ namespace PlayerScripts
             detectionRoutine = StartCoroutine(TargetDetectionRoutine());
 
             // SP look-at panel, MP kaynakli: hedef adi + etkilesim etiketi (sadece sahibinde).
+            // Not in headless test clients: the key-name query crashes natively without a display.
+            if (!Application.isBatchMode)
             LookAtInfoUI.CreateMp(transform.root,
                 () =>
                 {

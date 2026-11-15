@@ -379,6 +379,8 @@ public class CarriableObject_MP : NetworkBehaviour
         }
 
         ClearHandlerIfHolding(requester);
+
+        if (!isServer) MpSharedCompat.OnLoadedIntoStationClient(station);
     }
 
     [ClientRpc]

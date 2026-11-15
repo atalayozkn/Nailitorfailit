@@ -80,7 +80,9 @@ public class MpPlayerColor_MP : MonoBehaviour
     private void Update()
     {
         LobbyNetworkManager manager = NetworkManager.singleton as LobbyNetworkManager;
-        bool inLobby = manager != null && !manager.IsGameStarted && NetworkClient.localPlayer != null;
+        // IsGameStarted is only set on the host: clients kept the panel open inside the level.
+        bool inLobby = manager != null && !manager.IsGameStarted && NetworkClient.localPlayer != null &&
+                       UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == LobbyNetworkManager.MenuSceneName;
 
         if (group != null)
         {

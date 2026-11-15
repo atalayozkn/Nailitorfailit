@@ -48,6 +48,7 @@ namespace PlayerScripts
         private bool respawnRoutineRunning;
 
         private Rigidbody body;
+        private PlayerActiveRagdoll activeRagdoll;
 
         private DogStateMachine dogAI;
         private bool dogAiWaitingForNavMesh;
@@ -71,6 +72,11 @@ namespace PlayerScripts
                 jumpAction = movement.jump;
                 sprintAction = movement.sprint;
             }
+
+            // The active ragdoll is real physics: only the owner's machine runs it. Disabled before its Start the
+            // component leaves the bones passive, and PlayerStunnedState then uses the classic ragdoll there.
+            activeRagdoll = GetComponent<PlayerActiveRagdoll>();
+            if (activeRagdoll != null) activeRagdoll.enabled = false;
 
             netAnimator = stateMachine != null ? stateMachine.animator : null;
             if (netAnimator == null)
@@ -154,6 +160,8 @@ namespace PlayerScripts
             if (emoteListener != null) emoteListener.enabled = isOwned;
 
             ApplyRemotePhysics();
+
+            MpHomeLayout_MP.Apply(transform.root);
         }
 
         private void ApplyRemotePhysics()
@@ -170,6 +178,7 @@ namespace PlayerScripts
             movement.enabled = true;
             interaction.enabled = false;
             interactionNetwork.enabled = true;
+            if (activeRagdoll != null) activeRagdoll.enabled = true;
             stamina.enabled = true;
             if (crashHelper != null) crashHelper.enabled = true;
             if (trapRespawn != null) trapRespawn.enabled = true;
@@ -193,6 +202,8 @@ namespace PlayerScripts
                         MpSharedCompat.HasAuthoredMoneyHud);
                 }
             }
+
+            MpAuthoredHud_MP.Bridge(transform.root);
 
             if (movement != null) movement.SetActivity(true);
             if (interaction != null) interaction.SetActivity(true);
@@ -404,6 +415,80 @@ namespace PlayerScripts
 
         #endregion
 
+        #region RAGDOLL SYNC
+
+        // Owner: active ragdoll (real physics, may be flung by a car). Everyone else: the classic ragdoll for the
+        // same stun (triggered by RpcPlayHitReaction). While stunned the owner sends where its hips are and the
+        // others pin their ragdoll's hips to that, so the body lies in the same place on every machine.
+        // Limb details stay local (limp limbs), only the body position is shared.
+        private Rigidbody ragdollHips;
+        private float nextRagdollSendAt;
+        private bool hasRagdollPose;
+        private Vector3 ragdollPos;
+        private Quaternion ragdollRot;
+
+        public bool ActiveRagdollRunning => activeRagdoll != null && activeRagdoll.enabled;
+
+        public Rigidbody RagdollHips
+        {
+            get
+            {
+                if (ragdollHips == null && stateMachine != null && stateMachine.ragdollRigidBodies != null)
+                {
+                    foreach (Rigidbody rb in stateMachine.ragdollRigidBodies)
+                    {
+                        if (rb == null || !rb.name.EndsWith("Hips")) continue;
+                        ragdollHips = rb;
+                        break;
+                    }
+                }
+
+                return ragdollHips;
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            Rigidbody hips = stateMachine != null && stateMachine.currentPlayerState == PlayerStates.Stunned ? RagdollHips : null;
+
+            if (hips == null)
+            {
+                hasRagdollPose = false;
+                return;
+            }
+
+            if (isOwned)
+            {
+                if (Time.unscaledTime < nextRagdollSendAt) return;
+                nextRagdollSendAt = Time.unscaledTime + 0.1f;
+
+                if (isServer) RpcRagdollPose(hips.position, hips.rotation);
+                else CmdRagdollPose(hips.position, hips.rotation);
+                return;
+            }
+
+            if (!hasRagdollPose || ActiveRagdollRunning) return;
+
+            hips.isKinematic = true; // the other bones hang from it; PlayerStunnedState.Exit releases it
+            hips.MovePosition(Vector3.Lerp(hips.position, ragdollPos, 0.5f));
+            hips.MoveRotation(Quaternion.Slerp(hips.rotation, ragdollRot, 0.5f));
+        }
+
+        [Command(channel = Channels.Unreliable)]
+        private void CmdRagdollPose(Vector3 position, Quaternion rotation) => RpcRagdollPose(position, rotation);
+
+        [ClientRpc(channel = Channels.Unreliable, includeOwner = false)]
+        private void RpcRagdollPose(Vector3 position, Quaternion rotation)
+        {
+            if (isOwned) return;
+
+            ragdollPos = position;
+            ragdollRot = rotation;
+            hasRagdollPose = true;
+        }
+
+        #endregion
+
         #region LIFE / RESPAWN
 
         public void RequestDeath()
@@ -500,7 +585,7 @@ namespace PlayerScripts
             transform.rotation = rot;
 
             Rigidbody rb = GetComponent<Rigidbody>();
-            if (rb != null)
+            if (rb != null && !rb.isKinematic)
             {
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;

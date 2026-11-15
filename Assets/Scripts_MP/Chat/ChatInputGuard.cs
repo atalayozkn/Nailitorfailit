@@ -101,6 +101,9 @@ public class ChatInputGuard : MonoBehaviour
 
     private void Apply(bool typing)
     {
+        // Headless test clients (-batchmode -nographics) crash natively when an input action touches the keyboard.
+        if (Application.isBatchMode) return;
+
         PlayerMovement movement = FindLocalPlayerMovement();
 
         if (movement == null) return;
