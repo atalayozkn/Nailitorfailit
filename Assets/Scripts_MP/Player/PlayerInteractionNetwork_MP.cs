@@ -119,6 +119,8 @@ namespace PlayerScripts
         {
             if (!isLocalPlayer) return;
 
+            HandleSlotInput();
+
             if (interactAction != null && interactAction.action != null && !interactAction.action.enabled)
                 interactAction.action.Enable();
 
@@ -264,7 +266,8 @@ namespace PlayerScripts
 
             if (currentCarriable != null && currentInteractableType == InteractableType.Grabbable)
             {
-                RequestDrop(currentCarriable);
+                // With a free inventory slot the held item is stowed by the pickup, otherwise it is swapped out.
+                if (interactionHandlerSp.PickupWouldSwap()) RequestDrop(currentCarriable);
                 DispatchInteract(currentInteractable);
                 return;
             }
@@ -327,6 +330,59 @@ namespace PlayerScripts
 
             interactable.OnInteract();
         }
+
+        #region INVENTORY SLOTS
+
+        // 1/2/3 (and the numpad) pick a slot, gamepad dpad down/up cycle. The owner checks that the switch is allowed
+        // (calm state), the server tells every machine, and each copy of the handler applies the same change.
+        private void HandleSlotInput()
+        {
+            if (Application.isBatchMode || ChatUI.IsAnyOpen) return;
+
+            int wanted = -1;
+            int size = PlayerInteractionHandler.InventorySize;
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) wanted = 0;
+                else if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) wanted = 1;
+                else if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) wanted = 2;
+            }
+
+            Gamepad pad = Gamepad.current;
+            if (wanted < 0 && pad != null)
+            {
+                int active = interactionHandlerSp.GetActiveSlot();
+                if (pad.dpad.down.wasPressedThisFrame) wanted = (active + 1) % size;
+                else if (pad.dpad.up.wasPressedThisFrame) wanted = (active + size - 1) % size;
+            }
+
+            if (wanted >= 0) RequestSlot(wanted);
+        }
+
+        public void RequestSlot(int index)
+        {
+            if (!interactionHandlerSp.CanSelectSlot(index)) return;
+
+            if (isServer) RpcApplySlot(index);
+            else CmdSelectSlot(index);
+        }
+
+        [Command]
+        private void CmdSelectSlot(int index)
+        {
+            if (index < 0 || index >= PlayerInteractionHandler.InventorySize) return;
+            RpcApplySlot(index);
+        }
+
+        [ClientRpc]
+        private void RpcApplySlot(int index)
+        {
+            interactionHandlerSp.ApplyNetworkedSlot(index);
+        }
+
+        #endregion
 
         private void RequestDrop(CarriableObject_SP carriable)
         {

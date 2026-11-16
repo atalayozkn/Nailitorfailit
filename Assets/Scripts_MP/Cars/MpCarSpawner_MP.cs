@@ -24,6 +24,26 @@ public class MpCarSpawner_MP : MonoBehaviour
     private static readonly FieldInfo SpawnPointsField =
         typeof(CarController_Prototype).GetField("spawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
 
+    // Level 5 (and others) can have an oil truck: a networked truck that spills an oil strip behind it (OilTruckSpiller
+    // runs on every machine, the strip is a local decal + slip trigger). Interval like the SP CarController.
+    private const string TruckResourceName = "Car_Active_OilTruck_MP";
+    private static readonly FieldInfo OilTruckPrefabField =
+        typeof(CarController_Prototype).GetField("oilTruckPrefab", BindingFlags.Instance | BindingFlags.NonPublic);
+    private static readonly FieldInfo OilTruckIntervalField =
+        typeof(CarController_Prototype).GetField("oilTruckInterval", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    private static GameObject truckResourcesPrefab;
+    private bool sceneHasOilTruck;
+    private Vector2 truckInterval = new Vector2(25f, 40f);
+    private float nextTruckAt;
+    private GameObject liveTruck;
+
+    // Opposite lanes that sit (almost) on the same line made cars from both directions drive through each other:
+    // Level 4 has the two lanes 0.1 m apart, Level 2 and 5 only 1.2 m. Each lane is nudged sideways (to the right of
+    // its own direction, i.e. right-hand traffic) until the two directions are at least this far apart.
+    private const float OppositeLaneGap = 2.8f;
+    private readonly Dictionary<Transform, Vector3> laneShift = new();
+
     private readonly List<Transform> lanes = new();
     private readonly List<GameObject> liveCars = new();
 
@@ -61,6 +81,7 @@ public class MpCarSpawner_MP : MonoBehaviour
         }
 
         GameObject prefab = spawner.ResolvePrefab();
+        spawner.ResolveTruckPrefab(); // clients must know the truck before the server spawns one
 
         InteractionDebug.Log($"[MP-CAR] prefab registration refreshed " +
                              $"(prefab={(prefab != null ? prefab.name : "MISSING")}, " +
@@ -78,7 +99,17 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (Time.unscaledTime < nextSpawnAt) return;
 
         nextSpawnAt = Time.unscaledTime + Mathf.Max(0.5f, interval);
-        SpawnOne();
+        SpawnOne(ResolvePrefab());
+
+        if (sceneHasOilTruck && liveTruck == null && Time.unscaledTime >= nextTruckAt)
+        {
+            GameObject truck = ResolveTruckPrefab();
+            if (truck != null && SpawnOne(truck, ignoreLimit: true) is GameObject spawned)
+            {
+                liveTruck = spawned;
+                nextTruckAt = Time.unscaledTime + Random.Range(truckInterval.x, truckInterval.y);
+            }
+        }
     }
 
     private void BindScene(Scene scene)
@@ -89,6 +120,7 @@ public class MpCarSpawner_MP : MonoBehaviour
 
         DisableAuthoredTraffic(scene);
         CollectLanes(scene);
+        DetectOilTruck(scene);
 
         nextSpawnAt = Time.unscaledTime + Mathf.Max(0.5f, interval);
 
@@ -148,6 +180,55 @@ public class MpCarSpawner_MP : MonoBehaviour
         }
     }
 
+    private void DetectOilTruck(Scene scene)
+    {
+        sceneHasOilTruck = false;
+        liveTruck = null;
+        if (!scene.IsValid() || OilTruckPrefabField == null) return;
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (CarController_Prototype controller in root.GetComponentsInChildren<CarController_Prototype>(true))
+            {
+                if (OilTruckPrefabField.GetValue(controller) as GameObject == null) continue;
+
+                sceneHasOilTruck = true;
+                if (OilTruckIntervalField?.GetValue(controller) is Vector2 range) truckInterval = range;
+                nextTruckAt = Time.unscaledTime + Random.Range(truckInterval.x, truckInterval.y);
+
+                if (logActions) InteractionDebug.Log($"[MP-CAR] oil truck enabled for '{scene.name}' (every {truckInterval.x:0}-{truckInterval.y:0} s).");
+                return;
+            }
+        }
+    }
+
+    private GameObject ResolveTruckPrefab()
+    {
+        if (truckResourcesPrefab == null) truckResourcesPrefab = Resources.Load<GameObject>(TruckResourceName);
+        return truckResourcesPrefab != null ? RegisterIfNeeded(truckResourcesPrefab) : null;
+    }
+
+    // A level whose CarController has no spawn points assigned (Level 5 ships like that) still has its lane markers
+    // under "SpawnTransforms": use those, the same way the controller would.
+    private void CollectFallbackLanes(Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name != "SpawnTransforms") continue;
+
+                foreach (Transform child in t)
+                {
+                    if (child != null && !lanes.Contains(child)) lanes.Add(child);
+                }
+            }
+        }
+
+        if (lanes.Count > 0 && logActions)
+            InteractionDebug.Log($"[MP-CAR] no spawn points on the car controller: using {lanes.Count} marker(s) under 'SpawnTransforms'.");
+    }
+
     private void CollectLanes(Scene scene)
     {
         if (!scene.IsValid() || SpawnPointsField == null) return;
@@ -166,26 +247,67 @@ public class MpCarSpawner_MP : MonoBehaviour
                 }
             }
         }
+
+        if (lanes.Count == 0) CollectFallbackLanes(scene);
+
+        SeparateOppositeLanes();
     }
 
-    private void SpawnOne()
+    private void SeparateOppositeLanes()
     {
-        GameObject prefab = ResolvePrefab();
-        if (prefab == null) return;
+        laneShift.Clear();
+
+        foreach (Transform a in lanes)
+        {
+            if (a == null) continue;
+
+            Vector3 forward = a.forward; forward.y = 0f; forward.Normalize();
+            Vector3 right = new Vector3(forward.z, 0f, -forward.x);
+            float shift = 0f;
+
+            foreach (Transform b in lanes)
+            {
+                if (b == null || b == a) continue;
+
+                Vector3 other = b.forward; other.y = 0f; other.Normalize();
+                if (Vector3.Dot(other, forward) > -0.9f) continue; // not the opposite direction
+
+                Vector3 delta = b.position - a.position; delta.y = 0f;
+                float along = Vector3.Dot(delta, forward);
+                float side = Vector3.Dot(delta, right); // where the opposite lane lies, seen from this lane
+                if (Mathf.Abs(along) < 20f || Mathf.Abs(side) > 12f) continue; // not the same road
+
+                // Ideal: the opposite lane is OppositeLaneGap to our left (side = -gap); both lanes move half the missing way.
+                shift = Mathf.Max(shift, (side + OppositeLaneGap) * 0.5f);
+            }
+
+            if (shift > 0.05f) laneShift[a] = right * shift;
+        }
+
+        if (laneShift.Count > 0 && logActions)
+            InteractionDebug.Log($"[MP-CAR] {laneShift.Count} lane(s) moved sideways so opposite directions are {OppositeLaneGap:0.0} m apart.");
+    }
+
+    private Vector3 ShiftOf(Transform lane) => laneShift.TryGetValue(lane, out Vector3 shift) ? shift : Vector3.zero;
+
+    private GameObject SpawnOne(GameObject prefab, bool ignoreLimit = false)
+    {
+        if (prefab == null) return null;
 
         PruneLiveCars();
 
-        if (liveCars.Count >= Mathf.Max(1, maxConcurrent)) return;
+        if (!ignoreLimit && liveCars.Count >= Mathf.Max(1, maxConcurrent)) return null;
 
         Transform lane = PickFreeLane();
-        if (lane == null) return;
+        if (lane == null) return null;
 
-        GameObject car = Instantiate(prefab, lane.position, lane.rotation);
+        Vector3 shift = ShiftOf(lane);
+        GameObject car = Instantiate(prefab, lane.position + shift, lane.rotation);
 
         // Road start = this lane's spawn point, road end = where the road leaves the map (found from the lane on the
         // opposite side). The car is removed when it passes the end instead of after a fixed time mid-road.
         if (TryFindRoadEnd(lane, out Vector3 roadEnd) && car.TryGetComponent(out MpCarHitSync_MP route))
-            route.SetRoute(roadEnd, lane.forward);
+            route.SetRoute(roadEnd + shift, lane.forward);
 
         NetworkServer.Spawn(car);
 
@@ -195,6 +317,8 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (logActions)
             InteractionDebug.Log($"[MP-CAR] server spawn '{car.name}' lane='{lane.name}' " +
                                  $"netId={car.GetComponent<NetworkIdentity>()?.netId} (total {spawnedTotal})");
+
+        return car;
     }
 
     // The lane facing the opposite way on (almost) the same line marks the far end of the road.

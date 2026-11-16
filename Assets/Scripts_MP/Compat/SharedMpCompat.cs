@@ -122,6 +122,26 @@ public static class MpSharedCompat
             carriable.OnConsume();
     }
 
+    // CarriableObject_SP.SetVisuals needs its objectRenderer; a prefab without one (the processed brick had none) threw
+    // inside a Mirror RPC, which dropped the player's connection and with it the whole lobby. Fall back to the
+    // renderers found on the object.
+    public static void SetVisualsSafe(this CarriableObject_SP carriable, bool visible)
+    {
+        if (carriable == null) return;
+
+        try
+        {
+            carriable.SetVisuals(visible);
+        }
+        catch (NullReferenceException)
+        {
+            foreach (Renderer renderer in carriable.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer.name != "__HoverGlow") renderer.enabled = visible;
+            }
+        }
+    }
+
     public static void MarkConsumedForNetwork(this CarriableObject_SP carriable)
     {
         if (carriable == null) return;
@@ -586,7 +606,7 @@ public static class MpSharedCompat
         }
         else
         {
-            carriable.SetVisuals(false);
+            carriable.SetVisualsSafe(false);
         }
 
         PlayerInteractionHandler handler = GetField<PlayerInteractionHandler>(mixer, "interactionHandler");
@@ -644,20 +664,36 @@ public static class MpSharedCompat
             return;
         }
 
-        carriable.SetVisuals(true);
+        carriable.SetVisualsSafe(true);
         carriable.OnDrop();
     }
+
+    private const float MixerProductPush = 2.4f;
 
     private static void SpawnMixerProduct(Mixer mixer, MixerFormulaSO formula)
     {
         if (formula == null || formula.ProductPrefab == null) return;
 
+        // The mixer's front is its local -Z (the level designer puts the spawn and placement points there, 1.5 m out).
         Transform productSpawnPoint = GetField<Transform>(mixer, "productSpawnPoint");
-        Vector3 position = productSpawnPoint != null ? productSpawnPoint.position : mixer.transform.position;
+        Vector3 front = -mixer.transform.forward;
+        Vector3 position = productSpawnPoint != null
+            ? productSpawnPoint.position
+            : mixer.transform.position + front * 1.5f + Vector3.up;
         Quaternion rotation = productSpawnPoint != null ? productSpawnPoint.rotation : mixer.transform.rotation;
+
+        // Out from the drum, towards the player side.
+        Vector3 outward = position - mixer.transform.position;
+        outward.y = 0f;
+        outward = outward.sqrMagnitude > 0.01f ? outward.normalized : front;
 
         GameObject productPrefab = MpPrefabResolver.Resolve(formula.ProductPrefab);
         GameObject instance = UnityEngine.Object.Instantiate(productPrefab, position, rotation);
+
+        // It used to drop straight down at the spawn point, right against the mixer's base where the generator and
+        // the drum get in the way. A gentle push lands it clear of the machine, in front of whoever stands there.
+        if (instance.TryGetComponent(out Rigidbody productBody) && !productBody.isKinematic)
+            productBody.linearVelocity = outward * MixerProductPush;
 
         if (NetworkServer.active && instance.TryGetComponent(out NetworkIdentity identity))
         {

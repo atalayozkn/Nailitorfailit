@@ -61,6 +61,50 @@ public static class MpNetworkedCarPrefabBuilder
         Debug.Log($"[MP-CAR] built '{TargetPath}' from '{sourcePath}' (playerMask={playerMask}).");
     }
 
+    private const string TruckTargetPath = TargetFolder + "/Car_Active_OilTruck_MP.prefab";
+
+    [MenuItem("Tools/MP/Build Networked Oil Truck Prefab")]
+    public static void BuildOilTruck()
+    {
+        string sourcePath = null;
+        foreach (string guid in AssetDatabase.FindAssets("Car_Active_OilTruck t:Prefab"))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path.EndsWith("/Car_Active_OilTruck.prefab")) { sourcePath = path; break; }
+        }
+
+        if (sourcePath == null)
+        {
+            Debug.LogError("[MP-CAR] source Car_Active_OilTruck prefab not found - the oil truck was not built.");
+            return;
+        }
+
+        if (!AssetDatabase.IsValidFolder(TargetFolder))
+        {
+            Directory.CreateDirectory(TargetFolder);
+            AssetDatabase.Refresh();
+        }
+
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(source);
+        instance.name = "Car_Active_OilTruck_MP";
+
+        int playerMask = TakeOverHitLogic(instance);
+        EnsureRigidbody(instance);
+        EnsureNetworkIdentity(instance);
+        EnsureNetworkTransform(instance);
+        EnsureHitSync(instance, playerMask);
+
+        PrefabUtility.SaveAsPrefabAsset(instance, TruckTargetPath);
+        Object.DestroyImmediate(instance);
+
+        AssetDatabase.ImportAsset(TruckTargetPath);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Debug.Log($"[MP-CAR] built '{TruckTargetPath}' from '{sourcePath}' (playerMask={playerMask}).");
+    }
+
     private static int TakeOverHitLogic(GameObject root)
     {
         if (!root.TryGetComponent(out Car_Active car)) return 0;

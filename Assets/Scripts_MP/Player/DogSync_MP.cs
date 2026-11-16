@@ -152,8 +152,8 @@ public class DogSync_MP : NetworkBehaviour
         base.OnStartClient();
 
         if (dogBody == null && dog != null) dogBody = dog.GetComponent<Rigidbody>();
-        if (dogAnimator == null && dog != null) dogAnimator = dog.GetComponent<Animator>();
-        if (mailManAnimator == null && mailMan != null) mailManAnimator = mailMan.GetComponent<Animator>();
+        if (dogAnimator == null && dog != null) dogAnimator = FindAnimator(dog);
+        if (mailManAnimator == null && mailMan != null) mailManAnimator = FindAnimator(mailMan);
 
         if (isOwned) return;
 
@@ -365,21 +365,39 @@ public class DogSync_MP : NetworkBehaviour
     private void OnDogAnimChanged(int oldHash, int newHash)
     {
         if (isOwned || newHash == 0) return;
-        if (dogAnimator == null && dog != null) dogAnimator = dog.GetComponent<Animator>();
+        if (dogAnimator == null && dog != null) dogAnimator = FindAnimator(dog);
         if (dogAnimator != null) dogAnimator.CrossFadeInFixedTime(newHash, 0.15f);
     }
 
     private void OnMailAnimChanged(int oldHash, int newHash)
     {
         if (isOwned || newHash == 0) return;
-        if (mailManAnimator == null && mailMan != null) mailManAnimator = mailMan.GetComponent<Animator>();
+        if (mailManAnimator == null && mailMan != null) mailManAnimator = FindAnimator(mailMan);
         if (mailManAnimator != null) mailManAnimator.CrossFadeInFixedTime(newHash, 0.15f);
+    }
+
+    // The animator of the golden dog / the mail man sits on a child model, not on the object that moves. Looking only
+    // on the moving object found nothing, so no animation state was ever sent or played on the other machines.
+    private static Animator FindAnimator(Transform root)
+    {
+        if (root == null) return null;
+
+        Animator found = root.GetComponent<Animator>();
+        if (found != null && found.runtimeAnimatorController != null) return found;
+
+        foreach (Animator candidate in root.GetComponentsInChildren<Animator>(true))
+            if (candidate.runtimeAnimatorController != null) return candidate;
+
+        return found;
     }
 
     private static int CurrentAnimHash(Animator animator)
     {
         if (animator == null) return 0;
         if (animator.runtimeAnimatorController == null) return 0;
+
+        // A disabled/inactive animator is not playing its controller; layerCount then logs an error every frame.
+        if (!animator.isActiveAndEnabled || !animator.isInitialized) return 0;
         if (animator.layerCount == 0) return 0;
 
         AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);

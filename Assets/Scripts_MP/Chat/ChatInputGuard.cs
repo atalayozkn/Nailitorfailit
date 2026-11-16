@@ -41,7 +41,7 @@ public class ChatInputGuard : MonoBehaviour
 
         if (!typing && useCHotkey && ChatKeyPressed())
         {
-            // In a match the chat toggle belongs to MpChatHotkey_MP (T/C); opening here too
+            // In a match the chat toggle belongs to MpChatHotkey_MP (T); opening here too
             // fired ActivateInputField twice and could undo the hotkey's own toggle.
             if (MatchChatOwnedByLocal()) return;
             OpenChat();
@@ -66,10 +66,10 @@ public class ChatInputGuard : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
-        if (keyboard != null && keyboard.cKey.wasPressedThisFrame) return true;
+        if (keyboard != null && keyboard.tKey.wasPressedThisFrame) return true;
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
-        if (UnityEngine.Input.GetKeyDown(KeyCode.C)) return true;
+        if (UnityEngine.Input.GetKeyDown(KeyCode.T)) return true;
 #endif
         return false;
     }
@@ -96,7 +96,7 @@ public class ChatInputGuard : MonoBehaviour
         inputField.ActivateInputField();
         inputField.Select();
 
-        Debug.Log("[CHAT] 'C' ile chat acildi.");
+        Debug.Log("[CHAT] 'T' ile chat acildi.");
     }
 
     private void Apply(bool typing)
@@ -136,8 +136,8 @@ public class ChatInputGuard : MonoBehaviour
         foreach (ChatUI chat in FindObjectsByType<ChatUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (chat == null) continue;
-            PlayerNetwork_MP owner = chat.GetComponentInParent<PlayerNetwork_MP>(true);
-            if (owner != null && owner.isOwned) return true;
+            Mirror.NetworkIdentity package = chat.GetComponentInParent<Mirror.NetworkIdentity>(true);
+            if (package != null && package.isOwned) return true;
         }
         return false;
     }

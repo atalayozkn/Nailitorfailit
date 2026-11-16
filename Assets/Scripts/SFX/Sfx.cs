@@ -33,7 +33,7 @@ public static class Sfx
     // spatial: 0 = flat 2D (UI, stingers), 1 = fully positional.
     public static void Play(AudioClip[] clips, Vector3 position, float volume = 1f, float pitchJitter = 0.05f, float spatial = 0.6f, float minInterval = 0.04f)
     {
-        if (NetworkModeHelper.IsNetworked || clips == null || clips.Length == 0) return;
+        if (NetworkModeHelper.PresentationBlocked || clips == null || clips.Length == 0) return;
         var clip = clips[Random.Range(0, clips.Length)];
         if (clip == null) return;
 
@@ -55,7 +55,7 @@ public static class Sfx
     // A looping source on the host; it stops when the host is destroyed.
     public static AudioSource AttachLoop(GameObject host, AudioClip clip, float volume)
     {
-        if (NetworkModeHelper.IsNetworked || host == null || clip == null) return null;
+        if (NetworkModeHelper.PresentationBlocked || host == null || clip == null) return null;
         var source = host.AddComponent<AudioSource>();
         Setup(source, 0.85f);
         source.clip = clip;

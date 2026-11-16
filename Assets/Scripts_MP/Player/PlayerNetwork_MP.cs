@@ -47,6 +47,30 @@ namespace PlayerScripts
 
         private bool respawnRoutineRunning;
 
+        // Who this player is: copied from the lobby player when the match starts (the lobby player object is replaced).
+        // Name and colour drive the tag above the player and the character's tint; micMuted the icon on the tag.
+        [SyncVar] public string playerName = "";
+        [SyncVar(hook = nameof(OnColorChanged))] public int colorIndex = -1;
+        [SyncVar] public bool micMuted;
+        [SyncVar] public bool isHostPlayer; // crown on the name tag
+
+        private void OnColorChanged(int oldValue, int newValue) => MpPlayerTint_MP.Apply(this);
+
+        [Server]
+        public void ServerSetIdentity(string displayName, int color, bool muted, bool host)
+        {
+            playerName = displayName ?? "";
+            colorIndex = color;
+            micMuted = muted;
+            isHostPlayer = host;
+        }
+
+        [Command]
+        public void CmdSetMicMuted(bool muted)
+        {
+            micMuted = muted;
+        }
+
         private Rigidbody body;
         private PlayerActiveRagdoll activeRagdoll;
 
@@ -55,6 +79,9 @@ namespace PlayerScripts
 
         private void Awake()
         {
+            // Carry inventory (3 slots) works in multiplayer too: see CarriableObject_MP / PlayerInteractionNetwork_MP.
+            PlayerInteractionHandler.NetworkedInventory = true;
+
             body = GetComponent<Rigidbody>();
 
             if (movement == null) movement = GetComponent<PlayerMovement>();
@@ -161,7 +188,10 @@ namespace PlayerScripts
 
             ApplyRemotePhysics();
 
-            MpHomeLayout_MP.Apply(transform.root);
+            MpHomeLayout_MP.Apply(transform.root, isHostPlayer);
+
+            if (!Application.isBatchMode) MpNameTag_MP.Attach(this);
+            MpPlayerTint_MP.Apply(this);
         }
 
         private void ApplyRemotePhysics()
@@ -184,6 +214,12 @@ namespace PlayerScripts
             if (trapRespawn != null) trapRespawn.enabled = true;
 
             SetLocalOnlyActive(true);
+
+            // Match chat: translucent, shown only while typing (new messages still float up for a few seconds).
+            MpChatSkin_MP.Ensure(this);
+
+            // Bottom-right slot bar. Its icon camera needs a display, so headless test clients skip it.
+            if (!Application.isBatchMode && interaction != null) InventoryUI.Create(interaction);
 
             PauseMenu pauseMenu = transform.root.GetComponent<PauseMenu>();
             if (pauseMenu != null) MpSharedCompat.BindPauseStateMachine(pauseMenu, stateMachine);
@@ -405,6 +441,16 @@ namespace PlayerScripts
         [Command]
         private void CmdThrowCarried(Vector3 direction)
         {
+            // The item in hand flies off; stowed ones (same carrier) stay in the inventory.
+            PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
+            ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
+
+            if (held != null && held.TryGetComponent(out CarriableObject_MP heldMp) && heldMp.Carrier == netIdentity)
+            {
+                heldMp.ServerThrow(netIdentity, direction);
+                return;
+            }
+
             foreach (CarriableObject_MP item in FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None))
             {
                 if (item.Carrier != netIdentity) continue;
@@ -460,7 +506,7 @@ namespace PlayerScripts
             if (isOwned)
             {
                 if (Time.unscaledTime < nextRagdollSendAt) return;
-                nextRagdollSendAt = Time.unscaledTime + 0.1f;
+                nextRagdollSendAt = Time.unscaledTime + 0.05f;
 
                 if (isServer) RpcRagdollPose(hips.position, hips.rotation);
                 else CmdRagdollPose(hips.position, hips.rotation);
@@ -470,6 +516,29 @@ namespace PlayerScripts
             if (!hasRagdollPose || ActiveRagdollRunning) return;
 
             hips.isKinematic = true; // the other bones hang from it; PlayerStunnedState.Exit releases it
+
+            // A fling (car hit, thrown item) moves the owner's hips metres in a split second. Dragging only the hips
+            // that far stretched the jointed limbs across the map (the other player saw a twisted ragdoll): move the
+            // whole ragdoll along instead, then keep following with the small smoothing step.
+            Vector3 jump = ragdollPos - hips.position;
+            if (jump.sqrMagnitude > 1f)
+            {
+                foreach (Rigidbody bone in stateMachine.ragdollRigidBodies)
+                {
+                    if (bone == null) continue;
+
+                    bone.position += jump;
+                    if (!bone.isKinematic)
+                    {
+                        bone.linearVelocity = Vector3.zero;
+                        bone.angularVelocity = Vector3.zero;
+                    }
+                }
+
+                hips.rotation = ragdollRot;
+                return;
+            }
+
             hips.MovePosition(Vector3.Lerp(hips.position, ragdollPos, 0.5f));
             hips.MoveRotation(Quaternion.Slerp(hips.rotation, ragdollRot, 0.5f));
         }
@@ -511,12 +580,20 @@ namespace PlayerScripts
         // The SP stun now throws the held item (PlayerStunnedState -> ThrowHeldObject) and death drops it,
         // both locally. Drop it through the network first, so every copy's SP call finds an empty hand
         // and the server no longer counts this player as the carrier.
+        // allCarried: death drops the stowed inventory items too; a stun only throws the one in hand (like SP).
         [Server]
-        public void ServerDropHeld()
+        public void ServerDropHeld(bool allCarried = false)
         {
             PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
             ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
             if (held != null && held.TryGetComponent(out CarriableObject_MP heldMp)) heldMp.ServerForceDrop(netIdentity);
+
+            if (!allCarried) return;
+
+            foreach (CarriableObject_MP item in FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None))
+            {
+                if (item.Carrier == netIdentity) item.ServerForceDrop(netIdentity);
+            }
         }
 
         // Stun for everyone (car bump, stun zones). Reliable RPCs keep order, so the drop lands first.
@@ -526,6 +603,35 @@ namespace PlayerScripts
             if (isDead) return;
             ServerDropHeld();
             RpcPlayHitReaction();
+        }
+
+        // Car hit: knocked out like a stun, but thrown: the owner's ragdoll gets a launch velocity, the other machines
+        // follow the owner's hips (see RAGDOLL SYNC).
+        [Server]
+        public void ServerStunFling(Vector3 launchVelocity)
+        {
+            if (isDead) return;
+            ServerStun();
+            RpcFling(launchVelocity);
+        }
+
+        [ClientRpc]
+        private void RpcFling(Vector3 launchVelocity)
+        {
+            if (isOwned) StartCoroutine(FlingNextStep(launchVelocity));
+        }
+
+        // The stun's RPC switched the ragdoll on in this frame; its bodies can take a velocity from the next physics step.
+        private IEnumerator FlingNextStep(Vector3 launchVelocity)
+        {
+            yield return new WaitForFixedUpdate();
+
+            if (stateMachine == null || stateMachine.currentPlayerState != PlayerStates.Stunned) yield break;
+
+            foreach (Rigidbody rb in stateMachine.ragdollRigidBodies)
+            {
+                if (rb != null && !rb.isKinematic) rb.linearVelocity = launchVelocity;
+            }
         }
 
         public void RequestStun()
@@ -563,7 +669,7 @@ namespace PlayerScripts
 
             // PlayerDeadState.Enter calls the SP DropCarriedObject (local only). Drop through the network
             // first so the item lands for everyone and the server stops treating this player as its carrier.
-            ServerDropHeld();
+            ServerDropHeld(true);
 
             isDead = true;
 

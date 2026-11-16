@@ -24,6 +24,11 @@ public static class MpAuthoredHud_MP
 
         int rebound = BridgeStamina(localPackage, authored) + BridgeDog(localPackage, authored);
 
+        // The authored package also carries an emote wheel + listener on the same X key. Left on, X opened that dead
+        // copy next to the local player's own wheel (second cursor unlock, emote sent to a disabled player).
+        foreach (EmoteListener listener in authored.GetComponentsInChildren<EmoteListener>(true)) listener.enabled = false;
+        foreach (EmoteWheel wheel in authored.GetComponentsInChildren<EmoteWheel>(true)) wheel.gameObject.SetActive(false);
+
         InteractionDebug.Log($"[MP-HUD] authored HUD '{authored.name}' re-pointed to the local player " +
                              $"({rebound} binding(s)); the MP prefab's duplicate bars are hidden.");
     }

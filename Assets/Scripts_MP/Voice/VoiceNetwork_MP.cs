@@ -12,6 +12,7 @@ public class VoiceNetwork_MP : MonoBehaviour
         public uint netId;
         public byte[] data;
         public string speaker; // filled by the server every few seconds so clients can label the speaker
+        public bool raw;       // 16 kHz 16-bit mono PCM from the Unity microphone (no Steam): local tests only
     }
 
     private const float PacketInterval = 0.02f;
@@ -24,10 +25,9 @@ public class VoiceNetwork_MP : MonoBehaviour
     private readonly System.Collections.Generic.Dictionary<int, float> nameSentAt =
         new System.Collections.Generic.Dictionary<int, float>();
 
+    // Push-to-talk only: hold V to talk. (There is no open-mic mode and no mute key for now.)
     [Header("Input")]
-    [SerializeField] private bool pushToTalk = true;
     [SerializeField] private Key pushToTalkKey = Key.V;
-    [SerializeField] private Key muteKey = Key.M;
 
     [Header("Debug")]
     [SerializeField] private bool logVoice = false;
@@ -46,8 +46,10 @@ public class VoiceNetwork_MP : MonoBehaviour
     private bool recording;
 
     public bool IsTransmitting { get; private set; }
-    public bool Muted { get; private set; }
+    // Kept for the UI/diagnostics that still read it: with push-to-talk only, the mic is never "muted".
+    public bool Muted => false;
     public bool SteamAvailable => SteamManager.Initialized;
+    public bool MicAvailable => SteamManager.Initialized || LocalMicAvailable();
 
     private void Awake()
     {
@@ -106,30 +108,32 @@ public class VoiceNetwork_MP : MonoBehaviour
     {
         if (!handlersRegistered || !NetworkClient.active) return;
 
-        Keyboard keyboard = Keyboard.current;
-
-        if (keyboard != null && !ChatUI.IsAnyOpen && keyboard[muteKey].wasPressedThisFrame)
-        {
-            Muted = !Muted;
-            InteractionDebug.Log($"[VOICE] microphone {(Muted ? "muted" : "open")}.");
-        }
+        ReportMicState();
 
         if (!SteamManager.Initialized)
         {
             StopRecording();
-            IsTransmitting = false;
+            UpdateLocalMic(WantsToTalk());
             return;
         }
 
-        bool wantsToTalk = !Muted && (!pushToTalk || WantsToTalk());
+        bool wantsToTalk = WantsToTalk();
 
         IsTransmitting = wantsToTalk;
         UpdateDiagnostics(wantsToTalk);
 
         if (!wantsToTalk)
         {
-            StopRecording();
-            DrainPendingVoice();
+            // Releasing V stops the capture, but Steam still holds the last fraction of a second of speech.
+            // Send it (it used to be thrown away, which clipped the end of every sentence), then discard silence.
+            if (recording)
+            {
+                StopRecording();
+                tailUntil = Time.unscaledTime + TailSeconds;
+            }
+
+            if (Time.unscaledTime < tailUntil) FlushVoice();
+            else DrainPendingVoice();
             return;
         }
 
@@ -140,6 +144,123 @@ public class VoiceNetwork_MP : MonoBehaviour
 
         FlushVoice();
     }
+
+    // Everyone sees our mic as an icon. Muted and "no Steam voice" both read as muted. Sent when it changes and once
+    // for every new player object (the lobby player is replaced by the game player when the match starts).
+    private uint reportedFor;
+    private bool reportedMuted;
+
+    private void ReportMicState()
+    {
+        NetworkIdentity local = NetworkClient.localPlayer;
+        if (local == null) return;
+
+        bool effectiveMuted = !MicAvailable; // neither Steam voice nor a microphone = shown as a crossed-out mic
+        if (reportedFor == local.netId && reportedMuted == effectiveMuted) return;
+
+        reportedFor = local.netId;
+        reportedMuted = effectiveMuted;
+
+        if (local.TryGetComponent(out LobbyPlayer lobbyPlayer))
+        {
+            lobbyPlayer.CmdSetMicMuted(effectiveMuted);
+            return;
+        }
+
+        PlayerScripts.PlayerNetwork_MP player = local.GetComponentInChildren<PlayerScripts.PlayerNetwork_MP>(true);
+        if (player != null) player.CmdSetMicMuted(effectiveMuted);
+    }
+
+    // ---- no Steam (local KCP tests): talk through the Unity microphone, raw PCM instead of Steam's codec ----
+    private const int LocalRate = 16000;
+    private const int LocalPacketBytes = 640; // 20 ms
+    private AudioClip localClip;
+    private string localDevice;
+    private int localReadPos;
+    private readonly System.Collections.Generic.List<byte> localPending = new System.Collections.Generic.List<byte>();
+    private bool localNoMicWarned;
+
+    private static bool LocalMicAvailable()
+    {
+        if (Application.isBatchMode) return false;
+
+        try { return Microphone.devices.Length > 0; }
+        catch (System.Exception) { return false; }
+    }
+
+    private void UpdateLocalMic(bool talking)
+    {
+        IsTransmitting = talking && localClip != null;
+
+        if (!talking)
+        {
+            StopLocalMic();
+            return;
+        }
+
+        if (localClip == null)
+        {
+            if (!LocalMicAvailable())
+            {
+                if (!localNoMicWarned)
+                {
+                    localNoMicWarned = true;
+                    MpNotice_MP.Warning("Voice: Steam is not running and no microphone was found - voice is off.");
+                }
+                return;
+            }
+
+            localDevice = Microphone.devices[0];
+            localClip = Microphone.Start(localDevice, true, 1, LocalRate);
+            localReadPos = 0;
+            localPending.Clear();
+            IsTransmitting = true;
+            InteractionDebug.Log($"[VOICE] local microphone '{localDevice}' started (no Steam).");
+            return;
+        }
+
+        int position = Microphone.GetPosition(localDevice);
+        if (position < 0) return;
+
+        int length = localClip.samples;
+        int available = (position - localReadPos + length) % length;
+        if (available == 0) return;
+
+        var samples = new float[available];
+        // GetData wraps around the clip end for us.
+        localClip.GetData(samples, localReadPos);
+        localReadPos = position;
+        lastDataAt = Time.unscaledTime;
+
+        for (int i = 0; i < available; i++)
+        {
+            short value = (short)Mathf.Clamp(Mathf.RoundToInt(samples[i] * 32767f), short.MinValue, short.MaxValue);
+            localPending.Add((byte)(value & 0xFF));
+            localPending.Add((byte)((value >> 8) & 0xFF));
+        }
+
+        while (localPending.Count >= LocalPacketBytes)
+        {
+            var payload = localPending.GetRange(0, LocalPacketBytes).ToArray();
+            localPending.RemoveRange(0, LocalPacketBytes);
+            NetworkClient.Send(new VoicePacket { data = payload, raw = true }, Channels.Unreliable);
+            sentPackets++;
+            sentBytes += payload.Length;
+        }
+    }
+
+    private void StopLocalMic()
+    {
+        if (localClip == null) return;
+
+        Microphone.End(localDevice);
+        Destroy(localClip);
+        localClip = null;
+        localPending.Clear();
+    }
+
+    private const float TailSeconds = 0.4f;
+    private float tailUntil;
 
     private bool WantsToTalk()
     {
@@ -193,7 +314,7 @@ public class VoiceNetwork_MP : MonoBehaviour
         nextStatsAt = now + 5f;
         if (sentPackets == 0 && recvPackets == 0 && !talking) return;
 
-        Debug.Log($"[VOICE] stats 5s: talking={talking} recording={recording} muted={Muted} lastResult={lastResult} " +
+        Debug.Log($"[VOICE] stats 5s: talking={talking} recording={recording} lastResult={lastResult} " +
                   $"sent={sentPackets} pkts/{sentBytes} B received={recvPackets} pkts " +
                   $"server={NetworkServer.active} speakers={FindObjectsByType<VoiceSpeaker_MP>(FindObjectsSortMode.None).Length}");
         sentPackets = sentBytes = recvPackets = 0;
@@ -253,7 +374,7 @@ public class VoiceNetwork_MP : MonoBehaviour
             speaker = sender.authenticationData as string;
         }
 
-        var relay = new VoicePacket { netId = sender.identity.netId, data = message.data, speaker = speaker };
+        var relay = new VoicePacket { netId = sender.identity.netId, data = message.data, speaker = speaker, raw = message.raw };
         int channel = ChannelFor(message.data.Length);
 
         foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
@@ -276,7 +397,7 @@ public class VoiceNetwork_MP : MonoBehaviour
 
         if (!string.IsNullOrEmpty(message.speaker)) playback.SetSpeakerName(message.speaker);
         CountReceived();
-        playback.Push(message.data);
+        playback.Push(message.data, message.raw);
     }
 
     private static int ChannelFor(int length) => length <= MaxUnreliableBytes ? Channels.Unreliable : Channels.Reliable;

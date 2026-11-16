@@ -162,8 +162,10 @@ public class ChatUI : MonoBehaviour
             return;
         }
 
-        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !locked;
+        // No local player (lobby): the menu needs the mouse, so closing the chat must never lock it. It used to lock
+        // and hide the cursor here, which left the lobby impossible to click after pressing Esc in the chat.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private static void SetPlayerInput(bool enabled)

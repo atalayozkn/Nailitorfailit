@@ -144,6 +144,8 @@ public class GameHUD_MP : MonoBehaviour
         if (victoryBanner != null) victoryBanner.SetActive(victory);
         if (defeatBanner != null) defeatBanner.SetActive(!victory);
 
+        MpEndButtons_MP.Build(gameEndPanel);
+
         if (movement != null) movement.SetActivity(false);
         if (stateMachine != null) stateMachine.OpenCursor();
 

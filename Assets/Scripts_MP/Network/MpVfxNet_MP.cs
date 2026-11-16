@@ -5,6 +5,11 @@ using UnityEngine;
 // mixer done / fail, generator refuel). The server broadcasts them so every player sees and hears them.
 public static class MpVfxNet_MP
 {
+    // Particles and sounds of the shared code were off in every network session. Hazard fire, water and sparks, tile
+    // effects, stun stars and the like are local visuals, so multiplayer turns the layer on for all machines.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void EnablePresentation() => NetworkModeHelper.NetworkPresentation = true;
+
     public struct VfxMessage : NetworkMessage
     {
         public int id;

@@ -23,6 +23,7 @@ public class PlayerListEntryUI : MonoBehaviour
 
         displayName = name;
         if (nameText != null) nameText.text = ComposeName();
+        PlaceIcons();
     }
 
     private string displayName = "Player";
@@ -31,15 +32,8 @@ public class PlayerListEntryUI : MonoBehaviour
     private const string StarGlyph = "\u2605";
 
     // Gold star in front of the host. Falls back to a plain marker if the font has no star glyph.
-    private string ComposeName()
-    {
-        if (!shownAsHost) return displayName;
-
-        bool hasStar = nameText != null && nameText.font != null &&
-                       nameText.font.HasCharacter('\u2605', true, true);
-
-        return $"<color=#FFD24A>{(hasStar ? StarGlyph : "(H)")}</color> {displayName}";
-    }
+    // The host is marked with a crown icon after the name (see PlaceIcons), no glyph in the text any more.
+    private string ComposeName() => displayName;
 
     private UnityEngine.UI.Image avatar;
 
@@ -56,6 +50,7 @@ public class PlayerListEntryUI : MonoBehaviour
         avatar.sprite = sprite;
         avatar.color = Color.white;
         avatar.enabled = true;
+        PlaceIcons();
     }
 
     private UnityEngine.UI.Image EnsureAvatar()
@@ -73,14 +68,108 @@ public class PlayerListEntryUI : MonoBehaviour
         image.raycastTarget = false;
         image.enabled = false;
 
-        if (nameText != null)
+        return image;
+    }
+
+    private UnityEngine.UI.Image micIcon;
+
+    private static readonly Color MicOpenColor = new Color(0.92f, 0.92f, 0.92f, 1f);
+    private static readonly Color MicMutedColor = new Color(0.92f, 0.35f, 0.35f, 1f);
+    private static readonly Color MicTalkingColor = new Color(0.40f, 0.85f, 0.45f, 1f);
+
+    // Mic state as an icon at the right end of the row: open (white), talking (green), muted (red slash).
+    public void SetMic(bool muted, bool talking)
+    {
+        if (micIcon == null) micIcon = EnsureMicIcon();
+
+        micIcon.sprite = MpMicIcon_MP.For(muted);
+        micIcon.color = muted ? MicMutedColor : talking ? MicTalkingColor : MicOpenColor;
+        PlaceIcons();
+    }
+
+    private UnityEngine.UI.Image crownIcon;
+
+    private UnityEngine.UI.Image CreateIcon(string iconName)
+    {
+        var go = new GameObject(iconName, typeof(RectTransform));
+        go.transform.SetParent(nameText.transform, false);
+
+        RectTransform rect = (RectTransform)go.transform;
+        rect.sizeDelta = new Vector2(IconPixels, IconPixels);
+        rect.anchorMin = new Vector2(0f, 0.5f);
+        rect.anchorMax = new Vector2(0f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        var image = go.AddComponent<UnityEngine.UI.Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        return image;
+    }
+
+    private const float IconPixels = 28f;
+    private const float IconGap = 8f;
+
+    private UnityEngine.UI.Image EnsureMicIcon()
+    {
+        nameText.alignment = TMPro.TextAlignmentOptions.Left;
+        return CreateIcon("MicIcon");
+    }
+
+    // <name> <crown if host> <mic>: icons sit right behind the name text (children of its rect, left aligned).
+    // The name starts to the right of the avatar (when there is one). The shift used to happen once, when the avatar
+    // object was created, and any later layout pass left the first letters under the picture.
+    private void LayoutNameText()
+    {
+        if (nameText == null) return;
+
+        // The row object IS the text and its parent's layout group owns the rect (it resets any offset), so the name
+        // is moved with the text margin instead.
+        bool hasAvatar = avatar != null && avatar.enabled;
+        Vector4 margin = nameText.margin;
+        margin.x = hasAvatar ? 52f : 12f;
+        nameText.margin = margin;
+        nameText.alignment = TMPro.TextAlignmentOptions.Left;
+
+        // The row is as wide as its text (the list's layout group sizes it). With auto-size on, a wider margin made
+        // the row narrower than the text wanted and the font shrank to 14 px: fixed size, no wrapping.
+        if (nameText.enableAutoSizing)
         {
-            RectTransform label = nameText.rectTransform;
-            label.offsetMin = new Vector2(44f, label.offsetMin.y);
-            nameText.alignment = TMPro.TextAlignmentOptions.Left;
+            nameText.enableAutoSizing = false;
+            nameText.fontSize = 28f;
         }
 
-        return image;
+        nameText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+        nameText.overflowMode = TMPro.TextOverflowModes.Overflow;
+    }
+
+    private void PlaceIcons()
+    {
+        if (nameText == null) return;
+
+        LayoutNameText();
+        if (micIcon == null) return;
+
+        nameText.ForceMeshUpdate();
+
+        // Right edge of the drawn name, measured from the row's left edge.
+        float x = nameText.textBounds.max.x - nameText.rectTransform.rect.xMin + IconGap;
+
+        if (shownAsHost)
+        {
+            if (crownIcon == null)
+            {
+                crownIcon = CreateIcon("CrownIcon");
+                crownIcon.sprite = MpMicIcon_MP.Crown;
+                crownIcon.color = new Color(1f, 0.82f, 0.25f, 1f);
+            }
+
+            crownIcon.gameObject.SetActive(true);
+            ((RectTransform)crownIcon.transform).anchoredPosition = new Vector2(x + IconPixels * 0.5f, 0f);
+            x += IconPixels + IconGap;
+        }
+        else if (crownIcon != null) crownIcon.gameObject.SetActive(false);
+
+        ((RectTransform)micIcon.transform).anchoredPosition = new Vector2(x + IconPixels * 0.5f, 0f);
     }
 
     public void UpdateColor(bool isHost, bool isReady)
@@ -91,6 +180,7 @@ public class PlayerListEntryUI : MonoBehaviour
         nameText.richText = true;
         nameText.text = ComposeName();
         nameText.color = playerColor;
+        PlaceIcons();
 
         if (isHost) nameText.fontStyle = FontStyles.Bold;
         else if (isReady) nameText.fontStyle = FontStyles.Underline;

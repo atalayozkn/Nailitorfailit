@@ -365,7 +365,11 @@ public class PlayerInteractionHandler : MonoBehaviour
 
     #region INVENTORY
 
-    private bool UsesInventory => !NetworkModeHelper.IsNetworked;
+    // Multiplayer opts in (PlayerNetwork_MP sets it): its server decides who holds what and every machine replays
+    // the same pick-up / drop / slot events in the same order, so each copy of the handler ends up with equal slots.
+    public static bool NetworkedInventory;
+
+    private bool UsesInventory => !NetworkModeHelper.IsNetworked || NetworkedInventory;
 
     // The slot actions live in the same map as Interact, so no extra inspector wiring is needed.
     private void EnableSlotActions(bool condition)
@@ -413,9 +417,23 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     public void SelectSlot(int index)
     {
+        if (!CanSelectSlot(index)) return;
+        ApplySlotSelection(index);
+    }
+    // Owner-side check before a multiplayer slot change is requested.
+    public bool CanSelectSlot(int index)
+    {
+        return UsesInventory && index >= 0 && index < InventorySize && index != activeSlot && CanSwitchSlot();
+    }
+    // Multiplayer: replays the owner's slot change on another machine. The calm-state check was made by the owner,
+    // this copy's state machine can be in any state (it only follows the owner's animation).
+    public void ApplyNetworkedSlot(int index)
+    {
         if (!UsesInventory || index < 0 || index >= InventorySize || index == activeSlot) return;
-        if (!CanSwitchSlot()) return;
-
+        ApplySlotSelection(index);
+    }
+    private void ApplySlotSelection(int index)
+    {
         if (currentCarriable != null) currentCarriable.SetStowed(true);
         activeSlot = index;
 

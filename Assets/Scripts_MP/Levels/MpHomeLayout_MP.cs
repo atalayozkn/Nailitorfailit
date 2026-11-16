@@ -29,9 +29,19 @@ public static class MpHomeLayout_MP
     private static Row dogRow;
     private static Row mailRow;
 
-    public static void Apply(Transform package)
+    // ownsMail: this package keeps the level's single mailbox and mail man (the host's). Every other package has
+    // its MailManPackage switched off on all machines, so there is one mailbox and one mail man for everybody.
+    public static void Apply(Transform package, bool ownsMail)
     {
-        if (package == null || !MpLevelInstaller.HasAuthoredSpawn) return;
+        if (package == null) return;
+
+        if (!ownsMail)
+        {
+            Transform otherMail = FindDeep(package, "MailManPackage");
+            if (otherMail != null && otherMail.gameObject.activeSelf) otherMail.gameObject.SetActive(false);
+        }
+
+        if (!MpLevelInstaller.HasAuthoredSpawn) return;
 
         Transform authored = FindAuthoredPackage();
         if (authored == null) return;
@@ -58,7 +68,8 @@ public static class MpHomeLayout_MP
         }
 
         Vector3 dogShift = dogRow.direction * (slot * dogRow.step);
-        Vector3 mailShift = mailRow.direction * (slot * mailRow.step);
+        // The one mailbox stands where the level designer put it.
+        Vector3 mailShift = ownsMail ? Vector3.zero : mailRow.direction * (slot * mailRow.step);
 
         Place(package, authored, "DogHouse", dogShift);
         Place(package, authored, "FoodBowl", dogShift);

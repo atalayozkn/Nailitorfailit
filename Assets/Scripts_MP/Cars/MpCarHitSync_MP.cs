@@ -131,7 +131,7 @@ public class MpCarHitSync_MP : NetworkBehaviour
             return;
         }
 
-        if (!crashed) ServerCheckContacts();
+        ServerCheckContacts();
     }
 
     private void ServerDespawn()
@@ -198,13 +198,11 @@ public class MpCarHitSync_MP : NetworkBehaviour
                 if (hitTrigger != null) Physics.IgnoreCollision(hitTrigger, c, true);
             }
 
-            if (Overlaps(hitTrigger, capsule))
-            {
-                ServerApply(player, crash: true, "front-zone");
-                return;
-            }
-
-            if (Overlaps(hitBody, capsule)) ServerApply(player, crash: false, "body");
+            // The first player this car reaches through the front zone is the crash victim (dies, rides the car).
+            // Everyone else it reaches - same moment or later, front zone or side - is flung and knocked out
+            // (ragdoll stun). A car only has one stand-in to show, and two deaths on one car broke the visuals.
+            if (Overlaps(hitTrigger, capsule)) ServerApply(player, crash: !crashed, "front-zone");
+            else if (Overlaps(hitBody, capsule)) ServerApply(player, crash: false, "body");
         }
     }
 
@@ -220,12 +218,12 @@ public class MpCarHitSync_MP : NetworkBehaviour
     [Server]
     private void ServerHit(Collider other, bool crash)
     {
-        if (other == null || crashed) return;
+        if (other == null) return;
 
         PlayerScripts.PlayerNetwork_MP player = other.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>();
         if (player == null || player.isDead) return;
 
-        ServerApply(player, crash, crash ? "trigger" : "collision");
+        ServerApply(player, crash && !crashed, crash ? "trigger" : "collision");
     }
 
     [Server]
@@ -244,7 +242,7 @@ public class MpCarHitSync_MP : NetworkBehaviour
 
         if (!crash)
         {
-            player.ServerStun();
+            player.ServerStunFling(LaunchVelocity());
             return;
         }
 
@@ -258,6 +256,18 @@ public class MpCarHitSync_MP : NetworkBehaviour
             CancelInvoke(nameof(ServerDespawn));
             Invoke(nameof(ServerDespawn), 4f);
         }
+    }
+
+    // The car passes through players, so nothing physical throws them. Give a hit the punch it would have had:
+    // along the car's heading, scaled by its speed, plus a lift so the ragdoll is visibly knocked off its feet.
+    private Vector3 LaunchVelocity()
+    {
+        Vector3 heading = body != null ? body.linearVelocity : transform.forward;
+        float speed = heading.magnitude;
+        heading.y = 0f;
+        heading = heading.sqrMagnitude > 0.01f ? heading.normalized : transform.forward;
+
+        return heading * Mathf.Clamp(speed * 0.7f, 3f, 10f) + Vector3.up * 5f;
     }
 
     // Same visuals as Car_Active.Crash, on every machine.
@@ -288,6 +298,27 @@ public class MpCarHitSync_MP : NetworkBehaviour
         return null;
     }
 
+    private static int CopyMockPose(GameObject mock, GameObject copy)
+    {
+        SkinnedMeshRenderer source = mock.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        if (source == null) return 0;
+
+        var byName = new Dictionary<string, Transform>();
+        foreach (Transform t in copy.GetComponentsInChildren<Transform>(true))
+            if (!byName.ContainsKey(t.name)) byName[t.name] = t;
+
+        int matched = 0;
+        foreach (Transform bone in source.bones)
+        {
+            if (bone == null || !byName.TryGetValue(bone.name, out Transform target)) continue;
+
+            target.localRotation = bone.localRotation;
+            matched++;
+        }
+
+        return matched;
+    }
+
     // The prefab's stand-in ("mock player") is an old, untextured model: the victim looked undressed on the car.
     // Use a copy of the victim's own model instead (builder outfit, player colour, the pose it had when hit).
     private bool ShowVictimStandIn(NetworkIdentity victim, GameObject mock)
@@ -311,10 +342,18 @@ public class MpCarHitSync_MP : NetworkBehaviour
         foreach (MonoBehaviour script in copy.GetComponentsInChildren<MonoBehaviour>(true)) DestroyImmediate(script);
         foreach (Animator copiedAnimator in copy.GetComponentsInChildren<Animator>(true)) DestroyImmediate(copiedAnimator);
 
-        // Removing the Animator resets the bones to the bind pose (T-pose). The controller has no "hit by a car"
-        // clip, so pose the copy with the airborne frame of the Jump clip: arms out, legs bent, thrown onto the car.
-        AnimationClip hitPose = FindClip(animator.runtimeAnimatorController, "Jump");
-        if (hitPose != null) hitPose.SampleAnimation(copy, Mathf.Min(0.3f, hitPose.length));
+        // Removing the Animator resets the bones to the bind pose (T-pose). The car's own stand-in is posed as the
+        // "hit by a car" shape (SP shows exactly that): both rigs are Mixamo skeletons with the same bone names, so
+        // copy its bone rotations onto the victim's dressed model. Fallback (no matching skeleton): the airborne frame
+        // of the Jump clip, as the controller has no hit clip.
+        if (CopyMockPose(mock, copy) < 12)
+        {
+            AnimationClip hitPose = FindClip(animator.runtimeAnimatorController, "Jump");
+            if (hitPose != null) hitPose.SampleAnimation(copy, Mathf.Min(0.3f, hitPose.length));
+        }
+
+        // The Dead state hides the victim's own renderer, and on the host that already happened when this RPC runs.
+        foreach (Renderer renderer in copy.GetComponentsInChildren<Renderer>(true)) renderer.enabled = true;
 
         copy.transform.SetParent(mock.transform.parent, true);
         copy.transform.SetPositionAndRotation(mock.transform.position, mock.transform.rotation);

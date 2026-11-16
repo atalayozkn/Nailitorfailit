@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class MpVoiceUI_MP : MonoBehaviour
 {
     private const int MaxRows = 4;
+    private const bool HideTextPanel = true;
 
     private static MpVoiceUI_MP instance;
 
@@ -73,6 +74,14 @@ public class MpVoiceUI_MP : MonoBehaviour
     private void Update()
     {
         if (group == null) return;
+
+        // The mic state is now only an icon next to each player's name (lobby list and the tag above the player),
+        // so the bottom-right text panel and speaker list stay hidden.
+        if (HideTextPanel)
+        {
+            group.alpha = 0f;
+            return;
+        }
 
         VoiceNetwork_MP voice = VoiceNetwork_MP.Instance;
 

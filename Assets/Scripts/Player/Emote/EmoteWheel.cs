@@ -31,6 +31,14 @@ public class EmoteWheel : MonoBehaviour
         canvasRoot.SetActive(false);
     }
 
+    // Singleplayer: the wheel sits under the player. Multiplayer: it sits in the package's HUD while the state machine
+    // lives on the sibling Player_Default, so a parent search finds nothing and the cursor never came free.
+    private PlayerStateMachine FindStateMachine()
+    {
+        PlayerStateMachine found = GetComponentInParent<PlayerStateMachine>();
+        return found != null ? found : transform.root.GetComponentInChildren<PlayerStateMachine>(true);
+    }
+
     private void OnDisable()
     {
         if (isActive) Close(false);
@@ -90,7 +98,7 @@ public class EmoteWheel : MonoBehaviour
         // same path ChatUI uses, so the wheel tabs can actually be hovered.
         if (NetworkModeHelper.IsNetworked)
         {
-            PlayerStateMachine stateMachine = GetComponentInParent<PlayerStateMachine>();
+            PlayerStateMachine stateMachine = FindStateMachine();
             if (stateMachine != null) stateMachine.OpenCursor();
         }
         Canvas.ForceUpdateCanvases();
@@ -116,7 +124,7 @@ public class EmoteWheel : MonoBehaviour
         if (NetworkModeHelper.IsNetworked)
         {
             bool paused = GamePauseManager.Instance != null && GamePauseManager.Instance.IsPaused;
-            PlayerStateMachine stateMachine = GetComponentInParent<PlayerStateMachine>();
+            PlayerStateMachine stateMachine = FindStateMachine();
             if (!paused && stateMachine != null) stateMachine.CloseCursor();
         }
     }

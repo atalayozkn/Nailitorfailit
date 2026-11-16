@@ -29,6 +29,12 @@ public class EnergyDrink_SP : MonoBehaviour, IUsable
         if (isUsed) return;
         isUsed = true;
 
+        // The player who drinks is the one holding the can. FindFirstObjectByType (Awake) is fine with one player, but
+        // in multiplayer it picked an arbitrary player's stamina: the drinker got no buff and no stamina refill.
+        PlayerStaminaHandler holder = GetComponentInParent<PlayerStaminaHandler>(true);
+        if (holder != null) playerStamina = holder;
+        if (playerStamina == null) playerStamina = FindFirstObjectByType<PlayerStaminaHandler>();
+
         VfxManager.Play(VfxId.PlayerDrink, playerStamina.transform.position);
         playerStamina.GainEnergy(energyRestoreAmount);
         onUseEvent?.Invoke();

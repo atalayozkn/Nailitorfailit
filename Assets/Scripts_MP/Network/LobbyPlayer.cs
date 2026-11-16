@@ -20,17 +20,53 @@ public class LobbyPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(OnSteamIdChanged))]
     public ulong steamId;
 
+    // True while the player's microphone is muted or unavailable (shown as an icon next to the name).
+    [SyncVar(hook = nameof(OnMicChanged))]
+    public bool micMuted;
+
     PlayerListEntryUI uiRow;
 
     public override void OnStartServer()
     {
         base.OnStartServer();
 
-        colorIndex = ((LobbyNetworkManager)NetworkManager.singleton).NextFreeColorIndex(this);
+        LobbyNetworkManager manager = (LobbyNetworkManager)NetworkManager.singleton;
+        int remembered = LobbyNetworkManager.RememberedColor(connectionToClient);
+
+        // Coming back from a match: keep the colour the player had, unless somebody else took it meanwhile.
+        bool takenByOther = false;
+        foreach (LobbyPlayer other in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
+            if (other != null && other != this && ClampColor(other.colorIndex) == remembered) takenByOther = true;
+
+        colorIndex = remembered >= 0 && !takenByOther ? ClampColor(remembered) : manager.NextFreeColorIndex(this);
         LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
     }
 
     void OnSteamIdChanged(ulong oldVal, ulong newVal) => ApplyRowData();
+
+    void OnMicChanged(bool oldVal, bool newVal) => uiRow?.SetMic(newVal, IsTalking());
+
+    // Local player: our own push-to-talk. Others: their voice packets are arriving.
+    private bool IsTalking()
+    {
+        if (micMuted) return false;
+
+        if (isOwned) return VoiceNetwork_MP.Instance != null && VoiceNetwork_MP.Instance.IsTransmitting;
+
+        VoiceSpeaker_MP speaker = GetComponent<VoiceSpeaker_MP>();
+        return speaker != null && speaker.IsSpeaking;
+    }
+
+    void Update()
+    {
+        if (uiRow != null) uiRow.SetMic(micMuted, IsTalking());
+    }
+
+    [Command]
+    public void CmdSetMicMuted(bool muted)
+    {
+        micMuted = muted;
+    }
 
     public override void OnStartClient()
     {
@@ -74,6 +110,7 @@ public class LobbyPlayer : NetworkBehaviour
         uiRow.SetName(displayName);
         uiRow.SetPlayerColor(MpPlayerColor_MP.ColorOf(colorIndex));
         uiRow.SetSteamId(steamId);
+        uiRow.SetMic(micMuted, IsTalking());
         uiRow.UpdateColor(isHost, isReady);
     }
 
@@ -121,7 +158,19 @@ public class LobbyPlayer : NetworkBehaviour
     [Command]
     public void CmdSetColor(int index)
     {
-        colorIndex = ClampColor(index);
+        // Two players never share a colour: a pick that someone else already wears is ignored (the panel greys
+        // those out, this covers two clicks racing each other).
+        int wanted = ClampColor(index);
+        foreach (LobbyPlayer other in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
+        {
+            if (other != null && other != this && ClampColor(other.colorIndex) == wanted)
+            {
+                InteractionDebug.Log($"[LOBBY] colour {wanted} refused for '{playerName}': '{other.playerName}' has it.");
+                return;
+            }
+        }
+
+        colorIndex = wanted;
         LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
         InteractionDebug.Log($"[LOBBY] colour for '{playerName}' -> {colorIndex}");
     }

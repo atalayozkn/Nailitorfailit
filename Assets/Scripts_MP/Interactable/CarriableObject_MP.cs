@@ -16,6 +16,10 @@ public class CarriableObject_MP : NetworkBehaviour
 
     private Rigidbody rb;
     private Collider col;
+    // Every collider of the item (the fire extinguisher has several on child objects). Only the root collider used
+    // to be switched off while carried, so the rest kept shoving the player (it walked backwards by itself).
+    private Collider[] allColliders;
+    private bool[] colliderWasEnabled;
     private CarriableObject_SP carriableSp;
 
     [SyncVar] private NetworkIdentity carrier;
@@ -31,6 +35,9 @@ public class CarriableObject_MP : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
+        allColliders = GetComponentsInChildren<Collider>(true);
+        colliderWasEnabled = new bool[allColliders.Length];
+        for (int i = 0; i < allColliders.Length; i++) colliderWasEnabled[i] = allColliders[i] != null && allColliders[i].enabled;
         carriableSp = GetComponent<CarriableObject_SP>();
     }
 
@@ -171,11 +178,12 @@ public class CarriableObject_MP : NetworkBehaviour
             return;
         }
 
-        // The requester may still hold another item on the server (swap): release it first.
+        // The requester may still hold another item on the server. With a free inventory slot every machine stows
+        // it when this pickup is applied (RegisterCarriedObject); only a full inventory swaps, i.e. drops it first.
         PlayerInteractionHandler handler = HandlerOf(requester);
         CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
-        if (held != null && held != carriableSp && held.TryGetComponent(out CarriableObject_MP heldMp) &&
-            heldMp.carrier == requester)
+        if (held != null && held != carriableSp && handler.PickupWouldSwap() &&
+            held.TryGetComponent(out CarriableObject_MP heldMp) && heldMp.carrier == requester)
         {
             heldMp.ServerTryDrop(requester);
         }
@@ -221,6 +229,45 @@ public class CarriableObject_MP : NetworkBehaviour
 
         RpcApplyThrow(holder, flat.normalized * force);
         nextSettleCheck = Time.time + 1f;
+
+        thrower = holder;
+        thrownAt = Time.time;
+        thrownUntil = Time.time + ThrowHitWindow;
+    }
+
+    // A thrown item that reaches another player knocks them over (ragdoll + a push along the item's flight).
+    private const float ThrowHitWindow = 2.5f;
+    private const float ThrowHitRadius = 0.7f;
+    private const float ThrowMinSpeed = 2f;
+    private const float ThrowerGrace = 0.35f;
+    private NetworkIdentity thrower;
+    private float thrownAt;
+    private float thrownUntil;
+
+    [ServerCallback]
+    private void FixedUpdate()
+    {
+        if (Time.time > thrownUntil || rb == null || rb.isKinematic) return;
+        if (rb.linearVelocity.sqrMagnitude < ThrowMinSpeed * ThrowMinSpeed) return;
+
+        foreach (Collider hit in Physics.OverlapSphere(transform.position, ThrowHitRadius, ~0, QueryTriggerInteraction.Ignore))
+        {
+            PlayerScripts.PlayerNetwork_MP player = hit.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>();
+            if (player == null || player.isDead) continue;
+
+            // The thrower is not hit by their own throw while it leaves their hands.
+            if (player.netIdentity == thrower && Time.time - thrownAt < ThrowerGrace) continue;
+
+            Vector3 flight = rb.linearVelocity;
+            flight.y = 0f;
+            Vector3 push = (flight.sqrMagnitude > 0.01f ? flight.normalized : transform.forward) * 5f + Vector3.up * 3.5f;
+
+            InteractionDebug.Log($"[MP-THROW] '{name}' hit '{player.name}'.");
+            player.ServerStunFling(push);
+
+            thrownUntil = 0f; // one hit per throw
+            return;
+        }
     }
 
     [ClientRpc]
@@ -365,7 +412,7 @@ public class CarriableObject_MP : NetworkBehaviour
             transform.localRotation = Quaternion.identity;
         }
 
-        if (col != null) col.enabled = false;
+        SetItemColliders(false);
         if (rb != null)
         {
             rb.isKinematic = true;
@@ -375,7 +422,7 @@ public class CarriableObject_MP : NetworkBehaviour
         if (carriableSp != null)
         {
             carriableSp.SetOccupied();
-            carriableSp.SetVisuals(!hideVisuals);
+            carriableSp.SetVisualsSafe(!hideVisuals);
         }
 
         ClearHandlerIfHolding(requester);
@@ -402,9 +449,23 @@ public class CarriableObject_MP : NetworkBehaviour
 
         transform.SetParent(null);
 
-        if (col != null) col.enabled = true;
+        SetItemColliders(true);
 
-        if (carriableSp != null) carriableSp.SetVisuals(true);
+        if (carriableSp != null) carriableSp.SetVisualsSafe(true);
+    }
+
+    // false: all colliders off (carried, in a station). true: back to what the prefab had enabled.
+    private void SetItemColliders(bool enabled)
+    {
+        if (allColliders == null) return;
+
+        for (int i = 0; i < allColliders.Length; i++)
+        {
+            Collider c = allColliders[i];
+            if (c == null) continue;
+
+            c.enabled = enabled && colliderWasEnabled[i];
+        }
     }
 
     private void ApplyPickupLocally(NetworkIdentity carrierIdentity)
@@ -418,7 +479,7 @@ public class CarriableObject_MP : NetworkBehaviour
             if (other != carrierInteraction && other.GetCurrentCarriable() == carriableSp) other.ClearCarriedObject();
         }
 
-        if (col != null) col.enabled = false;
+        SetItemColliders(false);
 
         if (rb != null)
         {
@@ -445,9 +506,26 @@ public class CarriableObject_MP : NetworkBehaviour
             rb.WakeUp();
         }
 
-        if (col != null) col.enabled = true;
+        SetItemColliders(true);
 
-        ClearHandlerIfHolding(carrierIdentity);
+        // A stowed item is hidden. The SP death state may already have let go of it locally (DropAllCarried drops
+        // the inventory without un-hiding), so show it again here whatever the handler thinks.
+        if (carriableSp != null) carriableSp.SetStowed(false);
+
+        ReleaseFromHandler(carrierIdentity);
+    }
+
+    // The item left its carrier. The item in hand clears the hand; a stowed one frees its slot and shows again.
+    private void ReleaseFromHandler(NetworkIdentity holder)
+    {
+        PlayerInteractionHandler handler = HandlerOf(holder);
+        if (handler == null) return;
+
+        CarriableObject_SP held = handler.GetCurrentCarriable();
+        if (held != carriableSp && carriableSp != null) handler.ReleaseCarried(carriableSp);
+
+        // "held == null" also covers an already destroyed object (Unity fake-null) whose flags are still set.
+        if (held == null || held == carriableSp) handler.ClearCarriedObject();
     }
 
     private void ClearHandlerIfHolding(NetworkIdentity holder)

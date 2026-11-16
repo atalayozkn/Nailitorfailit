@@ -52,7 +52,7 @@ public class PresenceChecker : MonoBehaviour
         {
             if (col.TryGetComponent<CarriableObject_SP>(out CarriableObject_SP carriable))
             {
-                if (!carriable.IsOccupied())
+                if (!carriable.IsOccupied() && DogMayTake(carriable))
                 {
                     trackedCarriable = carriable;
                 }
@@ -66,6 +66,17 @@ public class PresenceChecker : MonoBehaviour
         }
 
         trackedCarriable = null;
+    }
+
+    // In a network session the dog runs on each machine on its own: taking a server-owned item would parent it to the
+    // dog's mouth on this machine only (and release it from the player's hands here), while the server and the other
+    // players still see the player holding it. Only local-only items (netId 0) may be taken.
+    private static bool DogMayTake(CarriableObject_SP carriable)
+    {
+        if (!NetworkModeHelper.IsNetworked) return true;
+
+        var identity = carriable.GetComponent<Mirror.NetworkIdentity>();
+        return identity == null || identity.netId == 0;
     }
 
     public void SearchForPlayer()
@@ -83,7 +94,7 @@ public class PresenceChecker : MonoBehaviour
             if (col.TryGetComponent<PlayerInteractionHandler>(out PlayerInteractionHandler interactionHandler))
             {
                 var carriable = interactionHandler.GetCurrentCarriable();
-                if (carriable != null && !carriable.IsOccupied())
+                if (carriable != null && !carriable.IsOccupied() && DogMayTake(carriable))
                 {
                     trackedCarriable = carriable;
                 }

@@ -55,6 +55,58 @@ public class LobbyNetworkManager : NetworkManager
 
     bool connectedOnce = false;
 
+    // Why the last client connection ended. The Steam transport only writes it to the log ("Connection was closed by
+    // peer, <reason>", reasons: "Disconnected by server" = the host closed it, "Timeout; remote problem" = nothing
+    // arrived from the host for ~10 s, "Timeout; problem detected locally" = our own link died); KCP reports a
+    // TransportError instead. Without it every drop looked like "the host ended the session".
+    private enum CloseCause { Unknown, HostClosed, HostUnresponsive, LocalLinkLost }
+    private string lastTransportCloseReason;
+    private bool closeReasonHooked;
+    private const string CloseReasonPrefix = "Connection was closed by peer,";
+
+    private void HookCloseReason()
+    {
+        lastTransportCloseReason = null;
+        if (closeReasonHooked) return;
+        Application.logMessageReceived += OnLogForCloseReason;
+        closeReasonHooked = true;
+    }
+
+    private void UnhookCloseReason()
+    {
+        if (!closeReasonHooked) return;
+        Application.logMessageReceived -= OnLogForCloseReason;
+        closeReasonHooked = false;
+    }
+
+    private void OnLogForCloseReason(string condition, string stackTrace, LogType type)
+    {
+        if (condition == null || !condition.StartsWith(CloseReasonPrefix)) return;
+        lastTransportCloseReason = condition.Substring(CloseReasonPrefix.Length).Trim();
+    }
+
+    public override void OnClientError(TransportError error, string reason)
+    {
+        base.OnClientError(error, reason);
+        if (error == TransportError.Timeout) lastTransportCloseReason = "Timeout; remote problem (" + reason + ")";
+    }
+
+    private CloseCause ClassifyClose()
+    {
+        string reason = lastTransportCloseReason;
+        if (string.IsNullOrEmpty(reason)) return CloseCause.Unknown;
+
+        if (reason.IndexOf("Timeout", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return reason.IndexOf("locally", System.StringComparison.OrdinalIgnoreCase) >= 0
+                ? CloseCause.LocalLinkLost
+                : CloseCause.HostUnresponsive;
+
+        if (reason.IndexOf("Disconnected by server", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return CloseCause.HostClosed;
+
+        return CloseCause.Unknown;
+    }
+
     int setupGeneration;
 
     private bool returnToMenuRequested;
@@ -74,6 +126,11 @@ public class LobbyNetworkManager : NetworkManager
     public override void Awake()
     {
         base.Awake();
+
+        // Mirror's default: an exception inside a message handler (an RPC that hits a null, say) disconnects that
+        // connection. For the host's own client that tore the whole lobby down and kicked everybody. A bug in one
+        // handler is logged, the session goes on.
+        exceptionsDisconnect = false;
 
         // Duplicate (e.g. MenuScene_MP's manager when the MpStack from the SP menu already exists): Mirror
         // destroys it, but hand its spawn list to the survivor first. Otherwise the survivor only knows the
@@ -108,6 +165,7 @@ public class LobbyNetworkManager : NetworkManager
 
     public override void OnDestroy()
     {
+        UnhookCloseReason();
         if (SteamLobbyManager.Instance != null)
             SteamLobbyManager.Instance.OnInviteCodeReady -= HandleInviteCode;
 
@@ -477,7 +535,11 @@ public class LobbyNetworkManager : NetworkManager
             ? requested.Trim()
             : (lp.isHost ? "Host" : $"Player {conn.connectionId}");
 
-        NetworkServer.AddPlayerForConnection(conn, lobbyObj);
+        // Back from a match the connection still owns its game player: swap it for a fresh lobby player.
+        if (conn.identity != null)
+            NetworkServer.ReplacePlayerForConnection(conn, lobbyObj, ReplacePlayerOptions.Destroy);
+        else
+            NetworkServer.AddPlayerForConnection(conn, lobbyObj);
 
         StartCoroutine(ForceNameSyncLater(lp));
     }
@@ -534,6 +596,19 @@ public class LobbyNetworkManager : NetworkManager
             baseRot
         );
 
+        // The lobby player is about to be replaced: hand its name, colour and mic state to the game player.
+        PlayerScripts.PlayerNetwork_MP gameNet = gamePlayer.GetComponentInChildren<PlayerScripts.PlayerNetwork_MP>(true);
+        if (gameNet != null)
+        {
+            if (conn.identity != null && conn.identity.TryGetComponent(out LobbyPlayer lobbyPlayer))
+                gameNet.ServerSetIdentity(lobbyPlayer.playerName, lobbyPlayer.colorIndex, lobbyPlayer.micMuted, lobbyPlayer.isHost);
+            else if (conn.identity != null && conn.identity.GetComponentInChildren<PlayerScripts.PlayerNetwork_MP>(true) is PlayerScripts.PlayerNetwork_MP previous)
+                // Play again / next level: the previous game player carries the identity.
+                gameNet.ServerSetIdentity(previous.playerName, previous.colorIndex, previous.micMuted, previous.isHostPlayer);
+            else
+                gameNet.ServerSetIdentity(conn.authenticationData as string, ColorFor(conn), false, conn == NetworkServer.localConnection);
+        }
+
         bool replacedOld = conn.identity != null;
         if (replacedOld)
             NetworkServer.ReplacePlayerForConnection(conn, gamePlayer, ReplacePlayerOptions.Destroy);
@@ -566,6 +641,7 @@ public class LobbyNetworkManager : NetworkManager
     {
         base.OnStartClient();
         connectedOnce = false;
+        HookCloseReason();
         Debug.Log($"[NET] Client started. target={networkAddress}");
 
         ChatNetwork.Register();
@@ -636,10 +712,31 @@ public class LobbyNetworkManager : NetworkManager
         base.OnClientDisconnect();
         Debug.LogWarning("[NET] Client connection lost.");
 
+        CloseCause cause = ClassifyClose();
+        Debug.LogWarning($"[NET] Close reason: '{lastTransportCloseReason ?? "unknown"}' -> {cause}");
+
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path == SelectedGameScenePath)
-            Debug.LogError("[MP] The host ended the session while this client was in the "
-                           + "match scene. Falling back to MenuScene_MP - check the host's "
-                           + "Player.log for '[MP-TEARDOWN]' to see what closed it.");
+        {
+            switch (cause)
+            {
+                case CloseCause.HostUnresponsive:
+                    Debug.LogError("[MP] Timeout: the host stopped responding (nothing received for ~10 s) while this "
+                                   + "client was in the match scene. The host may have frozen, crashed or lost its "
+                                   + "internet - check the host's Player.log around this time.");
+                    break;
+                case CloseCause.LocalLinkLost:
+                    Debug.LogError("[MP] Timeout: this client's own connection to the host was lost while in the match scene.");
+                    break;
+                case CloseCause.HostClosed:
+                    Debug.LogError("[MP] The host closed the session while this client was in the match scene - "
+                                   + "check the host's Player.log for '[MP-TEARDOWN]' to see what closed it.");
+                    break;
+                default:
+                    Debug.LogError("[MP] Connection to the host ended while this client was in the match scene "
+                                   + "(reason unknown) - check the host's Player.log for '[MP-TEARDOWN]'.");
+                    break;
+            }
+        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -657,9 +754,19 @@ public class LobbyNetworkManager : NetworkManager
                             quitInProgress || mode == NetworkManagerMode.Host;
 
         if (!leftByChoice)
-            MpNotice_MP.Warning(Application.internetReachability == NetworkReachability.NotReachable
-                ? "Disconnected: your internet connection was lost."
-                : "Disconnected from the host (connection lost or the host left).");
+        {
+            string notice;
+            if (Application.internetReachability == NetworkReachability.NotReachable || cause == CloseCause.LocalLinkLost)
+                notice = "Disconnected: your internet connection was lost.";
+            else if (cause == CloseCause.HostUnresponsive)
+                notice = "Timeout: the host stopped responding (it may have frozen, crashed or lost its connection).";
+            else if (cause == CloseCause.HostClosed)
+                notice = "The host closed the session.";
+            else
+                notice = "Disconnected from the host (connection lost or the host left).";
+
+            MpNotice_MP.Warning(notice);
+        }
 
         if (GameManager.Instance != null)
         {
@@ -754,6 +861,52 @@ public class LobbyNetworkManager : NetworkManager
         if (GameManager.Instance != null) GameManager.Instance.EnterGamePhase();
     }
 
+    #region End of match (host only)
+
+    private const string LobbyScenePath = "Assets/Scenes_MP/MenuScene_MP.unity";
+
+    // The level after the selected one, if it is a regular level (the catalog also lists the versus test scene).
+    public bool HasNextLevel
+    {
+        get
+        {
+            MpLevelCatalog catalog = MpLevelCatalog.Instance;
+            if (catalog == null) return false;
+
+            int next = catalog.SelectedIndex + 1;
+            return next < catalog.Count && catalog.Get(next).scenePath.Contains("/Level_");
+        }
+    }
+
+    public bool HostReplayLevel() => HostLoadLevel(MpLevelCatalog.Instance != null ? MpLevelCatalog.Instance.SelectedIndex : 0);
+
+    public bool HostNextLevel() => HasNextLevel && HostLoadLevel(MpLevelCatalog.Instance.SelectedIndex + 1);
+
+    private bool HostLoadLevel(int levelIndex)
+    {
+        if (!NetworkServer.active || !gameStarted) return false;
+
+        MpLevelNet.Instance?.HostSelect(levelIndex);
+        Debug.Log($"[LOBBY] Host loads level {levelIndex}: {SelectedGameScenePath}");
+
+        ServerChangeScene(SelectedGameScenePath);
+        return true;
+    }
+
+    // Everyone goes back to the lobby (new lobby players, colours kept), ready to pick a level and start again.
+    public bool HostReturnToLobby()
+    {
+        if (!NetworkServer.active) return false;
+
+        gameStarted = false;
+        Debug.Log("[LOBBY] Host sends everyone back to the lobby.");
+
+        ServerChangeScene(LobbyScenePath);
+        return true;
+    }
+
+    #endregion
+
     public bool LeaveMatch()
     {
         bool wasHost = NetworkServer.active;
@@ -806,6 +959,9 @@ public class LobbyNetworkManager : NetworkManager
     {
         if (conn != null) colorByConnection[conn.connectionId] = index;
     }
+
+    public static int RememberedColor(NetworkConnectionToClient conn) =>
+        conn != null && colorByConnection.TryGetValue(conn.connectionId, out int index) ? index : -1;
 
     public static int ColorFor(NetworkConnectionToClient conn)
     {

@@ -102,7 +102,25 @@ public class MpPlayerColor_MP : MonoBehaviour
 
             bool selected = LobbyPlayer.ClampColor(local.colorIndex) == i;
             swatches[i].rectTransform.localScale = selected ? Vector3.one * 1.15f : Vector3.one;
+
+            // Colours another player wears are greyed out and cannot be picked.
+            bool takenByOther = IsTakenByOther(i, local);
+            Color baseColor = Palette[i];
+            swatches[i].color = takenByOther ? new Color(baseColor.r, baseColor.g, baseColor.b, 0.18f) : baseColor;
+
+            Button button = swatches[i].GetComponent<Button>();
+            if (button != null) button.interactable = !takenByOther;
         }
+    }
+
+    private static bool IsTakenByOther(int index, LobbyPlayer local)
+    {
+        foreach (LobbyPlayer other in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
+        {
+            if (other != null && other != local && LobbyPlayer.ClampColor(other.colorIndex) == index) return true;
+        }
+
+        return false;
     }
 
     public void Pick(int index)
@@ -116,6 +134,8 @@ public class MpPlayerColor_MP : MonoBehaviour
             InteractionDebug.Log("[MP-COLOR] pick ignored: the local lobby player is not spawned yet.");
             return;
         }
+
+        if (IsTakenByOther(Clamp(index), local)) return;
 
         local.CmdSetColor(index);
         InteractionDebug.Log($"[MP-COLOR] requested colour {index} ({Palette[Clamp(index)]}).");

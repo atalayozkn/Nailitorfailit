@@ -4,8 +4,8 @@ using UnityEngine.InputSystem;
 
 public class MpChatHotkey_MP : MonoBehaviour
 {
-    [Tooltip("Open the chat with these keys while in a match.")]
-    [SerializeField] private bool openOnC = true;
+    [Tooltip("Open the chat with these keys while in a match. C is the crouch key, so only T opens it.")]
+    [SerializeField] private bool openOnC = false;
     [SerializeField] private bool openOnT = true;
     [SerializeField] private bool openOnEnter = false;
 
@@ -42,7 +42,7 @@ public class MpChatHotkey_MP : MonoBehaviour
             return;
         }
 
-        // While typing, T/C/Enter are part of the message text: the hotkey must not close the
+        // While typing, T/Enter are part of the message text: the hotkey must not close the
         // chat mid-word (that locked the cursor and dropped everything the player had typed).
         if (chat.IsTyping) return;
 
@@ -72,8 +72,16 @@ public class MpChatHotkey_MP : MonoBehaviour
         {
             if (chat == null) continue;
 
-            PlayerScripts.PlayerNetwork_MP owner = chat.GetComponentInParent<PlayerScripts.PlayerNetwork_MP>(true);
-            if (owner != null && !owner.isOwned) continue;
+            // The match chat sits in the package's HUD, a SIBLING of the player body (PlayerNetwork_MP), so a parent
+            // search finds no owner and every package's chat looked like "ours": the first one in the scene was
+            // opened, and on a client that is the host's package - opening it switched on the host's camera and HUD.
+            // The package root's NetworkIdentity tells whose chat it is; the lobby chat has none.
+            Mirror.NetworkIdentity package = chat.GetComponentInParent<Mirror.NetworkIdentity>(true);
+            if (package != null && !package.isOwned) continue;
+
+            // The disabled authored singleplayer package has no identity either: only the lobby chat may be that.
+            if (package == null && Mirror.NetworkClient.localPlayer != null &&
+                Mirror.NetworkClient.localPlayer.GetComponent<LobbyPlayer>() == null) continue;
 
             cachedChat = chat;
             return cachedChat;

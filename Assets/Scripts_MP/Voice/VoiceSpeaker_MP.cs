@@ -61,8 +61,8 @@ public class VoiceSpeaker_MP : MonoBehaviour
         source.playOnAwake = false;
         source.loop = true;
         source.rolloffMode = AudioRolloffMode.Linear;
-        source.minDistance = 4f;
-        source.maxDistance = 40f;
+        source.minDistance = 8f;
+        source.maxDistance = 60f;
         source.dopplerLevel = 0f;
         source.volume = 1f;
         source.spatialBlend = 0f;
@@ -91,12 +91,30 @@ public class VoiceSpeaker_MP : MonoBehaviour
         clip = null;
     }
 
-    public void Push(byte[] compressed)
+    private const int RawRate = 16000;
+
+    // Steam voice comes out quiet (it is level-matched for a headset on top of the game audio) and the 3D roll-off
+    // makes it quieter still: a fixed boost, hard-limited so loud speech cannot distort.
+    private const float PlaybackGain = 3f;
+
+    public void Push(byte[] compressed, bool raw = false)
     {
         if (compressed == null || compressed.Length == 0) return;
+
+        // Raw PCM from a peer without Steam (local tests): no codec, plays at 16 kHz.
+        if (raw)
+        {
+            EnsureClip(RawRate);
+            if (clip == null || sampleRate != RawRate) return;
+
+            LastPacketTime = Time.unscaledTime;
+            AppendPcm(compressed, compressed.Length);
+            return;
+        }
+
         if (!SteamManager.Initialized) return;
 
-        EnsureClip();
+        EnsureClip(0);
         if (clip == null) return;
 
         EVoiceResult result = SteamUser.DecompressVoice(compressed, (uint)compressed.Length, pcm, (uint)pcm.Length,
@@ -113,16 +131,20 @@ public class VoiceSpeaker_MP : MonoBehaviour
         }
 
         LastPacketTime = Time.unscaledTime;
+        AppendPcm(pcm, (int)written);
+    }
 
-        int samples = (int)(written / 2);
+    private void AppendPcm(byte[] bytes, int length)
+    {
+        int samples = length / 2;
         const float scale = 1f / 32768f;
 
         lock (gate)
         {
             for (int i = 0; i < samples; i++)
             {
-                short value = (short)(pcm[i * 2] | (pcm[i * 2 + 1] << 8));
-                ring[writeIndex] = value * scale;
+                short value = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8));
+                ring[writeIndex] = Mathf.Clamp(value * scale * PlaybackGain, -1f, 1f);
                 writeIndex = (writeIndex + 1) % ring.Length;
 
                 if (count < ring.Length) count++;
@@ -131,11 +153,11 @@ public class VoiceSpeaker_MP : MonoBehaviour
         }
     }
 
-    private void EnsureClip()
+    private void EnsureClip(int forcedRate)
     {
         if (clip != null) return;
 
-        sampleRate = (int)SteamUser.GetVoiceOptimalSampleRate();
+        sampleRate = forcedRate > 0 ? forcedRate : (int)SteamUser.GetVoiceOptimalSampleRate();
         if (sampleRate <= 0) sampleRate = 48000;
 
         ring = new float[sampleRate * MaxBufferedSeconds];
