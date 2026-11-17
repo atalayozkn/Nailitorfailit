@@ -231,12 +231,14 @@ public class LobbyNetworkManager : NetworkManager
         if (showNotice) MpNotice_MP.Error(reason);
         SetupFailed?.Invoke(reason);
     }
+    public static int MaxPlayersOverride;
 
     public void HostLobby(string password)
     {
         LobbyPassword = password;
 
         UseSteamNameIfEmpty();
+        if (MaxPlayersOverride > 0) maxConnections = MaxPlayersOverride;
 
         ChatNetwork.ClearHistory();
 

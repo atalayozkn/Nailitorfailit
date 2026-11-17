@@ -252,15 +252,36 @@ public static class LevelHouseSetup
         return true;
     }
 
-    private static Transform BuildHouse(UnityEngine.SceneManagement.Scene scene, LevelDef level, Transform marker)
+    // Versus test map: one player's house + station row under their own roots ("House_A", "Stations_A", ...).
+    // mirror flips the arrangement on X, so building one side with it and one without gives exact mirror images.
+    // No jitter and no shops here: the versus map has one shared shop and must be the same for both players.
+    public static void BuildVersusSide(UnityEngine.SceneManagement.Scene scene, string suffix, Vector3 housePosition, Vector3 stationsPosition, bool mirror,
+        out Transform house, out Transform stations, out List<ElectricalHazard_Prototype> sockets)
     {
-        DestroyRoot(scene, HouseRootName);
-        var house = new GameObject(HouseRootName);
+        const CarriableType W = CarriableType.Wood, B = CarriableType.Brick;
+        var level = new LevelDef { scene = scene.path, housePack = true, houseOpenPositiveZ = true, mirror = mirror, hasMixer = true, hasFire = true, seed = 3,
+            rooms = LShape(R("LivingRoom", Pattern.HalfSplit, W, B), R("Bedroom", Pattern.AllPrimary, W), R("Bathroom", Pattern.Checker, W, B)),
+            sockets = { new HazardSpot("LivingRoom", Side.East, 3), new HazardSpot("Bedroom", Side.North, 1) } };
+
+        var marker = new GameObject("VersusMarker").transform;
+        marker.position = housePosition;
+        house = BuildHouse(scene, level, marker, HouseRootName + suffix, false);
+        marker.position = stationsPosition;
+        stations = BuildStations(scene, level, marker, new List<Transform>(), StationsRootName + suffix, false, mirror);
+        Object.DestroyImmediate(marker.gameObject);
+        sockets = BuildHazards(level, house).sockets;
+    }
+
+    private static Transform BuildHouse(UnityEngine.SceneManagement.Scene scene, LevelDef level, Transform marker, string rootName = HouseRootName, bool useJitter = true)
+    {
+        DestroyRoot(scene, rootName);
+        var house = new GameObject(rootName);
         EditorSceneManager.MoveGameObjectToScene(house, scene);
 
         // Small seeded jitter so the house never sits exactly in the same spot.
         var rng = new System.Random(level.seed);
         var jitter = new Vector3((float)(rng.NextDouble() - 0.5) * 1.0f, 0f, (float)(rng.NextDouble() - 0.5) * 1.0f);
+        if (!useJitter) jitter = Vector3.zero;
         house.transform.position = marker.position + jitter;
         // Front door is on house-local -Z, turn it toward the road.
         house.transform.rotation = Quaternion.Euler(0f, level.houseOpenPositiveZ ? 180f : 0f, 0f);
@@ -333,15 +354,16 @@ public static class LevelHouseSetup
         return windows;
     }
 
-    private static void BuildStations(UnityEngine.SceneManagement.Scene scene, LevelDef level, Transform marker, List<Transform> all)
+    private static Transform BuildStations(UnityEngine.SceneManagement.Scene scene, LevelDef level, Transform marker, List<Transform> all,
+        string rootName = StationsRootName, bool withShops = true, bool mirrorRow = false)
     {
         // Remove the loose stations placed before this tool existed.
         string[] loose = { "Station_WoodCutter", "Mixer", "Spawner_Wood", "Spawner_Cement", "Spawner_Brick", "GlassSpawner" };
         foreach (var t in all.Where(t => t != null && loose.Contains(t.name) && PrefabUtility.IsOutermostPrefabInstanceRoot(t.gameObject) && t.root.name != StationsRootName).ToList())
             Object.DestroyImmediate(t.gameObject);
 
-        DestroyRoot(scene, StationsRootName);
-        var root = new GameObject(StationsRootName);
+        DestroyRoot(scene, rootName);
+        var root = new GameObject(rootName);
         EditorSceneManager.MoveGameObjectToScene(root, scene);
         root.transform.position = marker.position;
         root.transform.rotation = Quaternion.Euler(0f, level.stationsOpenPositiveZ ? 180f : 0f, 0f);
@@ -352,7 +374,8 @@ public static class LevelHouseSetup
         stations.Add(WoodPile);
         if (level.hasMixer) { stations.Add(CementPile); stations.Add(BrickPile); }
         if (level.hasGlass) stations.Add(GlassPile);
-        PlaceRow(root.transform, stations, 0f, 0f);
+        PlaceRow(root.transform, stations, 0f, 0f, mirrorRow);
+        if (!withShops) return root.transform;
 
         // Shops: small cluster in front of the row, on the right so the spawn in front stays free.
         var shops = new List<StationDef> { ShopEnergy, ShopOil, ShopPetFood };
@@ -360,10 +383,11 @@ public static class LevelHouseSetup
         float shopsWidth = shops.Sum(s => s.width);
         // Pads are ~10m wide (fence at +-5) and the player spawns at x 0: keep the cluster inside x 1..5.
         PlaceRow(root.transform, shops, Mathf.Min(3f, 4.8f - shopsWidth * 0.5f), ShopRowZ);
+        return root.transform;
     }
 
-    // Places a row of prefabs along local X, centered on centerX.
-    private static void PlaceRow(Transform parent, List<StationDef> row, float centerX, float z)
+    // Places a row of prefabs along local X, centered on centerX. mirror flips the row on X.
+    private static void PlaceRow(Transform parent, List<StationDef> row, float centerX, float z, bool mirror = false)
     {
         float x = centerX - row.Sum(s => s.width) * 0.5f;
         foreach (var s in row)
@@ -374,7 +398,7 @@ public static class LevelHouseSetup
             else
             {
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
-                go.transform.localPosition = new Vector3(x, s.y, z);
+                go.transform.localPosition = new Vector3(mirror ? -x : x, s.y, z);
                 go.transform.localRotation = Quaternion.Euler(0f, s.rotY, 0f);
             }
             x += s.width * 0.5f;

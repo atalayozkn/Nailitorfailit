@@ -49,6 +49,15 @@ namespace PlayerScripts
 
         private readonly RaycastHit[] hits = new RaycastHit[12];
 
+        // Hooks for a mode built on top of this stack (versus). Both stay null in co-op, which then behaves as before.
+        // InteractOverride: return true when the mode handled or refused the press itself.
+        public static System.Func<PlayerInteractionNetwork_MP, Component, bool> InteractOverride;
+        // HoverFilter: return true for targets that must not light up for the local player.
+        public static System.Func<Component, bool> HoverFilter;
+
+        public IInteractable CurrentInteractable => currentInteractable;
+        public InteractableType CurrentInteractableType => currentInteractableType;
+
         private void Awake()
         {
             if (interactionHandlerSp == null) interactionHandlerSp = GetComponent<PlayerInteractionHandler>();
@@ -249,7 +258,8 @@ namespace PlayerScripts
             }
 
             currentInteractableType = currentInteractable.InteractableType;
-            currentInteractable.OnHoverOn();
+            if (HoverFilter == null || !(currentInteractable is Component hovered) || !HoverFilter(hovered))
+                currentInteractable.OnHoverOn();
         }
 
         private void HandleInteract()
@@ -257,6 +267,8 @@ namespace PlayerScripts
             CarriableObject_SP currentCarriable = interactionHandlerSp.GetCurrentCarriable();
 
             if (currentCarriable == null && currentInteractable == null) return;
+
+            if (InteractOverride != null && currentInteractable is Component target && InteractOverride(this, target)) return;
 
             if (currentCarriable != null && currentInteractable == null)
             {

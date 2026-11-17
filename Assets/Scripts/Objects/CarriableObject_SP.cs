@@ -55,7 +55,8 @@ namespace ItemScript
         {
             if (isConsumed || isOccupied) return default;
             // With a free inventory slot the held item is stowed, so only a full inventory swaps.
-            bool wouldSwap = interactionHandler != null && interactionHandler.PickupWouldSwap();
+            PlayerInteractionHandler viewer = NetworkModeHelper.IsNetworked ? NetworkModeHelper.LocalHandler() : interactionHandler;
+            bool wouldSwap = viewer != null && viewer.PickupWouldSwap();
             return LookAtInfo.Ready(LookAtText.ItemName(this), wouldSwap ? "Swap" : "Carry");
         }
         public void OnHoverOn()
@@ -79,6 +80,11 @@ namespace ItemScript
         #endregion
 
         #region PLAYER INTERACTION
+        // The player carrying this item. With several players in a network session the one found at Awake can be the wrong one.
+        public void SetHolder(PlayerInteractionHandler holder)
+        {
+            if (holder != null) interactionHandler = holder;
+        }
         private void SnapToCarryTransform()
         {
             SetCollusion(false);

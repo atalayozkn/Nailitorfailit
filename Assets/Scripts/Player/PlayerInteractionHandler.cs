@@ -252,6 +252,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     }
     public void RegisterCarriedObject(CarriableObject_SP carriable)
     {
+        carriable.SetHolder(this);
         PlaceInInventory(carriable);
 
         currentCarriable = carriable;
@@ -369,7 +370,7 @@ public class PlayerInteractionHandler : MonoBehaviour
     // the same pick-up / drop / slot events in the same order, so each copy of the handler ends up with equal slots.
     public static bool NetworkedInventory;
 
-    private bool UsesInventory => !NetworkModeHelper.IsNetworked || NetworkedInventory;
+    private bool UsesInventory => !NetworkModeHelper.IsNetworked || NetworkedInventory || NetworkModeHelper.SingleplayerFeel;
 
     // The slot actions live in the same map as Interact, so no extra inspector wiring is needed.
     private void EnableSlotActions(bool condition)

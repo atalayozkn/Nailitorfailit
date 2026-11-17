@@ -72,7 +72,7 @@ public class GameTimeManager : MonoBehaviour
         int seconds = Mathf.FloorToInt(currentTime % 60f);
 
         timerText.text = $"{minutes:00}:{seconds:00}";
-        if (!NetworkModeHelper.IsNetworked) timerText.color = currentTime <= lowTimeWarning ? lowTimeColor : timerColor;
+        if (!NetworkModeHelper.PresentationOff) timerText.color = currentTime <= lowTimeWarning ? lowTimeColor : timerColor;
     }
     private void NotifyGameEnd()
     {

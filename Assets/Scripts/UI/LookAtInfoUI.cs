@@ -42,6 +42,10 @@ public class LookAtInfoUI : MonoBehaviour
     private System.Func<LookAtInfo> mpSource;
     private System.Func<bool, string> mpBindingLabel;
 
+    // A mode that routes interaction itself (versus) supplies what the panel shows instead of the singleplayer handler.
+    public delegate bool InfoSource(out LookAtInfo info);
+    public static InfoSource Override;
+
     public static void Create(PlayerInteractionHandler handler)
     {
         Canvas overlayCanvas = FindOverlayCanvas(handler);
@@ -179,14 +183,19 @@ public class LookAtInfoUI : MonoBehaviour
 
         LookAtInfo info = default;
         bool hasInfo;
-        if (mpSource != null)
+        if (Override != null)
+        {
+            hasInfo = Time.timeScale > 0f && handler != null && Override(out info);
+        }
+        else if (mpSource != null)
         {
             info = Time.timeScale > 0f ? mpSource() : default;
             hasInfo = !string.IsNullOrEmpty(info.Name);
         }
         else
         {
-            hasInfo = !NetworkModeHelper.IsNetworked && Time.timeScale > 0f && handler != null && handler.TryGetLookAtInfo(out info);
+            hasInfo = (!NetworkModeHelper.IsNetworked || NetworkModeHelper.SingleplayerFeel) && Time.timeScale > 0f
+                      && handler != null && handler.TryGetLookAtInfo(out info);
         }
 
         if (hasInfo)

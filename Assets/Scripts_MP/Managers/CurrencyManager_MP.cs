@@ -17,6 +17,10 @@ public class CurrencyManager_MP : MonoBehaviour
 
     private static int serverTotal = -1;
 
+    // Versus mode keeps one wallet per player. When set, it takes the change instead of the shared total
+    // (conn is null for the host's own player). Set and cleared by VersusMatch.
+    public static System.Func<NetworkConnectionToClient, int, bool> PerPlayerOverride;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoSpawn()
     {
@@ -69,6 +73,7 @@ public class CurrencyManager_MP : MonoBehaviour
 
         if (NetworkServer.active)
         {
+            if (PerPlayerOverride != null && PerPlayerOverride(null, delta)) return;
 
             ApplyServerChange(delta);
             return;
@@ -87,6 +92,8 @@ public class CurrencyManager_MP : MonoBehaviour
 
     private static void OnRequestChange(NetworkConnectionToClient conn, RequestChangeMessage message)
     {
+        if (PerPlayerOverride != null && PerPlayerOverride(conn, message.delta)) return;
+
         ApplyServerChange(message.delta);
     }
 

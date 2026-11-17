@@ -38,7 +38,11 @@ public class BlueprintVisual : MonoBehaviour
     private readonly List<Material> tileMaterials = new();
     private readonly List<(MeshRenderer renderer, Material[] original)> swappedRenderers = new();
 
+    // Versus mode: slots of the other player's building never light up for this player.
+    public static System.Func<Component, bool> IsForeign;
+
     private PlayerInteractionHandler interactionHandler;
+    private float nextHandlerSearch;
     private GameObject currentTile;
     private IBuildableTile currentBuildable;
     private float reveal;
@@ -50,7 +54,7 @@ public class BlueprintVisual : MonoBehaviour
 
     private void Start()
     {
-        if (!NetworkModeHelper.IsNetworked) interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+        if (!NetworkModeHelper.PresentationOff) interactionHandler = NetworkModeHelper.LocalHandler();
 
         isReady = true;
         Refresh();
@@ -83,6 +87,13 @@ public class BlueprintVisual : MonoBehaviour
     }
     private void UpdateGhost()
     {
+        // In a network session the local player spawns after the level, so keep looking for it.
+        if (interactionHandler == null && NetworkModeHelper.SingleplayerFeel && Time.time >= nextHandlerSearch)
+        {
+            nextHandlerSearch = Time.time + 1f;
+            interactionHandler = NetworkModeHelper.LocalHandler();
+        }
+
         // Multiplayer has no local handler here and keeps the always-visible blueprint.
         if (interactionHandler == null)
         {
@@ -90,14 +101,16 @@ public class BlueprintVisual : MonoBehaviour
             return;
         }
 
-        bool matches = interactionHandler.IsCarrying()
+        bool foreign = IsForeign != null && IsForeign(this);
+        bool hovered = isHovered && !foreign;
+        bool matches = !foreign && interactionHandler.IsCarrying()
             && interactionHandler.GetCurrentCarriable() != null
             && !interactionHandler.GetCurrentCarriable().isRawMaterial
             && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType();
 
-        float targetAlpha = matches ? 1f : isHovered ? hoverOnlyAlpha : 0f;
+        float targetAlpha = matches ? 1f : hovered ? hoverOnlyAlpha : 0f;
         float target = 0f;
-        if (matches) target = isHovered ? 1f : (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
+        if (matches) target = hovered ? 1f : (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
 
         ghostAlpha = Mathf.MoveTowards(ghostAlpha, targetAlpha, fadeSpeed * Time.deltaTime);
         highlight = Mathf.MoveTowards(highlight, target, highlightSpeed * Time.deltaTime);

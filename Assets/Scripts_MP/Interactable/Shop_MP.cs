@@ -8,6 +8,9 @@ public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Shop shop;
 
+    // Versus mode: charges the buyer's own wallet instead of the shared one. Set and cleared by VersusMatch.
+    public static System.Func<NetworkIdentity, int, bool> PerPlayerPurchase;
+
     private void Awake()
     {
         shop = GetComponent<Shop>();
@@ -46,7 +49,11 @@ public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
 
         PlayerInteractionHandler handler = PlayerInteractionResolver.ForIdentity(requester);
         if (handler != null && handler.IsCarrying()) return;
-        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
+        if (PerPlayerPurchase != null)
+        {
+            if (!PerPlayerPurchase(requester, cost)) return;
+        }
+        else if (CurrencyManager.Instance != null && !CurrencyManager.Instance.HasEnoughCurrency(cost)) return;
 
         Transform spawnTransform = MpSharedCompat.MpGetField<Transform>(shop, "spawnTransform");
         Vector3 position = spawnTransform != null ? spawnTransform.position : shop.transform.position;
@@ -62,7 +69,7 @@ public class Shop_MP : NetworkBehaviour, IInteractionNetworkProxy
         else if (obj.TryGetComponent(out CarriableObject_SP carriable))
             carriable.SnapToRightHand();
 
-        CurrencyManager_MP.Instance?.RequestSpend(cost);
+        if (PerPlayerPurchase == null) CurrencyManager_MP.Instance?.RequestSpend(cost);
 
         UnityEvent onPurchase = MpSharedCompat.MpGetField<UnityEvent>(shop, "onPurchaseEvent");
         if (onPurchase != null) onPurchase.Invoke();

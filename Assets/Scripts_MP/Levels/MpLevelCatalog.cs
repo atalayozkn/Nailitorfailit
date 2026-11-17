@@ -59,6 +59,7 @@ public class MpLevelCatalog : MonoBehaviour
             Entry("Level 03",           "Assets/Scenes/Level_03.unity"),
             Entry("Level 04",           "Assets/Scenes/Level_04.unity"),
             Entry("Level 05",           "Assets/Scenes/Level_05.unity"),
+            Entry("Versus Test (2P)",   "Assets/Scenes/VersusMultiplayer_Test.unity"),
         };
 
         Debug.Log($"[MP-LEVELS] catalog seeded with {levels.Count} level(s) from the Scenes folder.");
