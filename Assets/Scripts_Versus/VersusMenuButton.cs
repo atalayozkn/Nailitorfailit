@@ -13,8 +13,12 @@ public class VersusMenuButton : MonoBehaviour
     private const string BackName = "Button_BackToMenu";
     private const string VersusScenePath = "Assets/Scenes/VersusMultiplayer_Test.unity";
     private const string Label = "Versus Mode";
+    private const string CoopLabel = "Co-op";
     private const int VersusPlayers = 2;
+    // Five rows (tutorial, create, join, versus + the quit icon) do not fit at the old 200 spacing: the quit icon fell off
+    // the screen and sat on the social icons. The four big rows are squeezed together (buttons scaled to match).
     private const float RowSpacing = 200f;
+    private const float RowStep = 152f;
 
     public static bool VersusLobbyPending { get; private set; }
 
@@ -56,20 +60,10 @@ public class VersusMenuButton : MonoBehaviour
         clone.name = "Button_Versus";
 
         Transform back = panel.Find(BackName);
-        RectTransform cloneRect = (RectTransform)clone.transform;
-        if (back != null)
-        {
-            RectTransform backRect = (RectTransform)back;
-            cloneRect.anchoredPosition = backRect.anchoredPosition;
-            backRect.anchoredPosition -= new Vector2(0f, RowSpacing);
-            clone.transform.SetSiblingIndex(back.GetSiblingIndex());
-        }
-        else
-        {
-            cloneRect.anchoredPosition -= new Vector2(0f, RowSpacing * 2f);
-        }
+        LayoutRows(panel, create, clone.transform, back);
 
-        SetLabel(clone);
+        SetLabel(clone, Label);
+        SetLabel(create.gameObject, CoopLabel);
 
         Button versusButton = clone.GetComponent<Button>();
         if (versusButton != null) versusButton.onClick.AddListener(() => SetPending(true));
@@ -78,6 +72,28 @@ public class VersusMenuButton : MonoBehaviour
         AddClear(panel.Find(JoinName));
 
         Debug.Log("[VERSUS] Versus Mode button added to the multiplayer menu.");
+    }
+
+    private static void LayoutRows(Transform panel, Transform create, Transform versus, Transform back)
+    {
+        Transform tutorial = panel.Find("Button_Tutorial");
+        Transform join = panel.Find(JoinName);
+        if (tutorial == null || create == null || join == null) return;
+
+        // The quit button is the fifth row of the same stack.
+        // Order: Tutorial, Co-op, Versus Mode, Join, Exit.
+        Transform[] rows = back != null ? new[] { tutorial, create, versus, join, back } : new[] { tutorial, create, versus, join };
+        float top = ((RectTransform)tutorial).anchoredPosition.y;
+        float shrink = RowStep / RowSpacing;
+
+        for (int i = 0; i < rows.Length; i++)
+        {
+            var rect = (RectTransform)rows[i];
+            rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, top - i * RowStep);
+            rect.localScale *= shrink;
+        }
+
+        versus.SetSiblingIndex(back != null ? back.GetSiblingIndex() : versus.GetSiblingIndex());
     }
 
     private static void AddClear(Transform buttonTransform)
@@ -93,19 +109,19 @@ public class VersusMenuButton : MonoBehaviour
         Debug.Log($"[VERSUS] versus lobby pending -> {pending}");
     }
 
-    private static void SetLabel(GameObject button)
+    private static void SetLabel(GameObject button, string label)
     {
         bool found = false;
 
         foreach (TMP_Text text in button.GetComponentsInChildren<TMP_Text>(true))
         {
-            text.text = Label;
+            text.text = label;
             found = true;
         }
 
         foreach (Text text in button.GetComponentsInChildren<Text>(true))
         {
-            text.text = Label;
+            text.text = label;
             found = true;
         }
 
@@ -136,10 +152,17 @@ public class VersusMenuButton : MonoBehaviour
 
     private void Update()
     {
-        if (!VersusLobbyPending || !NetworkServer.active) return;
+        if (!NetworkServer.active) return;
 
         MpLevelCatalog catalog = MpLevelCatalog.Instance;
         if (catalog == null || MpLevelNet.Instance == null) return;
+
+        // Co-op lobby: the versus level must not stay selected (left over from a versus lobby).
+        if (!VersusLobbyPending)
+        {
+            if (!catalog.IsSelectable(catalog.SelectedIndex)) MpLevelNet.Instance.HostSelect(0);
+            return;
+        }
 
         int index = VersusIndex(catalog);
         if (index < 0 || catalog.SelectedIndex == index) return;

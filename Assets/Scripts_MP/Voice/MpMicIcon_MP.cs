@@ -15,6 +15,71 @@ public static class MpMicIcon_MP
 
     public static Sprite For(bool isMuted) => isMuted ? Muted : Open;
 
+    private static Sprite kick;
+    public static Sprite Kick => kick != null ? kick : kick = BuildKick();
+
+    // Kick marker: a boot kicking (tilted, toe up) with three speed lines in front of the toe. White, tint as needed.
+    private static Sprite BuildKick()
+    {
+        var texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false)
+        {
+            name = "MpKickIcon",
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp,
+        };
+
+        float angle = 28f * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(angle), sin = Mathf.Sin(angle);
+        var pixels = new Color32[Size * Size];
+
+        for (int y = 0; y < Size; y++)
+        {
+            for (int x = 0; x < Size; x++)
+            {
+                float px = x + 0.5f, py = y + 0.5f;
+
+                // Boot space: the pixel rotated around the boot's centre.
+                float dx = px - 26f, dy = py - 34f;
+                float bx = dx * cos + dy * sin;
+                float by = -dx * sin + dy * cos;
+
+                float shaft = RoundedBox(bx, by, -8f, 5f, -6f, 22f, 1.5f);
+                float cuff = RoundedBox(bx, by, -10f, 7f, 16f, 23f, 1.5f);
+                float foot = RoundedBox(bx, by, -8f, 19f, -15f, -3f, 3f);
+                float toe = Mathf.Sqrt((bx - 13f) * (bx - 13f) + (by + 8.5f) * (by + 8.5f)) - 6.5f;
+                float heel = RoundedBox(bx, by, -8f, -1f, -18f, -12f, 1f);
+                float body = Mathf.Min(Mathf.Min(shaft, cuff), Mathf.Min(foot, Mathf.Min(toe, heel)));
+
+                // A thin transparent line above the sole.
+                float gap = Mathf.Max(Mathf.Abs(by + 12.5f) - 0.9f, Mathf.Max(-9f - bx, bx - 20f));
+                float shape = Coverage(body) * Smooth(gap);
+
+                shape = Mathf.Max(shape, Coverage(SpeedLine(px, py, 48f, 58f, 38f)));
+                shape = Mathf.Max(shape, Coverage(SpeedLine(px, py, 50f, 60f, 30f)));
+                shape = Mathf.Max(shape, Coverage(SpeedLine(px, py, 46f, 55f, 22f)));
+
+                pixels[y * Size + x] = new Color32(255, 255, 255, (byte)Mathf.Clamp(Mathf.RoundToInt(shape * 255f), 0, 255));
+            }
+        }
+
+        texture.SetPixels32(pixels);
+        texture.Apply(false, true);
+        return Sprite.Create(texture, new Rect(0, 0, Size, Size), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    private static float SpeedLine(float x, float y, float x0, float x1, float yy) =>
+        Mathf.Max(Mathf.Abs(y - yy) - 1.2f, Mathf.Max(x0 - x, x - x1));
+
+    // Signed distance (negative inside) to a rounded rectangle.
+    private static float RoundedBox(float x, float y, float x0, float x1, float y0, float y1, float radius)
+    {
+        float cx = (x0 + x1) * 0.5f, cy = (y0 + y1) * 0.5f;
+        float hx = (x1 - x0) * 0.5f - radius, hy = (y1 - y0) * 0.5f - radius;
+        float qx = Mathf.Abs(x - cx) - hx, qy = Mathf.Abs(y - cy) - hy;
+        float outside = Mathf.Sqrt(Mathf.Max(qx, 0f) * Mathf.Max(qx, 0f) + Mathf.Max(qy, 0f) * Mathf.Max(qy, 0f));
+        return outside + Mathf.Min(Mathf.Max(qx, qy), 0f) - radius;
+    }
+
     private static Sprite crown;
     public static Sprite Crown => crown != null ? crown : crown = BuildCrown();
 

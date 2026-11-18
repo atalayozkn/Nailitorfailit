@@ -40,7 +40,8 @@ public static class LookAtText
     // "FireExtinguisher(Clone)" becomes "Fire Extinguisher".
     private static string CleanObjectName(string objectName)
     {
-        string trimmed = objectName.Replace("(Clone)", string.Empty).Replace('_', ' ').Trim();
+        // The multiplayer copies of the items carry an "_MP" suffix in their object name: not part of the item's name.
+        string trimmed = objectName.Replace("(Clone)", string.Empty).Replace("_MP", string.Empty).Replace('_', ' ').Trim();
         StringBuilder builder = new StringBuilder(trimmed.Length + 4);
 
         for (int i = 0; i < trimmed.Length; i++)

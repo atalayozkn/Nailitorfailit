@@ -34,6 +34,12 @@ public static class MpEndButtons_MP
         var rect = (RectTransform)mainMenu.transform;
         rect.localScale *= GridScale;
 
+        // anchoredPosition is an offset from the anchors, so a stretched template (anchorMin != anchorMax) puts every
+        // copy of the grid on top of the other one. Pin the template to the centre first: a position then means
+        // "this far from the middle", which is what the grid below assumes.
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
         float width = rect.rect.width * Mathf.Abs(rect.localScale.x);
         float height = rect.rect.height * Mathf.Abs(rect.localScale.y);
         float gap = width * 0.05f;
@@ -46,6 +52,33 @@ public static class MpEndButtons_MP
         Add(mainMenu, "Replay", "Play again", center - right + up, host && manager != null, () => manager.HostReplayLevel());
         Add(mainMenu, "Next", "Next level", center + right + up, host && manager != null && manager.HasNextLevel, () => manager.HostNextLevel());
         Add(mainMenu, "Lobby", "Back to lobby", center - right - up, host && manager != null, () => manager.HostReturnToLobby());
+
+        HideAuthoredMainMenu(endPanel);
+    }
+
+    // The level's own (singleplayer) end panel carries its own big "Main menu" button at the very centre, which would be
+    // drawn over the four buttons above whenever that panel shows. Keep it off.
+    private static void HideAuthoredMainMenu(GameObject endPanel)
+    {
+        foreach (Button button in Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (button == null || button.name != "Button_MainMenu") continue;
+            if (button.transform.IsChildOf(endPanel.transform)) continue;
+            if (!IsUnderEndPanel(button.transform)) continue;
+
+            button.gameObject.SetActive(false);
+
+            Transform holder = button.transform.parent != null ? button.transform.parent : button.transform;
+            if (holder.GetComponent<MpKeepChildOff_MP>() == null) holder.gameObject.AddComponent<MpKeepChildOff_MP>().Watch(button.gameObject);
+        }
+    }
+
+    private static bool IsUnderEndPanel(Transform t)
+    {
+        for (; t != null; t = t.parent)
+            if (t.name.IndexOf("GameEnd", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+
+        return false;
     }
 
     private const float GridScale = 0.55f;
@@ -62,7 +95,11 @@ public static class MpEndButtons_MP
     {
         Button button = Object.Instantiate(template, template.transform.parent);
         button.name = Marker + "_" + id;
-        ((RectTransform)button.transform).anchoredPosition = position;
+
+        var rect = (RectTransform)button.transform;
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = position;
 
         // The copy would otherwise keep the template's persistent "go to main menu" call.
         button.onClick = new Button.ButtonClickedEvent();
@@ -76,5 +113,18 @@ public static class MpEndButtons_MP
             text.text = usable || NetworkServer.active ? label : label + " (host)";
 
         button.interactable = usable;
+    }
+}
+
+// Keeps one child object switched off, whatever the singleplayer code does to its panel.
+public class MpKeepChildOff_MP : MonoBehaviour
+{
+    private GameObject target;
+
+    public void Watch(GameObject child) => target = child;
+
+    private void LateUpdate()
+    {
+        if (target != null && target.activeSelf) target.SetActive(false);
     }
 }

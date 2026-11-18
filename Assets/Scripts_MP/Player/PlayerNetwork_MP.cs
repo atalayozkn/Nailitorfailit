@@ -39,6 +39,16 @@ namespace PlayerScripts
 
         private static readonly int emptyStateHash = Animator.StringToHash("Empty");
 
+        // The owner's own "knocked down" truth (stunned, getting up, slipping). Every machine runs the stun / stand-up
+        // sequence on its own clock from an RPC, so a late or missed step used to leave other players looking at a
+        // hit pose long after the owner was walking again. The watchdog below ends that pose when this says "up".
+        [SyncVar] private bool netDown;
+        private bool lastSentDown;
+        private float downLocalSince = -1f;
+        private float upSince = -1f;
+        private float deadMismatchSince = -1f;
+        public static int BodyHealCount;
+
         // Declared before isDead so it is applied first when both change in the same update.
         [SyncVar] private int netDeathReason = (int)DeathReason.Car;
 
@@ -281,6 +291,9 @@ namespace PlayerScripts
 
             if (isOwned) UpdateEmoteThrow();
 
+            PublishDownState();
+            WatchRemoteBody();
+
             if (!isOwned || netAnimator == null || netAnimator.runtimeAnimatorController == null) return;
 
             int hash = netAnimator.IsInTransition(0)
@@ -299,6 +312,73 @@ namespace PlayerScripts
         private void CmdSetAnimState(int hash)
         {
             netAnimStateHash = hash;
+        }
+
+        private static bool IsDownState(PlayerStates state) =>
+            state == PlayerStates.Stunned || state == PlayerStates.Stand || state == PlayerStates.Slipping;
+
+        private void PublishDownState()
+        {
+            if (!isOwned || stateMachine == null) return;
+
+            bool down = IsDownState(stateMachine.currentPlayerState);
+            if (down == lastSentDown) return;
+
+            lastSentDown = down;
+            if (isServer) netDown = down;
+            else CmdSetDown(down);
+        }
+
+        [Command]
+        private void CmdSetDown(bool down) => netDown = down;
+
+        // Remote copies only: the owner's state is the truth. If this machine still shows the hit / get-up pose while
+        // the owner has been "up" for a moment, or still shows death after a respawn (or the other way round), end it.
+        private void WatchRemoteBody()
+        {
+            if (isOwned || stateMachine == null) return;
+
+            PlayerStates state = stateMachine.currentPlayerState;
+
+            // Down pose with the owner up: the owner needs ~RTT to report "down" after the RPC, so wait for both a
+            // local pose that is not brand new and an "up" that has lasted.
+            if (IsDownState(state) && !netDown && !isDead)
+            {
+                if (downLocalSince < 0f) downLocalSince = Time.time;
+                if (upSince < 0f) upSince = Time.time;
+
+                if (Time.time - downLocalSince > 1.6f && Time.time - upSince > 0.8f)
+                {
+                    downLocalSince = upSince = -1f;
+                    BodyHealCount++;
+                    InteractionDebug.Log($"[MP-HEAL] '{name}' still showed {state} while its owner is up: back to Idle.");
+                    stateMachine.ChangeToIdleState();
+                    stateMachine.ForceUpdateIdle();
+                }
+            }
+            else
+            {
+                if (!IsDownState(state)) downLocalSince = -1f;
+                upSince = -1f;
+            }
+
+            // Death shown here must match the synced flag.
+            bool shownDead = state == PlayerStates.Dead;
+            if (shownDead != isDead)
+            {
+                if (deadMismatchSince < 0f) deadMismatchSince = Time.time;
+                if (Time.time - deadMismatchSince > 1.0f)
+                {
+                    deadMismatchSince = -1f;
+                    BodyHealCount++;
+                    InteractionDebug.Log($"[MP-HEAL] '{name}' death state ({shownDead}) differed from isDead ({isDead}): re-applied.");
+                    OnDeadChanged(!isDead, isDead);
+                }
+            }
+            else
+            {
+                deadMismatchSince = -1f;
+            }
         }
 
         private void OnNetAnimStateChanged(int oldHash, int newHash)
@@ -326,6 +406,8 @@ namespace PlayerScripts
 
         private void LateUpdate()
         {
+            ApplyRemoteBones();
+
             if (netAnimator == null || !netAnimator.enabled || !netAnimator.isActiveAndEnabled) return;
             if (netAnimator.runtimeAnimatorController == null || isDead) return;
 
@@ -423,11 +505,25 @@ namespace PlayerScripts
 
             PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
             ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
-            if (held == null || !held.TryGetComponent(out CarriableObject_MP _)) return;
+            if (held == null || !held.TryGetComponent(out CarriableObject_MP _))
+            {
+                if (emoteThrowAt < 0f)
+                {
+                    emoteThrowAt = float.MaxValue;
+                    InteractionDebug.Log($"[MP-EMOTE] throw emote started but nothing networked in hand (held={(held != null ? held.name : "none")}).");
+                }
+                else if (emoteThrowAt < float.MaxValue)
+                {
+                    emoteThrowAt = float.MaxValue;
+                    InteractionDebug.Log("[MP-EMOTE] the item left the hand before the throw moment (something cleared the handler).");
+                }
+                return;
+            }
 
             if (emoteThrowAt < 0f)
             {
                 emoteThrowAt = Time.time + EmoteThrowActionTime;
+                InteractionDebug.Log($"[MP-EMOTE] throw emote: '{held.name}' will be thrown in {EmoteThrowActionTime:0.00} s.");
                 return;
             }
 
@@ -435,12 +531,14 @@ namespace PlayerScripts
 
             emoteThrowAt = float.MaxValue; // once per emote
             handler.ClearCarriedObject();  // the SP state now finds nothing to throw
+            InteractionDebug.Log($"[MP-EMOTE] throwing '{held.name}' (server={isServer}).");
             CmdThrowCarried(transform.forward);
         }
 
         [Command]
         private void CmdThrowCarried(Vector3 direction)
         {
+            InteractionDebug.Log($"[MP-EMOTE] CmdThrowCarried on the server for '{name}'.");
             // The item in hand flies off; stowed ones (same carrier) stay in the inventory.
             PlayerInteractionHandler handler = interaction != null ? interaction : GetComponent<PlayerInteractionHandler>();
             ItemScript.CarriableObject_SP held = handler != null ? handler.GetCurrentCarriable() : null;
@@ -500,6 +598,7 @@ namespace PlayerScripts
             if (hips == null)
             {
                 hasRagdollPose = false;
+                CaptureRestPose();
                 return;
             }
 
@@ -508,8 +607,10 @@ namespace PlayerScripts
                 if (Time.unscaledTime < nextRagdollSendAt) return;
                 nextRagdollSendAt = Time.unscaledTime + 0.05f;
 
-                if (isServer) RpcRagdollPose(hips.position, hips.rotation);
-                else CmdRagdollPose(hips.position, hips.rotation);
+                Quaternion[] boneRotations = ReadBoneRotations();
+
+                if (isServer) { RpcRagdollPose(hips.position, hips.rotation); RpcRagdollBones(boneRotations); }
+                else { CmdRagdollPose(hips.position, hips.rotation); CmdRagdollBones(boneRotations); }
                 return;
             }
 
@@ -541,6 +642,149 @@ namespace PlayerScripts
 
             hips.MovePosition(Vector3.Lerp(hips.position, ragdollPos, 0.5f));
             hips.MoveRotation(Quaternion.Slerp(hips.rotation, ragdollRot, 0.5f));
+
+            CheckRagdollStretch(hips);
+        }
+
+        // ---- remote ragdoll reset: limbs stretched / spine twisted by a fling are put back on the rest pose ----
+        private Vector3[] restLocalPositions; // each bone's local position (offset from its parent), from a calm pose
+        private Vector3[] restOffsets;       // each bone's position in the hips' space, from a calm pose
+        private Quaternion[] restRotations;  // each bone's rotation in the hips' space
+        private float nextStretchCheckAt;
+
+        // Remembers the rest pose while the player is not ragdolling (the animator keeps the bones in a normal pose).
+        private void CaptureRestPose()
+        {
+            if (restOffsets != null || stateMachine == null || stateMachine.ragdollRigidBodies == null) return;
+            if (stateMachine.animator == null || !stateMachine.animator.enabled) return;
+
+            Rigidbody hips = RagdollHips;
+            if (hips == null) return;
+
+            var bones = stateMachine.ragdollRigidBodies;
+            var offsets = new Vector3[bones.Length];
+            var rotations = new Quaternion[bones.Length];
+
+            for (int i = 0; i < bones.Length; i++)
+            {
+                if (bones[i] == null) continue;
+                offsets[i] = hips.transform.InverseTransformPoint(bones[i].position);
+                rotations[i] = Quaternion.Inverse(hips.rotation) * bones[i].rotation;
+            }
+
+            var locals = new Vector3[bones.Length];
+            for (int i = 0; i < bones.Length; i++)
+                locals[i] = bones[i] != null ? bones[i].transform.localPosition : Vector3.zero;
+
+            restLocalPositions = locals;
+            restOffsets = offsets;
+            restRotations = rotations;
+        }
+
+        private void CheckRagdollStretch(Rigidbody hips)
+        {
+            if (restOffsets == null || Time.unscaledTime < nextStretchCheckAt) return;
+            nextStretchCheckAt = Time.unscaledTime + 0.2f;
+
+            var bones = stateMachine.ragdollRigidBodies;
+            if (bones == null || bones.Length != restOffsets.Length) return;
+
+            bool bad = false;
+            for (int i = 0; i < bones.Length && !bad; i++)
+            {
+                if (bones[i] == null || bones[i] == hips) continue;
+
+                float rest = restOffsets[i].magnitude * Mathf.Abs(hips.transform.lossyScale.x);
+                float now = (bones[i].position - hips.position).magnitude;
+                if (now > rest * 1.5f + 0.2f) bad = true;
+            }
+
+            if (!bad) return;
+
+            ResetRagdollPose(hips);
+            BodyHealCount++;
+            InteractionDebug.Log($"[MP-HEAL] '{name}' ragdoll limbs were stretched: bones put back on the rest pose.");
+        }
+
+        private void ResetRagdollPose(Rigidbody hips)
+        {
+            var bones = stateMachine.ragdollRigidBodies;
+
+            for (int i = 0; i < bones.Length; i++)
+            {
+                if (bones[i] == null || bones[i] == hips) continue;
+
+                bones[i].position = hips.transform.TransformPoint(restOffsets[i]);
+                bones[i].rotation = hips.rotation * restRotations[i];
+
+                if (!bones[i].isKinematic)
+                {
+                    bones[i].linearVelocity = Vector3.zero;
+                    bones[i].angularVelocity = Vector3.zero;
+                }
+            }
+        }
+
+        // ---- the owner's ragdoll SKELETON, not only its hips ----
+        // The other machines used to run their own physics on the limbs and only pinned the hips to the owner's: a fling
+        // left their limbs stretched or twisted (long legs, a bent spine) while the owner's own ragdoll looked fine.
+        // Now the owner's bone rotations are sent too and the other machines pose their (kinematic) bones with them,
+        // so the limb lengths can never change and the shape is the owner's.
+        private Quaternion[] ragdollBoneTargets;
+
+        private Quaternion[] ReadBoneRotations()
+        {
+            var bones = stateMachine.ragdollRigidBodies;
+            if (bones == null) return new Quaternion[0];
+
+            var rotations = new Quaternion[bones.Length];
+            for (int i = 0; i < bones.Length; i++)
+                rotations[i] = bones[i] != null ? bones[i].transform.localRotation : Quaternion.identity;
+
+            return rotations;
+        }
+
+        [Command(channel = Channels.Unreliable)]
+        private void CmdRagdollBones(Quaternion[] rotations) => RpcRagdollBones(rotations);
+
+        [ClientRpc(channel = Channels.Unreliable, includeOwner = false)]
+        private void RpcRagdollBones(Quaternion[] rotations)
+        {
+            if (isOwned) return;
+            ragdollBoneTargets = rotations;
+        }
+
+        // Every frame, after the animator: while another player's ragdoll is on, its bones are only a pose. Rotations
+        // follow the owner's (smoothly, the sync is ~20 Hz); positions are the rest offsets. The positions matter: the
+        // bones start as physics bodies for a few frames (before the first pose arrives) and the car, the thrown item
+        // or gravity push them off their parent; setting only rotations later left them stretched (long legs).
+        private void ApplyRemoteBones()
+        {
+            if (isOwned || stateMachine == null) return;
+
+            if (stateMachine.currentPlayerState != PlayerStates.Stunned)
+            {
+                ragdollBoneTargets = null; // stun over: the animator owns the bones again
+                return;
+            }
+
+            var bones = stateMachine.ragdollRigidBodies;
+            if (bones == null) return;
+
+            bool haveRest = restLocalPositions != null && restLocalPositions.Length == bones.Length;
+            bool haveTargets = ragdollBoneTargets != null && ragdollBoneTargets.Length == bones.Length;
+            Rigidbody hips = RagdollHips;
+            float blend = 1f - Mathf.Exp(-18f * Time.deltaTime);
+
+            for (int i = 0; i < bones.Length; i++)
+            {
+                Rigidbody bone = bones[i];
+                if (bone == null || bone == hips) continue;
+
+                if (!bone.isKinematic) bone.isKinematic = true; // pure pose: no physics can stretch a limb
+                if (haveRest) bone.transform.localPosition = restLocalPositions[i];
+                if (haveTargets) bone.transform.localRotation = Quaternion.Slerp(bone.transform.localRotation, ragdollBoneTargets[i], blend);
+            }
         }
 
         [Command(channel = Channels.Unreliable)]
@@ -628,9 +872,22 @@ namespace PlayerScripts
 
             if (stateMachine == null || stateMachine.currentPlayerState != PlayerStates.Stunned) yield break;
 
+            // One impulse on the hips, the joints carry the rest. Giving every ragdoll body the same velocity tore the
+            // active ragdoll apart on a car hit: the limbs left the torso, the PD pose never caught up again and the
+            // player stayed broken after the stun.
+            Rigidbody hips = RagdollHips;
+            if (hips != null && !hips.isKinematic)
+            {
+                hips.linearVelocity = launchVelocity;
+                yield break;
+            }
+
             foreach (Rigidbody rb in stateMachine.ragdollRigidBodies)
             {
-                if (rb != null && !rb.isKinematic) rb.linearVelocity = launchVelocity;
+                if (rb == null || rb.isKinematic) continue;
+
+                rb.linearVelocity = launchVelocity;
+                break;
             }
         }
 

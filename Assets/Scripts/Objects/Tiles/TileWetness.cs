@@ -24,6 +24,9 @@ public class TileWetness : MonoBehaviour
     [SerializeField] private float swellAmount;
     [SerializeField] private float electrifiedDuration = 4f;
 
+    // Multiplayer: every wet tile is slippery, like oil (singleplayer: only the tiles marked slipperyWhenWet, i.e. glass).
+    private bool Slippery => slipperyWhenWet || NetworkModeHelper.IsNetworked;
+
     public Renderer TileRenderer => tileRenderer;
     public float Wetness => wetness;
 
@@ -65,7 +68,7 @@ public class TileWetness : MonoBehaviour
     }
     private void OnParticleCollision(GameObject other)
     {
-        if (!canCollect || NetworkModeHelper.IsNetworked) return;
+        if (!canCollect && !(NetworkModeHelper.IsNetworked && IsTileComplete())) return;
         if (!other.TryGetComponent<ParticleSystem>(out var particles)) return;
 
         int hitCount = particles.GetCollisionEvents(gameObject, collisionEvents);
@@ -73,6 +76,16 @@ public class TileWetness : MonoBehaviour
         RefreshState();
         RefreshVisual();
     }
+    // Multiplayer: whether the tile is finished is read from the tile itself. The "can collect" flag is set by one-off
+    // calls and is cleared whenever the tile object is switched on again (OnEnable), which left finished tiles dry.
+    private bool IsTileComplete()
+    {
+        if (TryGetComponent(out WoodTile wood)) return wood.GetCurrentPhase() == ConstructionPhase.Complete;
+        if (TryGetComponent(out GlassTile glass)) return glass.GetCurrentPhase() == ConstructionPhase.Complete;
+        if (TryGetComponent(out BrickTile brick)) return brick.GetCurrentPhase() == ConstructionPhase.Complete;
+        return false;
+    }
+
     // Called by the tile once it is nailed down; unfinished tiles don't soak up water.
     public void SetCanCollect(bool condition)
     {
@@ -102,13 +115,13 @@ public class TileWetness : MonoBehaviour
         if (wasWet == isWet) return;
 
         if (fragileWhenWet) gameObject.tag = isWet ? FragileTag : dryTag;
-        if (slipperyWhenWet) RefreshSurface();
+        if (Slippery) RefreshSurface();
         if (isWet && swellAmount > 0f) VfxManager.Play(VfxId.WoodSwell, transform.position);
     }
     private void RefreshSurface()
     {
         if (surfaceHelper == null) return;
-        surfaceHelper.SetSurfaceState(isWet && slipperyWhenWet, isElectrified);
+        surfaceHelper.SetSurfaceState(isWet && Slippery, isElectrified);
     }
     private void RefreshVisual()
     {

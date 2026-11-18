@@ -92,7 +92,7 @@ public class WoodTile : MonoBehaviour, IInteractable, ILookAtInfo, IFlammable, I
     #region WATER
     public void OnWaterContact()
     {
-        if (!NetworkModeHelper.IsNetworked) return; // Singleplayer water comes from particle hits, see TileWetness.
+        return; // Water comes from the spray particles hitting the tile (TileWetness), in singleplayer and multiplayer alike.
         if (!isFloorTile) return;
         if (currentPhase == ConstructionPhase.Construction) return;
         puddleHelper.StartPuddleProcess();

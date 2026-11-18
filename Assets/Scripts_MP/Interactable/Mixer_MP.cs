@@ -8,6 +8,12 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
     private MixerHandle handle;
     private Generator_Prototype generator;
 
+    // What the three slots show (CarriableType as int, -1 = empty). The letters are a local UI, so every machine
+    // updates its own copy when these change (also for a player who joins later).
+    [SyncVar(hook = nameof(OnSlotChanged))] private int slot1 = -1;
+    [SyncVar(hook = nameof(OnSlotChanged))] private int slot2 = -1;
+    [SyncVar(hook = nameof(OnSlotChanged))] private int slot3 = -1;
+
     private void Awake()
     {
         mixer = GetComponentInChildren<Mixer>();
@@ -67,5 +73,37 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
         }
 
         mixer.ServerInteract(requester);
+    }
+
+    [Server]
+    public void ServerSetSlot(int index, CarriableType type)
+    {
+        if (index == 1) slot1 = (int)type;
+        else if (index == 2) slot2 = (int)type;
+        else slot3 = (int)type;
+    }
+
+    [Server]
+    public void ServerClearSlots()
+    {
+        slot1 = slot2 = slot3 = -1;
+    }
+
+    public override void OnStartClient() => ApplySlots();
+
+    private void OnSlotChanged(int oldValue, int newValue) => ApplySlots();
+
+    private void ApplySlots()
+    {
+        if (isServer) return; // the server (host) already updated its UI directly
+
+        MixerUIHelper ui = GetComponentInChildren<MixerUIHelper>(true);
+        if (ui == null) return;
+
+        ui.ClearImages();
+        MpMixerIcons_MP.ClearAll(ui);
+        if (slot1 >= 0) { ui.DisplayItem(1, (CarriableType)slot1); MpMixerIcons_MP.Show(ui, 1, (CarriableType)slot1); }
+        if (slot2 >= 0) { ui.DisplayItem(2, (CarriableType)slot2); MpMixerIcons_MP.Show(ui, 2, (CarriableType)slot2); }
+        if (slot3 >= 0) { ui.DisplayItem(3, (CarriableType)slot3); MpMixerIcons_MP.Show(ui, 3, (CarriableType)slot3); }
     }
 }

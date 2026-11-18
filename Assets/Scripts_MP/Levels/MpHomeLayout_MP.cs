@@ -71,11 +71,40 @@ public static class MpHomeLayout_MP
         // The one mailbox stands where the level designer put it.
         Vector3 mailShift = ownsMail ? Vector3.zero : mailRow.direction * (slot * mailRow.step);
 
+        if (ownsMail) AlignMailMan(package, authored);
+
         Place(package, authored, "DogHouse", dogShift);
         Place(package, authored, "FoodBowl", dogShift);
         Place(package, authored, "MailBox", mailShift);
 
         InteractionDebug.Log($"[MP-HOME] '{package.name}' slot {slot}: dog house shifted {dogShift:0.0}, mailbox shifted {mailShift:0.0}.");
+    }
+
+    private static readonly System.Reflection.BindingFlags NonPublicInstance =
+        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+
+    // The mail man walks the points of his own MailManPackage, which sits on the spawn circle with the rest of the player
+    // package, while the single mailbox stands where the level designer put it. He delivered next to his package, far
+    // from the box. Put his package where the authored one is, and give him the right mailbox and start point (both were
+    // taken in Awake, before any of this: the first MailBox found, and the spawn position of the old place).
+    private static void AlignMailMan(Transform package, Transform authored)
+    {
+        Transform own = FindDeep(package, "MailManPackage");
+        Transform reference = FindDeep(authored, "MailManPackage");
+        if (own == null || reference == null) return;
+
+        own.SetPositionAndRotation(reference.position, reference.rotation);
+
+        MailManController controller = own.GetComponentInChildren<MailManController>(true);
+        if (controller == null) return;
+
+        typeof(MailManController).GetField("spawnPosition", NonPublicInstance)?.SetValue(controller, controller.transform.position);
+
+        Transform box = FindDeep(package, "MailBox");
+        MailBox mailBox = box != null ? box.GetComponent<MailBox>() : null;
+        if (mailBox != null) typeof(MailManController).GetField("mailBox", NonPublicInstance)?.SetValue(controller, mailBox);
+
+        InteractionDebug.Log($"[MP-HOME] mail man package aligned to the authored one at {reference.position:0.0}.");
     }
 
     private static void Place(Transform package, Transform authored, string objectName, Vector3 shift)

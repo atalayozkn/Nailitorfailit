@@ -172,22 +172,7 @@ public static class GameSettings
     public static void ApplyDisplay()
     {
         var mode = WindowMode == 0 ? FullScreenMode.ExclusiveFullScreen : WindowMode == 1 ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
-
-        // Exclusive fullscreen on Direct3D 12 is the shakiest mode Unity has (swap chain re-creation on every focus
-        // change, Alt-Tab and the Steam overlay crash on some drivers): use borderless there, it looks the same.
-        if (mode == FullScreenMode.ExclusiveFullScreen && SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Direct3D12)
-            mode = FullScreenMode.FullScreenWindow;
-
         var size = Resolutions[ResolutionIndex];
-
-        // A borderless window is always the desktop size: asking for another size made the game resize the swap chain
-        // right after the loading screen. Only the real window sizes (windowed mode) use the resolution setting.
-        if (mode == FullScreenMode.FullScreenWindow)
-        {
-            Resolution desktop = Screen.currentResolution;
-            size = new Vector2Int(desktop.width, desktop.height);
-        }
-
         // The editor's Game view ignores these; they matter in builds.
         if (!Application.isEditor && (Screen.width != size.x || Screen.height != size.y || Screen.fullScreenMode != mode))
         {

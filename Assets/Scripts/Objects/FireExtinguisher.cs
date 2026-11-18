@@ -26,29 +26,59 @@ public class FireExtinguisher : MonoBehaviour, IUsable
     private int currentFuel;
     private bool hasUsed;
     private bool isSpraying;
+    private bool fuelInitialized;
     private void OnEnable()
     {
-        currentFuel = maxFuel;
-        hasUsed = false;
+        // In a network session the item is switched on and off whenever it is picked up, dropped or re-attached:
+        // that must not refill it (it could be used forever).
+        if (!fuelInitialized || !NetworkModeHelper.IsNetworked)
+        {
+            currentFuel = maxFuel;
+            hasUsed = false;
+            fuelInitialized = true;
+        }
         UpdateUI();
+    }
+    // The server's shared count (multiplayer): never gives fuel back.
+    public void ApplyNetworkedFuel(int fuel)
+    {
+        fuelInitialized = true;
+        if (fuel < currentFuel) currentFuel = Mathf.Max(0, fuel);
+        if (fuel < 0) hasUsed = true;
     }
     public void OnUse()
     {
         if (hasUsed) return;
 
-        currentFuel -= perUseConsumption;
+        // Multiplayer: the extinguisher lasts 5 uses (singleplayer keeps its own count).
+        int step = NetworkModeHelper.IsNetworked ? maxFuel / NetworkedUses : perUseConsumption;
+        currentFuel -= step;
         TryStopFire();
         EndSpray();
-        if (currentFuel < 0)
+        // Networked: used up as soon as the last use is spent. Singleplayer: one use more (it goes below zero first).
+        if (currentFuel < 0 || (NetworkModeHelper.IsNetworked && currentFuel <= 0))
         {
             currentFuel = 0;
             hasUsed = true;
-            carriable.OnConsume();
-            Invoke(nameof(Die), 0.1f);
+            if (!ConsumeNetworked())
+            {
+                carriable.OnConsume();
+                Invoke(nameof(Die), 0.1f);
+            }
         }
+        else if (NetworkModeHelper.IsNetworked && TryGetComponent(out CarriableObject_MP shared)) shared.ReportFuel(currentFuel);
 
         UpdateUI();
         onUseEvent?.Invoke();
+    }
+    // Multiplayer: the server removes the item for everyone (a local Destroy only emptied the user's own hand).
+    private bool ConsumeNetworked()
+    {
+        if (!NetworkModeHelper.IsNetworked || !TryGetComponent(out CarriableObject_MP shared)) return false;
+
+        PlayerInteractionHandler holder = GetComponentInParent<PlayerInteractionHandler>();
+        shared.RequestConsume(holder != null ? holder.GetComponentInParent<Mirror.NetworkIdentity>() : null);
+        return true;
     }
     private void Die()
     {
@@ -58,12 +88,44 @@ public class FireExtinguisher : MonoBehaviour, IUsable
     public void BeginSpray()
     {
         if (spray == null || hasUsed) return;
+
+        // Multiplayer: the sound starts first, the powder jet follows a moment later.
+        if (NetworkModeHelper.IsNetworked)
+        {
+            if (TryGetComponent(out CarriableObject_MP shared)) shared.ReportSpray(); // the other players show the jet too
+
+            PlayerStateMachine holderStateMachine = GetComponentInParent<PlayerStateMachine>();
+            if (holderStateMachine != null) holderStateMachine.onUseFE?.Invoke();
+            CancelInvoke(nameof(StartSpray));
+            Invoke(nameof(StartSpray), SoundLead);
+            return;
+        }
+
+        StartSpray();
+    }
+    // Another player's use, seen on this machine: the jet plays for the length of the use animation.
+    public void PlayRemoteSpray()
+    {
+        if (spray == null) return;
+
+        CancelInvoke(nameof(StartSpray));
+        CancelInvoke(nameof(EndSpray));
+        Invoke(nameof(StartSpray), SoundLead);
+        Invoke(nameof(EndSpray), RemoteSprayLength);
+    }
+    private const float RemoteSprayLength = 1.0f;
+    private const float SoundLead = 0.15f;
+    private const int NetworkedUses = 5;
+    private void StartSpray()
+    {
+        if (spray == null || hasUsed) return;
         isSpraying = true;
         AimSpray();
         spray.Play(true);
     }
     public void EndSpray()
     {
+        CancelInvoke(nameof(StartSpray));
         isSpraying = false;
         if (spray != null) spray.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }

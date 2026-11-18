@@ -31,7 +31,8 @@ public class MpHazardScheduler_MP : MonoBehaviour
                 if (!controller.enabled) continue; // already taken over (or off in the scene)
 
                 UnityEvent[] events = EventsField.GetValue(controller) as UnityEvent[];
-                if (!TargetsHazards(events)) continue;
+                bool mail = TargetsOnlyMailMan(events);
+                if (!mail && !TargetsHazards(events)) continue;
 
                 controller.CancelInvoke();
                 controller.StopAllCoroutines();
@@ -41,7 +42,7 @@ public class MpHazardScheduler_MP : MonoBehaviour
 
                 var host = new GameObject("MpHazardScheduler_MP (" + controller.name + ")");
                 host.AddComponent<MpHazardScheduler_MP>().StartSchedule(
-                    events,
+                    mail ? null : events,
                     (float)MinField.GetValue(controller),
                     (float)MaxField.GetValue(controller),
                     (float)DelayField.GetValue(controller));
@@ -67,6 +68,7 @@ public class MpHazardScheduler_MP : MonoBehaviour
         return false;
     }
 
+    // events == null: a mail man schedule (the server switches the mail man on, on every machine).
     private void StartSchedule(UnityEvent[] events, float min, float max, float delay) =>
         StartCoroutine(Schedule(events, min, max, delay));
 
@@ -74,13 +76,42 @@ public class MpHazardScheduler_MP : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (events == null || events.Length == 0) yield break;
+        if (events == null)
+        {
+            while (true)
+            {
+                MpVfxNet_MP.ServerActivateMailMan();
+                yield return new WaitForSeconds(Mathf.Max(5f, Random.Range(min, max)));
+            }
+        }
+
+        if (events.Length == 0) yield break;
 
         while (true)
         {
             TriggerEvent(events[Random.Range(0, events.Length)]);
             yield return new WaitForSeconds(Random.Range(min, max));
         }
+    }
+
+    // True when every event of the controller only switches a mail man on (the scene's "aid" controller).
+    private static bool TargetsOnlyMailMan(UnityEvent[] events)
+    {
+        if (events == null || events.Length == 0) return false;
+
+        foreach (UnityEvent hazardEvent in events)
+        {
+            if (hazardEvent == null || hazardEvent.GetPersistentEventCount() == 0) return false;
+
+            for (int i = 0; i < hazardEvent.GetPersistentEventCount(); i++)
+            {
+                Object target = hazardEvent.GetPersistentTarget(i);
+                GameObject go = target as GameObject != null ? (GameObject)target : (target as Component)?.gameObject;
+                if (go == null || go.GetComponent<MailManController>() == null) return false;
+            }
+        }
+
+        return true;
     }
 
     private static void TriggerEvent(UnityEvent hazardEvent)

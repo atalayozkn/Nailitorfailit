@@ -41,6 +41,11 @@ public class BlueprintVisual : MonoBehaviour
     // Versus mode: slots of the other player's building never light up for this player.
     public static System.Func<Component, bool> IsForeign;
 
+    // Multiplayer decides how visible each slot is (1 = full, small = faint hint). Null = always full, as in singleplayer
+    // without a handler.
+    public static System.Func<BlueprintVisual, float> AlphaOverride;
+    public ItemScript.Constructor Owner => constructor;
+
     private PlayerInteractionHandler interactionHandler;
     private float nextHandlerSearch;
     private GameObject currentTile;
@@ -109,6 +114,11 @@ public class BlueprintVisual : MonoBehaviour
             && interactionHandler.GetCurrentCarriableType() == constructor.GetAcceptedType();
 
         float targetAlpha = matches ? 1f : hovered ? hoverOnlyAlpha : 0f;
+
+        // Versus (network + handler): your own empty slots stay as a faint hint like in co-op, they were invisible.
+        if (NetworkModeHelper.IsNetworked && AlphaOverride != null && !foreign)
+            targetAlpha = Mathf.Max(targetAlpha, AlphaOverride(this));
+
         float target = 0f;
         if (matches) target = hovered ? 1f : (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f * pulseMaxHighlight;
 
@@ -122,7 +132,10 @@ public class BlueprintVisual : MonoBehaviour
         float target = isHovered ? 1f : 0f;
         highlight = Mathf.MoveTowards(highlight, target, highlightSpeed * Time.deltaTime);
         SetGhostVisible(true);
-        ApplyTo(ghostMaterials, 0f, 1f, highlight);
+
+        float alpha = AlphaOverride != null ? AlphaOverride(this) : 1f;
+        ghostAlpha = Mathf.MoveTowards(ghostAlpha, alpha, fadeSpeed * Time.deltaTime);
+        ApplyTo(ghostMaterials, 0f, AlphaOverride != null ? ghostAlpha : 1f, highlight);
     }
     // Hidden slots are switched off, not just drawn at zero alpha, so they cost nothing.
     private void SetGhostVisible(bool visible)

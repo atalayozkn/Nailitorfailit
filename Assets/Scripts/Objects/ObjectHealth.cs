@@ -29,7 +29,19 @@ public class ObjectHealth : MonoBehaviour
     {
         
     }
+    // Multiplayer sets this (Constructor_MP): damage is decided on the server and every machine applies the same hits in
+    // the same order. Returns true when it took over. Left null in singleplayer.
+    public static System.Func<ObjectHealth, bool> NetworkDamageRouter;
+
     public void DealDamage()
+    {
+        if (NetworkModeHelper.IsNetworked && NetworkDamageRouter != null && NetworkDamageRouter(this)) return;
+
+        DealDamageLocal();
+    }
+
+    // The damage itself (what DealDamage always did).
+    public void DealDamageLocal()
     {
         if (isDead) return; // Still burning during the discard delay; dying twice would corrupt the room counter.
 

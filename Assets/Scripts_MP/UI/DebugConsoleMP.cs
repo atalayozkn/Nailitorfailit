@@ -12,9 +12,12 @@ public class DebugConsoleMP : MonoBehaviour
 {
     public static DebugConsoleMP Instance { get; private set; }
 
+    // One key opens every debug window at once: this console (right 2/3) and the network + analysis panels (left 1/3).
+    // F1 was a bad home for it: the F-row belongs to the editor and to overlays, and Shift+F1 is Unity's own shortcut.
+    // Backtick is the classic dev-console key and the game does not use it anywhere; Insert is the backup.
     public static KeyCode ToggleKey = KeyCode.BackQuote;
 
-    public static readonly KeyCode[] ExtraToggleKeys = { KeyCode.F1 };
+    public static readonly KeyCode[] ExtraToggleKeys = { KeyCode.Insert };
 
     const int MaxEntries = 400;
     const int MaxLineLength = 3000;
@@ -64,6 +67,8 @@ public class DebugConsoleMP : MonoBehaviour
 
     bool visible;
 
+    public bool IsVisible => visible;
+
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void AutoSpawn()
@@ -84,7 +89,7 @@ public class DebugConsoleMP : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         BuildUi();
         Application.logMessageReceivedThreaded += OnLogMessageReceived;
-        Debug.Log($"[Console] MP debug console ready [{InteractionDebug.Version}]. Press ` (backquote, next to 1) or F1 to toggle.");
+        Debug.Log($"[Console] MP debug console ready [{InteractionDebug.Version}]. Press F1 to toggle all debug windows.");
     }
 
     void OnDestroy()
@@ -106,12 +111,16 @@ public class DebugConsoleMP : MonoBehaviour
 
     static bool ReadToggleKey()
     {
+        // Release builds (not development builds) have no key that opens the debug windows.
+#if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
+        return false;
+#else
 #if ENABLE_INPUT_SYSTEM
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
         if (keyboard != null)
         {
             if (keyboard.backquoteKey.wasPressedThisFrame) return true;
-            if (keyboard.f1Key.wasPressedThisFrame) return true;
+            if (keyboard.insertKey.wasPressedThisFrame) return true;
         }
 #endif
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -121,6 +130,7 @@ public class DebugConsoleMP : MonoBehaviour
             if (UnityEngine.Input.GetKeyDown(extra)) return true;
 #endif
         return false;
+#endif
     }
 
     public void Toggle()
@@ -208,12 +218,17 @@ public class DebugConsoleMP : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
         consoleRoot.AddComponent<GraphicRaycaster>();
 
-        RectTransform root = (RectTransform)consoleRoot.transform;
-        root.anchorMin = new Vector2(0.5f, 0f);
-        root.anchorMax = new Vector2(0.5f, 0f);
-        root.pivot = new Vector2(0.5f, 0f);
-        root.anchoredPosition = new Vector2(0f, 8f);
-        root.sizeDelta = new Vector2(1400f, 480f);
+        // A root canvas ignores its own anchors, so the window is a child panel.
+        var windowObject = new GameObject("Window", typeof(RectTransform));
+        windowObject.transform.SetParent(consoleRoot.transform, false);
+        RectTransform root = (RectTransform)windowObject.transform;
+
+        // Windowed, not fullscreen: the right two thirds (the stats panels take the left third).
+        root.anchorMin = new Vector2(0.345f, 0.03f);
+        root.anchorMax = new Vector2(0.99f, 0.97f);
+        root.pivot = new Vector2(0.5f, 0.5f);
+        root.offsetMin = Vector2.zero;
+        root.offsetMax = Vector2.zero;
 
         Image background = CreateImage(root, "Panel_BG", new Color(0f, 0f, 0f, 0.88f));
         Stretch(background.rectTransform);
@@ -586,7 +601,7 @@ public class DebugConsoleMP : MonoBehaviour
         string pingTable = NetworkPingMonitor_MP.LatestTable;
         string pingSuffix = string.IsNullOrEmpty(pingTable) ? "" : $"\n{pingTable}";
 
-        return $"<b>MP DEBUG (` or F1)  [{InteractionDebug.Version}]</b>   {state}   transport={transport}   lobby={lobby}" +
+        return $"<b>MP DEBUG (F1)  [{InteractionDebug.Version}]</b>   {state}   transport={transport}   lobby={lobby}" +
                $"{rtt}{conns}   scene={SceneManager.GetActiveScene().name}{pingSuffix}";
     }
 

@@ -11215,7 +11215,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 7
+          m_IntArgument: 6
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -11230,7 +11230,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 8
+          m_IntArgument: 7
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -14929,6 +14929,10 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2739809372190839897, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
+      propertyPath: sendButton
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2865777617138249688, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -14940,6 +14944,10 @@ PrefabInstance:
     - target: {fileID: 2865777617138249688, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4146297444059980777, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
+      propertyPath: m_ChildControlWidth
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5889081159946862125, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -15082,7 +15090,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 5607129072911962601, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6048234571486755301, guid: a27dd0c91df27fd048fb72ecf9826a2d, type: 3}
@@ -18165,7 +18174,7 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5245275775520006699}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: ae97b140fe03011458ddf0f290755bfa, type: 3}
   m_Controller: {fileID: 9100000, guid: a7f0ba9d8628f9e40bd4794d7ce4e6ff, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0

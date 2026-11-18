@@ -31,6 +31,60 @@ public class CarriableObject_MP : NetworkBehaviour
 
     public NetworkIdentity Carrier => carrier;
 
+    // Uses left in a limited tool (the fire extinguisher), shared through the server so the count follows the item
+    // from hand to hand and is not refilled on the machines that did not use it. -1 = untouched.
+    [SyncVar(hook = nameof(OnFuelChanged))] private int netFuel = -1;
+
+    // The holder started spraying (fire extinguisher): everybody else plays the jet too.
+    public void ReportSpray()
+    {
+        if (isServer) RpcSpray();
+        else if (NetworkClient.active) CmdSpray();
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdSpray(NetworkConnectionToClient sender = null)
+    {
+        if (sender != null && carrier != sender.identity) return;
+        RpcSpray();
+    }
+
+    [ClientRpc]
+    private void RpcSpray()
+    {
+        // The user already plays it themselves.
+        if (carrier != null && carrier.isOwned) return;
+
+        if (TryGetComponent(out FireExtinguisher extinguisher)) extinguisher.PlayRemoteSpray();
+    }
+
+    public void ReportFuel(int fuel)
+    {
+        if (isServer) ServerSetFuel(fuel);
+        else if (NetworkClient.active) CmdReportFuel(fuel);
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdReportFuel(int fuel, NetworkConnectionToClient sender = null)
+    {
+        if (sender != null && carrier != sender.identity) return;
+        ServerSetFuel(fuel);
+    }
+
+    [Server]
+    private void ServerSetFuel(int fuel) => netFuel = netFuel < 0 ? fuel : Mathf.Min(netFuel, fuel);
+
+    private void OnFuelChanged(int oldValue, int newValue)
+    {
+        if (newValue >= 0 && TryGetComponent(out FireExtinguisher extinguisher)) extinguisher.ApplyNetworkedFuel(newValue);
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (netFuel >= 0) OnFuelChanged(-1, netFuel);
+    }
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -62,6 +116,8 @@ public class CarriableObject_MP : NetworkBehaviour
 
     private void LateUpdate()
     {
+        Reconcile();
+
         if (!localGhost || netId != 0) return;
         if (transform.parent != null || (carriableSp != null && carriableSp.IsOccupied())) return;
 
@@ -274,8 +330,18 @@ public class CarriableObject_MP : NetworkBehaviour
     private void RpcApplyThrow(NetworkIdentity holder, Vector3 impulse)
     {
         ApplyDropLocally(holder);
-        if (rb != null) rb.AddForce(impulse, ForceMode.Impulse);
+        if (rb == null) return;
+
+        rb.AddForce(impulse, ForceMode.Impulse);
+
+        // SP's OnThrow also lifts the item (throwUpwardSpeed): without it the thrown item dropped almost at the feet.
+        if (ThrowUpwardField?.GetValue(carriableSp) is float upward && upward > 0f)
+            rb.AddForce(Vector3.up * upward, ForceMode.VelocityChange);
     }
+
+    private static readonly System.Reflection.FieldInfo ThrowUpwardField =
+        typeof(CarriableObject_SP).GetField("throwUpwardSpeed",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 
     // Used when the holder dies / is removed: drop it where it is, for everyone.
     [Server]
@@ -329,6 +395,38 @@ public class CarriableObject_MP : NetworkBehaviour
         carrier = null;
         RpcApplyDropFromStation();
         nextSettleCheck = Time.time + SettleCheckInterval;
+    }
+
+    // Same as ServerDropFromStation, but the item leaves the station at a given point with a given push.
+    [Server]
+    public void ServerDropFromStationAt(Vector3 position, Vector3 velocity)
+    {
+        carrier = null;
+        RpcApplyDropFromStationAt(position, velocity);
+        nextSettleCheck = Time.time + SettleCheckInterval;
+    }
+
+    [ClientRpc]
+    private void RpcApplyDropFromStationAt(Vector3 position, Vector3 velocity)
+    {
+        transform.SetParent(null);
+        transform.position = position;
+
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.position = position;
+            rb.linearVelocity = velocity;
+            rb.WakeUp();
+        }
+
+        SetItemColliders(true);
+
+        if (carriableSp != null)
+        {
+            carriableSp.SetVisualsSafe(true);
+            ClearOccupied();
+        }
     }
 
     [Server]
@@ -385,6 +483,12 @@ public class CarriableObject_MP : NetworkBehaviour
         if (isServer) return;
         if (transform.parent != null) return;
 
+        // Code first, picture second: a resting pose is only drawn for an item that, by the synced state, is free. The
+        // carrier SyncVar can arrive a moment before the pickup RPC, and a settle that lands in that gap snapped the item
+        // to where the server had it (next to whoever threw it) just as its new holder picked it up.
+        if (carrier != null || serverConsumed) return;
+        if (carriableSp != null && (carriableSp.IsOccupied() || HeldByAnyHandler(carriableSp))) return;
+
         transform.SetPositionAndRotation(position, rotation);
 
         if (rb != null && !rb.isKinematic)
@@ -397,6 +501,17 @@ public class CarriableObject_MP : NetworkBehaviour
     [ClientRpc]
     private void RpcApplyPlaceInStation(NetworkIdentity station, NetworkIdentity requester, bool hideVisuals)
     {
+        // Code first: the hand lets go before the picture moves (a failure here must not leave the item in the station
+        // while the handler still says it is carried).
+        try
+        {
+            ClearHandlerIfHolding(requester);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[MP] Carriable '{name}': clearing the hand for the station failed ({e.GetType().Name}: {e.Message}).");
+        }
+
         Transform placementTransform = station != null ? station.transform : null;
 
         if (station != null)
@@ -425,8 +540,6 @@ public class CarriableObject_MP : NetworkBehaviour
             carriableSp.SetVisualsSafe(!hideVisuals);
         }
 
-        ClearHandlerIfHolding(requester);
-
         if (!isServer) MpSharedCompat.OnLoadedIntoStationClient(station);
     }
 
@@ -451,7 +564,21 @@ public class CarriableObject_MP : NetworkBehaviour
 
         SetItemColliders(true);
 
-        if (carriableSp != null) carriableSp.SetVisualsSafe(true);
+        if (carriableSp != null)
+        {
+            carriableSp.SetVisualsSafe(true);
+            ClearOccupied();
+        }
+    }
+
+    private static readonly System.Reflection.FieldInfo OccupiedField =
+        typeof(CarriableObject_SP).GetField("isOccupied", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+    // An item that went into a station is "occupied" (nobody may pick it up). When the station gives it back (failed
+    // mix, product) it has to be free again, or the server refuses every pickup of it.
+    private void ClearOccupied()
+    {
+        if (carriableSp != null && OccupiedField != null) OccupiedField.SetValue(carriableSp, false);
     }
 
     // false: all colliders off (carried, in a station). true: back to what the prefab had enabled.
@@ -468,6 +595,117 @@ public class CarriableObject_MP : NetworkBehaviour
         }
     }
 
+    // ---- Self-healing visuals -------------------------------------------------------------------------------------
+    // The server's `carrier` SyncVar is the truth. What each machine shows (parent = hand, handler slot) normally
+    // follows through the pickup/drop RPCs, but any lost, reordered or half-applied step (carrier not spawned yet when the
+    // RPC arrived, a local SP path that let go on its own...) used to stay wrong for good: the plank looked taken but was
+    // not, or the other way round. So every machine compares what it shows with the server's carrier a few times a
+    // second and re-applies the server state when the difference lasts (RPCs still in flight do not count).
+    private const float ReconcileInterval = 0.25f;
+    private const int ReconcileConfirmSamples = 3;
+    // How often the self-heal had to step in this session (shown in the F1 analysis panel).
+    public static int HealCount;
+    private float nextReconcileAt = -1f;
+    private int mismatchSamples;
+
+    private void Reconcile()
+    {
+        if (!NetworkClient.active || netId == 0 || carriableSp == null) return;
+        if (Time.unscaledTime < nextReconcileAt) return;
+        nextReconcileAt = Time.unscaledTime + ReconcileInterval + (netId % 5) * 0.01f;
+
+        // In a station, in the dog's mouth, being thrown/consumed: other systems own those states.
+        if (carriableSp.IsOccupied() || serverConsumed || LocallyConsumed()) { mismatchSamples = 0; return; }
+
+        NetworkIdentity serverCarrier = carrier;
+        bool wrong;
+
+        if (serverCarrier != null)
+        {
+            PlayerInteractionHandler holder = HandlerOf(serverCarrier);
+            if (holder == null || holder.GetCarryTransform() == null) { mismatchSamples = 0; return; } // carrier not spawned here yet
+
+            // An emote (throw) deliberately moves the item to the hand bone. Re-applying the pickup would register the
+            // item again, and registering forces the player back to Idle: that cut the throw emote short.
+            PlayerStateMachine holderState = holder.GetComponentInParent<PlayerStateMachine>(true);
+            if (holderState != null && holderState.currentPlayerState == PlayerStates.Emote) { mismatchSamples = 0; return; }
+
+            wrong = transform.parent != holder.GetCarryTransform() || !HandlerHolds(holder, carriableSp);
+        }
+        else
+        {
+            // Free item: not in any hand and in no handler. (A parent that is not a hand = a station, left alone.)
+            wrong = HeldByAnyHandler(carriableSp) || IsInAnyHand(transform.parent);
+        }
+
+        if (!wrong) { mismatchSamples = 0; return; }
+        if (++mismatchSamples < ReconcileConfirmSamples) return;
+        mismatchSamples = 0;
+
+        HealCount++;
+        InteractionDebug.Log($"[MP-HEAL] '{name}' #{netId}: showed the wrong holder, server carrier is " +
+                             $"'{(serverCarrier != null ? serverCarrier.name : "nobody")}' - state re-applied.");
+
+        if (serverCarrier != null)
+        {
+            ApplyPickupLocally(serverCarrier);
+        }
+        else
+        {
+            ClearAnyHolder();
+            ApplyDropLocally(null);
+        }
+    }
+
+    private static readonly System.Reflection.FieldInfo ConsumedField =
+        typeof(CarriableObject_SP).GetField("isConsumed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+    // Used up here already (drunk, built in): it is on its way out, nothing to put in a hand.
+    private bool LocallyConsumed() => ConsumedField != null && ConsumedField.GetValue(carriableSp) is bool consumed && consumed;
+
+    private static bool HandlerHolds(PlayerInteractionHandler handler, CarriableObject_SP item)
+    {
+        if (handler.GetCurrentCarriable() == item) return true;
+
+        for (int i = 0; i < PlayerInteractionHandler.InventorySize; i++)
+            if (handler.GetSlotItem(i) == item) return true;
+
+        return false;
+    }
+
+    // One scene search per second shared by every item (there can be dozens of items).
+    private static PlayerInteractionHandler[] cachedHandlers = new PlayerInteractionHandler[0];
+    private static float cachedHandlersAt = -10f;
+
+    private static PlayerInteractionHandler[] Handlers()
+    {
+        if (Time.unscaledTime - cachedHandlersAt > 1f)
+        {
+            cachedHandlersAt = Time.unscaledTime;
+            cachedHandlers = FindObjectsByType<PlayerInteractionHandler>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        }
+
+        return cachedHandlers;
+    }
+
+    private static bool HeldByAnyHandler(CarriableObject_SP item)
+    {
+        foreach (PlayerInteractionHandler handler in Handlers())
+            if (handler != null && HandlerHolds(handler, item)) return true;
+
+        return false;
+    }
+
+    private static bool IsInAnyHand(Transform parent)
+    {
+        if (parent == null) return false;
+
+        foreach (PlayerInteractionHandler handler in Handlers())
+            if (handler != null && handler.GetCarryTransform() == parent) return true;
+
+        return false;
+    }
+
     private void ApplyPickupLocally(NetworkIdentity carrierIdentity)
     {
         PlayerInteractionHandler carrierInteraction = HandlerOf(carrierIdentity);
@@ -477,6 +715,29 @@ public class CarriableObject_MP : NetworkBehaviour
         foreach (PlayerInteractionHandler other in FindObjectsByType<PlayerInteractionHandler>(FindObjectsSortMode.None))
         {
             if (other != carrierInteraction && other.GetCurrentCarriable() == carriableSp) other.ClearCarriedObject();
+        }
+
+        // Code first, visual second. The handler's state ("I carry this") is what every later action reads; the visual
+        // is only its picture. If the code step fails, nothing is shown: a hand that looks full but cannot drop is the
+        // worst outcome, and Reconcile retries from the server's carrier.
+        if (carriableSp != null)
+        {
+            try
+            {
+                carrierInteraction.RegisterCarriedObject(carriableSp);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[MP] Carriable '{name}': registering with '{carrierInteraction.name}' failed ({e.GetType().Name}: {e.Message}); the visual is not applied, it is retried from the server's carrier.");
+                return;
+            }
+
+            // Check the code state before drawing it: the handler must really hold this item in hand now.
+            if (carrierInteraction.GetCurrentCarriable() != carriableSp)
+            {
+                Debug.LogWarning($"[MP] Carriable '{name}': '{carrierInteraction.name}' does not have it in hand after registering; the visual is not applied, it is retried from the server's carrier.");
+                return;
+            }
         }
 
         SetItemColliders(false);
@@ -490,12 +751,26 @@ public class CarriableObject_MP : NetworkBehaviour
         transform.SetParent(carrierInteraction.GetCarryTransform());
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
-
-        if (carriableSp != null) carrierInteraction.RegisterCarriedObject(carriableSp);
     }
 
     private void ApplyDropLocally(NetworkIdentity carrierIdentity)
     {
+        // Code first (the hand lets go), then the picture (the item falls). The visual is applied even if the code
+        // step throws: an item that stays glued to a hand it no longer belongs to is the visible bug.
+        try
+        {
+            ReleaseFromHandler(carrierIdentity);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[MP] Carriable '{name}': releasing from the handler failed ({e.GetType().Name}: {e.Message}).");
+        }
+
+        // Check the code state: the hand must really have let go. If not, clear it by force, then show the item falling.
+        PlayerInteractionHandler releasedHandler = HandlerOf(carrierIdentity);
+        if (releasedHandler != null && carriableSp != null && releasedHandler.GetCurrentCarriable() == carriableSp)
+            releasedHandler.ClearCarriedObject();
+
         transform.SetParent(null);
 
         if (rb != null)
@@ -511,8 +786,6 @@ public class CarriableObject_MP : NetworkBehaviour
         // A stowed item is hidden. The SP death state may already have let go of it locally (DropAllCarried drops
         // the inventory without un-hiding), so show it again here whatever the handler thinks.
         if (carriableSp != null) carriableSp.SetStowed(false);
-
-        ReleaseFromHandler(carrierIdentity);
     }
 
     // The item left its carrier. The item in hand clears the hand; a stowed one frees its slot and shows again.

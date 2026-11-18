@@ -36,6 +36,8 @@ public class LobbyUIManager : MonoBehaviour
 
         if (statusText != null) statusText.text = nm.ReadySummary();
 
+        RefreshInviteButton();
+
         if (!NetworkServer.active || startGameButtonComponent == null) return;
 
         bool canStart = nm.AllClientsReady() && !nm.IsGameStarted;
@@ -50,11 +52,20 @@ public class LobbyUIManager : MonoBehaviour
 
         if (inviteFriendsButton != null)
         {
-
-            bool steamAvailable = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.SteamOnline;
-            inviteFriendsButton.gameObject.SetActive(steamAvailable);
+            inviteFriendsButton.onClick.RemoveListener(OnInviteFriends);
             inviteFriendsButton.onClick.AddListener(OnInviteFriends);
         }
+    }
+
+    // The Invite button follows the session instead of being decided once at Start: it is there for whoever hosts the
+    // lobby (Steam or local), hidden for plain clients.
+    private void RefreshInviteButton()
+    {
+        if (inviteFriendsButton == null) return;
+
+        bool show = NetworkServer.active;
+        if (inviteFriendsButton.gameObject.activeSelf != show) inviteFriendsButton.gameObject.SetActive(show);
+        if (show && !inviteFriendsButton.interactable) inviteFriendsButton.interactable = true;
     }
 
     private void BindLobbyButtons()
@@ -101,10 +112,44 @@ public class LobbyUIManager : MonoBehaviour
         Debug.Log($"[UI] LobbyUIManager bound {bound} lobby buttons (leave/start/ready).");
     }
 
+    // Steam lobby + working overlay: the friends/invite dialog. Anything else (local test session, overlay switched
+    // off, game not started through Steam): copy what a friend needs to join, so the button always does something.
     void OnInviteFriends()
     {
-        Debug.Log("[UI] Invite Steam friends pressed.");
-        SteamLobbyManager.Instance?.OpenInviteOverlay();
+        Debug.Log("[UI] Invite pressed.");
+
+        SteamLobbyManager steam = SteamLobbyManager.Instance;
+        bool steamLobby = steam != null && steam.SteamOnline && !string.IsNullOrEmpty(steam.CurrentCode);
+
+        if (steamLobby && steam.TryOpenInviteOverlay()) return;
+
+        string password = (NetworkManager.singleton as LobbyNetworkManager)?.LobbyPassword;
+        string passwordPart = string.IsNullOrEmpty(password) ? string.Empty : $" / password {password}";
+        string joinInfo = (steamLobby ? steam.CurrentCode : LocalAddress()) + passwordPart;
+        GUIUtility.systemCopyBuffer = joinInfo;
+
+        MpNotice_MP.Info(steamLobby
+            ? $"Steam overlay unavailable - lobby {joinInfo} copied. Send it to your friend."
+            : $"Invite copied: {joinInfo}  (your friend joins with this address)");
+    }
+
+    private static string LocalAddress()
+    {
+        try
+        {
+            foreach (var nic in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (nic.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                if (nic.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Loopback) continue;
+
+                foreach (var address in nic.GetIPProperties().UnicastAddresses)
+                    if (address.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        return address.Address.ToString();
+            }
+        }
+        catch (System.Exception) { }
+
+        return "127.0.0.1";
     }
 
     public PlayerListEntryUI AddPlayerRow(LobbyPlayer player)
@@ -123,6 +168,10 @@ public class LobbyUIManager : MonoBehaviour
         row.SetName(displayName);
         row.UpdateColor(player.isHost, player.isReady);
 
+        // Only the host gets the kick icon, and never on its own row.
+        bool canKick = NetworkServer.active && !player.isOwned;
+        row.SetKickable(canKick, canKick ? (System.Action)(() => KickPlayer(player)) : null);
+
         Debug.Log($"[UI] Satir eklendi: name='{displayName}' host={player.isHost} owned={player.isOwned}");
 
         if (player.isOwned)
@@ -132,6 +181,23 @@ public class LobbyUIManager : MonoBehaviour
         }
 
         return row;
+    }
+
+    private void KickPlayer(LobbyPlayer target)
+    {
+        LobbyPlayer host = NetworkClient.localPlayer != null
+            ? NetworkClient.localPlayer.GetComponent<LobbyPlayer>()
+            : null;
+
+        if (host == null || target == null)
+        {
+            Debug.LogWarning("[UI] kick ignored: host LobbyPlayer not found.");
+            return;
+        }
+
+        Debug.Log($"[UI] Kick pressed for '{(string.IsNullOrEmpty(target.playerName) ? "Player" : target.playerName)}' "
+                  + $"(netId={target.netId})");
+        host.CmdKick(target.netId);
     }
 
     public void RemovePlayerRow(PlayerListEntryUI row)

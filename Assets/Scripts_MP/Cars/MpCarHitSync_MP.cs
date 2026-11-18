@@ -45,6 +45,15 @@ public class MpCarHitSync_MP : NetworkBehaviour
     private Rigidbody body;
     private bool crashed;
 
+    // The crash victim shown on the car (its stand-in copy, or the car's own mock player). The victim respawns after a
+    // few seconds while the car keeps driving to the end of the road: the stand-in has to go with the respawn, or the
+    // other players keep seeing a "hit" character on the car long after it is back on its feet.
+    private GameObject shownVictim;
+    private PlayerScripts.PlayerNetwork_MP shownVictimPlayer;
+    private bool shownVictimWasDead;
+    private float shownVictimAt;
+    private const float StandInMaxSeconds = 12f;
+
     // Road end (server): the car is removed when it has driven past this point.
     private bool hasRoute;
     private Vector3 routeEnd;
@@ -119,6 +128,24 @@ public class MpCarHitSync_MP : NetworkBehaviour
     {
         base.OnStopServer();
         CancelInvoke(nameof(ServerDespawn));
+    }
+
+    private void Update()
+    {
+        if (shownVictim == null) return;
+
+        bool dead = shownVictimPlayer != null && shownVictimPlayer.isDead;
+        if (dead) shownVictimWasDead = true;
+
+        bool respawned = shownVictimWasDead && !dead;
+        bool gone = shownVictimPlayer == null;
+        if (!respawned && !gone && Time.time - shownVictimAt < StandInMaxSeconds) return;
+
+        // Victim back on its feet (or no longer there): take the stand-in off the car.
+        if (shownVictim.name == "VictimStandIn") Destroy(shownVictim);
+        else shownVictim.SetActive(false);
+
+        shownVictim = null;
     }
 
     // Every physics step: the car covers ~0.35 m per step at full speed, less than the front zone is deep.
@@ -276,8 +303,18 @@ public class MpCarHitSync_MP : NetworkBehaviour
     {
         if (carActive != null)
         {
-            if (MockPlayerField?.GetValue(carActive) is GameObject mock && mock != null && !ShowVictimStandIn(victim, mock))
-                mock.SetActive(true);
+            if (MockPlayerField?.GetValue(carActive) is GameObject mock && mock != null)
+            {
+                if (!ShowVictimStandIn(victim, mock))
+                {
+                    mock.SetActive(true);
+                    shownVictim = mock;
+                }
+
+                shownVictimPlayer = victim != null ? victim.GetComponentInChildren<PlayerScripts.PlayerNetwork_MP>(true) : null;
+                shownVictimWasDead = false;
+                shownVictimAt = Time.time;
+            }
 
             if (CrashEventField?.GetValue(carActive) is UnityEvent onCrash) onCrash.Invoke();
         }
@@ -358,6 +395,7 @@ public class MpCarHitSync_MP : NetworkBehaviour
         copy.transform.SetParent(mock.transform.parent, true);
         copy.transform.SetPositionAndRotation(mock.transform.position, mock.transform.rotation);
         copy.SetActive(true);
+        shownVictim = copy;
 
         Destroy(holder);
         mock.SetActive(false);

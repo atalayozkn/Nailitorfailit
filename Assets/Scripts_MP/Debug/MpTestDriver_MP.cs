@@ -121,6 +121,26 @@ public class MpTestDriver_MP : MonoBehaviour
             case "hammerapi": return HammerApi((int)F(c, 1, 12));
             case "chatopen": return Once(ChatOpenProbe);
             case "dogs": return Once(LogDogs);
+            case "bars": return Once(LogBars);
+            case "level": return Once(() => { MpLevelCatalog.Instance.Select((int)F(c, 1, 0f)); Log($"level selected: {MpLevelCatalog.Instance.SelectedIndex}"); });
+            case "mixtest": return MixTest(c.Length > 1 ? c[1] : "glass");
+            case "endtest": return Once(EndTest);
+            case "fetest": return FeTest();
+            case "mailman": return Once(LogMailMan);
+            case "solostart": return Once(() => { (NetworkManager.singleton as LobbyNetworkManager)?.StartGame(); Log("solostart requested"); });
+            case "lamppairs": return Once(LogLampPairs);
+            case "lampnear": return LampNear();
+            case "throwtest": return ThrowTest(c.Length > 1 ? c[1] : "Carriable_Wood_Processed_MP");
+            case "flingall": return Once(() =>
+            {
+                float speed = F(c, 1, 9f);
+                foreach (PlayerNetwork_MP p in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+                    p.ServerStunFling(p.transform.forward * -speed + Vector3.up * 5f);
+                Log($"flingall speed={speed}");
+            });
+            case "lamps": return Once(LogLamps);
+            case "satiety": return Once(() => SetSatiety(F(c, 1, 61f)));
+            case "posewatch": return Once(() => StartCoroutine(PoseWatch()));
             case "objs": return Once(() => LogObjects(c.Length > 1 ? c[1] : "lamp"));
             case "inv": return Once(() => StartCoroutine(InvariantWatch(F(c, 1, 60f))));
             case "spawner": return InteractNearest<Spawner_MP>("spawner");
@@ -135,6 +155,51 @@ public class MpTestDriver_MP : MonoBehaviour
             case "car": return Car(F(c, 1, 20f));
             case "carwatch": return CarWatch(F(c, 1, 10f));
             case "cars": return CarsLog(F(c, 1, 30f));
+            case "use": return UseItem(F(c, 1, 5f));
+            case "killremote": return Once(() =>
+            {
+                PlayerNetwork_MP remote = FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None).FirstOrDefault(p => !p.isOwned);
+                if (remote == null || !NetworkServer.active) { Log("killremote: no remote player"); return; }
+                Log($"killremote: killing remote player at {remote.transform.position}");
+                remote.ServerKill(DeathReason.None);
+            });
+            case "fall": return Once(() =>
+            {
+                PlayerNetwork_MP p = Me();
+                if (p == null) { Log("fall: no local player"); return; }
+                var rb = p.GetComponent<Rigidbody>();
+                Vector3 t = p.transform.position + Vector3.down * 40f;
+                p.transform.position = t;
+                if (rb != null) rb.position = t;
+                Log($"fall: moved local player to y={t.y:0}");
+            });
+            case "chatenter": return Once(() =>
+            {
+                // The chat input as the player uses it: text in the field, Enter (onSubmit), no Send button needed.
+                string text = string.Join(" ", c.Skip(1));
+                foreach (TMPro.TMP_InputField field in FindObjectsByType<TMPro.TMP_InputField>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                {
+                    if (!field.gameObject.activeInHierarchy || field.GetComponentInParent<ChatUI>() == null) continue;
+                    field.text = text;
+                    field.onSubmit.Invoke(text);
+                    Log($"chatenter: submitted '{text}' via {field.GetComponentInParent<ChatUI>().name}");
+                    return;
+                }
+                Log("chatenter: no active chat input");
+            });
+            case "dropchase": return DropChase((int)F(c, 1, 12f));
+            case "feedwood": return FeedWood((int)F(c, 1, 10f));
+            case "realpickc": return RealPickClient((int)F(c, 1, 10f));
+            case "realpick": return RealPick((int)F(c, 1, 10f), c.Length > 2 ? c[2] : "Carriable_Wood_Processed_MP");
+            case "mixerwatch": return MixerWatch(F(c, 1, 60f));
+            case "mixerui": return Once(() =>
+            {
+                foreach (MixerUIHelper u in FindObjectsByType<MixerUIHelper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    string letters = string.Concat(u.GetComponentsInChildren<TMPro.TextMeshProUGUI>(true).Select(t => "[" + t.text + "]"));
+                    Log($"mixerui {u.transform.root.name}/{u.name}: {letters}");
+                }
+            });
             case "stun": return Once(() => Me()?.RequestStun());
             case "hazards": return Once(LogHazards);
             case "homes": return Once(LogHomes);
@@ -146,6 +211,319 @@ public class MpTestDriver_MP : MonoBehaviour
         }
         Log("unknown command " + c[0]);
         return null;
+    }
+
+    // Background: logs every change of (state, renderer, bent pose) of every player as this machine sees it.
+    private IEnumerator PoseWatch()
+    {
+        var last = new Dictionary<uint, string>();
+        float t0 = Time.realtimeSinceStartup;
+        while (true)
+        {
+            foreach (PlayerNetwork_MP p in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+            {
+                PlayerStateMachine sm = p.GetComponent<PlayerStateMachine>();
+                Animator anim = sm != null ? sm.animator : null;
+                SkinnedMeshRenderer smr = anim != null ? anim.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+                bool on = smr != null && smr.enabled && smr.gameObject.activeInHierarchy;
+                float h = smr != null ? smr.bounds.size.y : -1f;
+                float tilt = anim != null ? anim.transform.up.y : 1f;
+                bool bent = on && (h < 1.25f || tilt < 0.85f);
+                string name = anim != null && anim.enabled && anim.isActiveAndEnabled ? AnimName(anim) : "animOff";
+                string ragMode = "-";
+                var ar = p.GetComponent<PlayerActiveRagdoll>();
+                if (ar != null && ar.enabled) ragMode = typeof(PlayerActiveRagdoll).GetField("mode", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.GetValue(ar)?.ToString() ?? "?";
+                Rigidbody hipsRb = p.RagdollHips;
+                float hipsHigh = hipsRb != null ? hipsRb.position.y - p.transform.position.y : -9f;
+                float hipsSide = hipsRb != null ? Vector2.Distance(new Vector2(hipsRb.position.x, hipsRb.position.z), new Vector2(p.transform.position.x, p.transform.position.z)) : -9f;
+                string key = $"{sm?.currentPlayerState} dead={p.isDead} smr={(on ? "on" : "off")} bent={bent} anim={name} rag={ragMode} hipsHigh={Mathf.Round(hipsHigh * 3f) / 3f:0.0} hipsSide={Mathf.Round(hipsSide * 3f) / 3f:0.0}";
+                if (!last.TryGetValue(p.netId, out string prev) || prev != key)
+                {
+                    last[p.netId] = key;
+                    Log($"pose t={Time.realtimeSinceStartup - t0:0.0} player#{p.netId} {(p.isOwned ? "ME" : "remote")} {key} h={h:0.00} tilt={tilt:0.00} root={p.transform.position:0.0}");
+                }
+            }
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
+
+    // Test: sets the local dog's hunger value (it goes to the bowl to eat when it reaches 60 / 40 / 20 / 10).
+    private void SetSatiety(float value)
+    {
+        foreach (SatietyController s in FindObjectsByType<SatietyController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (!s.isActiveAndEnabled) continue;
+            typeof(SatietyController).GetField("currentSatiety", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.SetValue(s, value);
+            Log($"satiety set to {value} on '{s.transform.root.name}'");
+        }
+    }
+
+    private void LogLamps()
+    {
+        int total = 0, oldVisible = 0, oldHidden = 0;
+        foreach (Transform t in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (!t.name.StartsWith("StyleTest_LampPost")) continue;
+            total++;
+
+            Transform original = t.parent;
+            var mr = original != null ? original.GetComponent<MeshRenderer>() : null;
+            if (mr != null && mr.enabled && mr.gameObject.activeInHierarchy)
+            {
+                oldVisible++;
+                if (oldVisible <= 3) Log($"lamp: original mesh '{original.name}' at {original.position:0.0} still VISIBLE next to the new post");
+            }
+            else oldHidden++;
+        }
+
+        Log($"lamps: new posts={total} originalVisible={oldVisible} originalHidden={oldHidden}");
+    }
+
+    // Mixer through the real item flow: pick each ingredient up, put it in the mixer, crank, see what comes out.
+    private IEnumerator MixTest(string recipe)
+    {
+        PlayerNetwork_MP me = Me();
+        Mixer mixer = FindFirstObjectByType<Mixer>();
+        if (me == null || mixer == null || !NetworkServer.active) { Log("mixtest: needs the host and a Mixer in the scene"); yield break; }
+
+        PlayerInteractionHandler handler = me.GetComponent<PlayerInteractionHandler>();
+        string main = recipe == "brick" ? "Carriable_Brick_MP" : "Carriable_Glass_Raw_MP";
+        string[] names = recipe == "fail" ? new[] { "Carriable_Wood_Raw_MP", "Carriable_Wood_Raw_MP", "Carriable_Glass_Raw_MP" } : new[] { main, main, "Carriable_Cement_MP" };
+        int badStates = 0;
+
+        foreach (string n in names)
+        {
+            var prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == n);
+            if (prefab == null) { Log($"mixtest: prefab '{n}' missing"); yield break; }
+
+            GameObject g2 = Instantiate(prefab, me.transform.position + me.transform.forward * 1.0f + Vector3.up, Quaternion.identity);
+            NetworkServer.Spawn(g2);
+            yield return new WaitForSeconds(0.3f);
+
+            var item = g2.GetComponent<CarriableObject_MP>();
+            item.NotifyPickedUp(handler);
+            yield return new WaitForSeconds(0.5f);
+
+            bool holding = handler.GetCurrentCarriable() == g2.GetComponent<CarriableObject_SP>();
+            bool parented = g2.transform.parent == handler.GetCarryTransform();
+            if (!holding || !parented) { badStates++; Log($"mixtest: {n} pickup holding={holding} parented={parented}"); }
+
+            mixer.ServerInteract(me.netIdentity);
+            yield return new WaitForSeconds(0.5f);
+
+            bool handEmpty = handler.GetCurrentCarriable() == null;
+            if (!handEmpty) { badStates++; Log($"mixtest: {n} hand not empty after the mixer took it"); }
+        }
+
+        int before = FindObjectsByType<CarriableObject_SP>(FindObjectsSortMode.None).Count(x => x.carriableType == (recipe == "brick" ? CarriableType.Brick : CarriableType.Glass) && !x.isRawMaterial);
+        mixer.ServerCompare(me.netIdentity);
+        yield return new WaitForSeconds(1.5f);
+        int after = FindObjectsByType<CarriableObject_SP>(FindObjectsSortMode.None).Count(x => x.carriableType == (recipe == "brick" ? CarriableType.Brick : CarriableType.Glass) && !x.isRawMaterial);
+        Log($"MIXTEST {recipe}: processed before={before} after={after} badStates={badStates} handEmpty={handler.GetCurrentCarriable() == null}");
+
+        if (recipe == "fail")
+        {
+            // The rejected ingredients were thrown out: can the player pick one up again?
+            yield return new WaitForSeconds(1.5f);
+            CarriableObject_MP dropped = FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None)
+                .Where(x => x.Carrier == null && x.transform.parent == null)
+                .OrderBy(x => Vector3.Distance(x.transform.position, mixer.transform.position)).FirstOrDefault();
+            if (dropped == null) { Log("MIXTEST fail: nothing was dropped"); yield break; }
+
+            dropped.NotifyPickedUp(handler);
+            yield return new WaitForSeconds(0.8f);
+            bool got = handler.GetCurrentCarriable() == dropped.GetComponent<CarriableObject_SP>() && dropped.Carrier != null;
+            Log($"MIXTEST fail: picked a dropped ingredient again = {got} ('{dropped.name}')");
+        }
+    }
+
+    // Throw emote with a networked item in hand: does it leave the hand and fly?
+    private IEnumerator ThrowTest(string prefabName)
+    {
+        PlayerNetwork_MP me = Me();
+        PlayerStateMachine sm = Sm();
+        if (me == null || sm == null || !NetworkServer.active) { Log("throwtest: needs the host"); yield break; }
+
+        var prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == prefabName);
+        if (prefab == null) { Log($"throwtest: prefab '{prefabName}' missing"); yield break; }
+
+        PlayerInteractionHandler handler = me.GetComponent<PlayerInteractionHandler>();
+        GameObject g2 = Instantiate(prefab, me.transform.position + me.transform.forward * 1.0f + Vector3.up, Quaternion.identity);
+        NetworkServer.Spawn(g2);
+        yield return new WaitForSeconds(0.3f);
+
+        var item = g2.GetComponent<CarriableObject_MP>();
+        item.NotifyPickedUp(handler);
+        yield return new WaitForSeconds(0.6f);
+
+        Vector3 start = g2.transform.position;
+        sm.ChangeToEmoteState(0);
+        float t0 = Time.realtimeSinceStartup;
+        float maxDist = 0f;
+        while (Time.realtimeSinceStartup - t0 < 4.5f)
+        {
+            if (g2 == null) break;
+            maxDist = Mathf.Max(maxDist, Vector3.Distance(g2.transform.position, start));
+            if (Mathf.Abs((Time.realtimeSinceStartup - t0) % 0.5f) < 0.11f)
+            {
+                var at = typeof(PlayerNetwork_MP).GetField("emoteThrowAt", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(me);
+                Log($"throwtest t={Time.realtimeSinceStartup - t0:0.0} time={Time.time:0.0} scale={Time.timeScale} state={sm.currentPlayerState} emoteIdx={sm.activeEmoteIndex} emoteThrowAt={at} held={(handler.GetCurrentCarriable() != null)} owned={me.isOwned}");
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        Log($"THROWTEST {prefabName}: maxDist={maxDist:0.0} carrierNow={(item != null && item.Carrier != null ? "yes" : "no")} handEmpty={handler.GetCurrentCarriable() == null} state={sm.currentPlayerState}");
+    }
+
+    // Forces the end-of-match panel and lists every active button under any 'GameEnd' panel.
+    private void EndTest()
+    {
+        var hud = FindObjectsByType<GameHUD_MP>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(h => h.isActiveAndEnabled);
+        if (hud == null) { Log("endtest: no GameHUD_MP"); return; }
+
+        typeof(GameHUD_MP).GetMethod("OnGameEnded", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(hud, new object[] { true });
+
+        foreach (UnityEngine.UI.Button b in FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            string path = b.name;
+            for (Transform t = b.transform.parent; t != null; t = t.parent) path = t.name + "/" + path;
+            if (path.IndexOf("GameEnd", StringComparison.OrdinalIgnoreCase) < 0 && b.name.IndexOf("MainMenu", StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+            var rt = (RectTransform)b.transform;
+            Log($"endtest button '{path}' activeInHierarchy={b.gameObject.activeInHierarchy} interactable={b.interactable} size={rt.rect.size.x * rt.lossyScale.x:0}x{rt.rect.size.y * rt.lossyScale.y:0} pos={rt.position:0}");
+        }
+    }
+
+    private void LogMailMan()
+    {
+        var bf = BindingFlags.Instance | BindingFlags.NonPublic;
+        foreach (MailManController m in FindObjectsByType<MailManController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            var agent = m.GetComponent<UnityEngine.AI.NavMeshAgent>();
+            var path = typeof(MailManController).GetField("path", bf)?.GetValue(m) as Transform[];
+            int idx = (int)(typeof(MailManController).GetField("currentPathIndex", bf)?.GetValue(m) ?? -1);
+            var renderers = m.GetComponentsInChildren<Renderer>(true);
+            int visible = renderers.Count(r => r.enabled && r.gameObject.activeInHierarchy);
+            Log($"mailman '{m.transform.root.name}/{m.name}' activeInHierarchy={m.gameObject.activeInHierarchy} enabled={m.enabled} pos={m.transform.position:0.0} " +
+                $"agent={(agent != null ? (agent.enabled ? (agent.isOnNavMesh ? "onNavMesh" : "OFF navmesh") : "disabled") : "none")} pathLen={(path != null ? path.Length : -1)} idx={idx} visibleRenderers={visible}/{renderers.Length} " +
+                $"owned={(m.GetComponentInParent<PlayerNetwork_MP>(true)?.isOwned)}");
+        }
+
+        // Who switches the mail man on? Every UnityEvent in the scene that targets it.
+        var mailMen = FindObjectsByType<MailManController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (MonoBehaviour mb in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (mb == null) continue;
+            foreach (FieldInfo f in mb.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                var events = new List<UnityEngine.Events.UnityEventBase>();
+                object v = null;
+                try { v = f.GetValue(mb); } catch { }
+                if (v is UnityEngine.Events.UnityEventBase single) events.Add(single);
+                else if (v is UnityEngine.Events.UnityEventBase[] many) events.AddRange(many);
+                foreach (var ev in events)
+                    for (int i = 0; i < ev.GetPersistentEventCount(); i++)
+                    {
+                        UnityEngine.Object target = ev.GetPersistentTarget(i);
+                        GameObject targetGo = target as GameObject ?? (target as Component)?.gameObject;
+                        if (targetGo == null) continue;
+                        if (mailMen.Any(m => m != null && (m.gameObject == targetGo || targetGo.transform.IsChildOf(m.transform.parent ?? m.transform))))
+                            Log($"mailman event: {mb.GetType().Name} '{mb.transform.root.name}/{mb.name}' field {f.Name}[{i}] -> '{targetGo.transform.root.name}/{targetGo.name}'.{ev.GetPersistentMethodName(i)}");
+                    }
+            }
+        }
+
+        foreach (MailBox box in FindObjectsByType<MailBox>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            Log($"mailbox '{box.transform.root.name}/{box.name}' active={box.gameObject.activeInHierarchy} pos={box.transform.position:0.0}");
+    }
+
+    // Walks the player up to several lamps and counts old lamp meshes that are visible next to the new post.
+    private IEnumerator LampNear()
+    {
+        PlayerNetwork_MP me = Me();
+        if (me == null) { Log("lampnear: no local player"); yield break; }
+
+        Transform[] posts = FindObjectsByType<Transform>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Where(t => t.name.StartsWith("StyleTest_LampPost")).Take(10).ToArray();
+        int bad = 0, lodGroups = 0;
+        foreach (Transform post in posts)
+        {
+            if (post.GetComponentInParent<LODGroup>() != null) lodGroups++;
+            Teleport(post.position + Vector3.right * 1.5f, post.position);
+            yield return new WaitForSeconds(0.6f);
+
+            var old = post.parent != null ? post.parent.GetComponent<MeshRenderer>() : null;
+            if (old != null && old.enabled && old.gameObject.activeInHierarchy)
+            {
+                bad++;
+                Log($"lampnear: old lamp mesh '{old.name}' at {post.position:0.0} is VISIBLE next to the post");
+            }
+        }
+
+        Log($"LAMPNEAR: {posts.Length} lamps visited, oldVisible={bad}, underLODGroup={lodGroups}");
+    }
+
+    private void LogLampPairs()
+    {
+        var list = new List<Renderer>();
+        foreach (Renderer r in FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (!r.enabled || !(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
+            Bounds b = r.bounds;
+            if (b.size.y < 2.0f || b.size.y > 7f || b.size.x > 3f || b.size.z > 3f) continue;
+            string n = r.name.ToLower(), pn = r.transform.parent ? r.transform.parent.name.ToLower() : "", rn = r.transform.root.name.ToLower();
+            if (n.IndexOf("lamp") < 0 && n.IndexOf("lamb") < 0 && n.IndexOf("plane.001") < 0 && pn.IndexOf("lamb") < 0 && pn.IndexOf("lamp") < 0 && n.IndexOf("cylinder") < 0 && n.IndexOf("direk") < 0) continue;
+            list.Add(r);
+        }
+
+        int pairs = 0;
+        for (int i = 0; i < list.Count; i++)
+            for (int j = i + 1; j < list.Count; j++)
+            {
+                Vector3 a = list[i].bounds.center, c = list[j].bounds.center;
+                if (Vector2.Distance(new Vector2(a.x, a.z), new Vector2(c.x, c.z)) > 1.6f) continue;
+                pairs++;
+                if (pairs <= 12)
+                    Log($"lamppair '{list[i].name}'<{list[i].transform.parent?.name}> + '{list[j].name}'<{list[j].transform.parent?.name}> at {a:0.0} sizes {list[i].bounds.size:0.0} / {list[j].bounds.size:0.0}");
+            }
+
+        Log($"lamppairs: tall lamp-like visible renderers={list.Count} overlapping pairs={pairs}");
+    }
+
+    // Networked fire extinguisher: how many uses until it is gone?
+    private IEnumerator FeTest()
+    {
+        PlayerNetwork_MP me = Me();
+        if (me == null || !NetworkServer.active) { Log("fetest: needs the host"); yield break; }
+
+        var prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == "FireExtinguisher_MP");
+        if (prefab == null) { Log("fetest: prefab missing"); yield break; }
+
+        PlayerInteractionHandler handler = me.GetComponent<PlayerInteractionHandler>();
+        GameObject g2 = Instantiate(prefab, me.transform.position + me.transform.forward + Vector3.up, Quaternion.identity);
+        NetworkServer.Spawn(g2);
+        yield return new WaitForSeconds(0.3f);
+        g2.GetComponent<CarriableObject_MP>().NotifyPickedUp(handler);
+        yield return new WaitForSeconds(0.5f);
+
+        var fe = g2.GetComponent<FireExtinguisher>();
+        int uses = 0;
+        for (int i = 1; i <= 9 && g2 != null; i++)
+        {
+            fe.OnUse();
+            uses = i;
+            yield return new WaitForSeconds(0.4f);
+        }
+
+        Log($"FETEST: object gone after {uses} OnUse call(s) (gone={g2 == null})");
+    }
+
+    private void LogBars()
+    {
+        foreach (UnityEngine.UI.Slider s in Resources.FindObjectsOfTypeAll<UnityEngine.UI.Slider>())
+        {
+            if (!s.gameObject.scene.IsValid() || !s.name.StartsWith("Slider_")) continue;
+            Log($"bar '{s.transform.parent?.parent?.parent?.name}/{s.name}' value={s.value:0}/{s.maxValue:0} visible={s.gameObject.activeInHierarchy}");
+        }
     }
 
     private static IEnumerator Once(Action a) { a(); yield break; }
@@ -344,6 +722,277 @@ public class MpTestDriver_MP : MonoBehaviour
         Log($"cars summary: samples={speeds.Count} speed min={(speeds.Count > 0 ? speeds.Min() : 0f):0.0} avg={(speeds.Count > 0 ? speeds.Average() : 0f):0.0} max={(speeds.Count > 0 ? speeds.Max() : 0f):0.0} smallest oncoming lateral gap={(worstGap < 999f ? worstGap.ToString("0.0") : "none")}");
     }
 
+    // Presses "use" for the local player (same method the use key calls) and logs the state / movement flag for a while:
+    // after the use animation the player must be Idle again with movement enabled.
+    private IEnumerator UseItem(float seconds)
+    {
+        PlayerStateMachine sm = Sm();
+        if (sm == null) { Log("use: no local player"); yield break; }
+
+        PlayerUseHandler use = sm.GetComponentInChildren<PlayerUseHandler>(true);
+        if (use == null) use = Me()?.transform.root.GetComponentInChildren<PlayerUseHandler>(true);
+        if (use == null) { Log("use: no PlayerUseHandler"); yield break; }
+
+        var handle = typeof(PlayerUseHandler).GetMethod("HandleUse", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var moveField = typeof(PlayerMovement).GetField("isActive", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        handle.Invoke(use, null);
+
+        float t0 = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - t0 < seconds)
+        {
+            bool moveOn = moveField != null && (bool)moveField.GetValue(sm.movementHandler);
+            Log($"use state={sm.currentPlayerState} movementActive={moveOn} carrying={sm.interactionHandler.IsCarrying()}");
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    // Logs the mixer's slot letters on this machine whenever they change.
+    private IEnumerator MixerWatch(float seconds)
+    {
+        string last = null;
+        float t0 = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - t0 < seconds)
+        {
+            MixerUIHelper u = FindAnyObjectByType<MixerUIHelper>(FindObjectsInactive.Include);
+            string letters = u == null ? "(no mixer)" : string.Concat(u.GetComponentsInChildren<TMPro.TextMeshProUGUI>(true).Select(t => "[" + t.text + "]"));
+            if (letters != last) { last = letters; Log("mixerwatch " + (NetworkServer.active ? "HOST" : "CLIENT") + " letters=" + letters); }
+            yield return new WaitForSeconds(0.3f);
+        }
+    }
+
+    // The pickup exactly as the interact key does it (HandleInteract: detection -> dispatch -> interact state), with empty
+    // hands, N times on the host: a wood plank is spawned in front of the player, picked, checked (hand = handler = server),
+    // dropped and removed. Reports every round where the three disagree.
+    private IEnumerator RealPick(int rounds, string prefabName)
+    {
+        PlayerNetwork_MP me = Me();
+        if (me == null || !NetworkServer.active) { Log("realpick: needs the host with a local player"); yield break; }
+
+        var interactNet = me.GetComponent<PlayerInteractionNetwork_MP>();
+        var handler = me.GetComponent<PlayerInteractionHandler>();
+        var press = typeof(PlayerInteractionNetwork_MP).GetMethod("HandleInteract", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var prefab = Resources.Load<GameObject>(prefabName);
+        if (prefab == null) prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == prefabName);
+        if (prefab == null) { Log("realpick: prefab not found " + prefabName); yield break; }
+
+        int bad = 0;
+        for (int i = 0; i < rounds; i++)
+        {
+            Vector3 spot = me.transform.position + me.transform.forward * 1.1f + Vector3.up * 0.3f;
+            GameObject plank = Instantiate(prefab, spot, Quaternion.identity);
+            NetworkServer.Spawn(plank);
+            var item = plank.GetComponent<CarriableObject_MP>();
+            yield return new WaitForSeconds(0.5f);
+
+            press.Invoke(interactNet, null);
+            yield return new WaitForSeconds(0.7f);
+
+            CarriableObject_SP sp = plank.GetComponent<CarriableObject_SP>();
+            bool code = handler.GetCurrentCarriable() == sp;
+            bool visual = plank.transform.parent == handler.GetCarryTransform();
+            bool server = item.Carrier != null && item.Carrier == me.netIdentity;
+            if (!(code && visual && server))
+            {
+                bad++;
+                Log($"REALPICK round {i}: code={code} visual={visual} server={server} state={Sm()?.currentPlayerState}");
+            }
+
+            if (code) item.NotifyDropped(handler);
+            yield return new WaitForSeconds(0.5f);
+            NetworkServer.Destroy(plank);
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        Log($"REALPICK done: {rounds} rounds, {bad} mismatches");
+    }
+
+    // Host side of the client test: puts a plank in front of the REMOTE player once per round and removes it afterwards.
+    private IEnumerator FeedWood(int rounds)
+    {
+        var prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == "Carriable_Wood_Processed_MP");
+        if (prefab == null) { Log("feedwood: prefab missing"); yield break; }
+
+        for (int i = 0; i < rounds; i++)
+        {
+            PlayerNetwork_MP remote = FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None).FirstOrDefault(p => !p.isOwned);
+            if (remote == null) { Log("feedwood: no remote player"); yield break; }
+
+            GameObject plank = Instantiate(prefab, remote.transform.position + remote.transform.forward * 1.1f + Vector3.up * 0.3f, Quaternion.identity);
+            NetworkServer.Spawn(plank);
+
+            // Until the client has picked it up and put it down again.
+            float t0 = Time.realtimeSinceStartup;
+            var item = plank.GetComponent<CarriableObject_MP>();
+            while (item.Carrier == null && Time.realtimeSinceStartup - t0 < 4f) yield return null;
+            while (item.Carrier != null && Time.realtimeSinceStartup - t0 < 8f) yield return null;
+
+            yield return new WaitForSeconds(0.4f);
+            NetworkServer.Destroy(plank);
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        Log("feedwood done");
+    }
+
+    // Client side: the interact key's real path, with empty hands, on planks that the host puts in front of this player.
+    private IEnumerator RealPickClient(int rounds)
+    {
+        PlayerNetwork_MP me = Me();
+        if (me == null || NetworkServer.active) { Log("realpickc: needs a pure client with a local player"); yield break; }
+
+        var interactNet = me.GetComponent<PlayerInteractionNetwork_MP>();
+        var handler = me.GetComponent<PlayerInteractionHandler>();
+        var press = typeof(PlayerInteractionNetwork_MP).GetMethod("HandleInteract", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        int bad = 0, done = 0;
+        for (int i = 0; i < rounds; i++)
+        {
+            CarriableObject_MP item = null;
+            for (float t = 0; t < 6f && item == null; t += 0.1f)
+            {
+                item = FindObjectsByType<CarriableObject_MP>(FindObjectsSortMode.None)
+                    .FirstOrDefault(c => c.Carrier == null && c.transform.parent == null && Vector3.Distance(c.transform.position, me.transform.position) < 2.5f);
+                if (item == null) yield return new WaitForSeconds(0.1f);
+            }
+            if (item == null) { Log($"REALPICKC round {i}: no plank appeared"); continue; }
+
+            yield return new WaitForSeconds(0.5f);
+            press.Invoke(interactNet, null);
+            yield return new WaitForSeconds(0.9f);
+
+            CarriableObject_SP sp = item.GetComponent<CarriableObject_SP>();
+            bool code = handler.GetCurrentCarriable() == sp;
+            bool visual = item.transform.parent == handler.GetCarryTransform();
+            bool server = item.Carrier != null && item.Carrier == me.netIdentity;
+            done++;
+            if (!(code && visual && server))
+            {
+                bad++;
+                Log($"REALPICKC round {i}: code={code} visual={visual} server={server} state={Sm()?.currentPlayerState}");
+            }
+
+            if (code) item.NotifyDropped(handler);
+            yield return new WaitForSeconds(1.5f);
+        }
+
+        Log($"REALPICKC done: {done} picked rounds of {rounds}, {bad} mismatches");
+    }
+
+    // Host orchestrates items that change hands while they are still falling, with both players (host + remote):
+    //   0 A drops, B picks it a moment later (item still in the air)      1 A and B pick the same item in the same frame
+    //   2 A is stunned while holding it (forced drop), B picks right away   3 A has a full inventory and picks a 4th (swap
+    //   drop), B picks the swapped-out item at once.      Server-side calls = what the Cmds end up doing; the other machine
+    // (run `inv` there) must agree afterwards. Every round is checked here and, through the watcher, on the client.
+    private IEnumerator DropChase(int rounds)
+    {
+        PlayerNetwork_MP a = Me();
+        PlayerNetwork_MP b = FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None).FirstOrDefault(p => !p.isOwned);
+        if (a == null || b == null || !NetworkServer.active) { Log("dropchase: needs host + one remote player"); yield break; }
+
+        PlayerInteractionHandler ha = a.GetComponent<PlayerInteractionHandler>();
+        PlayerInteractionHandler hb = b.GetComponent<PlayerInteractionHandler>();
+        var prefab = NetworkManager.singleton.spawnPrefabs.FirstOrDefault(g => g != null && g.name == "Carriable_Wood_Processed_MP");
+        if (prefab == null) { Log("dropchase: prefab missing"); yield break; }
+
+        float[] delays = { 0f, 0.05f, 0.12f, 0.25f };
+        int bad = 0;
+
+        for (int i = 0; i < rounds; i++)
+        {
+            int kind = i % 4;
+            float delay = delays[(i / 4) % delays.Length];
+            var spawned = new List<GameObject>();
+            Func<CarriableObject_MP> make = () =>
+            {
+                GameObject g = Instantiate(prefab, a.transform.position + a.transform.forward * 1.2f + Vector3.up * 1.2f, Quaternion.identity);
+                NetworkServer.Spawn(g);
+                spawned.Add(g);
+                return g.GetComponent<CarriableObject_MP>();
+            };
+
+            CarriableObject_MP item = make();
+            yield return new WaitForSeconds(0.3f);
+
+            if (kind == 0)
+            {
+                item.NotifyPickedUp(ha);
+                yield return new WaitForSeconds(0.4f);
+                item.NotifyDropped(ha);
+                yield return new WaitForSeconds(delay);
+                item.NotifyPickedUp(hb);
+            }
+            else if (kind == 1)
+            {
+                item.NotifyPickedUp(ha);
+                item.NotifyPickedUp(hb);
+            }
+            else if (kind == 2)
+            {
+                item.NotifyPickedUp(ha);
+                yield return new WaitForSeconds(0.4f);
+                a.RequestStun();
+                yield return new WaitForSeconds(0.1f + delay);
+                item.NotifyPickedUp(hb);
+            }
+            else
+            {
+                var held = new List<CarriableObject_MP> { item };
+                item.NotifyPickedUp(ha);
+                for (int k = 0; k < PlayerInteractionHandler.InventorySize - 1; k++)
+                {
+                    yield return new WaitForSeconds(0.3f);
+                    CarriableObject_MP extra = make();
+                    yield return new WaitForSeconds(0.2f);
+                    held.Add(extra);
+                    extra.NotifyPickedUp(ha);
+                }
+                yield return new WaitForSeconds(0.4f);
+                CarriableObject_MP fourth = make();
+                yield return new WaitForSeconds(0.2f);
+                CarriableObject_SP before = ha.GetCurrentCarriable();
+                fourth.NotifyPickedUp(ha);
+                yield return new WaitForSeconds(delay);
+                // the one that was swapped out of the hand
+                CarriableObject_MP swapped = before != null ? before.GetComponent<CarriableObject_MP>() : null;
+                if (swapped != null) swapped.NotifyPickedUp(hb);
+            }
+
+            yield return new WaitForSeconds(1.3f);
+
+            // Host's own view of every plank: hand, handler and server must agree.
+            foreach (GameObject g in spawned)
+            {
+                if (g == null) continue;
+                var c = g.GetComponent<CarriableObject_MP>();
+                var sp = g.GetComponent<CarriableObject_SP>();
+                PlayerInteractionHandler handHolder = new[] { ha, hb }.FirstOrDefault(h => h.GetCarryTransform() != null && g.transform.parent == h.GetCarryTransform());
+                PlayerInteractionHandler codeHolder = new[] { ha, hb }.FirstOrDefault(h => h.GetCurrentCarriable() == sp ||
+                    Enumerable.Range(0, PlayerInteractionHandler.InventorySize).Any(n => h.GetSlotItem(n) == sp));
+                bool serverHeld = c.Carrier != null;
+                if ((handHolder != null) != (codeHolder != null) || (handHolder != codeHolder) || (serverHeld != (handHolder != null)))
+                {
+                    bad++;
+                    Log($"DROPCHASE round {i} kind={kind} delay={delay}: #{c.netId} hand={(handHolder != null ? handHolder.transform.root.name : "-")} code={(codeHolder != null ? codeHolder.transform.root.name : "-")} server={(c.Carrier != null ? c.Carrier.name : "-")}");
+                }
+            }
+
+            yield return new WaitForSeconds(a.isDead || Sm()?.currentPlayerState == PlayerStates.Stunned ? 3.5f : 0.2f);
+
+            foreach (GameObject g in spawned)
+            {
+                if (g == null) continue;
+                var c = g.GetComponent<CarriableObject_MP>();
+                if (c.Carrier != null) { var h = c.Carrier == a.netIdentity ? ha : hb; c.NotifyDropped(h); }
+            }
+            yield return new WaitForSeconds(0.5f);
+            foreach (GameObject g in spawned) if (g != null) NetworkServer.Destroy(g);
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        Log($"DROPCHASE done: {rounds} rounds, {bad} host-side mismatches");
+    }
+
     private IEnumerator CarWatch(float seconds)
     {
         float t0 = Time.realtimeSinceStartup;
@@ -382,9 +1031,11 @@ public class MpTestDriver_MP : MonoBehaviour
                 Rigidbody hips = p.RagdollHips;
                 PlayerStateMachine sm = p.GetComponent<PlayerStateMachine>();
                 Animator anim = sm != null ? sm.animator : null;
+                SkinnedMeshRenderer smr = anim != null ? anim.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+                string vis = smr != null ? $" smr={(smr.enabled && smr.gameObject.activeInHierarchy ? "on" : "off")} h={smr.bounds.size.y:0.00} cy={(smr.bounds.center.y - p.transform.position.y):0.00} tilt={(anim != null ? anim.transform.up.y : 0f):0.00}" : " smr=none";
                 Log($"ragwatch t={Time.realtimeSinceStartup - t0:0.0} player#{p.netId} {(p.isOwned ? "ME" : "remote")} state={sm?.currentPlayerState} " +
                     $"animator={(anim != null && anim.enabled ? AnimName(anim) : "OFF")} " +
-                    $"activeRagdoll={p.ActiveRagdollRunning} hips={(hips != null ? hips.position.ToString("0.00") : "-")} hipsKin={(hips != null && hips.isKinematic)} root={p.transform.position.ToString("0.00")}");
+                    $"activeRagdoll={p.ActiveRagdollRunning}{vis} hips={(hips != null ? hips.position.ToString("0.00") : "-")} hipsKin={(hips != null && hips.isKinematic)} root={p.transform.position.ToString("0.00")}");
             }
 
             yield return new WaitForSeconds(0.5f);

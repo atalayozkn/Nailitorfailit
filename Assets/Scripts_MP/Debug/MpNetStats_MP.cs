@@ -6,8 +6,8 @@ using UnityEngine.InputSystem;
 
 // On-screen network and performance tools for multiplayer tests.
 //   Always (while connected): your ping in ms, top right.
-//   F2: network graph   - ping (RTT) history, jitter, KB/s in and out, messages per second, per-player ping table.
-//   F3: analysis graph  - frame time history with spikes highlighted, FPS, 1 % low, GC activity, list of recent spikes.
+//   F1 (with the console): network graph   - ping (RTT) history, jitter, KB/s in and out, messages per second, per-player ping table.
+//   F1 (with the console): analysis graph  - frame time history with spikes highlighted, FPS, 1 % low, GC activity, list of recent spikes.
 // Drawn with IMGUI so it works in builds without any scene setup.
 public class MpNetStats_MP : MonoBehaviour
 {
@@ -94,7 +94,7 @@ public class MpNetStats_MP : MonoBehaviour
         instance = null;
     }
 
-    // Traffic per message type (RPC / command / spawn / sync...) so the heavy senders show up in the F2 panel.
+    // Traffic per message type (RPC / command / spawn / sync...) so the heavy senders show up in the network panel.
     private readonly Dictionary<string, long> outByType = new Dictionary<string, long>();
     private readonly Dictionary<string, long> inByType = new Dictionary<string, long>();
     private string topOut = "", topIn = "";
@@ -146,8 +146,7 @@ public class MpNetStats_MP : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        if (keyboard.f2Key.wasPressedThisFrame) showNet = !showNet;
-        if (keyboard.f3Key.wasPressedThisFrame) showPerf = !showPerf;
+        // No keys of its own: the panels open and close together with the debug console (F1).
     }
 
     private void SampleFrame()
@@ -212,7 +211,8 @@ public class MpNetStats_MP : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!NetworkClient.isConnected && !showNet && !showPerf) return;
+        showNet = showPerf = DebugConsoleMP.Instance != null && DebugConsoleMP.Instance.IsVisible;
+        if (!NetworkClient.isConnected && !showNet) return;
 
         float scale = Mathf.Max(1f, Screen.height / 900f);
         GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -267,11 +267,11 @@ public class MpNetStats_MP : MonoBehaviour
     {
         const float w = 420f;
         const float graphH = 48f;
-        float x = width - w - 10f;
+        float x = 10f;
         float h = 30f + (graphH + 26f) * 3f + 82f;
 
         FillRect(new Rect(x, y, w, h), new Color(0f, 0f, 0f, 0.7f));
-        GUI.Label(new Rect(x + 8f, y + 4f, w, 20f), "NETWORK  (F2)", title);
+        GUI.Label(new Rect(x + 8f, y + 4f, w, 20f), "NETWORK", title);
 
         float cy = y + 28f;
         float rttNow = netCount > 0 ? rtt[(netHead - 1 + NetSamples) % NetSamples] : 0f;
@@ -302,11 +302,11 @@ public class MpNetStats_MP : MonoBehaviour
     {
         const float w = 420f;
         const float graphH = 70f;
-        float x = width - w - 10f;
+        float x = 10f;
         float h = 30f + graphH + 26f + 44f + SpikeLog * 16f + 10f;
 
         FillRect(new Rect(x, y, w, h), new Color(0f, 0f, 0f, 0.7f));
-        GUI.Label(new Rect(x + 8f, y + 4f, w, 20f), "ANALYSIS  (F3)", title);
+        GUI.Label(new Rect(x + 8f, y + 4f, w, 20f), "ANALYSIS", title);
 
         float avg = Average(frameMs, frameCount);
         float fps = avg > 0.01f ? 1000f / avg : 0f;
@@ -323,7 +323,7 @@ public class MpNetStats_MP : MonoBehaviour
         cy += graphH + 26f;
 
         GUI.Label(new Rect(x + 8f, cy, w - 16f, 54f),
-            $"GC collections/s: <b>{gcPerSecond}</b>   managed heap: {GC.GetTotalMemory(false) / 1048576f:0.0} MB\n" +
+            $"GC collections/s: <b>{gcPerSecond}</b>   managed heap: {GC.GetTotalMemory(false) / 1048576f:0.0} MB   carry heals: <b>{CarriableObject_MP.HealCount}</b>\n" +
             $"scene objects: {FindObjectsCount()}   spikes (>{SpikeMs:0} ms) below, newest last:", label);
         cy += 40f;
 

@@ -210,6 +210,8 @@ public class LobbyNetworkManager : NetworkManager
     {
         base.Update();
 
+        // F8 (local KCP transport) exists in the editor and in development builds only, never in a release build.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
 
         if (keyboard == null) return;
@@ -219,6 +221,7 @@ public class LobbyNetworkManager : NetworkManager
 
         InteractionDebug.Log($"[DEV] forced local KCP transport {(ForceDevTransport ? "ON" : "OFF")} " +
                              "(use this for ParrelSync / two local instances).");
+#endif
     }
 
     // Raised when hosting / joining fails before a connection exists, so the lobby screens can re-enable
@@ -682,8 +685,38 @@ public class LobbyNetworkManager : NetworkManager
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
+        // Read before base: base destroys the player object, and with it the name we want to announce.
+        string leftName = null;
+        bool wasHostConnection = conn != null && conn == NetworkServer.localConnection;
+
+        if (conn != null && conn.identity != null)
+        {
+            LobbyPlayer leaving = conn.identity.GetComponent<LobbyPlayer>();
+            if (leaving != null && !string.IsNullOrEmpty(leaving.playerName)) leftName = leaving.playerName;
+        }
+
         base.OnServerDisconnect(conn);
-        Debug.LogWarning($"[NET] Connection closed: connId={conn.connectionId}");
+        Debug.LogWarning($"[NET] Connection closed: connId={(conn != null ? conn.connectionId : 0)}");
+
+        // The host leaving is not a "someone left" event: every client gets "the host left" and the lobby is gone.
+        if (!wasHostConnection && !string.IsNullOrEmpty(leftName))
+            ServerLobbyNotice($"{leftName} left the lobby.");
+    }
+
+    // One line to everybody still in the lobby, through the host's own LobbyPlayer (the only object that is on the
+    // host and has a connection to broadcast on).
+    public static void ServerLobbyNotice(string message)
+    {
+        if (!NetworkServer.active || string.IsNullOrEmpty(message)) return;
+
+        foreach (LobbyPlayer player in FindObjectsByType<LobbyPlayer>(FindObjectsSortMode.None))
+        {
+            if (player == null || !player.isHost) continue;
+
+            Debug.Log($"[LOBBY] notice: {message}");
+            player.RpcLobbyNotice(message);
+            return;
+        }
     }
 
     public override void OnClientConnect()
@@ -745,9 +778,11 @@ public class LobbyNetworkManager : NetworkManager
         if (!connectedOnce)
         {
             Debug.Log("[LOBBY] Could not connect; staying on the Join screen.");
+            string authFailure = LobbyAuthenticator.LastFailure;
+            LobbyAuthenticator.LastFailure = null;
             ReportSetupFailure(Application.internetReachability == NetworkReachability.NotReachable
                 ? MpNotice_MP.Texts.NoInternet
-                : "Could not connect to the host. They may have closed the lobby, or one of you is offline.", true);
+                : authFailure ?? "Could not connect to the host. They may have closed the lobby, or one of you is offline.", true);
             return;
         }
 
@@ -758,12 +793,17 @@ public class LobbyNetworkManager : NetworkManager
         if (!leftByChoice)
         {
             string notice;
-            if (Application.internetReachability == NetworkReachability.NotReachable || cause == CloseCause.LocalLinkLost)
+            string kicked = LobbyPlayer.ClientKickReason;
+            LobbyPlayer.ClientKickReason = null;
+
+            if (!string.IsNullOrEmpty(kicked))
+                notice = kicked;
+            else if (Application.internetReachability == NetworkReachability.NotReachable || cause == CloseCause.LocalLinkLost)
                 notice = "Disconnected: your internet connection was lost.";
             else if (cause == CloseCause.HostUnresponsive)
                 notice = "Timeout: the host stopped responding (it may have frozen, crashed or lost its connection).";
             else if (cause == CloseCause.HostClosed)
-                notice = "The host closed the session.";
+                notice = "You were removed from the lobby because the host left.";
             else
                 notice = "Disconnected from the host (connection lost or the host left).";
 

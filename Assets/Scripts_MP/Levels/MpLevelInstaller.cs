@@ -112,6 +112,7 @@ public class MpLevelInstaller : MonoBehaviour
         BindAuthoredPlayerHud(scene);
 
         MpEndUiSuppressor_MP.Suppress(scene);
+        HideReplacedLamps(scene);
 
         addedThisScene.Clear();
         InteractableLayers = 0;
@@ -145,6 +146,57 @@ public class MpLevelInstaller : MonoBehaviour
         }
 
         return installed;
+    }
+
+    // The warm style stands an upright "StyleTest_LampPost" on every old bent-arm street lamp and switches the old
+    // mesh's renderer off. Switch it off again on every machine, so no player can end up looking at both lamps.
+    private static void HideReplacedLamps(Scene scene)
+    {
+        int hidden = 0;
+        MpLampKeeper_MP keeper = MpLampKeeper_MP.For(scene);
+
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (!t.name.StartsWith("StyleTest_LampPost") || t.parent == null) continue;
+
+                var old = t.parent.GetComponent<MeshRenderer>();
+                if (old == null) continue;
+
+                // A LODGroup switches its renderers on and off by distance, which brought the old lamp back when the
+                // player walked up to it. Take the old mesh out of the group's levels.
+                LODGroup group = old.GetComponentInParent<LODGroup>();
+                if (group != null)
+                {
+                    LOD[] lods = group.GetLODs();
+                    bool changed = false;
+
+                    for (int i = 0; i < lods.Length; i++)
+                    {
+                        var kept = new System.Collections.Generic.List<Renderer>();
+                        foreach (Renderer r in lods[i].renderers)
+                        {
+                            if (r == old) { changed = true; continue; }
+                            kept.Add(r);
+                        }
+
+                        lods[i].renderers = kept.ToArray();
+                    }
+
+                    if (changed) { group.SetLODs(lods); hidden++; }
+                }
+
+                keeper.Add(old);
+
+                if (!old.enabled) continue;
+
+                old.enabled = false;
+                hidden++;
+            }
+        }
+
+        if (hidden > 0) Debug.Log($"[MP-INSTALL] '{scene.name}': {hidden} old street lamp mesh(es) were visible next to the new post - hidden.");
     }
 
     private sealed class CachedNavMesh

@@ -26,7 +26,15 @@ public class MpDeathZone_MP : MonoBehaviour
 
     private void Update()
     {
-        if (!NetworkServer.active) return;
+        // The fall happens on the client that owns the player (position is owner-authoritative), so the server copy
+        // never went below PlayerKillHeight and a client that fell just kept falling. Clients check their own player and
+        // ask the server to kill it through the normal death path (drop, 5 s, respawn).
+        if (!NetworkServer.active)
+        {
+            CheckLocalPlayer();
+            return;
+        }
+
         if (Time.unscaledTime < nextCheckAt) return;
         nextCheckAt = Time.unscaledTime + CheckInterval;
 
@@ -46,6 +54,22 @@ public class MpDeathZone_MP : MonoBehaviour
 
             InteractionDebug.Log($"[MP-DEATHZONE] '{item.name}' fell out of the map and was removed.");
             NetworkServer.Destroy(item.gameObject);
+        }
+    }
+
+    private void CheckLocalPlayer()
+    {
+        if (Time.unscaledTime < nextCheckAt) return;
+        nextCheckAt = Time.unscaledTime + CheckInterval;
+
+        foreach (PlayerNetwork_MP player in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+        {
+            if (player == null || !player.isOwned || player.isDead) continue;
+            if (player.transform.position.y >= PlayerKillHeight) continue;
+
+            InteractionDebug.Log($"[MP-DEATHZONE] local player fell out of the map " +
+                                 $"(y={player.transform.position.y:0}) - asking the server.");
+            player.RequestDeath();
         }
     }
 }

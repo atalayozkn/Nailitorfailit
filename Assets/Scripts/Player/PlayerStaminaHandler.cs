@@ -67,6 +67,9 @@ namespace PlayerScripts
         {
             if (isEnergised) return;
 
+            // Multiplayer: stamina is spent twice as fast.
+            if (NetworkModeHelper.IsNetworked) value *= 2f;
+
             if (chargeRoutine != null)
             {
                 StopCoroutine(chargeRoutine);

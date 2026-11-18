@@ -183,6 +183,63 @@ public class LobbyPlayer : NetworkBehaviour
         playerName = real;
     }
 
+    // Set on the kicked client by TargetKicked, read once by LobbyNetworkManager.OnClientDisconnect so the reason is
+    // not overwritten by the generic "Disconnected from the host" line.
+    public static string ClientKickReason;
+
+    // Lobby-wide one-liner ("X left the lobby"). Sent from the host's own LobbyPlayer, which every client observes.
+    [ClientRpc]
+    public void RpcLobbyNotice(string message) => MpNotice_MP.Info(message);
+
+    // Host-only: the kick icon next to a client's name goes through here.
+    [Command]
+    public void CmdKick(uint targetNetId)
+    {
+        if (!isHost)
+        {
+            Debug.LogWarning($"[LOBBY] kick refused: '{playerName}' is not the host.");
+            return;
+        }
+
+        if (!NetworkServer.spawned.TryGetValue(targetNetId, out NetworkIdentity identity) || identity == null)
+        {
+            Debug.LogWarning($"[LOBBY] kick failed: no object with netId={targetNetId}.");
+            return;
+        }
+
+        LobbyPlayer target = identity.GetComponent<LobbyPlayer>();
+        if (target == null || target == this || target.isHost) return;
+
+        target.ServerKick("You were kicked from the lobby by the host.");
+    }
+
+    [Server]
+    public void ServerKick(string reason)
+    {
+        Debug.LogWarning($"[LOBBY] '{playerName}' kicked by the host (connId=" +
+                         $"{(connectionToClient != null ? connectionToClient.connectionId : -1)}).");
+
+        TargetKicked(reason);
+        StartCoroutine(KickDisconnect());
+    }
+
+    [TargetRpc]
+    void TargetKicked(string reason)
+    {
+        ClientKickReason = reason;
+        MpNotice_MP.Error(reason);
+        Debug.LogWarning($"[LOBBY] Kicked: {reason}");
+    }
+
+    // The target RPC has to be on the wire before the connection closes, so the disconnect waits one beat.
+    [Server]
+    private IEnumerator KickDisconnect()
+    {
+        yield return new WaitForSecondsRealtime(0.5f);
+        NetworkConnectionToClient conn = connectionToClient;
+        if (conn != null) conn.Disconnect();
+    }
+
     [Command]
     public void CmdSetReady(bool ready)
     {

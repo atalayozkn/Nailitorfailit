@@ -13,9 +13,106 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 {
     private Constructor constructor;
 
+    // The truth about this constructor, kept in synced data and not only in one-shot RPCs: a lost or early RPC (tile not
+    // found yet, message before the scene was ready) used to leave a client with a tile that still showed its progress
+    // bar while the host had finished it. Clients re-apply this every second, so they always converge.
+    //   builtType: -1 = nothing placed yet, else the CarriableType that was placed.
+    //   tileProgress: tile path -> progress 0..1 (1 = finished).
+    [SyncVar] private int builtType = -1;
+    private readonly SyncDictionary<string, float> tileProgress = new SyncDictionary<string, float>();
+    private float nextTileSyncAt;
+
     private void Awake()
     {
         constructor = GetComponent<Constructor>();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        nextTileSyncAt = 0f;
+    }
+
+    // ---- tile health: decided on the server, applied identically everywhere ----
+    // A tile's health used to be local to each machine: a client that walked over it with a heavy item, or stood in a
+    // fire, broke the tile ON ITS OWN MACHINE only (it reset to its blueprint and showed the progress bar again) while
+    // the host still had it built. Now every hit goes to the server, which applies it and sends the same hit to the
+    // other machines, so all copies lose health in step and die together.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterDamageRouter()
+    {
+        ObjectHealth.NetworkDamageRouter = RouteDamage;
+    }
+
+    private static readonly Dictionary<string, float> lastDamageAt = new Dictionary<string, float>();
+    private const float DamageDedupeSeconds = 0.25f;
+
+    private static bool RouteDamage(ObjectHealth health)
+    {
+        if (health == null) return false;
+
+        Constructor_MP owner = health.GetComponentInParent<Constructor_MP>();
+        if (owner == null || owner.netIdentity == null) return false; // not part of a networked constructor: local, as before
+
+        string path = owner.PathTo(health.transform);
+        if (path.Length == 0) path = "."; // the health component sits on the constructor itself
+
+        if (owner.isServer) owner.ServerDamage(path);
+        else if (NetworkClient.active) owner.CmdDamage(path);
+
+        return true;
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdDamage(string path) => ServerDamage(path);
+
+    [Server]
+    private void ServerDamage(string path)
+    {
+        // Every machine that sees the same fire or the same pressure asks: one hit counts once.
+        string key = netId + "|" + path;
+        if (lastDamageAt.TryGetValue(key, out float last) && Time.unscaledTime - last < DamageDedupeSeconds) return;
+        lastDamageAt[key] = Time.unscaledTime;
+
+        ObjectHealth health = FindHealth(path);
+        if (health == null) return;
+
+        health.DealDamageLocal();
+        RpcDamage(path);
+    }
+
+    [ClientRpc]
+    private void RpcDamage(string path)
+    {
+        if (isServer) return;
+
+        ObjectHealth health = FindHealth(path);
+        if (health != null) health.DealDamageLocal();
+    }
+
+    private ObjectHealth FindHealth(string path)
+    {
+        Transform target = FindByPath(path);
+        return target != null ? target.GetComponent<ObjectHealth>() : null;
+    }
+
+    private void Update()
+    {
+        if (isServer || !isClient || constructor == null) return;
+        if (Time.unscaledTime < nextTileSyncAt) return;
+        nextTileSyncAt = Time.unscaledTime + 1f;
+
+        // Placed on the host, not here yet.
+        if (builtType >= 0) MpSharedCompat.ApplyConstructorBuiltOnClient(constructor, (CarriableType)builtType);
+
+        foreach (KeyValuePair<string, float> entry in tileProgress)
+        {
+            Component tile = FindTile(entry.Key);
+            if (tile == null) continue;
+
+            if (entry.Value >= 1f) MpSharedCompat.ApplyTileCompletedOnClient((MonoBehaviour)tile);
+            else ApplyTileProgress(tile, entry.Value);
+        }
     }
 
     public void RequestInteract(NetworkIdentity requester, Component interactable)
@@ -60,6 +157,8 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
             bool completed = DispatchTileServerInteract(tile, requester);
             float after = GetTileProgress(tile);
 
+            tileProgress[tilePath] = completed ? 1f : after;
+
             if (completed) RpcApplyTileCompleted(tilePath);
             else if (!Mathf.Approximately(before, after)) RpcApplyTileProgress(tilePath, after);
             return;
@@ -75,7 +174,11 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
 
         constructor.ServerInteract(requester);
 
-        if (constructor.IsBuilt()) RpcApplyBuilt((int)constructor.GetAcceptedType());
+        if (constructor.IsBuilt())
+        {
+            builtType = (int)constructor.GetAcceptedType();
+            RpcApplyBuilt(builtType);
+        }
     }
 
     [ClientRpc]
@@ -115,27 +218,22 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
     private static bool IsTile(Component interactable) =>
         interactable is WoodTile || interactable is GlassTile || interactable is BrickTile;
 
+    // "index:name/index:name": the index finds the child fast, the name guards against hierarchies that differ between
+    // machines (objects added at runtime on one side only shifted the indices and addressed the wrong tile).
     private string PathTo(Transform target)
     {
-        var indices = new List<int>();
+        var parts = new List<string>();
 
-        for (Transform t = target; t != null && t != transform; t = t.parent) indices.Add(t.GetSiblingIndex());
+        for (Transform t = target; t != null && t != transform; t = t.parent) parts.Add(t.GetSiblingIndex() + ":" + t.name);
 
-        indices.Reverse();
-        return string.Join("/", indices);
+        parts.Reverse();
+        return string.Join("/", parts);
     }
 
     private Component FindTile(string tilePath)
     {
-        if (string.IsNullOrEmpty(tilePath)) return null;
-
-        Transform current = transform;
-
-        foreach (string part in tilePath.Split('/'))
-        {
-            if (!int.TryParse(part, out int index) || index < 0 || index >= current.childCount) return null;
-            current = current.GetChild(index);
-        }
+        Transform current = FindByPath(tilePath);
+        if (current == null) return null;
 
         foreach (Component candidate in current.GetComponents<Component>())
         {
@@ -143,6 +241,45 @@ public class Constructor_MP : NetworkBehaviour, IInteractionNetworkProxy
         }
 
         return null;
+    }
+
+    private Transform FindByPath(string tilePath)
+    {
+        if (string.IsNullOrEmpty(tilePath)) return null;
+        if (tilePath == ".") return transform;
+
+        Transform current = transform;
+
+        foreach (string part in tilePath.Split('/'))
+        {
+            int colon = part.IndexOf(':');
+            string indexText = colon >= 0 ? part.Substring(0, colon) : part;
+            string childName = colon >= 0 ? part.Substring(colon + 1) : null;
+
+            if (!int.TryParse(indexText, out int index)) return null;
+
+            Transform next = null;
+            if (index >= 0 && index < current.childCount)
+            {
+                Transform byIndex = current.GetChild(index);
+                if (childName == null || byIndex.name == childName) next = byIndex;
+            }
+
+            if (next == null && childName != null)
+            {
+                for (int i = 0; i < current.childCount; i++)
+                {
+                    if (current.GetChild(i).name != childName) continue;
+                    next = current.GetChild(i);
+                    break;
+                }
+            }
+
+            if (next == null) return null;
+            current = next;
+        }
+
+        return current;
     }
 
     // Returns true when this interaction finished the tile.

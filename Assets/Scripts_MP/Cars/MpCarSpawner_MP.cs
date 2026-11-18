@@ -116,6 +116,7 @@ public class MpCarSpawner_MP : MonoBehaviour
     {
         boundScene = scene;
         lanes.Clear();
+        roadSlabs = null;
         liveCars.Clear();
 
         DisableAuthoredTraffic(scene);
@@ -251,11 +252,51 @@ public class MpCarSpawner_MP : MonoBehaviour
         if (lanes.Count == 0) CollectFallbackLanes(scene);
 
         SeparateOppositeLanes();
+
+        // The lane markers are raised lazily, on the first spawn: at bind time the scene is not fully there yet and the
+        // road lookup came back empty, which also poisoned the cache the seating uses.
+        lanesAligned = false;
     }
 
     private void SeparateOppositeLanes()
     {
         laneShift.Clear();
+
+        // Level 4 was authored with its two E-W spawn points on the same centre line (0.07 m apart): the level has one
+        // line of traffic there. Pulling them 2.8 m apart invented a second line the level does not have.
+        if (boundScene.IsValid() && boundScene.name == "Level_04")
+        {
+            // One line of traffic means cars from ONE direction: of two opposite spawn points on that line, only the
+            // first is used (both used to send cars head-on along the same lane).
+            for (int i = lanes.Count - 1; i >= 0; i--)
+            {
+                Transform a = lanes[i];
+                if (a == null) continue;
+
+                Vector3 forward = a.forward; forward.y = 0f; forward.Normalize();
+                Vector3 right = new Vector3(forward.z, 0f, -forward.x);
+
+                for (int j = 0; j < i; j++)
+                {
+                    Transform b = lanes[j];
+                    if (b == null) continue;
+
+                    Vector3 other = b.forward; other.y = 0f; other.Normalize();
+                    if (Vector3.Dot(other, forward) > -0.9f) continue; // not the opposite direction
+
+                    Vector3 delta = b.position - a.position; delta.y = 0f;
+                    if (Mathf.Abs(Vector3.Dot(delta, right)) > 1.5f) continue; // a different line
+
+                    lanes.RemoveAt(i);
+                    if (logActions) InteractionDebug.Log($"[MP-CAR] Level_04: lane '{a.name}' dropped (opposite direction on the same line as '{b.name}').");
+                    break;
+                }
+            }
+
+            if (logActions)
+                InteractionDebug.Log($"[MP-CAR] Level_04 keeps its single centre line, one direction ({lanes.Count} lane(s)).");
+            return;
+        }
 
         foreach (Transform a in lanes)
         {
@@ -296,13 +337,20 @@ public class MpCarSpawner_MP : MonoBehaviour
 
         PruneLiveCars();
 
-        if (!ignoreLimit && liveCars.Count >= Mathf.Max(1, maxConcurrent)) return null;
+        if (!ignoreLimit && liveCars.Count >= MaxCars) return null;
+
+        if (!lanesAligned)
+        {
+            lanesAligned = true;
+            AlignLanesToRoad();
+        }
 
         Transform lane = PickFreeLane();
         if (lane == null) return null;
 
         Vector3 shift = ShiftOf(lane);
         GameObject car = Instantiate(prefab, lane.position + shift, lane.rotation);
+        SeatOnRoad(car, lane);
 
         // Road start = this lane's spawn point, road end = where the road leaves the map (found from the lane on the
         // opposite side). The car is removed when it passes the end instead of after a fixed time mid-road.
@@ -319,6 +367,123 @@ public class MpCarSpawner_MP : MonoBehaviour
                                  $"netId={car.GetComponent<NetworkIdentity>()?.netId} (total {spawnedTotal})");
 
         return car;
+    }
+
+    // The road meshes have no collider and sit a little above the ground collider, while the lane transforms were placed
+    // for the ground and at a different height in every level: wheels ended up inside the asphalt (Level 3) or floating
+    // (Level 1). So a spawned car is put on the road MESH found under its lane: its lowest mesh point = the road top.
+    private const float WheelClearance = 0.015f;
+    private MeshRenderer[] roadSlabs;
+    private bool lanesAligned;
+
+    // Road top under a point, seen from a reference height (the lane marker or the car).
+    // The highest slab at or just above the reference wins, so a water decal lying on the asphalt does not count as the
+    // road; anything further above than 0.6 m is treated as a roof/canopy and ignored. If nothing is in that band the
+    // highest slab within +/-3 m is used, which covers level markers that sit on the ground instead of on the road.
+    private bool TryRoadTop(Vector3 point, float referenceY, out float top)
+    {
+        top = float.MinValue;
+
+        float insideTop = float.MinValue;
+        float nearTop = float.MinValue;
+        float nearDistance = 15f;
+
+        foreach (MeshRenderer slab in roadSlabs)
+        {
+            if (slab == null) continue;
+
+            Bounds b = slab.bounds;
+
+            float delta = b.max.y - referenceY;
+            if (delta < -3f || delta > 3f) continue;      // another floor / a roof
+
+            bool usable = delta <= 0.6f;                  // at the reference or just above it
+
+            float dx = Mathf.Max(b.min.x - point.x, 0f, point.x - b.max.x);
+            float dz = Mathf.Max(b.min.z - point.z, 0f, point.z - b.max.z);
+            float distance = Mathf.Sqrt(dx * dx + dz * dz);
+
+            if (distance <= 0.001f)
+            {
+                // Straight under the point: the highest usable slab wins (a water decal on the asphalt is lower).
+                if (usable && (insideTop == float.MinValue || delta > insideTop - referenceY)) insideTop = b.max.y;
+                continue;
+            }
+
+            // Level 5 and the versus scene put their lane markers past the end of the road mesh, so nothing is straight
+            // under them. Fall back to the nearest road surface around the point instead of leaving the car in the air.
+            if (distance < nearDistance)
+            {
+                nearDistance = distance;
+                nearTop = b.max.y;
+            }
+        }
+
+        top = insideTop != float.MinValue ? insideTop : nearTop;
+        return top != float.MinValue;
+    }
+
+    // The lane markers are also the SP car controller's waypoints. A marker sitting on the ground (Level 5, versus)
+    // pulled every car back down to y = 0 after the spawn had been corrected, so the markers are raised to the road
+    // themselves once per scene; the controller then drives on the road and the spawn continues to match it.
+    private void AlignLanesToRoad()
+    {
+        if (roadSlabs == null || roadSlabs.Length == 0) roadSlabs = FindRoadSlabs();
+
+        int moved = 0;
+
+        foreach (Transform lane in lanes)
+        {
+            if (lane == null) continue;
+
+            Vector3 p = lane.position;
+            if (!TryRoadTop(p, p.y, out float top)) continue;
+            if (Mathf.Abs(top - p.y) < 0.01f) continue;
+
+            lane.position = new Vector3(p.x, top, p.z);
+            moved++;
+
+            if (logActions)
+                InteractionDebug.Log($"[MP-CAR] lane '{lane.name}' raised {p.y:0.00} -> {top:0.00} (road top).");
+        }
+
+        if (moved > 0 && logActions)
+            InteractionDebug.Log($"[MP-CAR] {moved} lane marker(s) aligned to the road surface.");
+    }
+
+    private void SeatOnRoad(GameObject car, Transform lane)
+    {
+        if (roadSlabs == null || roadSlabs.Length == 0) roadSlabs = FindRoadSlabs();
+
+        if (!TryRoadTop(car.transform.position, lane.position.y, out float roadTop)) return;
+
+        float bottom = float.MaxValue;
+        foreach (Renderer r in car.GetComponentsInChildren<Renderer>())
+        {
+            if (!(r is MeshRenderer) && !(r is SkinnedMeshRenderer)) continue;
+            bottom = Mathf.Min(bottom, r.bounds.min.y);
+        }
+
+        if (bottom == float.MaxValue) return;
+
+        car.transform.position += Vector3.up * (roadTop + WheelClearance - bottom);
+    }
+
+    // Flat, wide mesh slabs of the level: road, pavement, ground tiles.
+    private static MeshRenderer[] FindRoadSlabs()
+    {
+        var found = new System.Collections.Generic.List<MeshRenderer>();
+
+        foreach (MeshRenderer r in FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+        {
+            Bounds b = r.bounds;
+            if (b.size.y > 1.5f || b.size.x < 3f || b.size.z < 3f) continue;
+            if (r.GetComponentInParent<NetworkIdentity>() != null) continue;
+
+            found.Add(r);
+        }
+
+        return found.ToArray();
     }
 
     // The lane facing the opposite way on (almost) the same line marks the far end of the road.
@@ -345,6 +510,11 @@ public class MpCarSpawner_MP : MonoBehaviour
 
         return bestLateral < float.MaxValue;
     }
+
+    // Versus: at most 2 cars at a time, one per lane (the two-lane road had four cars on it). Co-op keeps the inspector value.
+    private int MaxCars => boundScene.IsValid() && boundScene.name.IndexOf("Versus", System.StringComparison.OrdinalIgnoreCase) >= 0
+        ? Mathf.Max(1, Mathf.Min(maxConcurrent, 2))
+        : Mathf.Max(1, maxConcurrent);
 
     private Transform PickFreeLane()
     {

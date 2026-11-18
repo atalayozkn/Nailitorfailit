@@ -75,7 +75,7 @@ public class GlassTile : MonoBehaviour, IInteractable, ILookAtInfo, IWettable, I
 
     public void OnWaterContact()
     {
-        if (!NetworkModeHelper.IsNetworked) return; // Singleplayer water comes from particle hits, see TileWetness.
+        return; // Water comes from the spray particles hitting the tile (TileWetness), in singleplayer and multiplayer alike.
         if (!isFloorTile) return;
         puddleHelper.StartPuddleProcess();
     }

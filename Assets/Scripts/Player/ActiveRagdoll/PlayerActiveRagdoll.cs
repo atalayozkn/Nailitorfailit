@@ -290,6 +290,16 @@ public class PlayerActiveRagdoll : MonoBehaviour
                 break;
         }
 
+        // The root was moved away from the body (a respawn after a car hit, a teleport): the physical bodies would
+        // drag across the map for a while with the limbs stretched behind them. Put them straight onto the animation.
+        // Network sessions only, the singleplayer ragdoll keeps its exact behaviour.
+        if (NetworkModeHelper.IsNetworked && mode == Mode.Active && !snapToAnimation)
+        {
+            Vector3 away = hips.rb.position - rootRb.position;
+            away.y = 0f;
+            if (away.sqrMagnitude > 9f) snapToAnimation = true;
+        }
+
         bool toolUse = sm.currentPlayerState == PlayerStates.Using || sm.currentPlayerState == PlayerStates.Interacting;
         armBoost = Mathf.MoveTowards(armBoost, toolUse && mode == Mode.Active ? toolArmStiffness : 1f, 8f * dt);
 

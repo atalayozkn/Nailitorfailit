@@ -254,17 +254,13 @@ public class DogStateMachine : StateMachine_Dog
         return GetNeededDrops().Count > 0;
     }
     // The drops an unbuilt slot in this level still accepts. Includes slots in hidden wall structures, which are needed later.
-    // Multiplayer keeps its full list.
     private List<GameObject> GetNeededDrops()
     {
         List<GameObject> needed = new();
         if (possibleDrops == null) return needed;
-        if (NetworkModeHelper.IsNetworked)
-        {
-            needed.AddRange(possibleDrops);
-            return needed;
-        }
-
+        // Multiplayer used to keep the full list (every material in every level). It now follows the level like
+        // singleplayer: only the materials an unbuilt slot of THIS level still accepts. The constructors' built state
+        // is mirrored on every machine (Constructor_MP), so each dog owner sees the same slots.
         HashSet<CarriableType> neededTypes = new();
         foreach (Constructor constructor in FindObjectsByType<Constructor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {

@@ -102,19 +102,65 @@ public class MpLevelCatalog : MonoBehaviour
         return levels[Mathf.Clamp(index, 0, Count - 1)];
     }
 
+    // The versus test scene belongs to Versus Mode only: a normal lobby must not be able to pick it, and stepping
+    // through the list skips it.
+    public static bool IsVersusScene(string scenePath) =>
+        !string.IsNullOrEmpty(scenePath) &&
+        scenePath.IndexOf("Versus", System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+    public bool IsSelectable(int index)
+    {
+        if (Count == 0) return false;
+
+        // Co-op lobby: Level 1-5 only. Versus lobby: the versus level only.
+        MpLevelEntry entry = levels[Mathf.Clamp(index, 0, Count - 1)];
+        return IsVersusScene(entry.scenePath) == VersusMenuButton.VersusLobbyPending;
+    }
+
     public void Select(int index)
     {
         if (Count == 0) return;
-        selectedIndex = Mathf.Clamp(index, 0, Count - 1);
+
+        int wanted = Mathf.Clamp(index, 0, Count - 1);
+        if (!IsSelectable(wanted))
+        {
+            Debug.Log($"[MP-LEVELS] '{levels[wanted].displayName}' is Versus Mode only; selection ignored.");
+            return;
+        }
+
+        selectedIndex = wanted;
     }
 
-    public void SelectNext() => Select(SelectedIndex + 1);
+    public void SelectNext() => SelectStep(+1);
 
-    public void SelectPrevious() => Select(SelectedIndex - 1);
+    public void SelectPrevious() => SelectStep(-1);
+
+    private void SelectStep(int step)
+    {
+        if (Count == 0) return;
+
+        for (int i = SelectedIndex + step; i >= 0 && i < Count; i += step)
+        {
+            if (!IsSelectable(i)) continue;
+
+            selectedIndex = i;
+            return;
+        }
+    }
 
     public string SelectedLabel()
     {
         if (Count == 0) return "no levels in catalog";
-        return $"{Selected.displayName}  ({SelectedIndex + 1}/{Count})";
+        // Count only the levels this lobby can pick (co-op: Level 1-5, versus: the versus level).
+        int total = 0, position = 0;
+        for (int i = 0; i < Count; i++)
+        {
+            if (!IsSelectable(i)) continue;
+
+            total++;
+            if (i <= SelectedIndex) position = total;
+        }
+
+        return $"{Selected.displayName}  ({Mathf.Max(1, position)}/{Mathf.Max(1, total)})";
     }
 }

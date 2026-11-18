@@ -75,6 +75,18 @@ public static class MpAuthoredHud_MP
         count += Rebind(dog.GetComponent<FavorController>(), Slider(authored, "Slider_Favor"), "maxFavor", "currentFavor");
         count += Rebind(dog.GetComponent<DogEnergyController>(), Slider(authored, "Slider_Energy"), "maxEnergy", "currentEnergy");
 
+        // The bowl bar (bowl icon) shows how much food is left in the food bowl. The bowl is part of the player's own
+        // package and writes to the slider of the package's hidden DogUI, so the authored bar never moved when the dog
+        // ate or the bowl was filled.
+        FoodBowl bowl = localPackage.GetComponentInChildren<FoodBowl>(true);
+        Slider bowlSlider = Slider(authored, "Slider_Bowl");
+        if (bowl != null && bowlSlider != null && Set(bowl, "slider", bowlSlider))
+        {
+            bowlSlider.maxValue = Read(bowl, "maxFood", bowlSlider.maxValue);
+            bowlSlider.value = Read(bowl, "currentFood", bowlSlider.value);
+            count++;
+        }
+
         DogMoodUI mood = authored.GetComponentInChildren<DogMoodUI>(true);
         if (mood != null && Set(mood, "stateMachine", dog))
         {

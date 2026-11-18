@@ -89,6 +89,63 @@ public class PlayerListEntryUI : MonoBehaviour
 
     private UnityEngine.UI.Image crownIcon;
 
+    private UnityEngine.UI.Button kickButton;
+    private const float KickPixels = 30f;
+
+    // Host only: a red boot (kick) icon at the end of another player's row. It sits in the same icon chain as the crown and the
+    // mic (right after the name, advancing x), so it never lands on top of either of them.
+    public void SetKickable(bool show, System.Action onKick)
+    {
+        if (!show)
+        {
+            if (kickButton != null) kickButton.gameObject.SetActive(false);
+            return;
+        }
+
+        if (kickButton == null) kickButton = BuildKickButton();
+
+        kickButton.onClick.RemoveAllListeners();
+        if (onKick != null) kickButton.onClick.AddListener(() => onKick());
+
+        kickButton.gameObject.SetActive(true);
+        PlaceIcons();
+    }
+
+    private UnityEngine.UI.Button BuildKickButton()
+    {
+        var go = new GameObject("KickButton", typeof(RectTransform));
+        go.transform.SetParent(transform, false);
+
+        RectTransform rect = (RectTransform)go.transform;
+        rect.sizeDelta = new Vector2(KickPixels, KickPixels);
+        rect.anchorMin = new Vector2(0f, 0.5f);
+        rect.anchorMax = new Vector2(0f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        var background = go.AddComponent<UnityEngine.UI.Image>();
+        background.color = new Color(0.86f, 0.24f, 0.24f, 0.95f);
+
+        var button = go.AddComponent<UnityEngine.UI.Button>();
+        button.targetGraphic = background;
+
+        var iconGo = new GameObject("KickIcon", typeof(RectTransform));
+        iconGo.transform.SetParent(go.transform, false);
+
+        var iconRect = (RectTransform)iconGo.transform;
+        iconRect.anchorMin = Vector2.zero;
+        iconRect.anchorMax = Vector2.one;
+        iconRect.offsetMin = Vector2.zero;
+        iconRect.offsetMax = Vector2.zero;
+
+        var icon = iconGo.AddComponent<UnityEngine.UI.Image>();
+        icon.sprite = MpMicIcon_MP.Kick;
+        icon.preserveAspect = true;
+        icon.color = Color.white;
+        icon.raycastTarget = false;
+
+        return button;
+    }
+
     private UnityEngine.UI.Image CreateIcon(string iconName)
     {
         var go = new GameObject(iconName, typeof(RectTransform));
@@ -170,6 +227,10 @@ public class PlayerListEntryUI : MonoBehaviour
         else if (crownIcon != null) crownIcon.gameObject.SetActive(false);
 
         ((RectTransform)micIcon.transform).anchoredPosition = new Vector2(x + IconPixels * 0.5f, 0f);
+        x += IconPixels + IconGap;
+
+        if (kickButton != null && kickButton.gameObject.activeSelf)
+            ((RectTransform)kickButton.transform).anchoredPosition = new Vector2(x + KickPixels * 0.5f, 0f);
     }
 
     public void UpdateColor(bool isHost, bool isReady)

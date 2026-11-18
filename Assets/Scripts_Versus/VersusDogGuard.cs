@@ -13,6 +13,11 @@ public class VersusDogGuard : MonoBehaviour
     private static readonly MethodInfo PatrolBoundariesSetter =
         typeof(DogStateMachine).GetProperty("patrolBoundaries", BindingFlags.Instance | BindingFlags.Public)?.GetSetMethod(true);
 
+    // The dog attacked too often: its cooldown after a hit is doubled, and a dog that merely lost its target waits 4 s
+    // (was 1 s) before charging again.
+    private const float CooldownScale = 2f;
+    private const float MinRetryDelay = 4f;
+
     private DogStateMachine dog;
     private VersusMatch match;
     private VersusMatch.DogSettings settings;
@@ -136,7 +141,7 @@ public class VersusDogGuard : MonoBehaviour
     // The dog rammed the thief: the server stuns them like a car hit (which also knocks the item out of their hands).
     public void Ram(PlayerNetwork_MP thief)
     {
-        nextChargeAt = Time.time + settings.chargeCooldown;
+        nextChargeAt = Time.time + settings.chargeCooldown * CooldownScale;
         dog.onBark?.Invoke();
         match.ReportDogHit(thief.netId);
     }
@@ -152,7 +157,7 @@ public class VersusDogGuard : MonoBehaviour
     public void OnStateExit()
     {
         busy = false;
-        if (Time.time + 1f > nextChargeAt) nextChargeAt = Time.time + 1f;
+        if (Time.time + MinRetryDelay > nextChargeAt) nextChargeAt = Time.time + MinRetryDelay;
     }
 }
 

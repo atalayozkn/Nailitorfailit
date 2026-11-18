@@ -364,7 +364,11 @@ public static class MpSharedCompat
         if (!carriable.isRawMaterial) return;
 
         CarriableType[] accepted = GetField<CarriableType[]>(cutter, "acceptedCarriableTypes");
+        if (carriable.carriableType == CarriableType.Glass) return; // glass is never cut
         if (accepted == null || !Array.Exists(accepted, type => type == carriable.carriableType)) return;
+
+        // Code first: the hand lets go, then the item is placed (visual).
+        handler.ClearCarriedObject();
 
         SetField(cutter, "placedObject", carriable);
         carriable.SetOccupied();
@@ -384,8 +388,6 @@ public static class MpSharedCompat
                 carriable.transform.localRotation = Quaternion.identity;
             }
         }
-
-        handler.ClearCarriedObject();
 
         InteractionProcessHelper processHelper = GetField<InteractionProcessHelper>(cutter, "processHelper");
         if (processHelper != null) processHelper.ResetProcess();
@@ -547,6 +549,18 @@ public static class MpSharedCompat
             }
         }
 
+        // Glass no longer goes through the cutter in multiplayer, so the mixer is where it becomes a glass tile.
+        if (matchedFormula == null)
+        {
+            foreach (MixerFormulaSO formula in GlassFormulas())
+            {
+                if (formula == null || !formula.Matches(storedObjects)) continue;
+
+                matchedFormula = formula;
+                break;
+            }
+        }
+
         if (matchedFormula == null)
         {
             MpVfxNet_MP.ServerPlay(VfxId.MixerFail, MixerPoint(mixer, "placementTransform"));
@@ -562,6 +576,40 @@ public static class MpSharedCompat
         DestroyStoredItems(mixer, requester);
         SpawnMixerProduct(mixer, matchedFormula);
         MpVfxNet_MP.ServerPlay(VfxId.MixerDone, MixerPoint(mixer, "productSpawnPoint"));
+    }
+
+    // Multiplayer-only recipes: two glass + cement (like the brick tile) make the processed glass the
+    // scene's cutter would have made. Built once from the cutter's own product prefab.
+    private static MixerFormulaSO[] glassFormulas;
+    private static GameObject glassFormulasProduct;
+
+    private static MixerFormulaSO[] GlassFormulas()
+    {
+        GameObject product = null;
+        foreach (Cutter cutter in UnityEngine.Object.FindObjectsByType<Cutter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            product = GetField<GameObject>(cutter, "glassProduct");
+            if (product != null) break;
+        }
+
+        if (product == null) return System.Array.Empty<MixerFormulaSO>();
+        if (glassFormulas != null && glassFormulasProduct == product && glassFormulas[0] != null) return glassFormulas;
+
+        glassFormulas = new[]
+        {
+            MakeFormula(product, CarriableType.Glass, CarriableType.Glass, CarriableType.Cement),
+        };
+        glassFormulasProduct = product;
+        return glassFormulas;
+    }
+
+    private static MixerFormulaSO MakeFormula(GameObject product, params CarriableType[] ingredients)
+    {
+        MixerFormulaSO formula = ScriptableObject.CreateInstance<MixerFormulaSO>();
+        formula.name = "MP_GlassFormula";
+        SetField(formula, "ingredients", ingredients);
+        SetField(formula, "productPrefab", product);
+        return formula;
     }
 
     private static Vector3 MixerPoint(Mixer mixer, string field)
@@ -586,11 +634,36 @@ public static class MpSharedCompat
     private static void MixerDisplayItem(Mixer mixer, int index, CarriableType type)
     {
         MixerUIHelper uiHelper = GetField<MixerUIHelper>(mixer, "uiHelper");
-        if (uiHelper != null) uiHelper.DisplayItem(index, type);
+        if (uiHelper != null)
+        {
+            uiHelper.DisplayItem(index, type);
+            MpMixerIcons_MP.Show(uiHelper, index, type); // a picture of the material instead of its letter
+        }
+
+        // The letters are a local UI: tell every other machine's copy of the mixer too.
+        Mixer_MP net = mixer.GetComponentInParent<Mixer_MP>();
+        if (net != null && NetworkServer.active) net.ServerSetSlot(index, type);
+    }
+
+    private static void MixerClearDisplay(Mixer mixer)
+    {
+        MixerUIHelper uiHelper = GetField<MixerUIHelper>(mixer, "uiHelper");
+        if (uiHelper != null)
+        {
+            uiHelper.ClearImages();
+            MpMixerIcons_MP.ClearAll(uiHelper);
+        }
+
+        Mixer_MP net = mixer.GetComponentInParent<Mixer_MP>();
+        if (net != null && NetworkServer.active) net.ServerClearSlots();
     }
 
     private static void PlaceInMixer(Mixer mixer, CarriableObject_SP carriable, NetworkIdentity requester)
     {
+        // Code first: the hand lets go, then the item moves into the mixer (visual).
+        PlayerInteractionHandler handler = GetField<PlayerInteractionHandler>(mixer, "interactionHandler");
+        if (handler != null) handler.ClearCarriedObject();
+
         Transform placementTransform = GetField<Transform>(mixer, "placementTransform");
 
         if (placementTransform != null)
@@ -608,9 +681,6 @@ public static class MpSharedCompat
         {
             carriable.SetVisualsSafe(false);
         }
-
-        PlayerInteractionHandler handler = GetField<PlayerInteractionHandler>(mixer, "interactionHandler");
-        if (handler != null) handler.ClearCarriedObject();
     }
 
     private static void DestroyStoredItems(Mixer mixer, NetworkIdentity requester)
@@ -623,8 +693,7 @@ public static class MpSharedCompat
         SetField(mixer, "secondCarriable", null);
         SetField(mixer, "thirdCarriable", null);
 
-        MixerUIHelper uiHelper = GetField<MixerUIHelper>(mixer, "uiHelper");
-        if (uiHelper != null) uiHelper.ClearImages();
+        MixerClearDisplay(mixer);
     }
 
     private static void DestroyMixerCarriable(CarriableObject_SP carriable, NetworkIdentity requester)
@@ -642,25 +711,37 @@ public static class MpSharedCompat
 
     private static void DropStoredItems(Mixer mixer, NetworkIdentity requester)
     {
-        DropMixerCarriable(GetField<CarriableObject_SP>(mixer, "firstCarriable"));
-        DropMixerCarriable(GetField<CarriableObject_SP>(mixer, "secondCarriable"));
-        DropMixerCarriable(GetField<CarriableObject_SP>(mixer, "thirdCarriable"));
+        DropMixerCarriable(mixer, GetField<CarriableObject_SP>(mixer, "firstCarriable"), 0);
+        DropMixerCarriable(mixer, GetField<CarriableObject_SP>(mixer, "secondCarriable"), 1);
+        DropMixerCarriable(mixer, GetField<CarriableObject_SP>(mixer, "thirdCarriable"), 2);
 
         SetField(mixer, "firstCarriable", null);
         SetField(mixer, "secondCarriable", null);
         SetField(mixer, "thirdCarriable", null);
 
-        MixerUIHelper uiHelper = GetField<MixerUIHelper>(mixer, "uiHelper");
-        if (uiHelper != null) uiHelper.ClearImages();
+        MixerClearDisplay(mixer);
     }
 
-    private static void DropMixerCarriable(CarriableObject_SP carriable)
+    // Rejected ingredients are thrown out to the front of the mixer (same side as the product), fanned out a bit,
+    // instead of falling where the drum is.
+    private static void DropMixerCarriable(Mixer mixer, CarriableObject_SP carriable, int index)
     {
         if (carriable == null) return;
 
         if (NetworkServer.active && carriable.TryGetComponent(out CarriableObject_MP networked))
         {
-            networked.ServerDropFromStation();
+            Transform spawnPoint = GetField<Transform>(mixer, "productSpawnPoint");
+            Vector3 front = -mixer.transform.forward;
+            Vector3 position = spawnPoint != null ? spawnPoint.position : mixer.transform.position + front * 1.5f + Vector3.up;
+
+            Vector3 outward = position - mixer.transform.position;
+            outward.y = 0f;
+            outward = outward.sqrMagnitude > 0.01f ? outward.normalized : front;
+
+            Vector3 side = Vector3.Cross(Vector3.up, outward);
+            position += side * ((index - 1) * 0.55f) + Vector3.up * (0.1f * index);
+
+            networked.ServerDropFromStationAt(position, outward * MixerProductPush);
             return;
         }
 
@@ -730,6 +811,10 @@ public static class MpSharedCompat
         if (GetField(constructor, "isBuilt", false)) return;
         SetField(constructor, "isBuilt", true);
 
+        // Code first: the carried material is used up (hand cleared, server consumed) before the built tile shows.
+        CarriableObject_SP carriable = handler.GetCurrentCarriable();
+        if (carriable != null) ConsumeNetworked(carriable, requester);
+
         if (GetField(constructor, "isTutorial", false))
         {
             TutorialObjective objective = GetField<TutorialObjective>(constructor, "objective");
@@ -761,9 +846,6 @@ public static class MpSharedCompat
 
         Collider interactionCollider = GetField<Collider>(constructor, "interactionCollider");
         if (interactionCollider != null) interactionCollider.enabled = false;
-
-        CarriableObject_SP carriable = handler.GetCurrentCarriable();
-        if (carriable != null) ConsumeNetworked(carriable, requester);
 
         constructor.Invoke("NotifyInteractionHandler", 0.05f);
     }
@@ -857,11 +939,13 @@ public static class MpSharedCompat
     public static void ApplyTileCompletedOnClient(MonoBehaviour tile)
     {
         if (tile == null) return;
-        if (GetField(tile, "currentPhase", ConstructionPhase.Construction) == ConstructionPhase.Complete) return;
 
-        // The completing hit only sends "completed", never progress 1.0: the bar stayed on screen on clients.
+        // Idempotent: it is also called every second from the synced tile state. The bar is hidden every time (a tile
+        // that was switched off and on again restarts its process helper and shows the bar at 0 again).
         InteractionProcessHelper finished = GetField<InteractionProcessHelper>(tile, "processHelper");
         if (finished != null) finished.ApplyNetworkedProgress(1f);
+
+        if (GetField(tile, "currentPhase", ConstructionPhase.Construction) == ConstructionPhase.Complete) return;
 
         SetField(tile, "currentPhase", ConstructionPhase.Complete);
         tile.gameObject.layer = LayerMask.NameToLayer("Ground");

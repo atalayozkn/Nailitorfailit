@@ -38,6 +38,15 @@ public class EnergyDrink_SP : MonoBehaviour, IUsable
         VfxManager.Play(VfxId.PlayerDrink, playerStamina.transform.position);
         playerStamina.GainEnergy(energyRestoreAmount);
         onUseEvent?.Invoke();
+        // Multiplayer: the server removes the can for everybody (a local OnConsume left the server's copy alive, and
+        // every machine kept "healing" a can its drinker had already thrown away).
+        if (NetworkModeHelper.IsNetworked && carriableObject.TryGetComponent(out CarriableObject_MP networked))
+        {
+            PlayerInteractionHandler holderHandler = GetComponentInParent<PlayerInteractionHandler>();
+            networked.RequestConsume(holderHandler != null ? holderHandler.GetComponentInParent<Mirror.NetworkIdentity>() : null);
+            return;
+        }
+
         carriableObject.OnConsume();
     }
 

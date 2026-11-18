@@ -50,7 +50,8 @@ public class PlayerUseState : PlayerBaseState
             }
             else if (currentUseType == UseType.FireExtinguisher)
             {
-                stateMachine.onUseFE?.Invoke();
+                // Multiplayer plays the extinguisher sound when the spray starts (FireExtinguisher.BeginSpray).
+                if (!NetworkModeHelper.IsNetworked) stateMachine.onUseFE?.Invoke();
             }
             stateMachine.ForceUpdateIdle();
             return;

@@ -295,6 +295,8 @@ public class DogSync_MP : NetworkBehaviour
             return;
         }
 
+        KeepAnimationInSync();
+
         float rate = 1f / Mathf.Max(0.05f, sendInterval + 0.05f);
         dogTrack.Apply(dog, extraBufferSeconds, maxBufferSeconds, rate);
 
@@ -360,6 +362,33 @@ public class DogSync_MP : NetworkBehaviour
     {
         if (isServer || isOwned) return;
         mailTrack.Buffer(netMailLocalPosition, netMailLocalRotation);
+    }
+
+    // The animation hashes arrive only when they CHANGE. The mail man is switched on later than his first hash was
+    // sent (he starts inactive), so a machine that had not seen him yet stood him in a T-pose until the next change.
+    // Every frame: if what the animator plays differs from the synced state, play the synced one.
+    private float nextAnimCheckAt;
+
+    private void KeepAnimationInSync()
+    {
+        if (Time.unscaledTime < nextAnimCheckAt) return;
+        nextAnimCheckAt = Time.unscaledTime + 0.25f;
+
+        FollowSynced(dogAnimator, netDogAnimStateHash);
+
+        if (mailManAnimator == null && mailMan != null) mailManAnimator = FindAnimator(mailMan);
+        FollowSynced(mailManAnimator, netMailAnimStateHash);
+    }
+
+    private static void FollowSynced(Animator animator, int stateHash)
+    {
+        if (animator == null || stateHash == 0) return;
+        if (animator.runtimeAnimatorController == null || !animator.isActiveAndEnabled || !animator.isInitialized) return;
+        if (animator.layerCount == 0 || animator.IsInTransition(0)) return;
+        if (animator.GetCurrentAnimatorStateInfo(0).fullPathHash == stateHash) return;
+        if (!animator.HasState(0, stateHash)) return;
+
+        animator.CrossFadeInFixedTime(stateHash, 0.15f);
     }
 
     private void OnDogAnimChanged(int oldHash, int newHash)

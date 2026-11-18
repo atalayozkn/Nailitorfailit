@@ -306,6 +306,21 @@ public class SteamLobbyManager : MonoBehaviour
         cb?.Invoke();
     }
 
+    // False when the overlay cannot be shown (no lobby, overlay disabled, game not launched through Steam).
+    public bool TryOpenInviteOverlay()
+    {
+        if (!SteamOnline || CurrentLobby == CSteamID.Nil) return false;
+
+        if (!SteamUtils.IsOverlayEnabled())
+        {
+            Debug.LogWarning("[STEAM-LOBBY] Steam overlay is disabled or not injected (start the game through Steam, D3D11 is the safest).");
+            return false;
+        }
+
+        SteamFriends.ActivateGameOverlayInviteDialog(CurrentLobby);
+        return true;
+    }
+
     public void OpenInviteOverlay()
     {
         if (!SteamOnline)
@@ -435,7 +450,7 @@ public class SteamLobbyManager : MonoBehaviour
         switch ((EChatRoomEnterResponse)response)
         {
             case EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist: return "lobi artik yok";
-            case EChatRoomEnterResponse.k_EChatRoomEnterResponseFull: return "lobi dolu";
+            case EChatRoomEnterResponse.k_EChatRoomEnterResponseFull: return "the lobby is full";
             case EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned: return "bu lobiden yasaklandiniz";
             case EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited: return "hesap kisitli (Steam'de harcama yapilmamis)";
             case EChatRoomEnterResponse.k_EChatRoomEnterResponseRatelimitExceeded: return "cok fazla deneme, biraz bekleyin";
