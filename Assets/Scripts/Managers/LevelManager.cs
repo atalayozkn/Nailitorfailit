@@ -4,7 +4,10 @@ using UnityEngine.Events;
 public class LevelManager : MonoBehaviour
 {
 
-    [SerializeField] private int roomCurrencyReward = 10;
+    [Tooltip("Dollars paid per tile when a room is finished (times the safety margin).")]
+    [SerializeField] private int roomCurrencyReward = 5;
+    [Tooltip("Extra on top of the calculated room pay, so untested levels can not run out of money. 1.15 = 15% more.")]
+    [SerializeField] private float rewardSafetyMargin = 1.15f;
     [SerializeField] private int roomTimeReward = 90;
 
     [SerializeField] private UnityEvent onVictoryEvent;
@@ -30,19 +33,24 @@ public class LevelManager : MonoBehaviour
 
         if (roomControllers.Length == 0) Debug.LogWarning("LevelManager: No RoomController found in scene, level can not be won.");
     }
-    public void CompleteRoom()
+    public void CompleteRoom(int tileCount)
     {
         if (isLevelEnded) return;
 
         remainingRoomCount--;
 
-        CurrencyManager.Instance?.GainCurrency(roomCurrencyReward); //Currency Reward
+        // Bigger rooms pay more, so finishing the small rooms first pays for the oil the big one needs.
+        CurrencyManager.Instance?.GainCurrency(GetRoomReward(tileCount));
         GameTimeManager.Instance.IncreaseRoundTime(roomTimeReward); //Time Reward
 
         if (remainingRoomCount <= 0)
         {
             Victory();
         }
+    }
+    public int GetRoomReward(int tileCount)
+    {
+        return Mathf.RoundToInt(roomCurrencyReward * tileCount * rewardSafetyMargin);
     }
     private void OnDestroy()
     {
@@ -79,11 +87,7 @@ public class LevelManager : MonoBehaviour
         EndLevel();
         onVictoryEvent?.Invoke();
         VfxManager.Play(VfxId.Victory, FindFirstObjectByType<PlayerStateMachine>().transform.position);
-        int score = ScoreManager.Instance.CalculateScore();
-
-        //Probably delay will be added here
-
-        CurrencyManager.Instance?.GainCurrency(score);
+        // Money only lives inside a level, so the score is no longer paid out as currency.
 
         // Save progress right away so the next level is unlocked even if the player quits from here.
         GameManager.Instance?.CompleteCurrentLevel();

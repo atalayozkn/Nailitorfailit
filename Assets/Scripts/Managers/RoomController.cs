@@ -18,7 +18,9 @@ public class RoomController : MonoBehaviour
         totalRequiredItemCount = availableTiles.Length;
         UpdateUI();
         wallStructure.SetActive(false);
+        outline = RoomOutline.Create(this, availableTiles);
     }
+    private RoomOutline outline;
     public void IncreaseCounter()
     {
         completedItemCount++;
@@ -36,6 +38,7 @@ public class RoomController : MonoBehaviour
         {
             isCompleted = true;
             wallStructure.SetActive(true);
+            if (outline != null) outline.Hide();
             VfxManager.Play(VfxId.RoomFinished, transform.position);
             NotifyLevelManager();
         }
@@ -51,7 +54,7 @@ public class RoomController : MonoBehaviour
         if (isTutorial) objective.CompleteCondition();
         else
         {
-            LevelManager.Instance.CompleteRoom();
+            LevelManager.Instance.CompleteRoom(totalRequiredItemCount);
         }
     }
     public bool IsCompleted()

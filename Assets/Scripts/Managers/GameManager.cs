@@ -5,7 +5,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Settings")]
-    [SerializeField] private int startCurrencyAmount = 250;
+    [SerializeField] private int startCurrencyAmount = 35;
     [SerializeField] private int firstLevelIndex = 1;
 
     private GamePhase currentPhase = GamePhase.Menu;

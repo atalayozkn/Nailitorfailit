@@ -45,9 +45,9 @@ public class Shop : MonoBehaviour, IInteractable, ILookAtInfo
     public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
     {
         string name = LookAtText.ItemName(objectPrefab, "Shop");
-        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.CanAfford(cost)) return LookAtInfo.Blocked(name, $"Not enough money ({cost})");
+        if (CurrencyManager.Instance != null && !CurrencyManager.Instance.CanAfford(cost)) return LookAtInfo.Blocked(name, $"Not enough money (${cost})");
         if (carried != null) return LookAtInfo.Blocked(name, "Your hands are full");
-        return LookAtInfo.Ready(name, $"Buy ({cost})");
+        return LookAtInfo.Ready(name, $"Buy (${cost})");
     }
     public void OnHoverOn()
     {

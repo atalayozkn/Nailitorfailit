@@ -12,7 +12,7 @@ public class CurrencyText : MonoBehaviour
 
     public void UpdateUI(int amount)
     {
-        textComponent.text = amount.ToString();
+        textComponent.text = "$" + amount;
     }
     public void Gain()
     {
