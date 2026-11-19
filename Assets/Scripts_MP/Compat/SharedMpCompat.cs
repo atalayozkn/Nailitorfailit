@@ -15,7 +15,7 @@ public static class MpSharedCompat
     private const BindingFlags AnyInstance =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-    private const string MultiplayerMenuScene = "MenuScene_MP";
+    private const string MultiplayerMenuScene = "MenuScene";
 
     private sealed class TimerState
     {

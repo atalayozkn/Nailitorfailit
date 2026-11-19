@@ -107,6 +107,8 @@ public class MpTestDriver_MP : MonoBehaviour
         {
             case "ready": return Ready();
             case "start": return StartMatch();
+            case "mpmenu": return Once(() => MpMenuProbe(c.Length > 1 ? c[1] : "state"));
+            case "char": return Once(() => Lobby()?.CmdSetCharacter((int)F(c, 1, 1)));
             case "color": return Once(() => Lobby()?.CmdSetColor((int)F(c, 1, 2)));
             case "chat": return Once(() => ChatNetwork.Instance?.Send(string.Join(" ", c.Skip(1))));
             case "rtt": return Rtt(F(c, 1, 5f));
@@ -1316,11 +1318,43 @@ public class MpTestDriver_MP : MonoBehaviour
 
     // ------------------------------------------------------------------ report
 
+    // mpmenu state|multiplayer|back: drives the merged menu like a click and logs which panels are on.
+    private static void MpMenuProbe(string what)
+    {
+        UnityEngine.UI.Button Find(string name, string parent)
+        {
+            foreach (var b in FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (b.name == name && (parent == null || (b.transform.parent != null && b.transform.parent.name == parent))) return b;
+            return null;
+        }
+
+        if (what == "multiplayer") Find("Button_Multiplayer", "Buttons_MainMenu")?.onClick.Invoke();
+        else if (what == "back") Find("Button_BackToMenu", "Buttons_AfterMultiplayer")?.onClick.Invoke();
+
+        string State(string n)
+        {
+            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+                if (t.name == n && t.gameObject.scene.IsValid()) return t.gameObject.activeInHierarchy ? "ON" : "off";
+            return "missing";
+        }
+
+        Log($"mpmenu {what}: MainMenu={State("MainMenu")} MainMenu_MP={State("MainMenu_MP")} Buttons_AfterMultiplayer={State("Buttons_AfterMultiplayer")} Panel_Lobby={State("Panel_Lobby")} " +
+            $"server={NetworkServer.active} client={NetworkClient.active} scene={SceneManager.GetActiveScene().name}");
+    }
+
+    private static string BodyMesh(PlayerNetwork_MP p)
+    {
+        foreach (SkinnedMeshRenderer r in p.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            if (r.transform.parent != null && r.transform.parent.name == "Character_01_Male")
+                return r.sharedMesh != null ? r.sharedMesh.name + "/" + r.sharedMesh.vertexCount : "nomesh";
+        return "nobody";
+    }
+
     private void Report()
     {
         string scene = SceneManager.GetActiveScene().name;
         Log($"--- report ({(NetworkServer.active ? "HOST" : "CLIENT")}) scene={scene} connected={NetworkClient.isConnected} " +
-            $"rtt={NetworkTime.rtt * 1000:0}ms spawned={NetworkClient.spawned.Count} errors={errors} exceptions={exceptions}");
+            $"rtt={NetworkTime.rtt * 1000:0}ms spawned={NetworkClient.spawned.Count} errors={errors} exceptions={exceptions} t={Time.time:F1} frame={Time.frameCount} ts={Time.timeScale}");
 
         foreach (PlayerNetwork_MP p in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
         {
@@ -1331,7 +1365,7 @@ public class MpTestDriver_MP : MonoBehaviour
                 $"carrying={(h != null && h.IsCarrying())} item={(h?.GetCurrentCarriable() ? h.GetCurrentCarriable().name : "-")} " +
                 $"inHand=[{string.Join(",", (h != null && h.GetCarryTransform() != null ? h.GetCarryTransform().GetComponentsInChildren<CarriableObject_MP>(true) : new CarriableObject_MP[0]).Select(x => x.name + "#" + x.netId))}] " +
                 $"slots=[{string.Join(",", Enumerable.Range(0, PlayerInteractionHandler.InventorySize).Select(i => h != null && h.GetSlotItem(i) != null ? h.GetSlotItem(i).name.Replace("Carriable_", "").Replace("(Clone)", "") : "-"))}] active={(h != null ? h.GetActiveSlot() : -1)} " +
-                $"name='{p.playerName}' color={p.colorIndex} micMuted={p.micMuted} dead={p.isDead} pos={p.transform.position}");
+                $"name='{p.playerName}' color={p.colorIndex} char={p.characterIndex} body={BodyMesh(p)} micMuted={p.micMuted} dead={p.isDead} pos={p.transform.position}");
         }
 
         // Dog bars: which controller runs, its value, and which HUD slider it writes to (and what that shows).

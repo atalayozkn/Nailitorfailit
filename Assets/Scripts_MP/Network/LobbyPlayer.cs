@@ -17,6 +17,10 @@ public class LobbyPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(OnColorChanged))]
     public int colorIndex;
 
+    // Body model picked in the lobby (index into MpCharacterSet_MP). Unlike colours, several players may share one.
+    [SyncVar]
+    public int characterIndex;
+
     [SyncVar(hook = nameof(OnSteamIdChanged))]
     public ulong steamId;
 
@@ -40,6 +44,9 @@ public class LobbyPlayer : NetworkBehaviour
 
         colorIndex = remembered >= 0 && !takenByOther ? ClampColor(remembered) : manager.NextFreeColorIndex(this);
         LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
+
+        int rememberedCharacter = LobbyNetworkManager.RememberedCharacter(connectionToClient);
+        characterIndex = rememberedCharacter >= 0 ? MpCharacterSet_MP.Clamp(rememberedCharacter) : 0;
     }
 
     void OnSteamIdChanged(ulong oldVal, ulong newVal) => ApplyRowData();
@@ -173,6 +180,14 @@ public class LobbyPlayer : NetworkBehaviour
         colorIndex = wanted;
         LobbyNetworkManager.RememberColor(connectionToClient, colorIndex);
         InteractionDebug.Log($"[LOBBY] colour for '{playerName}' -> {colorIndex}");
+    }
+
+    [Command]
+    public void CmdSetCharacter(int index)
+    {
+        characterIndex = MpCharacterSet_MP.Clamp(index);
+        LobbyNetworkManager.RememberCharacter(connectionToClient, characterIndex);
+        InteractionDebug.Log($"[LOBBY] character for '{playerName}' -> {characterIndex} ({MpCharacterSet_MP.NameOf(characterIndex)})");
     }
 
     [Server]

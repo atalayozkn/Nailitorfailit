@@ -47,7 +47,7 @@ public class LobbyNetworkManager : NetworkManager
 
     public const string SpawnMarkerName = "SpawnPoint";
 
-    public const string MenuSceneName = "MenuScene_MP";
+    public const string MenuSceneName = "MenuScene"; // the multiplayer menu is a panel of the main menu scene now
 
     bool gameStarted = false;
 
@@ -606,12 +606,12 @@ public class LobbyNetworkManager : NetworkManager
         if (gameNet != null)
         {
             if (conn.identity != null && conn.identity.TryGetComponent(out LobbyPlayer lobbyPlayer))
-                gameNet.ServerSetIdentity(lobbyPlayer.playerName, lobbyPlayer.colorIndex, lobbyPlayer.micMuted, lobbyPlayer.isHost);
+                gameNet.ServerSetIdentity(lobbyPlayer.playerName, lobbyPlayer.colorIndex, lobbyPlayer.micMuted, lobbyPlayer.isHost, lobbyPlayer.characterIndex);
             else if (conn.identity != null && conn.identity.GetComponentInChildren<PlayerScripts.PlayerNetwork_MP>(true) is PlayerScripts.PlayerNetwork_MP previous)
                 // Play again / next level: the previous game player carries the identity.
-                gameNet.ServerSetIdentity(previous.playerName, previous.colorIndex, previous.micMuted, previous.isHostPlayer);
+                gameNet.ServerSetIdentity(previous.playerName, previous.colorIndex, previous.micMuted, previous.isHostPlayer, previous.characterIndex);
             else
-                gameNet.ServerSetIdentity(conn.authenticationData as string, ColorFor(conn), false, conn == NetworkServer.localConnection);
+                gameNet.ServerSetIdentity(conn.authenticationData as string, ColorFor(conn), false, conn == NetworkServer.localConnection, Mathf.Max(0, RememberedCharacter(conn)));
         }
 
         bool replacedOld = conn.identity != null;
@@ -905,7 +905,7 @@ public class LobbyNetworkManager : NetworkManager
 
     #region End of match (host only)
 
-    private const string LobbyScenePath = "Assets/Scenes_MP/MenuScene_MP.unity";
+    private const string LobbyScenePath = "Assets/Scenes/MenuScene.unity";
 
     // The level after the selected one, if it is a regular level (the catalog also lists the versus test scene).
     public bool HasNextLevel
@@ -1001,6 +1001,17 @@ public class LobbyNetworkManager : NetworkManager
     {
         if (conn != null) colorByConnection[conn.connectionId] = index;
     }
+
+    // Body model per connection, kept like the colour.
+    private static readonly Dictionary<int, int> characterByConnection = new Dictionary<int, int>();
+
+    public static void RememberCharacter(NetworkConnectionToClient conn, int index)
+    {
+        if (conn != null) characterByConnection[conn.connectionId] = index;
+    }
+
+    public static int RememberedCharacter(NetworkConnectionToClient conn) =>
+        conn != null && characterByConnection.TryGetValue(conn.connectionId, out int index) ? index : -1;
 
     public static int RememberedColor(NetworkConnectionToClient conn) =>
         conn != null && colorByConnection.TryGetValue(conn.connectionId, out int index) ? index : -1;

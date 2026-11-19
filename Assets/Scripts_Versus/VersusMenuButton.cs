@@ -6,19 +6,20 @@ using UnityEngine.UI;
 
 public class VersusMenuButton : MonoBehaviour
 {
-    private const string MenuScene = "MenuScene_MP";
+    private const string MenuScene = "MenuScene";
     private const string PanelName = "Buttons_AfterMultiplayer";
     private const string CreateName = "Button_Create";
     private const string JoinName = "Button_Join";
     private const string BackName = "Button_BackToMenu";
     private const string VersusScenePath = "Assets/Scenes/VersusMultiplayer_Test.unity";
-    private const string Label = "Versus Mode";
-    private const string CoopLabel = "Co-op";
+    private const string Label = "Confrontation";
+    private const string CoopLabel = "Together";
     private const int VersusPlayers = 2;
     // Five rows (tutorial, create, join, versus + the quit icon) do not fit at the old 200 spacing: the quit icon fell off
     // the screen and sat on the social icons. The four big rows are squeezed together (buttons scaled to match).
     private const float RowSpacing = 200f;
     private const float RowStep = 152f;
+    private const float MainMenuScale = 0.105f; // Button_SinglePlayer / Multiplayer scale in MenuScene
 
     public static bool VersusLobbyPending { get; private set; }
 
@@ -43,7 +44,7 @@ public class VersusMenuButton : MonoBehaviour
         Transform panel = FindInScene(scene, PanelName);
         if (panel == null)
         {
-            Debug.LogWarning($"[VERSUS] '{PanelName}' not found in {MenuScene}; Versus Mode button not added.");
+            Debug.LogWarning($"[VERSUS] '{PanelName}' not found in {MenuScene}; Confrontation button not added.");
             return;
         }
 
@@ -52,7 +53,7 @@ public class VersusMenuButton : MonoBehaviour
         Transform create = panel.Find(CreateName);
         if (create == null)
         {
-            Debug.LogWarning($"[VERSUS] '{CreateName}' not found under {PanelName}; Versus Mode button not added.");
+            Debug.LogWarning($"[VERSUS] '{CreateName}' not found under {PanelName}; Confrontation button not added.");
             return;
         }
 
@@ -71,7 +72,7 @@ public class VersusMenuButton : MonoBehaviour
         AddClear(create);
         AddClear(panel.Find(JoinName));
 
-        Debug.Log("[VERSUS] Versus Mode button added to the multiplayer menu.");
+        Debug.Log("[VERSUS] Confrontation button added to the multiplayer menu.");
     }
 
     private static void LayoutRows(Transform panel, Transform create, Transform versus, Transform back)
@@ -81,16 +82,15 @@ public class VersusMenuButton : MonoBehaviour
         if (tutorial == null || create == null || join == null) return;
 
         // The quit button is the fifth row of the same stack.
-        // Order: Tutorial, Co-op, Versus Mode, Join, Exit.
+        // Order: Tutorial, Together, Confrontation, Join, Exit.
         Transform[] rows = back != null ? new[] { tutorial, create, versus, join, back } : new[] { tutorial, create, versus, join };
         float top = ((RectTransform)tutorial).anchoredPosition.y;
-        float shrink = RowStep / RowSpacing;
 
         for (int i = 0; i < rows.Length; i++)
         {
             var rect = (RectTransform)rows[i];
             rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, top - i * RowStep);
-            rect.localScale *= shrink;
+            rect.localScale = Vector3.one * MainMenuScale; // same size as the main menu buttons
         }
 
         versus.SetSiblingIndex(back != null ? back.GetSiblingIndex() : versus.GetSiblingIndex());
@@ -116,6 +116,9 @@ public class VersusMenuButton : MonoBehaviour
         foreach (TMP_Text text in button.GetComponentsInChildren<TMP_Text>(true))
         {
             text.text = label;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 60f;
+            text.fontSizeMax = text.fontSize;
             found = true;
         }
 

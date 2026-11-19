@@ -99,16 +99,16 @@ public class MpVoiceUI_MP : MonoBehaviour
         }
         else if (voice.Muted)
         {
-            statusText.text = "MIKROFON: KAPALI";
+            statusText.text = "MICROPHONE: MUTED";
             statusText.color = new Color(0.92f, 0.35f, 0.35f, 1f);
         }
         else
         {
-            statusText.text = "MIKROFON: HAZIR";
+            statusText.text = "MICROPHONE: READY";
             statusText.color = new Color(0.95f, 0.85f, 0.30f, 1f);
         }
 
-        hintText.text = voice.SteamAvailable ? "V bas-konus  |  M sustur" : "Steam yok - ses kapali";
+        hintText.text = voice.SteamAvailable ? "V push-to-talk  |  M mute" : "Steam unavailable - voice off";
 
         FillRows();
     }
@@ -170,8 +170,8 @@ public class MpVoiceUI_MP : MonoBehaviour
         backdrop.color = new Color(0.05f, 0.06f, 0.08f, 0.72f);
         backdrop.raycastTarget = false;
 
-        statusText = NewText(panel, "Status", new Vector2(0f, 52f), 20f, "MIKROFON: HAZIR");
-        hintText = NewText(panel, "Hint", new Vector2(0f, 26f), 16f, "V bas-konus  |  M sustur");
+        statusText = NewText(panel, "Status", new Vector2(0f, 52f), 20f, "MICROPHONE: READY");
+        hintText = NewText(panel, "Hint", new Vector2(0f, 26f), 16f, "V push-to-talk  |  M mute");
         hintText.color = new Color(0.75f, 0.75f, 0.75f, 1f);
 
         for (int i = 0; i < MaxRows; i++)

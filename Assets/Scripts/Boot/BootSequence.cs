@@ -18,8 +18,12 @@ public class BootSequence : MonoBehaviour
     [Header("Loading screen")]
     [SerializeField] private Texture background;
     [SerializeField] private Color backgroundTint = Color.white;
+    [Tooltip("Visible part of the background picture (min x/y, max x/y in 0-1 texture fractions). Cuts the transparent / wavy sky border of the artwork.")]
+    [SerializeField] private Vector4 backgroundCrop = new Vector4(0.052f, 0.018f, 0.923f, 0.960f);
     [Tooltip("Layer between the background and the centre picture (19.png: folder + clipboard). Fitted to the screen, aspect kept.")]
     [SerializeField] private Texture overlay;
+    [Tooltip("Visible part of the overlay picture (min x/y, max x/y in 0-1 texture fractions). The rest (transparent margin) is cropped away so the folder fills the screen. Default = whole picture.")]
+    [SerializeField] private Vector4 overlayCrop = new Vector4(0.1359f, 0.0264f, 0.8934f, 0.9250f);
     [Tooltip("Where the centre picture sits ON the overlay, in the overlay picture's fractions (min x/y, max x/y). " +
              "Default = the white paper of the clipboard in 19.png (paper: x 0.557-0.852, y 0.103-0.848).")]
     [SerializeField] private Vector4 centerAreaOnOverlay = new Vector4(0.58f, 0.15f, 0.83f, 0.80f);
@@ -142,7 +146,9 @@ public class BootSequence : MonoBehaviour
             // Fill the screen without stretching (crops the edges on other aspect ratios).
             var envelope = bg.gameObject.AddComponent<AspectRatioFitter>();
             envelope.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-            envelope.aspectRatio = background.height > 0 ? (float)background.width / background.height : 16f / 9f;
+            float bw = Mathf.Max(0.05f, backgroundCrop.z - backgroundCrop.x), bh = Mathf.Max(0.05f, backgroundCrop.w - backgroundCrop.y);
+            bg.uvRect = new Rect(backgroundCrop.x, backgroundCrop.y, bw, bh);
+            envelope.aspectRatio = background.height > 0 ? (background.width * bw) / (background.height * bh) : 16f / 9f;
         }
 
         // Middle layer: background -> overlay -> centre picture.
@@ -150,17 +156,21 @@ public class BootSequence : MonoBehaviour
         if (overlay != null)
         {
             layer = Raw("Overlay", root, overlay, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            Fit(layer, overlay);
+            float cw = Mathf.Max(0.05f, overlayCrop.z - overlayCrop.x), ch = Mathf.Max(0.05f, overlayCrop.w - overlayCrop.y);
+            layer.uvRect = new Rect(overlayCrop.x, overlayCrop.y, cw, ch);
+            Fit(layer, overlay, (overlay.width * cw) / Mathf.Max(1f, overlay.height * ch));
         }
 
         // Centre: picture if assigned, otherwise the game title. With an overlay it is placed on the overlay
         // picture itself (the clipboard paper), so it stays there at any screen aspect.
         if (centerImage != null)
         {
+            // centerAreaOnOverlay is in whole-picture fractions; remap into the cropped view.
+            float cw2 = Mathf.Max(0.05f, overlayCrop.z - overlayCrop.x), ch2 = Mathf.Max(0.05f, overlayCrop.w - overlayCrop.y);
+            Vector2 areaMin = new Vector2((centerAreaOnOverlay.x - overlayCrop.x) / cw2, (centerAreaOnOverlay.y - overlayCrop.y) / ch2);
+            Vector2 areaMax = new Vector2((centerAreaOnOverlay.z - overlayCrop.x) / cw2, (centerAreaOnOverlay.w - overlayCrop.y) / ch2);
             RawImage center = layer != null
-                ? Raw("CenterImage", layer.rectTransform, centerImage,
-                      new Vector2(centerAreaOnOverlay.x, centerAreaOnOverlay.y),
-                      new Vector2(centerAreaOnOverlay.z, centerAreaOnOverlay.w), Vector2.zero, Vector2.zero)
+                ? Raw("CenterImage", layer.rectTransform, centerImage, areaMin, areaMax, Vector2.zero, Vector2.zero)
                 : Raw("CenterImage", root, centerImage, centerAnchor, centerAnchor, Vector2.zero, centerSize);
             Fit(center, centerImage);
         }
@@ -275,7 +285,7 @@ public class BootSequence : MonoBehaviour
     // Keep the picture's aspect ratio inside its box. The box values are read BEFORE the AspectRatioFitter is
     // added: adding it immediately stretches the image to its parent (the whole screen), which made the logos
     // fill the screen.
-    private static void Fit(RawImage image, Texture texture)
+    private static void Fit(RawImage image, Texture texture, float aspectOverride = 0f)
     {
         RectTransform rect = image.rectTransform;
         Vector2 anchorMin = rect.anchorMin, anchorMax = rect.anchorMax, position = rect.anchoredPosition, box = rect.sizeDelta;
@@ -285,7 +295,7 @@ public class BootSequence : MonoBehaviour
         rect.SetParent(frame, false);
 
         var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
-        fitter.aspectRatio = texture.height > 0 ? (float)texture.width / texture.height : 1f;
+        fitter.aspectRatio = aspectOverride > 0f ? aspectOverride : (texture.height > 0 ? (float)texture.width / texture.height : 1f);
         fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
     }
 

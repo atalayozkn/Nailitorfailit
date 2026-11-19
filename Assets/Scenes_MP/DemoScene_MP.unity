@@ -6812,6 +6812,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1331500662415591188, guid: ba3e1447621e3ae4185e3ef2e83d0bb9, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 1331500662415591188, guid: ba3e1447621e3ae4185e3ef2e83d0bb9, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     - target: {fileID: 3011375498502142927, guid: ba3e1447621e3ae4185e3ef2e83d0bb9, type: 3}
       propertyPath: m_Name
       value: Shop_PetFood
@@ -8944,6 +8952,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 9027665916422003268, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 9027665916422003268, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11840,6 +11856,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 6286257267418394731, guid: 29bdf33348e45714e8f2d73284e12bd2, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 6286257267418394731, guid: 29bdf33348e45714e8f2d73284e12bd2, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     - target: {fileID: 7313507888434762851, guid: 29bdf33348e45714e8f2d73284e12bd2, type: 3}
       propertyPath: m_Name
       value: Spawner_Brick
@@ -17556,8 +17580,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 20
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+  m_sharedMaterial: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -18552,6 +18576,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1331500662415591188, guid: 2fc277727303762418db330e51370443, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 1331500662415591188, guid: 2fc277727303762418db330e51370443, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     - target: {fileID: 3011375498502142927, guid: 2fc277727303762418db330e51370443, type: 3}
       propertyPath: m_Name
       value: Shop_Oil
@@ -21719,6 +21751,14 @@ PrefabInstance:
       propertyPath: sceneId
       value: 236950674
       objectReference: {fileID: 0}
+    - target: {fileID: 1143870359908742357, guid: 1d5a28ed40586c24f9686552fcbdb551, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 1143870359908742357, guid: 1d5a28ed40586c24f9686552fcbdb551, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     - target: {fileID: 4619426574898395758, guid: 1d5a28ed40586c24f9686552fcbdb551, type: 3}
       propertyPath: m_LocalPosition.x
       value: -12.702
@@ -25227,8 +25267,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 20
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+  m_sharedMaterial: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -35900,6 +35940,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1331500662415591188, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+    - target: {fileID: 1331500662415591188, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
     - target: {fileID: 3011375498502142927, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
       propertyPath: m_Name
       value: Shop_EnergyDrink
@@ -53695,8 +53743,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 20
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
+  m_sharedMaterial: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

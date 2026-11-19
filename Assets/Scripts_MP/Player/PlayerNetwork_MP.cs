@@ -64,13 +64,23 @@ namespace PlayerScripts
         [SyncVar] public bool micMuted;
         [SyncVar] public bool isHostPlayer; // crown on the name tag
 
+        // Which body model the owner picked in the lobby (MpCharacterSet_MP): 0 = the prefab's own model.
+        [SyncVar(hook = nameof(OnCharacterChanged))] public int characterIndex;
+
         private void OnColorChanged(int oldValue, int newValue) => MpPlayerTint_MP.Apply(this);
 
+        private void OnCharacterChanged(int oldValue, int newValue)
+        {
+            MpCharacterSet_MP.Apply(this);
+            MpPlayerTint_MP.Apply(this);
+        }
+
         [Server]
-        public void ServerSetIdentity(string displayName, int color, bool muted, bool host)
+        public void ServerSetIdentity(string displayName, int color, bool muted, bool host, int character = 0)
         {
             playerName = displayName ?? "";
             colorIndex = color;
+            characterIndex = character;
             micMuted = muted;
             isHostPlayer = host;
         }
@@ -201,6 +211,7 @@ namespace PlayerScripts
             MpHomeLayout_MP.Apply(transform.root, isHostPlayer);
 
             if (!Application.isBatchMode) MpNameTag_MP.Attach(this);
+            MpCharacterSet_MP.Apply(this);
             MpPlayerTint_MP.Apply(this);
         }
 

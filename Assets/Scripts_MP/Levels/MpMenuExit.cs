@@ -24,6 +24,13 @@ public static class MpMenuExit
             Debug.Log("[MP-UI] exit: network stopped.");
         }
 
+        // The multiplayer panel is part of the main menu scene: nothing to load, the caller swaps the panels back.
+        if (SceneManager.GetActiveScene().name == LobbyNetworkManager.MenuSceneName)
+        {
+            if (MpMenuUI.Instance != null) MpMenuUI.Instance.HideAll();
+            return;
+        }
+
         MpInPlaceToggle inPlace = Object.FindAnyObjectByType<MpInPlaceToggle>(FindObjectsInactive.Include);
         if (inPlace != null)
         {

@@ -21,6 +21,7 @@ public class MpPlayerColor_MP : MonoBehaviour
 
     private CanvasGroup group;
     private readonly Image[] swatches = new Image[Palette.Length];
+    private TMP_Text characterLabel;
 
     public static int Count => Palette.Length;
 
@@ -70,6 +71,24 @@ public class MpPlayerColor_MP : MonoBehaviour
             var sw = panel.Find("Swatch" + i);
             if (sw != null) swatches[i] = sw.GetComponent<Image>();
         }
+
+        // An authored panel predates the character picker: grow it downwards and add the row.
+        var caption = panel.Find("Caption");
+        if (caption != null && caption.TryGetComponent(out TMP_Text captionText)) captionText.text = "COLOR";
+
+        var panelRect = (RectTransform)panel;
+        var existing = panel.Find("CharacterName");
+        if (existing == null)
+        {
+            panelRect.sizeDelta += new Vector2(0f, 140f);
+            panelRect.anchoredPosition += new Vector2(0f, -70f);
+            foreach (RectTransform child in panelRect) child.anchoredPosition += new Vector2(0f, 70f);
+            BuildCharacterRow(panelRect);
+        }
+        else
+        {
+            characterLabel = existing.GetComponent<TMP_Text>();
+        }
     }
 
     private void OnDestroy()
@@ -95,6 +114,8 @@ public class MpPlayerColor_MP : MonoBehaviour
 
         LobbyPlayer local = NetworkClient.localPlayer.GetComponent<LobbyPlayer>();
         if (local == null) return;
+
+        if (characterLabel != null) characterLabel.text = MpCharacterSet_MP.NameOf(local.characterIndex).ToUpperInvariant();
 
         for (int i = 0; i < swatches.Length; i++)
         {
@@ -141,6 +162,21 @@ public class MpPlayerColor_MP : MonoBehaviour
         InteractionDebug.Log($"[MP-COLOR] requested colour {index} ({Palette[Clamp(index)]}).");
     }
 
+    // direction: +1 next, -1 previous (wraps around).
+    public void StepCharacter(int direction)
+    {
+        LobbyPlayer local = NetworkClient.localPlayer != null
+            ? NetworkClient.localPlayer.GetComponent<LobbyPlayer>()
+            : null;
+
+        if (local == null) return;
+
+        int count = MpCharacterSet_MP.Count;
+        int next = ((local.characterIndex + direction) % count + count) % count;
+        local.CmdSetCharacter(next);
+        InteractionDebug.Log($"[MP-COLOR] requested character {next} ({MpCharacterSet_MP.NameOf(next)}).");
+    }
+
     private void Build()
     {
         var canvasGo = new GameObject("Canvas", typeof(RectTransform));
@@ -163,16 +199,16 @@ public class MpPlayerColor_MP : MonoBehaviour
         RectTransform root = (RectTransform)canvasGo.transform;
 
         RectTransform panel = NewRect(root, "ColorPanel");
-        panel.sizeDelta = new Vector2(170f, 330f);
+        panel.sizeDelta = new Vector2(170f, 470f);
         panel.anchorMin = new Vector2(1f, 0.5f);
         panel.anchorMax = new Vector2(1f, 0.5f);
-        panel.anchoredPosition = new Vector2(-115f, 0f);
+        panel.anchoredPosition = new Vector2(-115f, -70f); // the panel grew downwards: its top edge stays where it was
 
         Image backdrop = panel.gameObject.AddComponent<Image>();
         backdrop.color = new Color(0.05f, 0.06f, 0.08f, 0.75f);
         backdrop.raycastTarget = false;
 
-        TMP_Text caption = NewText(panel, "Caption", new Vector2(0f, 138f), 20f, "RENK");
+        TMP_Text caption = NewText(panel, "Caption", new Vector2(0f, 208f), 20f, "COLOR");
         caption.color = new Color(0.98f, 0.71f, 0.40f, 1f);
 
         for (int i = 0; i < Palette.Length; i++)
@@ -184,7 +220,7 @@ public class MpPlayerColor_MP : MonoBehaviour
 
             RectTransform cell = NewRect(panel, "Swatch" + i);
             cell.sizeDelta = new Vector2(46f, 46f);
-            cell.anchoredPosition = new Vector2(column == 0 ? -33f : 33f, 96f - row * 62f);
+            cell.anchoredPosition = new Vector2(column == 0 ? -33f : 33f, 166f - row * 62f);
 
             Image image = cell.gameObject.AddComponent<Image>();
             image.color = Palette[i];
@@ -195,6 +231,44 @@ public class MpPlayerColor_MP : MonoBehaviour
 
             swatches[i] = image;
         }
+
+        BuildCharacterRow(panel);
+    }
+
+    // Character row under the colour swatches: CHARACTER / < NAME >.
+    private void BuildCharacterRow(RectTransform panel)
+    {
+        TMP_Text characterCaption = NewText(panel, "CharacterCaption", new Vector2(0f, -80f), 20f, "CHARACTER");
+        characterCaption.color = new Color(0.98f, 0.71f, 0.40f, 1f);
+
+        characterLabel = NewText(panel, "CharacterName", new Vector2(0f, -132f), 17f, "MAN");
+        ((RectTransform)characterLabel.transform).sizeDelta = new Vector2(80f, 40f);
+        characterLabel.fontStyle = FontStyles.Bold;
+        characterLabel.enableAutoSizing = true;
+        characterLabel.fontSizeMin = 9f;
+        characterLabel.fontSizeMax = 17f;
+
+        NewArrow(panel, "CharacterPrev", new Vector2(-64f, -132f), "<", () => StepCharacter(-1));
+        NewArrow(panel, "CharacterNext", new Vector2(64f, -132f), ">", () => StepCharacter(1));
+    }
+
+    private static void NewArrow(Transform parent, string name, Vector2 position, string glyph, UnityEngine.Events.UnityAction onClick)
+    {
+        RectTransform cell = NewRect(parent, name);
+        cell.sizeDelta = new Vector2(34f, 40f);
+        cell.anchoredPosition = position;
+
+        Image image = cell.gameObject.AddComponent<Image>();
+        image.color = new Color(0.98f, 0.71f, 0.40f, 1f);
+
+        Button button = cell.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.onClick.AddListener(onClick);
+
+        TMP_Text text = NewText(cell, "Glyph", Vector2.zero, 24f, glyph);
+        ((RectTransform)text.transform).sizeDelta = new Vector2(34f, 40f);
+        text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        text.fontStyle = FontStyles.Bold;
     }
 
     private static RectTransform NewRect(Transform parent, string name)

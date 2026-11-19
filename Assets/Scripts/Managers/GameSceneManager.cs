@@ -50,7 +50,8 @@ public class GameSceneManager : MonoBehaviour
 
     private IEnumerator LoadSceneRoutine(int index)
     {
-        // Fade Out
+        // Fade out to black (the next scene fades in on its own: ScreenFader).
+        yield return ScreenFader.FadeOut(1f);
         // Disable input
         // Loading screen
 

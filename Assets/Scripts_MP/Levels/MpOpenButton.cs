@@ -13,7 +13,7 @@ public class MpOpenButton : MonoBehaviour
     [SerializeField] private OpenMode mode = OpenMode.UseWorkingMpScene;
 
     [Tooltip("Scene used by 'UseWorkingMpScene'.")]
-    [SerializeField] private string mpScenePath = "Assets/Scenes_MP/MenuScene_MP.unity";
+    [SerializeField] private string mpScenePath = "Assets/Scenes/MenuScene.unity";
 
     [Header("OpenInPlace")]
     [Tooltip("Objects hidden while the MP menu is open (e.g. the SP menu panel).")]
