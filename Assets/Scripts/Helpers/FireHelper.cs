@@ -39,12 +39,51 @@ public class FireHelper : MonoBehaviour
     private GameObject burnEffect;
     private int tileMask;
 
+    // Wood char: the tile mesh's 'Yanma' blend shape follows the health lost to fire. It only grows, so a fire that is
+    // put out leaves the tile as charred as it got; rebuilding the tile (OnEnable) gives a fresh one.
+    private const string BurnBlendShape = "Yanma";
+    private SkinnedMeshRenderer burnMesh;
+    private int burnShapeIndex = -1;
+    private float burnWeight;
+
     private void Awake()
     {
         tileMask = LayerMask.GetMask("Ground");
+        FindBurnBlendShape();
+    }
+    private void FindBurnBlendShape()
+    {
+        Transform puddle = transform.Find("WaterPuddle");
+        foreach (SkinnedMeshRenderer candidate in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+        {
+            if (candidate.sharedMesh == null || (puddle != null && candidate.transform.IsChildOf(puddle))) continue;
+            int index = candidate.sharedMesh.GetBlendShapeIndex(BurnBlendShape);
+            if (index < 0) continue;
+            burnMesh = candidate;
+            burnShapeIndex = index;
+            return;
+        }
+    }
+    private void RefreshBurnBlendShape()
+    {
+        if (burnMesh == null || burnShapeIndex < 0 || objectHealth == null) return;
+        burnWeight = Mathf.Max(burnWeight, (1f - objectHealth.GetCurrentHealthPercent()) * 100f);
+        burnMesh.SetBlendShapeWeight(burnShapeIndex, burnWeight);
+        if (burnWeight > 0f) HidePuddleVisual();
+    }
+    // The charred boards sink below the old puddle placeholder, which then shows through as cyan speckles.
+    // Singleplayer never uses that visual (TileWetness only uses the puddle trigger); multiplayer keeps it.
+    private void HidePuddleVisual()
+    {
+        if (NetworkModeHelper.IsNetworked) return;
+        Transform puddle = transform.Find("WaterPuddle");
+        if (puddle == null) return;
+        foreach (Renderer r in puddle.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
     }
     private void OnEnable()
     {
+        burnWeight = 0f;
+        if (burnMesh != null && burnShapeIndex >= 0) burnMesh.SetBlendShapeWeight(burnShapeIndex, 0f);
         isBurning = false;
         VfxManager.Stop(burnEffect);
         if (fireRoutine != null) StopCoroutine(fireRoutine);
@@ -90,6 +129,7 @@ public class FireHelper : MonoBehaviour
         while (true)
         {
             objectHealth.DealDamage();
+            RefreshBurnBlendShape();
 
             if (!isNetworked)
             {
