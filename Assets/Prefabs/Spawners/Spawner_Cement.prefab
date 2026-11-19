@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 3506129535933248831}
   - component: {fileID: 1446772030668657773}
   - component: {fileID: 6071999846458691942}
+  - component: {fileID: 2037581071287701512}
   m_Layer: 6
   m_Name: Spawner_Cement
   m_TagString: Untagged
@@ -146,6 +147,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 1159600109177681445}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!65 &1446772030668657773
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -185,6 +187,26 @@ MonoBehaviour:
   pitchJitter: 0.06
   spatial: 0.6
   minInterval: 0.08
+--- !u!114 &2037581071287701512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2125192666328773998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 586c9f17a2a0a154ba74fab4d4cce3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldIndicator
+  glyph: 
+  icon: {fileID: 21300000, guid: 5b4cacb829a8de24f9ca01cdd2b0a68e, type: 3}
+  color: {r: 0.22, g: 0.58, b: 0.95, a: 1}
+  pulse: 0
+  worldOffset: {x: 0, y: 1.4, z: 0}
+  groupKey: Supplies
+  shownOnStart: 1
+  hideWithinDistance: 4
 --- !u!1001 &564691056384846497
 PrefabInstance:
   m_ObjectHideFlags: 0
