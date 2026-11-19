@@ -118,6 +118,7 @@ public class WoodTile : MonoBehaviour, IInteractable, ILookAtInfo, IFlammable, I
         if (!canDealDamage) return;
         canDealDamage = false;
         objectHealth.DealDamage();
+        TileCracks.RegisterPressureHit(gameObject, TileCracks.Look.Wood, objectHealth);
         Invoke(nameof(ReverseDamage), pressureDamageDelay);
     }
     private void ReverseDamage()

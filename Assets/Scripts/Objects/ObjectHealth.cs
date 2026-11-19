@@ -75,6 +75,7 @@ public class ObjectHealth : MonoBehaviour
     {
         connectedConstructor.RequestClosure(gameObject); //Ölürken kapatıyoruz, Silmiyoruz.
     }
+    public int MaxHealth => maxHealth;
     public float GetCurrentHealthPercent()
     {
         return (float)currentHealth / maxHealth;

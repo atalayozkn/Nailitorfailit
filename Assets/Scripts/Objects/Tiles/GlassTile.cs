@@ -100,6 +100,7 @@ public class GlassTile : MonoBehaviour, IInteractable, ILookAtInfo, IWettable, I
         if (!canDealDamage) return;
         canDealDamage = false;
         objectHealth.DealDamage();
+        TileCracks.RegisterPressureHit(gameObject, TileCracks.Look.Glass, objectHealth);
         Invoke(nameof(ReverseDamage), pressureDamageDelay);
     }
 
