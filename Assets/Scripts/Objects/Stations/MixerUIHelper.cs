@@ -2,12 +2,19 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Shows the mixer's slots as material letters (W Wood, B Brick, G Glass, C Cement).
+// Shows what is in each mixer slot: the material's icon when one is assigned (wood, brick, cement),
+// otherwise its letter (W Wood, B Brick, G Glass, C Cement).
+// Multiplayer reads firstImage/secondImage/thirdImage by name (MpMixerIcons_MP), so keep those names.
 public class MixerUIHelper : MonoBehaviour
 {
     [SerializeField] private Image firstImage;
     [SerializeField] private Image secondImage;
     [SerializeField] private Image thirdImage;
+
+    [Header("Icons")]
+    [SerializeField] private Sprite woodIcon;
+    [SerializeField] private Sprite brickIcon;
+    [SerializeField] private Sprite cementIcon;
 
     [SerializeField] private Color letterColor = new Color(0.1f, 0.1f, 0.1f, 1f);
 
@@ -15,11 +22,19 @@ public class MixerUIHelper : MonoBehaviour
     private TextMeshProUGUI secondLetter;
     private TextMeshProUGUI thirdLetter;
 
+    private Image firstIcon;
+    private Image secondIcon;
+    private Image thirdIcon;
+
     private void Awake()
     {
         firstLetter = CreateLetter(firstImage);
         secondLetter = CreateLetter(secondImage);
         thirdLetter = CreateLetter(thirdImage);
+
+        firstIcon = CreateIcon(firstImage);
+        secondIcon = CreateIcon(secondImage);
+        thirdIcon = CreateIcon(thirdImage);
     }
 
     private void OnEnable()
@@ -29,19 +44,24 @@ public class MixerUIHelper : MonoBehaviour
 
     public void DisplayItem(int index, CarriableType type)
     {
-        string letter = GetLetter(type);
+        TextMeshProUGUI letter = index == 1 ? firstLetter : index == 2 ? secondLetter : thirdLetter;
+        Image icon = index == 1 ? firstIcon : index == 2 ? secondIcon : thirdIcon;
 
-        if (index == 1)
+        Sprite sprite = GetIcon(type);
+        icon.sprite = sprite;
+        icon.enabled = sprite != null;
+        letter.text = sprite != null ? string.Empty : GetLetter(type);
+    }
+
+    // The icon assigned for this material, or null when it should fall back to its letter.
+    public Sprite GetIcon(CarriableType type)
+    {
+        switch (type)
         {
-            firstLetter.text = letter;
-        }
-        else if (index == 2)
-        {
-            secondLetter.text = letter;
-        }
-        else
-        {
-            thirdLetter.text = letter;
+            case CarriableType.Wood: return woodIcon;
+            case CarriableType.Brick: return brickIcon;
+            case CarriableType.Cement: return cementIcon;
+            default: return null;
         }
     }
 
@@ -52,6 +72,10 @@ public class MixerUIHelper : MonoBehaviour
         firstLetter.text = string.Empty;
         secondLetter.text = string.Empty;
         thirdLetter.text = string.Empty;
+
+        firstIcon.enabled = false;
+        secondIcon.enabled = false;
+        thirdIcon.enabled = false;
     }
 
     private static string GetLetter(CarriableType type)
@@ -81,6 +105,26 @@ public class MixerUIHelper : MonoBehaviour
         text.fontSizeMax = 200f;
         text.raycastTarget = false;
         return text;
+    }
+
+    // Named "Icon" so multiplayer's MpMixerIcons_MP finds and reuses it instead of adding a second one.
+    private Image CreateIcon(Image slot)
+    {
+        GameObject iconObject = new GameObject("Icon", typeof(RectTransform));
+        iconObject.layer = slot.gameObject.layer;
+
+        RectTransform rect = iconObject.GetComponent<RectTransform>();
+        rect.SetParent(slot.transform, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(2f, 2f);
+        rect.offsetMax = new Vector2(-2f, -2f);
+
+        Image image = iconObject.AddComponent<Image>();
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        image.enabled = false;
+        return image;
     }
 
     #endregion

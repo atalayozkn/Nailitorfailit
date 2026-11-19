@@ -22,6 +22,8 @@ public class StaminaBarVisual : MonoBehaviour
     [Tooltip("Below this fraction the draining colour turns to amber.")]
     [SerializeField, Range(0f, 1f)] private float lowThreshold = 0.35f;
     [SerializeField] private float blendSpeed = 6f;
+    [Tooltip("Glow on the fill's right end while refilling. Off when the fill is a full-width art piece cropped by a mask, since its right end is not the bar's leading edge.")]
+    [SerializeField] private bool leadingEdgeGlow = true;
 
     private static readonly int StripeSpeedId = Shader.PropertyToID("_StripeSpeed");
     private static readonly int StripeAmountId = Shader.PropertyToID("_StripeAmount");
@@ -87,6 +89,6 @@ public class StaminaBarVisual : MonoBehaviour
         instance.SetFloat(StripeAmountId, stripeAmount);
         instance.SetFloat(SheenAmountId, sheen);
         instance.SetFloat(PulseAmountId, pulse);
-        instance.SetFloat(EdgeGlowId, edge);
+        instance.SetFloat(EdgeGlowId, leadingEdgeGlow ? edge : 0f);
     }
 }

@@ -26,7 +26,8 @@ public static class MpMixerIcons_MP
         HideLetter(slot);
 
         Image icon = IconOf(slot, true);
-        icon.sprite = SpriteFor(type);
+        Sprite art = ui.GetIcon(type);
+        icon.sprite = art != null ? art : SpriteFor(type);
         icon.enabled = icon.sprite != null;
     }
 
