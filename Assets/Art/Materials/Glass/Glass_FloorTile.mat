@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Glass_FloorTile
+  m_Shader: {fileID: 4800000, guid: 50fe705a19cc82c41928777c7be861fa, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Depth: 0.12
+    - _FrameWidth: 0.05
+    - _GlintScale: 1.3
+    - _GlintWidth: 0.07
+    - _Reflection: 0.45
+    - _SpecularSize: 0.18
+    - _TileHalfSize: 0.5
+    m_Colors:
+    - _BaseColor: {r: 0.62, g: 0.86, b: 0.92, a: 1}
+    - _DeepColor: {r: 0.15999997, g: 0.35999998, b: 0.45999992, a: 1}
+    - _EdgeColor: {r: 0.9, g: 0.97999996, b: 1, a: 1}
+    - _GlintColor: {r: 1, g: 1, b: 1, a: 0.45}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
