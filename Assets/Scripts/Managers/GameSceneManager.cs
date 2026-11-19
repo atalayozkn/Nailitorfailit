@@ -52,12 +52,18 @@ public class GameSceneManager : MonoBehaviour
     {
         // Fade out to black (the next scene fades in on its own: ScreenFader).
         yield return ScreenFader.FadeOut(1f);
-        // Disable input
-        // Loading screen
+        // Loading screen over the black; the scene is held back until the screen has been up long enough not to flash.
+        LoadingScreen.Show();
 
         AsyncOperation operation = SceneManager.LoadSceneAsync(scenes[index]);
+        operation.allowSceneActivation = false;
+        while (operation.progress < 0.9f || !LoadingScreen.MinTimeElapsed) yield return null;
+        operation.allowSceneActivation = true;
 
         while (!operation.isDone) yield return null;
+
+        // Fades out while ScreenFader brings the new scene in from black.
+        LoadingScreen.Hide();
 
         activeScene = scenes[index];
 
