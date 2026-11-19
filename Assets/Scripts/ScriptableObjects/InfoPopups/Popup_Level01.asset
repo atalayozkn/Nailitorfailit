@@ -19,11 +19,14 @@ MonoBehaviour:
 
 
       Every
-      finished room gives you extra time and coins.'
+      finished room gives you extra time and money.'
+    image: {fileID: 0}
+  - title: Plan your budget
+    body: "Money is tight! The colored outlines on the ground show each room. <b>Bigger rooms pay more</b>, but you start with only enough money to finish a <b>small room</b>.\n\nBuild the <b>small rooms first</b> and use their pay to buy the <b>Oil</b> the big room needs. Start with the big room and you will run out of power before it is done."
     image: {fileID: 0}
   - title: Shops
     body: 'Shop stands sell useful items. Walk up to one and press <b>E</b> to buy
-      it (you need enough coins):
+      it (you need enough money):
 
 
       <b>Energy Drink</b> - refills your stamina.
