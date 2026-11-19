@@ -58,6 +58,7 @@ MonoBehaviour:
   carriableType: 3
   dropForce: 0.025
   throwMultiplier: 0.175
+  throwUpwardSpeed: 5
   objectDiscardDelay: 3
   onHoverOnEvent:
     m_PersistentCalls:
@@ -170,6 +171,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   meshRenderer: {fileID: 7131936121395262526}
   isMeshRenderer: 1
+  includeAllParts: 1
 --- !u!114 &5892521626937671403
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -288,7 +290,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 977025d4d7f60f5408908aa86e0df0c3, type: 2}
+  - {fileID: 2100000, guid: 037ad32bcaabd3f4a8b374427a7bd752, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
