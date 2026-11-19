@@ -171,8 +171,12 @@ namespace ItemScript
             foreach (var canvas in GetComponentsInChildren<Canvas>(true)) canvas.enabled = false;
             if (rb != null)
             {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
+                // A carried object is already kinematic, and setting velocity on a kinematic body logs a warning.
+                if (!rb.isKinematic)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
                 rb.isKinematic = true;
             }
         }

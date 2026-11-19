@@ -184,7 +184,8 @@ public class CarController_Prototype : MonoBehaviour
 
         for (int i = 0; i < spawnPoints.Length; i++)
         {
-            if (IsLaneFree(i)) freeLanes.Add(i);
+            // An empty Spawn Points slot is skipped instead of throwing when a car is sent down it.
+            if (spawnPoints[i] != null && IsLaneFree(i)) freeLanes.Add(i);
         }
 
         if (freeLanes.Count == 0) return -1;
