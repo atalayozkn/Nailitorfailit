@@ -30,8 +30,22 @@ public class TileWetness : MonoBehaviour
     public Renderer TileRenderer => tileRenderer;
     public float Wetness => wetness;
 
-    private readonly List<MeshRenderer> visibleRenderers = new();
+    private const string PuddleChildName = "WaterPuddle";
+    private const string SwellBlendShape = "Sisme";
+
+    // Wood only (tiles with swellAmount > 0): once soaked past wetThreshold the tile is damaged for good. It stays
+    // Fragile, and the 'Sisme' blend shape grows while it dries, up to the highest wetness it reached. It never
+    // shrinks back; rebuilding the tile (OnEnable) gives a fresh one.
+    private SkinnedMeshRenderer swellMesh;
+    private int swellShapeIndex = -1;
+    private bool isSoaked;
+    private float peakWetness;
+    private float swellWeight;
+
+    private readonly List<Renderer> visibleRenderers = new();
     private MaterialPropertyBlock propertyBlock;
+    private Transform swellTarget;
+    private Transform puddleRoot;
     private Vector3 dryScale;
     private string dryTag;
     private GameObject electrifiedEffect;
@@ -44,8 +58,46 @@ public class TileWetness : MonoBehaviour
     private void Awake()
     {
         propertyBlock = new MaterialPropertyBlock();
-        dryScale = tileRenderer != null ? tileRenderer.transform.localScale : Vector3.one;
+        puddleRoot = transform.Find(PuddleChildName);
+        swellTarget = FindSwellTarget();
+        dryScale = swellTarget != null ? swellTarget.localScale : Vector3.one;
         dryTag = gameObject.tag;
+        FindSwellBlendShape();
+    }
+    private void FindSwellBlendShape()
+    {
+        if (swellAmount <= 0f) return;
+        foreach (SkinnedMeshRenderer candidate in GetComponentsInChildren<SkinnedMeshRenderer>(true))
+        {
+            if (!IsSurface(candidate) || candidate.sharedMesh == null) continue;
+            int index = candidate.sharedMesh.GetBlendShapeIndex(SwellBlendShape);
+            if (index < 0) continue;
+            swellMesh = candidate;
+            swellShapeIndex = index;
+            return;
+        }
+    }
+    private bool UsesSwellBlendShape => swellMesh != null && swellShapeIndex >= 0;
+    // Wood and glass tiles draw their surface with a SkinnedMeshRenderer and leave tileRenderer empty, so the swell
+    // falls back to the tile's real surface. A skinned mesh follows its root bone, so that is what gets scaled.
+    private Transform FindSwellTarget()
+    {
+        Renderer surface = tileRenderer;
+        if (surface == null)
+            foreach (Renderer candidate in GetComponentsInChildren<Renderer>(true))
+                if (IsSurface(candidate)) { surface = candidate; break; }
+        if (surface == null) return null;
+        if (surface is SkinnedMeshRenderer skinned && skinned.rootBone != null) return skinned.rootBone;
+        return surface.transform;
+    }
+    // The tile's own visible meshes. The old puddle visual under WaterPuddle is part of the tile but isn't its surface.
+    private bool IsSurface(Renderer candidate)
+    {
+        if (!(candidate is MeshRenderer) && !(candidate is SkinnedMeshRenderer)) return false;
+        if (candidate.name.StartsWith("__")) return false; // hover glow and other overlays
+        if (puddleRoot != null && candidate.transform.IsChildOf(puddleRoot)) return false;
+        PuddleHelper puddle = candidate.GetComponentInParent<PuddleHelper>(true);
+        return puddle == null || puddle.transform == transform;
     }
     private void OnEnable()
     {
@@ -55,6 +107,11 @@ public class TileWetness : MonoBehaviour
         canCollect = false;
         isWet = false;
         isElectrified = false;
+        // A rebuilt tile is a fresh tile: flat and not damaged.
+        isSoaked = false;
+        peakWetness = 0f;
+        swellWeight = 0f;
+        if (UsesSwellBlendShape) swellMesh.SetBlendShapeWeight(swellShapeIndex, 0f);
         gameObject.tag = dryTag;
         RefreshVisual();
     }
@@ -112,9 +169,16 @@ public class TileWetness : MonoBehaviour
         if (wetness >= wetThreshold) isWet = true;
         else if (wetness <= dryThreshold) isWet = false;
 
+        if (swellAmount > 0f)
+        {
+            if (isWet) isSoaked = true;
+            if (isSoaked) peakWetness = Mathf.Max(peakWetness, wetness);
+        }
+
         if (wasWet == isWet) return;
 
-        if (fragileWhenWet) gameObject.tag = isWet ? FragileTag : dryTag;
+        // Soaked wood stays Fragile after it dries; other tiles are Fragile only while wet.
+        if (fragileWhenWet) gameObject.tag = isWet || isSoaked ? FragileTag : dryTag;
         if (Slippery) RefreshSurface();
         if (isWet && swellAmount > 0f) VfxManager.Play(VfxId.WoodSwell, transform.position);
     }
@@ -125,14 +189,28 @@ public class TileWetness : MonoBehaviour
     }
     private void RefreshVisual()
     {
-        if (tileRenderer != null) tileRenderer.transform.localScale = new Vector3(dryScale.x, dryScale.y * (1f + swellAmount * wetness), dryScale.z);
+        if (UsesSwellBlendShape) RefreshSwellBlendShape();
+        else if (swellTarget != null && swellAmount > 0f) swellTarget.localScale = new Vector3(dryScale.x, dryScale.y * (1f + swellAmount * wetness), dryScale.z);
 
         // The overlay is only on the renderers while wet, so dry tiles stay batched.
         SetOverlay(wetness > 0f);
         if (!hasOverlay) return;
 
         propertyBlock.SetFloat(WetnessId, wetness);
-        foreach (MeshRenderer visible in visibleRenderers) visible.SetPropertyBlock(propertyBlock, visible.sharedMaterials.Length - 1);
+        Material overlay = VfxManager.WetOverlayMaterial;
+        foreach (Renderer visible in visibleRenderers)
+        {
+            int slot = OverlaySlots.IndexOf(visible, overlay);
+            if (slot >= 0) visible.SetPropertyBlock(propertyBlock, slot);
+        }
+    }
+    // The swell grows as the soaked tile dries (drying progress x highest wetness reached) and never goes back.
+    private void RefreshSwellBlendShape()
+    {
+        if (!isSoaked || peakWetness <= 0f) return;
+        float dried = 1f - Mathf.Clamp01(wetness / peakWetness);
+        swellWeight = Mathf.Max(swellWeight, dried * peakWetness * 100f);
+        swellMesh.SetBlendShapeWeight(swellShapeIndex, swellWeight);
     }
     private void SetOverlay(bool condition)
     {
@@ -142,40 +220,26 @@ public class TileWetness : MonoBehaviour
         if (overlay == null) return;
 
         if (condition) AddOverlay(overlay);
-        else RemoveOverlay();
+        else RemoveOverlay(overlay);
 
         hasOverlay = condition;
     }
-    // Goes on the meshes the tile really shows: FloorConstruct swaps in its own brick mesh, so tileRenderer alone can be hidden.
+    // Goes on the meshes the tile really shows: FloorConstruct swaps in its own brick mesh, and wood/glass use a skinned mesh.
+    // Other overlays (cracks) can share the renderer, so slots are handled by material through OverlaySlots.
     private void AddOverlay(Material overlay)
     {
         visibleRenderers.Clear();
-        foreach (MeshRenderer candidate in GetComponentsInChildren<MeshRenderer>())
+        foreach (Renderer candidate in GetComponentsInChildren<Renderer>())
         {
-            if (!candidate.enabled) continue;
-            // The old puddle plane is part of the tile but isn't its surface.
-            if (candidate.GetComponentInParent<PuddleHelper>() != null && candidate.GetComponentInParent<PuddleHelper>().transform != transform) continue;
-
-            Material[] current = candidate.sharedMaterials;
-            Material[] materials = new Material[current.Length + 1];
-            current.CopyTo(materials, 0);
-            materials[current.Length] = overlay;
-            candidate.sharedMaterials = materials;
+            if (!candidate.enabled || !IsSurface(candidate)) continue;
+            OverlaySlots.Add(candidate, overlay);
             visibleRenderers.Add(candidate);
         }
     }
-    private void RemoveOverlay()
+    private void RemoveOverlay(Material overlay)
     {
-        foreach (MeshRenderer visible in visibleRenderers)
-        {
-            if (visible == null) continue;
-
-            Material[] current = visible.sharedMaterials;
-            visible.SetPropertyBlock(null, current.Length - 1);
-            Material[] materials = new Material[current.Length - 1];
-            System.Array.Copy(current, materials, materials.Length);
-            visible.sharedMaterials = materials;
-        }
+        foreach (Renderer visible in visibleRenderers)
+            if (visible != null) OverlaySlots.Remove(visible, overlay);
 
         visibleRenderers.Clear();
     }
