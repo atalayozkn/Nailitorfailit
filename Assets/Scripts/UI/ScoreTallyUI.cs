@@ -24,6 +24,11 @@ public class ScoreTallyUI : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Vector2 endScreenPosition = new Vector2(500f, 0f);
     [SerializeField] private float endScreenScale = 0.62f;
 
+    [Header("Buttons")]
+    [Tooltip("Space between the stacked Next Level / Retry / Main Menu buttons, in panel units.")]
+    [SerializeField] private float buttonGap = 12f;
+    private const string MainMenuButtonName = "Button_MainMenu";
+
     [Header("Timing")]
     [SerializeField] private float rowSlideTime = 0.22f;
     [SerializeField] private float minCountTime = 0.3f;
@@ -98,8 +103,79 @@ public class ScoreTallyUI : MonoBehaviour, IPointerClickHandler
         hintText.text = string.Empty;
 
         yield return Wait(finalGradePause);
+        AddLevelButtons(report.isVictory);
         yield return RevealEndScreen();
         state = TallyState.Finished;
+    }
+
+    // Victory: Next Level, Retry, Main Menu. Defeat: Retry, Main Menu. Next is left out after the last level.
+    // The new buttons are copies of the panel's Main Menu button, stacked from its spot downwards.
+    private void AddLevelButtons(bool isVictory)
+    {
+        if (GameManager.Instance == null || GameSceneManager.Instance == null) return;
+
+        int levelIndex = GameSceneManager.Instance.GetActiveSceneIndex();
+        if (levelIndex < 1) return;
+        bool hasNext = isVictory && levelIndex + 1 <= GameSceneManager.Instance.GetLevelCount();
+
+        foreach (GameObject child in hiddenChildren)
+        {
+            Button menuButton = FindButton(child.transform, MainMenuButtonName);
+            if (menuButton == null) continue;
+
+            RectTransform menuRect = (RectTransform)menuButton.transform;
+            Vector2 slot = menuRect.anchoredPosition;
+            float step = menuRect.rect.height * menuRect.localScale.y + buttonGap;
+            List<Button> panelButtons = new List<Button>();
+
+            if (hasNext) panelButtons.Add(CloneButton(menuButton, "Button_NextLevel", "Next Level", () => GameManager.Instance.PlayLevel(levelIndex + 1)));
+            panelButtons.Add(CloneButton(menuButton, "Button_Retry", "Retry", () => GameManager.Instance.PlayLevel(levelIndex)));
+            panelButtons.Add(menuButton);
+
+            for (int i = 0; i < panelButtons.Count; i++)
+            {
+                ((RectTransform)panelButtons[i].transform).anchoredPosition = slot - new Vector2(0f, step * i);
+                CenterLabel(panelButtons[i]);
+                // A scene load takes a moment to fade out; one click is enough.
+                panelButtons[i].onClick.AddListener(() => { foreach (Button b in panelButtons) b.interactable = false; });
+            }
+        }
+    }
+
+    // The Main Menu label was hand-placed off centre (uneven margins, sideways offset); every stacked button gets a centred one.
+    private static void CenterLabel(Button button)
+    {
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text == null) return;
+
+        RectTransform rect = text.rectTransform;
+        rect.anchoredPosition = new Vector2(0f, rect.anchoredPosition.y);
+        Vector4 margin = text.margin;
+        text.margin = new Vector4(0f, margin.y, 0f, margin.w);
+        text.horizontalAlignment = HorizontalAlignmentOptions.Center;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
+    private static Button FindButton(Transform root, string buttonName)
+    {
+        foreach (Button button in root.GetComponentsInChildren<Button>(true))
+        {
+            if (button.name == buttonName) return button;
+        }
+        return null;
+    }
+
+    private static Button CloneButton(Button source, string objectName, string label, UnityEngine.Events.UnityAction onClick)
+    {
+        Button clone = Instantiate(source, source.transform.parent);
+        clone.name = objectName;
+        // Drop the copied Main Menu call, only the new action runs.
+        clone.onClick = new Button.ButtonClickedEvent();
+        clone.onClick.AddListener(onClick);
+
+        TMP_Text text = clone.GetComponentInChildren<TMP_Text>(true);
+        if (text != null) text.text = label;
+        return clone;
     }
 
     // Panel_Victory or Panel_Defeat was picked by the level's end event, only that one comes back here.
