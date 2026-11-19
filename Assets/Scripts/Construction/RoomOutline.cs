@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// Dashed ground outline around a room's tiles, so the player sees which tile belongs to which room before building.
+// Pulsing ground outline around a room's tiles, so the player sees which tile belongs to which room before building.
 // Built at runtime by RoomController from its tile list, so no level needs hand-made art for it.
 // Small rooms and big rooms get different colours (small rooms are the ones to build first). Hidden once the room is done.
 public class RoomOutline : MonoBehaviour
@@ -10,8 +10,8 @@ public class RoomOutline : MonoBehaviour
     const string MaterialPath = "RoomOutline/RoomOutline";
     const int SmallRoomMaxTiles = 9;
 
-    static readonly Color SmallRoomColor = new Color(0.35f, 1f, 0.45f, 0.95f);
-    static readonly Color BigRoomColor = new Color(1f, 0.62f, 0.2f, 0.95f);
+    static readonly Color SmallRoomColor = new Color(0.45f, 0.85f, 0.5f, 0.9f);
+    static readonly Color BigRoomColor = new Color(0.95f, 0.66f, 0.32f, 0.9f);
     const float LineWidth = 0.09f;
     const float Inset = 0.14f;      // pulled inside the room edge so two neighbouring rooms show two separate lines
     const float Lift = 0.03f;       // above the tile tops so built tiles do not cover it
