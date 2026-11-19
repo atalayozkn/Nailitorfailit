@@ -151,7 +151,9 @@ MonoBehaviour:
   nextScene: MenuScene
   background: {fileID: 2800000, guid: 11e399ef1691733439b5340ff3f8fc63, type: 3}
   backgroundTint: {r: 1, g: 1, b: 1, a: 1}
+  backgroundCrop: {x: 0.052, y: 0.018, z: 0.923, w: 0.96}
   overlay: {fileID: 2800000, guid: b3cfa75ab9424bd4cbde1d79bf3c00cb, type: 3}
+  overlayCrop: {x: 0.1359, y: 0.0264, z: 0.8934, w: 0.925}
   centerAreaOnOverlay: {x: 0.58, y: 0.15, z: 0.83, w: 0.8}
   centerImage: {fileID: 2800000, guid: c98401968e0247fa9a87a9630371832e, type: 3}
   centerAnchor: {x: 0.75, y: 0.5}
