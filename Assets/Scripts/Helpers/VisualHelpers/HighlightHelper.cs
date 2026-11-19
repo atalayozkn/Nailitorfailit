@@ -22,9 +22,18 @@ public class HighlightHelper : MonoBehaviour
     private readonly List<(Renderer source, GameObject overlay)> overlays = new();
     private bool built;
 
-    public void HighlightMaterial() => SetGlow(true);
-    public void ReverseHighlight() => SetGlow(false);
+    private bool hovered;
+    private bool held;
 
+    public void HighlightMaterial() { hovered = true; Refresh(); }
+    public void ReverseHighlight() { hovered = false; Refresh(); }
+
+    // Keeps the glow on without hover, to point the player at something (the mixer handle once the mixer is full).
+    public void SetHeld(bool on) { held = on; Refresh(); }
+
+    private void Refresh() => SetGlow(hovered || held);
+
+    private void OnEnable() { if (held) Refresh(); }
     private void OnDisable() => SetGlow(false);
 
     private void SetGlow(bool on)

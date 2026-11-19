@@ -35,9 +35,29 @@ public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
     private CarriableObject_SP secondCarriable;
     private CarriableObject_SP thirdCarriable;
 
+    // The handle glows while the mixer is full, so the player sees what to press next.
+    private HighlightHelper handleHighlight;
+    private bool handleHinted;
+
     private void Awake()
     {
         interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+
+        MixerHandle handle = GetComponentInChildren<MixerHandle>(true);
+        if (handle != null)
+        {
+            handleHighlight = handle.GetComponentInChildren<HighlightHelper>(true);
+            if (handleHighlight == null) handleHighlight = handle.gameObject.AddComponent<HighlightHelper>();
+        }
+    }
+
+    // Polled rather than hooked: multiplayer fills and empties the slots without going through these methods.
+    private void Update()
+    {
+        bool full = firstCarriable != null && secondCarriable != null && thirdCarriable != null;
+        if (full == handleHinted || handleHighlight == null) return;
+        handleHinted = full;
+        handleHighlight.SetHeld(full);
     }
 
     private void OnEnable()
