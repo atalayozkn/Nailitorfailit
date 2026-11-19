@@ -39,7 +39,34 @@ namespace ItemScript
         private void Awake()
         {
             interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+            CreateCarriableCatcher();
         }
+
+        // Carriables share this tile's Interaction layer, which does not collide with itself, so a dropped item fell
+        // through the blueprint and could no longer be picked up. This copy of the tile's box sits on Ignore Raycast
+        // (the interaction sphere-cast never sees it) and only lets Interaction-layer bodies touch it, so items rest on
+        // top while the player, dog and cars pass through. It lives under the blueprint, so it is gone once the tile is built.
+        private void CreateCarriableCatcher()
+        {
+            if (bluePrintObject == null || !(interactionCollider is BoxCollider source)) return;
+
+            var catcher = new GameObject("__CarriableCatcher") { layer = 2 }; // Ignore Raycast
+            Transform t = catcher.transform;
+            t.SetParent(bluePrintObject.transform, false);
+            t.SetPositionAndRotation(source.transform.position, source.transform.rotation);
+            Vector3 parentScale = bluePrintObject.transform.lossyScale;
+            Vector3 wanted = source.transform.lossyScale;
+            t.localScale = new Vector3(SafeDivide(wanted.x, parentScale.x), SafeDivide(wanted.y, parentScale.y), SafeDivide(wanted.z, parentScale.z));
+
+            var box = catcher.AddComponent<BoxCollider>();
+            box.center = source.center;
+            box.size = source.size;
+            int interactionLayer = LayerMask.NameToLayer("Interaction");
+            box.excludeLayers = ~(1 << interactionLayer);
+            box.layerOverridePriority = 10;
+        }
+
+        private static float SafeDivide(float a, float b) => Mathf.Abs(b) > 0.0001f ? a / b : a;
         public bool OnInteract()
         {
             if (isBuilt) return false;

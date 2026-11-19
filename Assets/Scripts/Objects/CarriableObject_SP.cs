@@ -155,7 +155,7 @@ namespace ItemScript
             if (isConsumed) return;
             isConsumed = true;
 
-            spawnerObject?.ReduceCounter();
+            ReleaseSpawnerSlot();
             onConsumeEvent?.Invoke();
             interactionHandler.ReleaseCarried(this);
 
@@ -228,7 +228,7 @@ namespace ItemScript
         }
         public void DestroyedByDog()
         {
-            spawnerObject?.ReduceCounter();
+            ReleaseSpawnerSlot();
             onConsumeEvent?.Invoke();
             isOccupied = false;
             HideConsumed();
@@ -237,6 +237,18 @@ namespace ItemScript
         #endregion
 
         #region UTILITIES
+        // Frees this item's place in its spawner's limit, at most once.
+        private void ReleaseSpawnerSlot()
+        {
+            if (spawnerObject != null) spawnerObject.ReduceCounter();
+            spawnerObject = null;
+        }
+        // Items destroyed without OnConsume (mixer ingredients, anything else that calls Destroy directly) still free their slot.
+        // Consumed items already did; the multiplayer path marks isConsumed and reduces the counter itself.
+        private void OnDestroy()
+        {
+            if (!isConsumed) ReleaseSpawnerSlot();
+        }
         private void SetCollusion(bool condition)
         {
             foreach (var col in cols)

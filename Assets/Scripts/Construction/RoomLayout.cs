@@ -51,6 +51,80 @@ public class RoomLayout : MonoBehaviour
     private void Awake()
     {
         Apply();
+        OpenFrontDoors();
+    }
+
+    // Front doors stay open for the whole level: each jointed leaf is frozen swung away from the room, so it never blocks
+    // the doorway. Works for both door styles: the pack rooms' HingeJoint leaf and the old Door_Outher's two ConfigurableJoints.
+    private const float FrontDoorOpenAngle = 95f;
+
+    private void OpenFrontDoors()
+    {
+        Transform structure = transform.Find("Structure");
+        Transform slots = structure != null ? structure.Find("Slots") : null;
+        if (slots == null) return;
+
+        foreach (Transform slot in slots)
+        {
+            Transform doorOuter = slot.Find("DoorOuter");
+            if (doorOuter == null) continue;
+
+            var bodies = new HashSet<Rigidbody>();
+            foreach (Joint joint in doorOuter.GetComponentsInChildren<Joint>(true))
+            {
+                if (joint.TryGetComponent(out Rigidbody body)) bodies.Add(body);
+            }
+            foreach (Rigidbody body in bodies) FreezeOpen(body);
+        }
+    }
+
+    private void FreezeOpen(Rigidbody leaf)
+    {
+        Joint[] joints = leaf.GetComponents<Joint>();
+        Transform t = leaf.transform;
+
+        // Two joints share one hinge line through both anchors; a single joint carries its own axis.
+        Vector3 pivot = t.TransformPoint(joints[0].anchor);
+        Vector3 axis = t.TransformDirection(joints[0].axis);
+        if (joints.Length >= 2)
+        {
+            Vector3 other = t.TransformPoint(joints[1].anchor);
+            axis = other - pivot;
+            pivot = (pivot + other) * 0.5f;
+        }
+        if (axis.sqrMagnitude < 0.0001f) return;
+        axis.Normalize();
+
+        foreach (Joint joint in joints) Destroy(joint);
+        leaf.isKinematic = true;
+
+        // Swing whichever way takes the leaf further from the room centre, so it opens outwards.
+        Vector3 center = LeafCenter(t);
+        Vector3 roomCenter = transform.position;
+        float outDistance = FlatDistance(RotatePoint(center, pivot, axis, FrontDoorOpenAngle), roomCenter);
+        float inDistance = FlatDistance(RotatePoint(center, pivot, axis, -FrontDoorOpenAngle), roomCenter);
+        t.RotateAround(pivot, axis, outDistance >= inDistance ? FrontDoorOpenAngle : -FrontDoorOpenAngle);
+    }
+
+    // Mesh bounds work even while the structure is still hidden (renderer bounds do not).
+    private static Vector3 LeafCenter(Transform leaf)
+    {
+        foreach (MeshFilter filter in leaf.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (filter.sharedMesh != null) return filter.transform.TransformPoint(filter.sharedMesh.bounds.center);
+        }
+        return leaf.position;
+    }
+
+    private static Vector3 RotatePoint(Vector3 point, Vector3 pivot, Vector3 axis, float angle)
+    {
+        return pivot + Quaternion.AngleAxis(angle, axis) * (point - pivot);
+    }
+
+    private static float FlatDistance(Vector3 a, Vector3 b)
+    {
+        a.y = b.y = 0f;
+        return Vector3.Distance(a, b);
     }
 
     public void SetSize(int width, int depth)
