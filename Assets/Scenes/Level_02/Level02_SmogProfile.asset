@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7863183570056399020
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 221518ef91623a7438a71fef23660601, type: 3}
+  m_Name: WhiteBalance
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.WhiteBalance
+  active: 1
+  temperature:
+    m_OverrideState: 1
+    m_Value: 6
+  tint:
+    m_OverrideState: 1
+    m_Value: -6
+--- !u!114 &-6296442180912763309
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f335fb1ffd8684294ad653bf1c7564, type: 3}
+  m_Name: ColorAdjustments
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorAdjustments
+  active: 1
+  postExposure:
+    m_OverrideState: 1
+    m_Value: 0.05
+  contrast:
+    m_OverrideState: 1
+    m_Value: 16
+  colorFilter:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 0.9, a: 1}
+  hueShift:
+    m_OverrideState: 0
+    m_Value: 0
+  saturation:
+    m_OverrideState: 1
+    m_Value: -10
+--- !u!114 &-1994322099620242432
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a2a04ca282ac7b4ea8fc5316e57bf36, type: 3}
+  m_Name: VolumetricFog
+  m_EditorClassIdentifier: Assembly-CSharp::VolumetricFog
+  active: 1
+  density:
+    m_OverrideState: 1
+    m_Value: 0.028
+  baseHeight:
+    m_OverrideState: 1
+    m_Value: 0.5
+  heightFalloff:
+    m_OverrideState: 1
+    m_Value: 0.12
+  maxDistance:
+    m_OverrideState: 1
+    m_Value: 120
+  albedo:
+    m_OverrideState: 1
+    m_Value: {r: 0.78, g: 0.77, b: 0.48, a: 1}
+  ambient:
+    m_OverrideState: 1
+    m_Value: {r: 0.22, g: 0.21, b: 0.13, a: 1}
+  sunScattering:
+    m_OverrideState: 1
+    m_Value: 1
+  anisotropy:
+    m_OverrideState: 1
+    m_Value: 0.45
+  noiseStrength:
+    m_OverrideState: 1
+    m_Value: 0.65
+  noiseScale:
+    m_OverrideState: 1
+    m_Value: 0.035
+  wind:
+    m_OverrideState: 1
+    m_Value: {x: 0.8, y: 0.05, z: 0.35}
+  steps:
+    m_OverrideState: 1
+    m_Value: 32
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: Level02_SmogProfile
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: -1994322099620242432}
+  - {fileID: -6296442180912763309}
+  - {fileID: -7863183570056399020}

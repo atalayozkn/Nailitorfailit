@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 1
-  m_FogColor: {r: 0.98, g: 0.76, b: 0.55, a: 1}
+  m_FogColor: {r: 0.6, g: 0.59, b: 0.42, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.004
+  m_FogDensity: 0.006
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.58, g: 0.63, b: 0.88, a: 1}
@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 3e46ea4bd592b6c489939a49b654f431, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: bf2e7313191703746be6b87843e43ae3, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -30279,8 +30279,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 1
-  m_Color: {r: 1, g: 0.87, b: 0.69, a: 1}
-  m_Intensity: 1.6
+  m_Color: {r: 0.96, g: 0.91, b: 0.7, a: 1}
+  m_Intensity: 1.4
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -65909,6 +65909,10 @@ PrefabInstance:
       propertyPath: '<patrolBoundaries>k__BackingField.Array.data[2]'
       value: 
       objectReference: {fileID: 1968396235}
+    - target: {fileID: 2613767292318966947, guid: 7bc2d0b4ac7199c4b94286aac94ca800, type: 3}
+      propertyPath: m_fontSize
+      value: 35.4
+      objectReference: {fileID: 0}
     - target: {fileID: 2807120570544133170, guid: 7bc2d0b4ac7199c4b94286aac94ca800, type: 3}
       propertyPath: m_LocalPosition.z
       value: -9.5
@@ -66172,6 +66176,10 @@ PrefabInstance:
     - target: {fileID: 8012075391278276949, guid: 7bc2d0b4ac7199c4b94286aac94ca800, type: 3}
       propertyPath: m_AnchorMin.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8175640939861029321, guid: 7bc2d0b4ac7199c4b94286aac94ca800, type: 3}
+      propertyPath: m_fontSize
+      value: 35.4
       objectReference: {fileID: 0}
     - target: {fileID: 8471304664243593826, guid: 7bc2d0b4ac7199c4b94286aac94ca800, type: 3}
       propertyPath: m_Size.x
@@ -68911,6 +68919,55 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3093277528062418687, guid: d590da079263dc243933796fa0bfd4de, type: 3}
   m_PrefabInstance: {fileID: 2139390911}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2142765869
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142765871}
+  - component: {fileID: 2142765870}
+  m_Layer: 0
+  m_Name: Level02_Smog
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2142765870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142765869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 11
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: b373302bade899543a1c77536de334e1, type: 2}
+--- !u!4 &2142765871
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142765869}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2144829351
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -69308,3 +69365,4 @@ SceneRoots:
   - {fileID: 20744292}
   - {fileID: 453515625}
   - {fileID: 1408337915}
+  - {fileID: 2142765871}
