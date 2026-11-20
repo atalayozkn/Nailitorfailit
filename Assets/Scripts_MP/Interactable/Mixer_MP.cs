@@ -26,6 +26,7 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
 
         bool usedCrank = interactable is MixerHandle;
         bool usedGenerator = interactable is Generator_Prototype;
+        if (usedCrank && mixer != null) mixer.NotifyHandleUsed();
 
         if (isServer) ServerHandle(requester, usedCrank, usedGenerator);
         else CmdRequestInteract(requester, usedCrank, usedGenerator);
@@ -96,6 +97,8 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
     private void ApplySlots()
     {
         if (isServer) return; // the server (host) already updated its UI directly
+
+        if (mixer != null) mixer.SetRemoteFull(slot1 >= 0 && slot2 >= 0 && slot3 >= 0);
 
         MixerUIHelper ui = GetComponentInChildren<MixerUIHelper>(true);
         if (ui == null) return;

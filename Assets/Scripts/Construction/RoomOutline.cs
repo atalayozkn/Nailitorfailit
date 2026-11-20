@@ -15,6 +15,8 @@ public class RoomOutline : MonoBehaviour
     const float LineWidth = 0.09f;
     const float Inset = 0.14f;      // pulled inside the room edge so two neighbouring rooms show two separate lines
     const float Lift = 0.03f;       // above the tile tops so built tiles do not cover it
+    const float SlabReach = 0.5f;   // only meshes that start this close to the tile base count as the floor slab
+    const float MaxAboveBase = 1f;  // hard cap: the line never floats more than this over the tile base
 
     static Material sharedMaterial;
     private LineRenderer line;
@@ -118,21 +120,31 @@ public class RoomOutline : MonoBehaviour
         return best == float.MaxValue ? 1f : best;
     }
 
-    // Highest point of any mesh in the tile (all variants, built or not). Mesh bounds work on hidden objects too.
+    // Top of the tile's floor slab (all variants, built or not). Mesh bounds work on hidden objects too.
+    // Tiles also carry helper meshes (hammer icon, puddle, VFX, world canvas, walls) that reach far above the floor
+    // and lifted the line to around +15. Only meshes whose bottom starts near the tile base count, and the result is
+    // capped so the outline always hugs the room's floor.
     private static float TileTop(GameObject tile)
     {
-        float top = tile.transform.position.y;
+        float baseY = tile.transform.position.y;
+        float top = baseY;
         foreach (MeshFilter filter in tile.GetComponentsInChildren<MeshFilter>(true))
         {
             if (filter.sharedMesh == null || filter.name.StartsWith("__")) continue;
+            if (filter.GetComponentInParent<Canvas>(true) != null) continue;
             Bounds b = filter.sharedMesh.bounds;
             Vector3 c = b.center, e = b.extents;
+            float meshMin = float.MaxValue, meshMax = float.MinValue;
             for (int k = 0; k < 8; k++)
             {
                 Vector3 corner = c + new Vector3((k & 1) == 0 ? -e.x : e.x, (k & 2) == 0 ? -e.y : e.y, (k & 4) == 0 ? -e.z : e.z);
-                top = Mathf.Max(top, filter.transform.TransformPoint(corner).y);
+                float y = filter.transform.TransformPoint(corner).y;
+                meshMin = Mathf.Min(meshMin, y);
+                meshMax = Mathf.Max(meshMax, y);
             }
+            if (Mathf.Abs(meshMin - baseY) > SlabReach) continue;
+            top = Mathf.Max(top, meshMax);
         }
-        return top;
+        return Mathf.Min(top, baseY + MaxAboveBase);
     }
 }

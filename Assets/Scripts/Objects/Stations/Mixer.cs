@@ -35,9 +35,12 @@ public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
     private CarriableObject_SP secondCarriable;
     private CarriableObject_SP thirdCarriable;
 
-    // The handle glows while the mixer is full, so the player sees what to press next.
-    private HighlightHelper handleHighlight;
-    private bool handleHinted;
+    // The handle glimmers once the mixer is full, so the player sees what to press next. It is its own effect
+    // (not the hover glow), so hovering the handle or the mixer next to it never switches it off. It stays on
+    // until the handle is used, and comes back the next time the mixer is filled.
+    private AttentionGlimmer handleGlimmer;
+    private bool handleUsed;
+    private bool remoteFull; // multiplayer client: the slots live on the server, Mixer_MP reports them here
 
     private void Awake()
     {
@@ -46,19 +49,25 @@ public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
         MixerHandle handle = GetComponentInChildren<MixerHandle>(true);
         if (handle != null)
         {
-            handleHighlight = handle.GetComponentInChildren<HighlightHelper>(true);
-            if (handleHighlight == null) handleHighlight = handle.gameObject.AddComponent<HighlightHelper>();
+            handleGlimmer = handle.GetComponent<AttentionGlimmer>();
+            if (handleGlimmer == null) handleGlimmer = handle.gameObject.AddComponent<AttentionGlimmer>();
         }
     }
 
     // Polled rather than hooked: multiplayer fills and empties the slots without going through these methods.
     private void Update()
     {
-        bool full = firstCarriable != null && secondCarriable != null && thirdCarriable != null;
-        if (full == handleHinted || handleHighlight == null) return;
-        handleHinted = full;
-        handleHighlight.SetHeld(full);
+        bool full = remoteFull || (firstCarriable != null && secondCarriable != null && thirdCarriable != null);
+        if (!full) handleUsed = false;
+        bool glimmer = full && !handleUsed;
+        if (handleGlimmer != null && glimmer != handleGlimmer.IsOn) handleGlimmer.SetOn(glimmer);
     }
+
+    // Called when a player pulls the handle (single player and multiplayer).
+    public void NotifyHandleUsed() => handleUsed = true;
+
+    // Multiplayer client: whether all three synced slots are filled.
+    public void SetRemoteFull(bool full) => remoteFull = full;
 
     private void OnEnable()
     {
@@ -236,9 +245,10 @@ public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
 
     private void DropStoredItems()
     {
-        DropCarriable(firstCarriable);
-        DropCarriable(secondCarriable);
-        DropCarriable(thirdCarriable);
+        // Side by side: items collide with each other now, and three dropped on one spot would shove each other away.
+        DropCarriable(firstCarriable, -1);
+        DropCarriable(secondCarriable, 0);
+        DropCarriable(thirdCarriable, 1);
 
         firstCarriable = null;
         secondCarriable = null;
@@ -248,14 +258,16 @@ public class Mixer : MonoBehaviour, IInteractable, ILookAtInfo
         // UI update can happen here.
     }
 
-    private void DropCarriable(CarriableObject_SP carriable)
+    private const float DropSpacing = 0.35f;
+
+    private void DropCarriable(CarriableObject_SP carriable, int side)
     {
         if (carriable == null) return;
         // Make the object visible again.
         carriable.SetVisuals(true);
+        carriable.transform.position += placementTransform.right * (side * DropSpacing);
         // Detach from mixer.
         carriable.OnDrop();
-        
     }
 
     private void ClearSlots()

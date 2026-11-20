@@ -593,6 +593,10 @@ public class CarriableObject_MP : NetworkBehaviour
 
             c.enabled = enabled && colliderWasEnabled[i];
         }
+
+        // The item-vs-item copies follow their source colliders (see CarriableContact).
+        CarriableContact contact = GetComponentInChildren<CarriableContact>(true);
+        if (contact != null) contact.Sync();
     }
 
     // ---- Self-healing visuals -------------------------------------------------------------------------------------
@@ -782,6 +786,11 @@ public class CarriableObject_MP : NetworkBehaviour
         }
 
         SetItemColliders(true);
+
+        // Leaves from the holder's hand: keep it off the holder's own capsule and limbs until it is clear,
+        // or a throw can hit the thrower and lose part of its impulse.
+        Component holder = releasedHandler != null ? releasedHandler : carrierIdentity;
+        if (holder != null) ThrowReleaseGuard.Protect(gameObject, holder);
 
         // A stowed item is hidden. The SP death state may already have let go of it locally (DropAllCarried drops
         // the inventory without un-hiding), so show it again here whatever the handler thinks.

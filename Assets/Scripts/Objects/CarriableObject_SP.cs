@@ -36,7 +36,11 @@ namespace ItemScript
         private void Awake()
         {
             interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
+            // Items collide with each other through their own layer (see CarriableContact).
+            contact = GetComponent<CarriableContact>();
+            if (contact == null) contact = gameObject.AddComponent<CarriableContact>();
         }
+        private CarriableContact contact;
 
         #region INTERACTABLE
 
@@ -119,6 +123,7 @@ namespace ItemScript
             transform.SetParent(null);
             rb.isKinematic = false;
             SetCollusion(true);
+            ThrowReleaseGuard.Protect(gameObject, interactionHandler);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
@@ -140,6 +145,8 @@ namespace ItemScript
             transform.SetParent(null);
             rb.isKinematic = false;
             SetCollusion(true);
+            // Released inside the throwing arm: without this it can hit the thrower and lose part of the impulse.
+            ThrowReleaseGuard.Protect(gameObject, interactionHandler);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.WakeUp();
@@ -259,6 +266,7 @@ namespace ItemScript
             {
                 col.enabled = condition;
             }
+            if (contact != null) contact.Sync();
         }
         public void SetOccupied()
         {

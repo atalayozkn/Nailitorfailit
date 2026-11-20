@@ -63,6 +63,9 @@ public class HighlightHelper : MonoBehaviour
         }
     }
 
+    // Same parts the hover glow uses, for effects that want to cover exactly the same meshes (AttentionGlimmer).
+    public List<Renderer> GlowTargets() => Targets();
+
     // Every mesh that belongs to this interactable; parts owned by a nested interactable glow on their own.
     private List<Renderer> Targets()
     {

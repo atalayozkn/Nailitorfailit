@@ -13,6 +13,7 @@ public class MixerHandle : MonoBehaviour, IInteractable, ILookAtInfo
     public InteractableType InteractableType => interactableType;
     public bool OnInteract()
     {
+        connectedMixer.NotifyHandleUsed();
         return connectedMixer.CompareFormula();
     }
     public LookAtInfo GetLookAtInfo(CarriableObject_SP carried)
