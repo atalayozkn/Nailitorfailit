@@ -2,7 +2,8 @@
 #define WARM_STYLIZED_INCLUDED
 
 // One-light stylized surface for the warm art style test.
-// Cost: base map + one noise sample + main light shadow. No PBR, no reflections, no additional lights.
+// Cost: base map + one noise sample + main light shadow. No PBR, no reflections.
+// Additional lights only when a scene opts in through _NailAdditionalLights (see NightLighting).
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -69,6 +70,46 @@ float3 WarmWind(float3 positionOS, float weight)
 #endif
 }
 
+// Point and spot lights. Off unless a scene opts in (NightLighting sets this global to 1), so levels that
+// were tuned without them (for example the Generator's small point light) keep their look.
+float _NailAdditionalLights;
+
+// Same soft band as the sun, with the light's own distance falloff, so lamp pools read as painted.
+half3 WarmAdditionalLights(float3 positionWS, float4 positionCS, half3 normalWS, half3 viewDir, half3 albedo, half paint)
+{
+    half3 sum = 0;
+#if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
+    UNITY_BRANCH
+    if (_NailAdditionalLights > 0.5)
+    {
+        InputData inputData = (InputData)0;
+        inputData.positionWS = positionWS;
+        inputData.normalWS = normalWS;
+        inputData.viewDirectionWS = viewDir;
+        inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(positionCS);
+        half4 shadowMask = half4(1, 1, 1, 1);
+        half paintShift = (paint - 0.5) * 0.2 * _PaintStrength;
+
+    #if USE_CLUSTER_LIGHT_LOOP
+        [loop] for (uint dirIndex = 0; dirIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); dirIndex++)
+        {
+            Light d = GetAdditionalLight(dirIndex, positionWS, shadowMask);
+            half b = smoothstep(_RampOffset - _RampSoft, _RampOffset + _RampSoft, dot(normalWS, d.direction) + paintShift);
+            sum += d.color * (b * d.distanceAttenuation * d.shadowAttenuation);
+        }
+    #endif
+
+        uint pixelLightCount = GetAdditionalLightsCount();
+        LIGHT_LOOP_BEGIN(pixelLightCount)
+            Light light = GetAdditionalLight(lightIndex, positionWS, shadowMask);
+            half band = smoothstep(_RampOffset - _RampSoft * 2, _RampOffset + _RampSoft * 2, dot(normalWS, light.direction) + paintShift);
+            sum += light.color * (band * light.distanceAttenuation * light.shadowAttenuation);
+        LIGHT_LOOP_END
+    }
+#endif
+    return albedo * sum;
+}
+
 struct Varyings
 {
     float4 positionCS : SV_POSITION;
@@ -132,6 +173,8 @@ half4 WarmFrag(Varyings input) : SV_Target
     half3 viewDir = GetWorldSpaceNormalizeViewDir(input.positionWS);
     half rim = pow(saturate(1.0 - dot(normalWS, viewDir)), _RimPower);
     color += _RimColor.rgb * rim * (0.35 + 0.65 * lit);
+
+    color += WarmAdditionalLights(input.positionWS, input.positionCS, normalWS, viewDir, albedo, paint.g);
 
 #ifdef _EMISSION
     color += SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb * _EmissionColor.rgb;

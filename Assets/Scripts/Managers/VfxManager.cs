@@ -140,6 +140,9 @@ public static class VfxManager
         }
         effect.transform.localScale = Vector3.one * entry.scale;
         if (parent != null) effect.transform.SetParent(parent, true);
+        // Night levels: fire is the one effect that lights its surroundings (its own light, not the prefab's flash).
+        if (NightLighting.Current != null && (id == VfxId.FireBurn || id == VfxId.FireIgnite))
+            NightLighting.Current.AttachFireLight(effect, id == VfxId.FireIgnite);
         return effect;
     }
 }
