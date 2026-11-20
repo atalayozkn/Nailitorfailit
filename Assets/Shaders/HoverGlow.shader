@@ -11,6 +11,11 @@ Shader "NailIt/HoverGlow"
         _PulseSpeed("Pulse Speed", Float) = 4
         _PulseAmount("Pulse Amount", Range(0, 1)) = 0.25
         _Inflate("Inflate (m)", Float) = 0.004
+        // Moving shine band, used by the attention glimmer (0 = off, so the hover glow looks as before).
+        _SweepStrength("Sweep Strength", Range(0, 4)) = 0
+        _SweepSpeed("Sweep Speed", Float) = 0.8
+        _SweepScale("Sweep Scale (bands per m)", Float) = 1.5
+        _SweepWidth("Sweep Width", Range(0.01, 1)) = 0.18
     }
     SubShader
     {
@@ -39,6 +44,10 @@ Shader "NailIt/HoverGlow"
                 half _PulseSpeed;
                 half _PulseAmount;
                 float _Inflate;
+                half _SweepStrength;
+                half _SweepSpeed;
+                half _SweepScale;
+                half _SweepWidth;
             CBUFFER_END
 
             struct Attributes
@@ -77,6 +86,10 @@ Shader "NailIt/HoverGlow"
                 half rim = pow(saturate(1.0 - abs(dot(n, v))), _RimPower);
                 half pulse = 1.0 - _PulseAmount * (0.5 + 0.5 * sin(_Time.y * _PulseSpeed));
                 half amount = (_Fill + rim * _RimStrength) * pulse;
+                // Diagonal shine that slides across the object in world space.
+                float s = frac(dot(input.positionWS, float3(0.55, 1.0, 0.35)) * _SweepScale - _Time.y * _SweepSpeed);
+                half band = saturate(1.0 - abs(s - 0.5) * 2.0 / _SweepWidth);
+                amount += band * band * _SweepStrength;
                 return half4(_GlowColor.rgb * amount, 1);
             }
             ENDHLSL
