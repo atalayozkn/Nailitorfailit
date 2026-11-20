@@ -94,7 +94,7 @@ public class MpVoiceUI_MP : MonoBehaviour
 
         if (voice.IsTransmitting)
         {
-            statusText.text = "MICROPHONE: TALKINGSUN";
+            statusText.text = "MICROPHONE: TALKING";
             statusText.color = new Color(0.40f, 0.85f, 0.45f, 1f);
         }
         else if (voice.Muted)

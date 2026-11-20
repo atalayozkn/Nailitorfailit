@@ -449,12 +449,12 @@ public class SteamLobbyManager : MonoBehaviour
     {
         switch ((EChatRoomEnterResponse)response)
         {
-            case EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist: return "lobi artik yok";
+            case EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist: return "the lobby no longer exists";
             case EChatRoomEnterResponse.k_EChatRoomEnterResponseFull: return "the lobby is full";
-            case EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned: return "bu lobiden yasaklandiniz";
-            case EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited: return "hesap kisitli (Steam'de harcama yapilmamis)";
-            case EChatRoomEnterResponse.k_EChatRoomEnterResponseRatelimitExceeded: return "cok fazla deneme, biraz bekleyin";
-            default: return "hata kodu " + response;
+            case EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned: return "you are banned from this lobby";
+            case EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited: return "your Steam account is limited (it has not spent any money on Steam yet)";
+            case EChatRoomEnterResponse.k_EChatRoomEnterResponseRatelimitExceeded: return "too many attempts, please wait a moment";
+            default: return "error code " + response;
         }
     }
 }

@@ -424,7 +424,7 @@ public class DebugConsoleMP : MonoBehaviour
                      "  ping     - Mirror round trip time (clients)\n" +
                      "  players  - connected connections (host only)\n" +
                      "  scene    - active scene\n" +
-                     "  ui       - open canvases (duplicate HUD tespiti)\n" +
+                     "  ui       - open canvases (detects duplicate HUDs)\n" +
                      "  leave    - stop host/client and reload the menu scene\n" +
                      "  copy     - copy the whole log to the clipboard\n" +
                      "  clear    - wipe the log");
