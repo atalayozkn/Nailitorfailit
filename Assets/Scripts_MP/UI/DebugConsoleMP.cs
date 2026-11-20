@@ -103,14 +103,22 @@ public class DebugConsoleMP : MonoBehaviour
     {
         FlushCapturedEntries();
 
+        if (!DebugMenuEnabled && visible) SetVisible(false);
+
         if (ReadToggleKey())
         {
             Toggle();
         }
     }
 
+    // Switch for the debug windows (console, network/performance panels). Off for now: nothing opens them.
+    // Set to true to get the ` / Insert key back.
+    public const bool DebugMenuEnabled = false;
+
     static bool ReadToggleKey()
     {
+        if (!DebugMenuEnabled) return false;
+
         // Release builds (not development builds) have no key that opens the debug windows.
 #if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
         return false;

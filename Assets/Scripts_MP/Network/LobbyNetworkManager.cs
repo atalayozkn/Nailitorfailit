@@ -174,12 +174,17 @@ public class LobbyNetworkManager : NetworkManager
 
     private const string DevPrefKey = "NIOFI.MP.ForceDevTransport";
 
+    // Switch for the local KCP transport (F8 / the saved editor preference). Off for now: the Steam transport is the
+    // only one used, whatever the saved preference says. Set to true to get F8 and the preference back.
+    public const bool DevTransportEnabled = false;
+
     private static bool forceDevTransport;
 
     public static bool ForceDevTransport
     {
         get
         {
+            if (!DevTransportEnabled) return false;
 #if UNITY_EDITOR
             return UnityEditor.EditorPrefs.GetBool(DevPrefKey, false); // Steam by default; F8 toggles local KCP
 #else
@@ -212,6 +217,8 @@ public class LobbyNetworkManager : NetworkManager
 
         // F8 (local KCP transport) exists in the editor and in development builds only, never in a release build.
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!DevTransportEnabled) return;
+
         UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
 
         if (keyboard == null) return;
