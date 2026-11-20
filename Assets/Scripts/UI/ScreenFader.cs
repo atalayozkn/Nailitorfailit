@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 // Fade in / fade out for every menu transition, without touching any panel:
 //  * Scene change  : the new scene fades in from black (and GameSceneManager fades out to black before it loads).
+//  * Settings card : opening, closing and switching its tabs is an overlay, not a transition, so it never fades.
 //  * Panel change  : when a click on a Button switches panels (some objects turn off, others on), the screen goes black
 //                    at once and the new panel fades in from black. (A screen snapshot cross-fade was tried first: the
 //                    capture came back blank white in the editor, a "flashbang".)
@@ -23,6 +24,7 @@ public class ScreenFader : MonoBehaviour
     private Image black;
     private bool armed;
     private int signatureAtPress;
+    private bool settingsOpenAtPress;
     private Coroutine fadeRoutine;
     private readonly List<RaycastResult> hits = new List<RaycastResult>();
 
@@ -125,6 +127,7 @@ public class ScreenFader : MonoBehaviour
         if (!PressedOnButton(mouse.position.ReadValue())) return;
 
         armed = true;
+        settingsOpenAtPress = SettingsOpen();
         signatureAtPress = Signature();
     }
 
@@ -137,10 +140,20 @@ public class ScreenFader : MonoBehaviour
 
         armed = false;
 
+        // The settings card is an overlay (opens/closes/switches tabs on the same screen): no fade.
+        if (settingsOpenAtPress || SettingsOpen()) return;
+
         // Only when the click actually switched panels.
         if (Signature() == signatureAtPress) return;
 
         BlackThenFadeIn(PanelFade);
+    }
+
+    private static bool SettingsOpen()
+    {
+        foreach (SettingsMenu menu in FindObjectsByType<SettingsMenu>(FindObjectsSortMode.None))
+            if (menu != null && menu.IsOpen) return true;
+        return false;
     }
 
     private bool PressedOnButton(Vector2 position)

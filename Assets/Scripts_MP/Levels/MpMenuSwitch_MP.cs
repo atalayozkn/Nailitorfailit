@@ -10,6 +10,15 @@ public class MpMenuSwitch_MP : MonoBehaviour
     [SerializeField] private GameObject mainPanel;
     [SerializeField] private GameObject mpPanel;
 
+    // The social icons (shared by every menu panel) sit a little higher while the multiplayer panel is open.
+    private const string SocialIconsName = "SocialMedia_Buttons (1)";
+    private const string SocialPlateName = "Social_Backdrop";
+    private const float MpSocialLift = 30f;
+
+    private RectTransform socialIcons, socialPlate;
+    private Vector2 socialIconsHome, socialPlateHome;
+    private bool socialHomeSaved;
+
     private static MpMenuSwitch_MP instance;
 
     public bool IsMpOpen => mpPanel != null && mpPanel.activeSelf;
@@ -36,6 +45,7 @@ public class MpMenuSwitch_MP : MonoBehaviour
     {
         if (mainPanel != null) mainPanel.SetActive(false);
         if (mpPanel != null) mpPanel.SetActive(true);
+        MoveSocial(true);
 
         GameManager.Instance?.SwitchToMenuPhase();
         Debug.Log("[MP-MENU] multiplayer panel opened (same scene).");
@@ -48,7 +58,28 @@ public class MpMenuSwitch_MP : MonoBehaviour
 
         if (mpPanel != null) mpPanel.SetActive(false);
         if (mainPanel != null) mainPanel.SetActive(true);
+        MoveSocial(false);
         Debug.Log("[MP-MENU] back to the main panel.");
+    }
+
+    private void MoveSocial(bool inMultiplayer)
+    {
+        if (mpPanel == null || mpPanel.transform.parent == null) return;
+        Transform parent = mpPanel.transform.parent;
+        if (socialIcons == null) socialIcons = parent.Find(SocialIconsName) as RectTransform;
+        if (socialPlate == null) socialPlate = parent.Find(SocialPlateName) as RectTransform;
+        if (socialIcons == null) return;
+
+        if (!socialHomeSaved)
+        {
+            socialIconsHome = socialIcons.anchoredPosition;
+            if (socialPlate != null) socialPlateHome = socialPlate.anchoredPosition;
+            socialHomeSaved = true;
+        }
+
+        Vector2 lift = inMultiplayer ? new Vector2(0f, MpSocialLift) : Vector2.zero;
+        socialIcons.anchoredPosition = socialIconsHome + lift;
+        if (socialPlate != null) socialPlate.anchoredPosition = socialPlateHome + lift;
     }
 
     public static void CloseIfPresent()

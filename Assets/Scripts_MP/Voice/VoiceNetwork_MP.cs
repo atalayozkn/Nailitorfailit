@@ -47,6 +47,7 @@ public class VoiceNetwork_MP : MonoBehaviour
 
     public bool IsTransmitting { get; private set; }
     // Kept for the UI/diagnostics that still read it: with push-to-talk only, the mic is never "muted".
+    public Key PushToTalkKey => pushToTalkKey;
     public bool Muted => false;
     public bool SteamAvailable => SteamManager.Initialized;
     public bool MicAvailable => SteamManager.Initialized || LocalMicAvailable();

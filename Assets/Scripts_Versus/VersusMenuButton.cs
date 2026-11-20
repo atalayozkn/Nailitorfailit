@@ -1,6 +1,7 @@
 using Mirror;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -12,8 +13,10 @@ public class VersusMenuButton : MonoBehaviour
     private const string JoinName = "Button_Join";
     private const string BackName = "Button_BackToMenu";
     private const string VersusScenePath = "Assets/Scenes/VersusMultiplayer_Test.unity";
-    private const string Label = "Confrontation";
+    private const string Label = "Compete";
     private const string CoopLabel = "Together";
+    private const string ModeGroupName = "Buttons_ModeChoice";
+    private const string BackdropName = "Buttons_Backdrop";
     private const int VersusPlayers = 2;
     // Five rows (tutorial, create, join, versus + the quit icon) do not fit at the old 200 spacing: the quit icon fell off
     // the screen and sat on the social icons. The four big rows are squeezed together (buttons scaled to match).
@@ -57,49 +60,101 @@ public class VersusMenuButton : MonoBehaviour
             return;
         }
 
+        // Together / Compete open a second step with Create and Join, so that step is a copy of the whole panel
+        // (made first: the copy keeps the Create / Join wiring of the scene, and its panel references point at itself).
+        GameObject modeGroup = Instantiate(panel.gameObject, panel.parent, false);
+        modeGroup.name = ModeGroupName;
+        modeGroup.SetActive(false);
+        BuildModeGroup(modeGroup.transform, panel.gameObject);
+
         GameObject clone = Instantiate(create.gameObject, panel, false);
         clone.name = "Button_Versus";
 
         Transform back = panel.Find(BackName);
-        LayoutRows(panel, create, clone.transform, back);
+        Transform join = panel.Find(JoinName);
+        if (join != null) Destroy(join.gameObject); // Join lives inside the two modes now.
+        LayoutTopRows(panel, create, clone.transform, back);
 
         SetLabel(clone, Label);
         SetLabel(create.gameObject, CoopLabel);
 
-        Button versusButton = clone.GetComponent<Button>();
-        if (versusButton != null) versusButton.onClick.AddListener(() => SetPending(true));
+        OpenModeOnClick(create.GetComponent<Button>(), false, panel.gameObject, modeGroup);
+        OpenModeOnClick(clone.GetComponent<Button>(), true, panel.gameObject, modeGroup);
 
-        AddClear(create);
-        AddClear(panel.Find(JoinName));
-
-        Debug.Log("[VERSUS] Confrontation button added to the multiplayer menu.");
+        Debug.Log("[VERSUS] Together / Compete mode choice added to the multiplayer menu.");
     }
 
-    private static void LayoutRows(Transform panel, Transform create, Transform versus, Transform back)
+    // Top step: Tutorial, Together, Compete, Exit - the same rows and spacing as the main menu.
+    private static void LayoutTopRows(Transform panel, Transform together, Transform compete, Transform back)
     {
         Transform tutorial = panel.Find("Button_Tutorial");
-        Transform join = panel.Find(JoinName);
-        if (tutorial == null || create == null || join == null) return;
-
-        // The quit button is the fifth row of the same stack.
-        // Order: Tutorial, Together, Confrontation, Join, Exit.
-        Transform[] rows = back != null ? new[] { tutorial, create, versus, join, back } : new[] { tutorial, create, versus, join };
-        float top = ((RectTransform)tutorial).anchoredPosition.y;
-
-        for (int i = 0; i < rows.Length; i++)
-        {
-            var rect = (RectTransform)rows[i];
-            rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, top - i * RowStep);
-            rect.localScale = Vector3.one * MainMenuScale; // same size as the main menu buttons
-        }
-
-        versus.SetSiblingIndex(back != null ? back.GetSiblingIndex() : versus.GetSiblingIndex());
+        Transform[] rows = { tutorial, together, compete, back };
+        PlaceRows(panel, rows, new[] { 203.5f, 65.5f, -72.5f, -210.5f }, new Vector2(516f, 632f), new Vector2(480f, -3.5f));
+        compete.SetSiblingIndex(back != null ? back.GetSiblingIndex() : compete.GetSiblingIndex());
     }
 
-    private static void AddClear(Transform buttonTransform)
+    // Second step: Create, Join, Back - the same rows as the singleplayer sub menu.
+    private static void BuildModeGroup(Transform group, GameObject topPanel)
     {
-        Button button = buttonTransform != null ? buttonTransform.GetComponent<Button>() : null;
-        if (button != null) button.onClick.AddListener(() => SetPending(false));
+        Transform tutorial = group.Find("Button_Tutorial");
+        if (tutorial != null) Destroy(tutorial.gameObject);
+
+        Transform create = group.Find(CreateName);
+        Transform join = group.Find(JoinName);
+        Transform back = group.Find(BackName);
+        if (create == null || join == null || back == null) return;
+
+        SetLabel(create.gameObject, "Create");
+
+        // The scene wiring of Back leaves the multiplayer panel; here it only returns to the first step.
+        Button backButton = back.GetComponent<Button>();
+        DisablePersistent(backButton);
+        if (backButton != null)
+        {
+            GameObject g = group.gameObject;
+            backButton.onClick.AddListener(() => { g.SetActive(false); topPanel.SetActive(true); });
+        }
+
+        PlaceRows(group, new[] { create, join, back }, new[] { 172.8f, -3.5f, -179.8f }, new Vector2(516f, 572f), new Vector2(480f, -3.5f));
+    }
+
+    private static void PlaceRows(Transform group, Transform[] rows, float[] ys, Vector2 backdropSize, Vector2 backdropPos)
+    {
+        for (int i = 0; i < rows.Length && i < ys.Length; i++)
+        {
+            if (rows[i] == null) continue;
+            var rect = (RectTransform)rows[i];
+            rect.anchoredPosition = new Vector2(backdropPos.x, ys[i]);
+            rect.localScale = Vector3.one * MainMenuScale;
+        }
+
+        Transform backdrop = group.Find(BackdropName);
+        if (backdrop != null)
+        {
+            var rect = (RectTransform)backdrop;
+            rect.anchoredPosition = backdropPos;
+            rect.sizeDelta = backdropSize;
+        }
+    }
+
+    private static void DisablePersistent(Button button)
+    {
+        if (button == null) return;
+        for (int i = button.onClick.GetPersistentEventCount() - 1; i >= 0; i--)
+            button.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
+    }
+
+    // Together / Compete: remember the mode, then show Create / Join.
+    private static void OpenModeOnClick(Button button, bool versus, GameObject topPanel, GameObject modeGroup)
+    {
+        if (button == null) return;
+        DisablePersistent(button);
+        button.onClick.AddListener(() =>
+        {
+            SetPending(versus);
+            topPanel.SetActive(false);
+            modeGroup.SetActive(true);
+        });
     }
 
     private static void SetPending(bool pending)

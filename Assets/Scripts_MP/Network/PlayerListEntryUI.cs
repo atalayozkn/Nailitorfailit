@@ -6,6 +6,10 @@ public class PlayerListEntryUI : MonoBehaviour
 {
     [SerializeField] TMP_Text nameText;
 
+    [Header("Look (dark lobby theme)")]
+    [SerializeField] Sprite ringSprite;   // frame around the avatar (always drawn, also without a Steam picture)
+    [SerializeField] Sprite crownSprite;  // host marker
+
     static readonly Color HostColor     = Color.yellow;
     static readonly Color ReadyColor    = Color.green;
     static readonly Color NotReadyColor = Color.red;
@@ -36,6 +40,32 @@ public class PlayerListEntryUI : MonoBehaviour
     private string ComposeName() => displayName;
 
     private UnityEngine.UI.Image avatar;
+    private UnityEngine.UI.Image ring;
+
+    private const float RingPixels = 46f;
+    private const float AvatarPixels = 32f;
+    private const float RingCentreX = 28f;
+
+    private void Awake() => EnsureRing();
+
+    // Orange ring at the left end of the row. The Steam picture (when there is one) sits inside it.
+    private void EnsureRing()
+    {
+        if (ring != null || ringSprite == null) return;
+
+        var go = new GameObject("AvatarRing", typeof(RectTransform));
+        go.transform.SetParent(transform, false);
+
+        RectTransform rect = (RectTransform)go.transform;
+        rect.sizeDelta = new Vector2(RingPixels, RingPixels);
+        rect.anchorMin = new Vector2(0f, 0.5f);
+        rect.anchorMax = new Vector2(0f, 0.5f);
+        rect.anchoredPosition = new Vector2(RingCentreX, 0f);
+
+        ring = go.AddComponent<UnityEngine.UI.Image>();
+        ring.sprite = ringSprite;
+        ring.raycastTarget = false;
+    }
 
     public void SetPlayerColor(Color color) => playerColor = color;
 
@@ -59,14 +89,18 @@ public class PlayerListEntryUI : MonoBehaviour
         go.transform.SetParent(transform, false);
 
         RectTransform rect = (RectTransform)go.transform;
-        rect.sizeDelta = new Vector2(34f, 34f);
+        rect.sizeDelta = new Vector2(AvatarPixels, AvatarPixels);
         rect.anchorMin = new Vector2(0f, 0.5f);
         rect.anchorMax = new Vector2(0f, 0.5f);
-        rect.anchoredPosition = new Vector2(20f, 0f);
+        rect.anchoredPosition = new Vector2(RingCentreX, 0f);
 
         var image = go.AddComponent<UnityEngine.UI.Image>();
         image.raycastTarget = false;
         image.enabled = false;
+
+        // The ring is drawn over the picture.
+        EnsureRing();
+        if (ring != null) ring.transform.SetAsLastSibling();
 
         return image;
     }
@@ -183,7 +217,7 @@ public class PlayerListEntryUI : MonoBehaviour
         // is moved with the text margin instead.
         bool hasAvatar = avatar != null && avatar.enabled;
         Vector4 margin = nameText.margin;
-        margin.x = hasAvatar ? 52f : 12f;
+        margin.x = ring != null || hasAvatar ? 62f : 12f;
         nameText.margin = margin;
         nameText.alignment = TMPro.TextAlignmentOptions.Left;
 
@@ -216,8 +250,8 @@ public class PlayerListEntryUI : MonoBehaviour
             if (crownIcon == null)
             {
                 crownIcon = CreateIcon("CrownIcon");
-                crownIcon.sprite = MpMicIcon_MP.Crown;
-                crownIcon.color = new Color(1f, 0.82f, 0.25f, 1f);
+                crownIcon.sprite = crownSprite != null ? crownSprite : MpMicIcon_MP.Crown;
+                crownIcon.color = crownSprite != null ? Color.white : new Color(1f, 0.82f, 0.25f, 1f);
             }
 
             crownIcon.gameObject.SetActive(true);

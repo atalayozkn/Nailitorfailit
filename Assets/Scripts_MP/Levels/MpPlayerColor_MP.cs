@@ -5,6 +5,10 @@ using UnityEngine.UI;
 
 public class MpPlayerColor_MP : MonoBehaviour
 {
+    [Header("Look")]
+    [Tooltip("Backdrop of the colour / character panel (the menu's wooden-brown panel).")]
+    [SerializeField] private Sprite panelSprite;
+
     private static MpPlayerColor_MP instance;
 
     public static readonly Color[] Palette =
@@ -77,6 +81,7 @@ public class MpPlayerColor_MP : MonoBehaviour
         if (caption != null && caption.TryGetComponent(out TMP_Text captionText)) captionText.text = "COLOR";
 
         var panelRect = (RectTransform)panel;
+        ApplyPanelLook(panel.GetComponent<Image>());
         var existing = panel.Find("CharacterName");
         if (existing == null)
         {
@@ -89,6 +94,17 @@ public class MpPlayerColor_MP : MonoBehaviour
         {
             characterLabel = existing.GetComponent<TMP_Text>();
         }
+    }
+
+    // Opaque wooden panel (the same one behind the menu buttons) when the sprite is assigned in the scene.
+    private void ApplyPanelLook(Image backdrop)
+    {
+        // The panel built in code (when the menu scene object was not the first instance) has no scene reference.
+        if (panelSprite == null) panelSprite = Resources.Load<Sprite>("Menu/MenuButtons_Panel");
+        if (backdrop == null || panelSprite == null) return;
+        backdrop.sprite = panelSprite;
+        backdrop.type = Image.Type.Sliced;
+        backdrop.color = Color.white;
     }
 
     private void OnDestroy()
@@ -207,6 +223,7 @@ public class MpPlayerColor_MP : MonoBehaviour
         Image backdrop = panel.gameObject.AddComponent<Image>();
         backdrop.color = new Color(0.05f, 0.06f, 0.08f, 0.75f);
         backdrop.raycastTarget = false;
+        ApplyPanelLook(backdrop);
 
         TMP_Text caption = NewText(panel, "Caption", new Vector2(0f, 208f), 20f, "COLOR");
         caption.color = new Color(0.98f, 0.71f, 0.40f, 1f);
@@ -248,8 +265,8 @@ public class MpPlayerColor_MP : MonoBehaviour
         characterLabel.fontSizeMin = 9f;
         characterLabel.fontSizeMax = 17f;
 
-        NewArrow(panel, "CharacterPrev", new Vector2(-64f, -132f), "<", () => StepCharacter(-1));
-        NewArrow(panel, "CharacterNext", new Vector2(64f, -132f), ">", () => StepCharacter(1));
+        NewArrow(panel, "CharacterPrev", new Vector2(-54f, -132f), "<", () => StepCharacter(-1));
+        NewArrow(panel, "CharacterNext", new Vector2(54f, -132f), ">", () => StepCharacter(1));
     }
 
     private static void NewArrow(Transform parent, string name, Vector2 position, string glyph, UnityEngine.Events.UnityAction onClick)

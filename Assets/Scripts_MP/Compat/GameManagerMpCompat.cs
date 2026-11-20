@@ -9,6 +9,7 @@ public static class GameManagerMpCompat
 
     private const string MainMenuPanel = "Buttons_MainMenu";
     private const string MultiplayerPanel = "Buttons_AfterMultiplayer";
+    private const string ModeChoicePanel = "Buttons_ModeChoice";
     private const string CreatePanel = "Panel_AfterCreate";
     private const string JoinPanel = "Panel_AfterJoin";
     private const string LobbyPanel = "Panel_Lobby";
@@ -16,7 +17,7 @@ public static class GameManagerMpCompat
 
     private static readonly string[] MpPanels =
     {
-        MultiplayerPanel, CreatePanel, JoinPanel, LobbyPanel, CharacterSelectionPanel,
+        MultiplayerPanel, ModeChoicePanel, CreatePanel, JoinPanel, LobbyPanel, CharacterSelectionPanel,
     };
 
     public static void SwitchToMenuPhase(this GameManager gameManager)

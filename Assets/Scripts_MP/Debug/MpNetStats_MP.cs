@@ -236,31 +236,35 @@ public class MpNetStats_MP : MonoBehaviour
         title = new GUIStyle(label) { fontSize = 14, fontStyle = FontStyle.Bold };
     }
 
-    // Top right, always while connected: our own round-trip time.
+    // Top right, always while connected: the connection quality as a signal icon only (no numbers). The exact
+    // round-trip time is in the debug console (F-key panel). Hover the icon for a short label.
     private void DrawPing(float width)
     {
         if (!NetworkClient.isConnected) return;
 
-        string text;
-        Color color;
+        // The host talks to itself, so its connection is always good.
+        float ms = NetworkServer.active ? 0f : (float)(NetworkTime.rtt * 1000.0);
+        int level = ms < 90f ? 3 : ms < 170f ? 2 : 1;
+        string label = level == 3 ? "Good connection" : level == 2 ? "Okay connection" : "Bad connection";
+        Color lit = level == 3 ? new Color(0.45f, 0.88f, 0.45f) : level == 2 ? new Color(0.96f, 0.80f, 0.30f) : new Color(0.93f, 0.33f, 0.30f);
 
-        if (NetworkServer.active)
+        var plate = new Rect(width - 58f, 8f, 48f, 32f);
+        FillRect(plate, new Color(0.13f, 0.08f, 0.05f, 1f));
+        FillRect(new Rect(plate.x + 1f, plate.y + 1f, plate.width - 2f, plate.height - 2f), new Color(0.35f, 0.24f, 0.16f, 1f));
+
+        for (int i = 0; i < 3; i++)
         {
-            text = "HOST  0 ms";
-            color = new Color(0.55f, 0.85f, 1f);
-        }
-        else
-        {
-            float ms = (float)(NetworkTime.rtt * 1000.0);
-            text = $"PING  {ms:0} ms";
-            color = PingColor(ms);
+            float h = 8f + i * 6f;
+            var bar = new Rect(plate.x + 9f + i * 12f, plate.yMax - 7f - h, 8f, h);
+            FillRect(bar, i < level ? lit : new Color(0.13f, 0.08f, 0.05f, 0.75f));
         }
 
-        var rect = new Rect(width - 190f, 6f, 180f, 28f);
-        FillRect(rect, new Color(0f, 0f, 0f, 0.55f));
-        var style = new GUIStyle(title) { alignment = TextAnchor.MiddleCenter, fontSize = 16 };
-        style.normal.textColor = color;
-        GUI.Label(rect, text, style);
+        if (plate.Contains(Event.current.mousePosition))
+        {
+            var style = new GUIStyle(title) { alignment = TextAnchor.MiddleRight, fontSize = 14 };
+            style.normal.textColor = lit;
+            GUI.Label(new Rect(plate.x - 190f, plate.y, 182f, plate.height), label, style);
+        }
     }
 
     private float DrawNetworkPanel(float width, float y)

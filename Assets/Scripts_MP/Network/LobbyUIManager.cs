@@ -27,10 +27,59 @@ public class LobbyUIManager : MonoBehaviour
     void OnEnable()
     {
         if (leaveLobbyButton != null) leaveLobbyButton.interactable = true;
+        ShowVoiceHint();
+    }
+
+    // "Press V to open Voice Chat": shown for a few seconds every time the lobby opens, then fades out.
+    const float VoiceHintSeconds = 10f;
+    const float VoiceHintFade = 1f;
+    TMP_Text voiceHint;
+    float voiceHintUntil;
+
+    void ShowVoiceHint()
+    {
+        if (voiceHint == null)
+        {
+            var go = new GameObject("VoiceHint", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            go.transform.SetParent(transform, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(700f, 44f);
+            rect.anchoredPosition = new Vector2(448f, 8f);
+
+            voiceHint = go.GetComponent<TextMeshProUGUI>();
+            if (statusText != null) voiceHint.font = statusText.font;
+            voiceHint.fontSize = 30f;
+            voiceHint.fontStyle = FontStyles.Bold;
+            voiceHint.alignment = TextAlignmentOptions.Center;
+            voiceHint.color = new Color(1f, 0.86f, 0.62f, 1f);
+            voiceHint.raycastTarget = false;
+            // Dark brown outline so it reads on any background.
+            voiceHint.outlineWidth = 0.3f;
+            voiceHint.outlineColor = new Color32(34, 21, 14, 255);
+        }
+
+        VoiceNetwork_MP voice = VoiceNetwork_MP.Instance;
+        string key = voice != null ? voice.PushToTalkKey.ToString() : "V";
+        voiceHint.text = "Press <b>" + key + "</b> to open Voice Chat";
+        voiceHint.alpha = 1f;
+        voiceHint.gameObject.SetActive(true);
+        voiceHintUntil = Time.unscaledTime + VoiceHintSeconds;
+    }
+
+    void UpdateVoiceHint()
+    {
+        if (voiceHint == null || !voiceHint.gameObject.activeSelf) return;
+
+        float left = voiceHintUntil - Time.unscaledTime;
+        if (left <= 0f) { voiceHint.gameObject.SetActive(false); return; }
+        voiceHint.alpha = Mathf.Clamp01(left / VoiceHintFade);
     }
 
     void Update()
     {
+        UpdateVoiceHint();
+
         LobbyNetworkManager nm = NetworkManager.singleton as LobbyNetworkManager;
         if (nm == null) return;
 
