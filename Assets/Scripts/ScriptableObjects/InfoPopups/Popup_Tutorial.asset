@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52e4a196ade8fa64b94cade3bdeb555c, type: 3}
+  m_Name: Popup_Tutorial
+  m_EditorClassIdentifier: Assembly-CSharp::InfoPopupData
+  popupId: tutorial_intro
+  pages:
+  - title: Welcome to Nail It or Fail It!
+    body: "You build houses, one floor tile at a time.\n\nThis short tutorial teaches the basics. Your dog needs a home, so you will build its <b>dog house</b>."
+    image: {fileID: 0}
+  - title: How to play
+    body: "<b>W, A, S, D</b> - move.\n<b>E</b> - interact: pick things up, put them into machines, place and nail tiles.\n\nFollow the objective shown on screen. The highlighted spots and glowing items show where to go next."
+    image: {fileID: 0}

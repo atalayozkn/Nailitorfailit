@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 // First scene of the game (BootScene, build index 0):
 //   1. Loading screen   - background, centre image/title, spinning tools icon + "Loading..." bottom-right.
@@ -22,6 +23,8 @@ public class BootSequence : MonoBehaviour
     [SerializeField] private Vector4 backgroundCrop = new Vector4(0.052f, 0.018f, 0.923f, 0.960f);
     [Tooltip("Layer between the background and the centre picture (19.png: folder + clipboard). Fitted to the screen, aspect kept.")]
     [SerializeField] private Texture overlay;
+    [Tooltip("Size of the folder/clipboard picture relative to the fitted size (1 = fills the screen). Centred.")]
+    [SerializeField, Range(0.3f, 1f)] private float overlayScale = 0.8f;
     [Tooltip("Visible part of the overlay picture (min x/y, max x/y in 0-1 texture fractions). The rest (transparent margin) is cropped away so the folder fills the screen. Default = whole picture.")]
     [SerializeField] private Vector4 overlayCrop = new Vector4(0.1359f, 0.0264f, 0.8934f, 0.9250f);
     [Tooltip("Where the centre picture sits ON the overlay, in the overlay picture's fractions (min x/y, max x/y). " +
@@ -37,10 +40,8 @@ public class BootSequence : MonoBehaviour
     [SerializeField] private Texture spinnerIcon;
     [SerializeField] private float spinDegreesPerSecond = 180f;
     [SerializeField] private string loadingText = "Loading";
-    [Tooltip("Spinner + 'Loading...' colour. Light, on top of the dark backdrop panel.")]
+    [Tooltip("Spinner + 'Loading...' colour. Light, shown straight on the background.")]
     [SerializeField] private Color indicatorColor = new Color(1f, 0.96f, 0.88f, 1f);
-    [Tooltip("Semi-transparent panel behind the spinner + text so they stay readable on a busy background.")]
-    [SerializeField] private Color indicatorBackdrop = new Color(0.08f, 0.06f, 0.05f, 0.75f);
 
     [Header("Logos (shown one after another)")]
     [SerializeField] private Texture studioLogo;
@@ -54,6 +55,12 @@ public class BootSequence : MonoBehaviour
     [Tooltip("Keep the loading screen at least this long, so it doesn't flash on fast machines.")]
     [SerializeField] private float minLoadingTime = 1f;
 
+    // Videos live in Resources/Boot (loaded by name, no scene wiring needed).
+    private const string LoadingVideoName = "Boot/hammers";          // looping hammer pattern behind the loading screen
+    private const string StudioVideoName = "Boot/poder_games";       // "Poder Games" typed with nail sounds, under the studio logo
+
+    private VideoPlayer loadingVideo;
+    private RenderTexture loadingVideoTexture;
     private CanvasGroup loadingGroup;
     private RectTransform spinner;
     private TextMeshProUGUI loadingLabel;
@@ -85,8 +92,9 @@ public class BootSequence : MonoBehaviour
 
         yield return Fade(loadingGroup, 1f, 0f);
         loadingGroup.gameObject.SetActive(false);
+        StopLoadingVideo();
 
-        yield return ShowLogo(canvas.transform, studioLogo, "Poder Games");
+        yield return ShowLogo(canvas.transform, studioLogo, "Poder Games", Resources.Load<VideoClip>(StudioVideoName));
         yield return ShowLogo(canvas.transform, unityLogo, "Made with Unity");
 
         Application.backgroundLoadingPriority = ThreadPriority.Normal;
@@ -118,6 +126,7 @@ public class BootSequence : MonoBehaviour
         cam.backgroundColor = Color.black;
         cam.cullingMask = 0;
         cam.depth = -100;
+        cam.gameObject.AddComponent<AudioListener>(); // the studio video's sound needs a listener (there is no other in this scene)
     }
 
     private static Canvas BuildCanvas()
@@ -151,6 +160,8 @@ public class BootSequence : MonoBehaviour
             envelope.aspectRatio = background.height > 0 ? (background.width * bw) / (background.height * bh) : 16f / 9f;
         }
 
+        StartLoadingVideo(root, bg);
+
         // Middle layer: background -> overlay -> centre picture.
         RawImage layer = null;
         if (overlay != null)
@@ -159,6 +170,7 @@ public class BootSequence : MonoBehaviour
             float cw = Mathf.Max(0.05f, overlayCrop.z - overlayCrop.x), ch = Mathf.Max(0.05f, overlayCrop.w - overlayCrop.y);
             layer.uvRect = new Rect(overlayCrop.x, overlayCrop.y, cw, ch);
             Fit(layer, overlay, (overlay.width * cw) / Mathf.Max(1f, overlay.height * ch));
+            layer.rectTransform.parent.localScale = Vector3.one * overlayScale; // the frame is centred: scales about the middle
         }
 
         // Centre: picture if assigned, otherwise the game title. With an overlay it is placed on the overlay
@@ -184,9 +196,6 @@ public class BootSequence : MonoBehaviour
         // Bottom-right: spinning icon + "Loading..."
         RectTransform corner = Rect("LoadingIndicator", root, new Vector2(1f, 0f), new Vector2(1f, 0f),
                                     new Vector2(-170f, 90f), new Vector2(280f, 100f));
-        Image backdrop = corner.gameObject.AddComponent<Image>();
-        backdrop.color = indicatorBackdrop;
-        backdrop.raycastTarget = false;
         if (spinnerIcon != null)
         {
             RawImage icon = Raw("Spinner", corner, spinnerIcon, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
@@ -207,7 +216,7 @@ public class BootSequence : MonoBehaviour
         return group;
     }
 
-    private IEnumerator ShowLogo(Transform parent, Texture logo, string fallback)
+    private IEnumerator ShowLogo(Transform parent, Texture logo, string fallback, VideoClip video = null)
     {
         RectTransform root = Rect("Logo_" + fallback, parent, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         var group = root.gameObject.AddComponent<CanvasGroup>();
@@ -216,10 +225,19 @@ public class BootSequence : MonoBehaviour
         RawImage bg = Raw("Background", root, null, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         bg.color = logoBackground;
 
+        // With a video the logo sits in the upper half and the video text appears below it.
+        VideoPlayer player = null;
+        RenderTexture videoTexture = null;
+        if (video != null) player = BuildLogoVideo(root, video, out videoTexture);
+
+        // Logo above, video text below, the pair centred as a whole on the screen.
+        Vector2 logoPosition = player != null ? new Vector2(0f, 90f) : Vector2.zero;
+        Vector2 logoSize = player != null ? new Vector2(440f, 440f) : new Vector2(800f, 450f);
+
         if (logo != null)
         {
             RawImage image = Raw("Logo", root, logo, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                                 Vector2.zero, new Vector2(800f, 450f));
+                                 logoPosition, logoSize);
             Fit(image, logo);
         }
         else
@@ -229,10 +247,113 @@ public class BootSequence : MonoBehaviour
         }
 
         Debug.Log($"[Boot] logo '{fallback}' ({(logo != null ? logo.name : "text fallback")})");
+        if (player != null) player.Prepare(); // decode while the logo fades in
         yield return Fade(group, 0f, 1f);
+
+        if (player != null)
+        {
+            // Wait for the video (max 3 s), then play it to the end.
+            for (float t = 0f; !player.isPrepared && !videoFailed && t < 3f; t += Step) yield return null;
+
+            if (player.isPrepared && !videoFailed)
+            {
+                videoDone = false;
+                Debug.Log($"[Boot] studio video playing ({player.length:0.0}s, audio tracks {player.audioTrackCount}).");
+                float started = Time.realtimeSinceStartup;
+                player.Play();
+                for (float t = 0f; !videoDone && !videoFailed && t < player.length + 2f; t += Step) yield return null;
+                Debug.Log($"[Boot] studio video finished after {Time.realtimeSinceStartup - started:0.0}s (done={videoDone}).");
+            }
+            else Debug.LogWarning("[Boot] studio video not ready - skipped.");
+        }
+
         for (float t = 0f; t < logoHold; t += Step) yield return null;
         yield return Fade(group, 1f, 0f);
+
+        if (player != null) player.Stop();
+        if (videoTexture != null) videoTexture.Release();
         Destroy(root.gameObject);
+    }
+
+    private bool videoDone, videoFailed;
+
+    // Full-screen video (black background, so it blends into the black logo screen). Audio goes through an AudioSource.
+    private VideoPlayer BuildLogoVideo(RectTransform root, VideoClip clip, out RenderTexture texture)
+    {
+        videoDone = false;
+        videoFailed = false;
+
+        texture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32) { name = "BootStudioVideo" };
+        // The video's text sits at the middle of its frame: the frame is moved down so the text lands under the logo.
+        RawImage image = Raw("Video", root, texture, Vector2.zero, Vector2.one, new Vector2(0f, -260f), Vector2.zero);
+        Fit(image, texture); // own frame keeps the offset: an AspectRatioFitter on the image itself would reset it
+
+        var go = new GameObject("StudioVideoPlayer");
+        go.transform.SetParent(root, false);
+        var source = go.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.spatialBlend = 0f;
+        source.volume = 1f;
+
+        var player = go.AddComponent<VideoPlayer>();
+        player.playOnAwake = false;
+        player.isLooping = false;
+        player.clip = clip;
+        player.renderMode = VideoRenderMode.RenderTexture;
+        player.targetTexture = texture;
+        player.audioOutputMode = VideoAudioOutputMode.AudioSource;
+        player.controlledAudioTrackCount = 1;
+        player.SetTargetAudioSource(0, source);
+        player.loopPointReached += _ => videoDone = true;
+        player.errorReceived += (_, message) => { videoFailed = true; Debug.LogWarning("[Boot] studio video error: " + message); };
+        return player;
+    }
+
+    // Looping hammer pattern replaces the still background once its first frame is ready (the still art shows until then).
+    private void StartLoadingVideo(RectTransform root, RawImage background)
+    {
+        VideoClip clip = Resources.Load<VideoClip>(LoadingVideoName);
+        if (clip == null) return;
+
+        loadingVideoTexture = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32) { name = "BootLoadingVideo" };
+
+        var go = new GameObject("LoadingVideoPlayer");
+        go.transform.SetParent(root, false);
+        loadingVideo = go.AddComponent<VideoPlayer>();
+        loadingVideo.playOnAwake = false;
+        loadingVideo.isLooping = true;
+        loadingVideo.skipOnDrop = true;
+        loadingVideo.clip = clip;
+        loadingVideo.renderMode = VideoRenderMode.RenderTexture;
+        loadingVideo.targetTexture = loadingVideoTexture;
+        loadingVideo.audioOutputMode = VideoAudioOutputMode.None;
+        loadingVideo.sendFrameReadyEvents = true;
+        loadingVideo.errorReceived += (_, message) => Debug.LogWarning("[Boot] loading video error: " + message);
+        loadingVideo.prepareCompleted += p => p.Play();
+
+        bool shown = false;
+        loadingVideo.frameReady += (p, _) =>
+        {
+            if (shown || background == null) return;
+            shown = true;
+
+            background.texture = loadingVideoTexture;
+            background.uvRect = new Rect(0f, 0f, 1f, 1f);
+            background.color = Color.white;
+            var fit = background.GetComponent<AspectRatioFitter>();
+            if (fit == null) fit = background.gameObject.AddComponent<AspectRatioFitter>();
+            fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fit.aspectRatio = 16f / 9f;
+            Debug.Log("[Boot] loading video playing as the background.");
+        };
+
+        loadingVideo.Prepare();
+    }
+
+    private void StopLoadingVideo()
+    {
+        if (loadingVideo != null) loadingVideo.Stop();
+        if (loadingVideoTexture != null) loadingVideoTexture.Release();
     }
 
     private const string FadeCoverName = "FadeCover";

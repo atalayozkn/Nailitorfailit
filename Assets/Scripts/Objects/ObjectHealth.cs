@@ -33,6 +33,10 @@ public class ObjectHealth : MonoBehaviour
     // the same order. Returns true when it took over. Left null in singleplayer.
     public static System.Func<ObjectHealth, bool> NetworkDamageRouter;
 
+    // Raised for every hit this machine applies (DealDamageLocal). In multiplayer the stepping machine alone runs the
+    // tile's pressure code, but every machine applies the routed hit, so visuals that follow damage (cracks) hook here.
+    public event System.Action<ObjectHealth> LocalHit;
+
     public void DealDamage()
     {
         if (NetworkModeHelper.IsNetworked && NetworkDamageRouter != null && NetworkDamageRouter(this)) return;
@@ -46,6 +50,7 @@ public class ObjectHealth : MonoBehaviour
         if (isDead) return; // Still burning during the discard delay; dying twice would corrupt the room counter.
 
         currentHealth--; //Şuanki sistemde 1 hasar vurmak yeterli. Gerekirse Script'i güncelleriz.
+        LocalHit?.Invoke(this);
 
         if (currentHealth <= 0) //Öldüyse vurma efektini kullanmadan çıkıyoruz ve ölme efektini oynuyoruz.
         {

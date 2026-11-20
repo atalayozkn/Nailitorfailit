@@ -27,7 +27,6 @@ public static class MpCharacterBaker
     private const float Softness = 0.03f;
     private const float MinWeight = 0.06f;
 
-    [MenuItem("NIOFI/MP/Bake characters")]
     public static void Bake()
     {
         var baseFbx = AssetDatabase.LoadAssetAtPath<GameObject>(BaseModel);

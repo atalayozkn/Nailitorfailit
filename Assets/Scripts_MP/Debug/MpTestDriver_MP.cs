@@ -107,7 +107,7 @@ public class MpTestDriver_MP : MonoBehaviour
         {
             case "ready": return Ready();
             case "start": return StartMatch();
-            case "mpmenu": return Once(() => MpMenuProbe(c.Length > 1 ? c[1] : "state"));
+            case "mpmenu": return Once(() => MpMenuProbe(c.Length > 1 ? c[1] : "state", c.Length > 2 ? c[2] : null));
             case "char": return Once(() => Lobby()?.CmdSetCharacter((int)F(c, 1, 1)));
             case "color": return Once(() => Lobby()?.CmdSetColor((int)F(c, 1, 2)));
             case "chat": return Once(() => ChatNetwork.Instance?.Send(string.Join(" ", c.Skip(1))));
@@ -1319,7 +1319,7 @@ public class MpTestDriver_MP : MonoBehaviour
     // ------------------------------------------------------------------ report
 
     // mpmenu state|multiplayer|back: drives the merged menu like a click and logs which panels are on.
-    private static void MpMenuProbe(string what)
+    private static void MpMenuProbe(string what, string clickParent = null)
     {
         UnityEngine.UI.Button Find(string name, string parent)
         {
@@ -1330,6 +1330,8 @@ public class MpTestDriver_MP : MonoBehaviour
 
         if (what == "multiplayer") Find("Button_Multiplayer", "Buttons_MainMenu")?.onClick.Invoke();
         else if (what == "back") Find("Button_BackToMenu", "Buttons_AfterMultiplayer")?.onClick.Invoke();
+        else if (what == "pw") { foreach (var f in FindObjectsByType<TMPro.TMP_InputField>(FindObjectsInactive.Include, FindObjectsSortMode.None)) if (f.name.Contains("Password")) f.text = "1111"; }
+        else if (what.StartsWith("click:")) { var b = Find(what.Substring(6), clickParent); Log($"click {what} under {clickParent}: {(b != null ? "found" : "NOT FOUND")}"); b?.onClick.Invoke(); }
 
         string State(string n)
         {
@@ -1339,7 +1341,8 @@ public class MpTestDriver_MP : MonoBehaviour
         }
 
         Log($"mpmenu {what}: MainMenu={State("MainMenu")} MainMenu_MP={State("MainMenu_MP")} Buttons_AfterMultiplayer={State("Buttons_AfterMultiplayer")} Panel_Lobby={State("Panel_Lobby")} " +
-            $"server={NetworkServer.active} client={NetworkClient.active} scene={SceneManager.GetActiveScene().name}");
+            $"server={NetworkServer.active} client={NetworkClient.active} scene={SceneManager.GetActiveScene().name} " +
+            $"managers={FindObjectsByType<LobbyNetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length} singleton={(NetworkManager.singleton != null ? NetworkManager.singleton.name : "NULL")}");
     }
 
     private static string BodyMesh(PlayerNetwork_MP p)

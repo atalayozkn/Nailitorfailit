@@ -26,7 +26,7 @@ public class FoodBowl : MonoBehaviour, IInteractable, ILookAtInfo
     {
         interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
         currentFood = maxFood;
-        slider.maxValue = maxFood;
+        if (slider != null) slider.maxValue = maxFood;
         UpdateUI();
     }
     public bool OnInteract()
@@ -78,6 +78,6 @@ public class FoodBowl : MonoBehaviour, IInteractable, ILookAtInfo
     }
     private void UpdateUI()
     {
-        slider.value = currentFood;
+        if (slider != null) slider.value = currentFood;
     }
 }

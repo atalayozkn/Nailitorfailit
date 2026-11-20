@@ -38,8 +38,15 @@ public class WoodTile : MonoBehaviour, IInteractable, ILookAtInfo, IFlammable, I
     {
         interactionHandler = FindFirstObjectByType<PlayerInteractionHandler>();
     }
+    private bool crackHooked;
     private void OnEnable()
     {
+        // Multiplayer: cracks follow the hits every machine applies, not the pressure code of the stepping machine only.
+        if (NetworkModeHelper.IsNetworked && !crackHooked && objectHealth != null)
+        {
+            crackHooked = true;
+            objectHealth.LocalHit += _ => TileCracks.RegisterPressureHit(gameObject, TileCracks.Look.Wood, objectHealth);
+        }
         canDealDamage = true;
         currentPhase = ConstructionPhase.Construction;
         gameObject.layer = LayerMask.NameToLayer("Interaction");
@@ -118,7 +125,7 @@ public class WoodTile : MonoBehaviour, IInteractable, ILookAtInfo, IFlammable, I
         if (!canDealDamage) return;
         canDealDamage = false;
         objectHealth.DealDamage();
-        TileCracks.RegisterPressureHit(gameObject, TileCracks.Look.Wood, objectHealth);
+        if (!NetworkModeHelper.IsNetworked) TileCracks.RegisterPressureHit(gameObject, TileCracks.Look.Wood, objectHealth);
         Invoke(nameof(ReverseDamage), pressureDamageDelay);
     }
     private void ReverseDamage()

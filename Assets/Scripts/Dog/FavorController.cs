@@ -17,7 +17,7 @@ public class FavorController : MonoBehaviour
     {
         currentFavor = maxFavor;
         UpdateUI();
-        slider.maxValue = maxFavor;
+        if (slider != null) slider.maxValue = maxFavor;
 
         if (loveHungerRoutine != null)
         {
@@ -43,7 +43,7 @@ public class FavorController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        slider.value = currentFavor;
+        if (slider != null) slider.value = currentFavor;
     }
     public void GainFavor(int amount)
     {

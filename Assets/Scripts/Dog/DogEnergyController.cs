@@ -20,7 +20,7 @@ public class DogEnergyController : MonoBehaviour
     {
         currentEnergy = maxEnergy;
         UpdateUI();
-        slider.maxValue = maxEnergy;
+        if (slider != null) slider.maxValue = maxEnergy;
         if (energyDecayRoutine != null)
         {
             StopCoroutine(energyDecayRoutine);
@@ -49,7 +49,7 @@ public class DogEnergyController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        slider.value = currentEnergy;
+        if (slider != null) slider.value = currentEnergy;
     }
     public void GainEnergy(float amount)
     {

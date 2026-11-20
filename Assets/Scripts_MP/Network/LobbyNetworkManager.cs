@@ -425,7 +425,7 @@ public class LobbyNetworkManager : NetworkManager
         LobbyPassword = password;
         LobbyID = "DEV";
 
-        InteractionDebug.Log($"[DEV] Steam yok - yerel KCP host baslatiliyor (port {DevPort}). " +
+        InteractionDebug.Log($"[DEV] no Steam - starting local KCP host (port {DevPort}). " +
                              "Ikinci instance '127.0.0.1' ile baglanabilir.");
 
         StartHost();
@@ -441,7 +441,7 @@ public class LobbyNetworkManager : NetworkManager
         LobbyPassword = password;
         LobbyID = host;
 
-        InteractionDebug.Log($"[DEV] Steam yok - yerel KCP client: {host}:{DevPort}");
+        InteractionDebug.Log($"[DEV] no Steam - local KCP client: {host}:{DevPort}");
 
         StartClient();
     }

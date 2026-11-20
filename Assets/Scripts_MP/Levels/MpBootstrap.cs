@@ -38,7 +38,11 @@ public class MpBootstrap : MonoBehaviour
                 if (logActions) Debug.Log($"[MP] menu prefab adopted from the scene bootstrap ('{menuPrefab.name}').");
             }
 
-            Destroy(gameObject);
+            // This component can sit on the MP stack itself (network manager, Steam, chat...): destroying the whole
+            // object would delete the network manager when the game starts from BootScene (the bootstrap created
+            // before the scene loads wins). Only remove the duplicate component then.
+            if (GetComponent<LobbyNetworkManager>() != null) Destroy(this);
+            else Destroy(gameObject);
             return;
         }
 

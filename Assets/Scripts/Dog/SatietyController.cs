@@ -17,7 +17,7 @@ public class SatietyController : MonoBehaviour
     {
         currentSatiety = maxSatiety;
         UpdateUI();
-        slider.maxValue = maxSatiety;
+        if (slider != null) slider.maxValue = maxSatiety;
         if (hungerRoutine != null)
         {
             StopCoroutine(hungerRoutine);
@@ -48,7 +48,7 @@ public class SatietyController : MonoBehaviour
     }
     private void UpdateUI()
     {
-        slider.value = currentSatiety;
+        if (slider != null) slider.value = currentSatiety;
     }
     public float GetPercentSatiety()
     {
