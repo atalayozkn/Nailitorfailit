@@ -92,6 +92,13 @@ public class PlayerFootDust : MonoBehaviour
         if (landFeedback != null && landFeedback.IsPlaying) landFeedback.StopFeedbacks();
     }
 
+    // Puff for a step made by someone else (multiplayer remote players have no input of their own to raise Stepped).
+    public void PlayRemoteStep(bool running)
+    {
+        if (IsRagdolled()) return;
+        Emit(running ? run : walk);
+    }
+
     private void HandleStep(bool onWater)
     {
         if (onWater || IsRagdolled()) return;

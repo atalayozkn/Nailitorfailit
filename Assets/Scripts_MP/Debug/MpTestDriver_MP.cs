@@ -208,6 +208,7 @@ public class MpTestDriver_MP : MonoBehaviour
             case "repair": return Once(RepairHazard);
             case "ragwatch": return RagWatch(F(c, 1, 6f));
             case "emote": return Once(() => Sm()?.ChangeToEmoteState((int)F(c, 1, 1)));
+            case "tiles": return Once(LogTiles);
             case "wait": return Wait(F(c, 1, 1f));
             case "quit": return Once(() => { Report(); Application.Quit(0); });
         }
@@ -634,6 +635,22 @@ public class MpTestDriver_MP : MonoBehaviour
     }
 
     private Constructor lastBuilt;
+
+    // TMP-TILES: every constructor and tile as THIS machine sees it.
+    private void LogTiles()
+    {
+        foreach (Constructor k in FindObjectsByType<Constructor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (!k.IsBuilt()) continue;
+            foreach (Component t in k.GetComponentsInChildren<Component>(true).Where(x => x is WoodTile || x is BrickTile || x is GlassTile))
+            {
+                bool done = TileDone(t);
+                var mp = t.GetComponent<Tile_MP>();
+                Log($"TILE {k.name}/{t.name} active={t.gameObject.activeInHierarchy} done={done} hasTileMP={(mp != null)} " +
+                    $"{(NetworkServer.active ? "server" : "client")}");
+            }
+        }
+    }
 
     private IEnumerator Hammer(int hits)
     {

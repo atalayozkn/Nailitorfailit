@@ -59,7 +59,7 @@ public class MpLevelCatalog : MonoBehaviour
             Entry("Level 03",           "Assets/Scenes/Level_03.unity"),
             Entry("Level 04",           "Assets/Scenes/Level_04.unity"),
             Entry("Level 05",           "Assets/Scenes/Level_05.unity"),
-            Entry("Versus Test (2P)",   "Assets/Scenes/VersusMultiplayer_Test.unity"),
+            Entry("Compete Level",      "Assets/Scenes/VersusMultiplayer_Test.unity"),
         };
 
         Debug.Log($"[MP-LEVELS] catalog seeded with {levels.Count} level(s) from the Scenes folder.");
@@ -131,6 +131,14 @@ public class MpLevelCatalog : MonoBehaviour
         selectedIndex = wanted;
     }
 
+    // The host's choice, as received by a client. A client never has the "versus lobby pending" flag (only the host's menu
+    // sets it), so Select() refused the Compete level there and the client kept showing Level 5.
+    public void ApplyReceived(int index)
+    {
+        if (Count == 0) return;
+        selectedIndex = Mathf.Clamp(index, 0, Count - 1);
+    }
+
     public void SelectNext() => SelectStep(+1);
 
     public void SelectPrevious() => SelectStep(-1);
@@ -151,11 +159,15 @@ public class MpLevelCatalog : MonoBehaviour
     public string SelectedLabel()
     {
         if (Count == 0) return "no levels in catalog";
-        // Count only the levels this lobby can pick (co-op: Level 1-5, versus: the versus level).
+
+        // The Compete level stands alone: just its name.
+        if (IsVersusScene(Selected.scenePath)) return Selected.displayName;
+
+        // Co-op levels, counted without the Compete level.
         int total = 0, position = 0;
         for (int i = 0; i < Count; i++)
         {
-            if (!IsSelectable(i)) continue;
+            if (IsVersusScene(levels[i].scenePath)) continue;
 
             total++;
             if (i <= SelectedIndex) position = total;

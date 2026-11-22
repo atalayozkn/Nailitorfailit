@@ -17,6 +17,9 @@ public class ImageMaterialChangeHelper : MonoBehaviour
     }
     public void ChangeToColor()
     {
+        // A target with no alpha was never set up (it just made the button's own background vanish while hovered).
+        if (targetColor.a <= 0.01f) return;
+
         image.color = targetColor;
     }
     public void RevertToOriginalColor()

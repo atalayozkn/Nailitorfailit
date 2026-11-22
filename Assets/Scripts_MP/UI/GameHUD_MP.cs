@@ -123,8 +123,50 @@ public class GameHUD_MP : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (ScoreTallyUI.NetworkedButtons == (System.Action<System.Collections.Generic.IReadOnlyList<GameObject>, bool>)MpEndButtons_MP.BuildStack)
+            ScoreTallyUI.NetworkedButtons = null;
         victoryEvent?.RemoveListener(onVictory);
         defeatEvent?.RemoveListener(onDefeat);
+    }
+
+    // The round is over: the money, timer, dog, stamina, inventory and hint panels of every HUD on screen (this player's
+    // and the level's own singleplayer one) go away, so only the end screen is left. They stay off until the scene changes.
+    private static readonly string[] InGameHudNames =
+    {
+        "Emote_Wheel", "TimeCounter", "TimeCounter_Shadow", "Stamina_Shadow", "Stamina_Slider",
+        "Currency", "Currency_Shadow", "DogUI", "InventoryPanel", "LookAtInfoPanel",
+    };
+
+    // The level's own singleplayer HUD has its own Panel_GameEnd and its level events open it too: that was the second,
+    // full-size sign on top of the tally's. Only this player's panel (the one with the tally) may show.
+    private void HideAuthoredEndPanels()
+    {
+        foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (candidate == null || candidate.name != "Panel_GameEnd") continue;
+            if (gameEndPanel != null && (candidate.gameObject == gameEndPanel || candidate.IsChildOf(gameEndPanel.transform))) continue;
+
+            candidate.gameObject.SetActive(false);
+
+            Transform holder = candidate.parent != null ? candidate.parent : candidate;
+            holder.gameObject.AddComponent<MpKeepChildOff_MP>().Watch(candidate.gameObject);
+        }
+    }
+
+    private static void HideInGameHud()
+    {
+        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (canvas == null) continue;
+
+            foreach (Transform child in canvas.transform)
+            {
+                if (System.Array.IndexOf(InGameHudNames, child.name) < 0) continue;
+
+                child.gameObject.SetActive(false);
+                canvas.gameObject.AddComponent<MpKeepChildOff_MP>().Watch(child.gameObject);
+            }
+        }
     }
 
     private void OnGameEnded(bool victory)
@@ -138,13 +180,31 @@ public class GameHUD_MP : MonoBehaviour
         if (victoryBanner != null) MpEndUiSuppressor_MP.StripIn(victoryBanner);
         if (defeatBanner != null) MpEndUiSuppressor_MP.StripIn(defeatBanner);
 
+        ScoreTallyUI tally = gameEndPanel != null ? gameEndPanel.GetComponent<ScoreTallyUI>() : null;
+        bool useTally = tally != null && ScoreManager.Instance != null;
+
         if (gameEndPanel != null) gameEndPanel.SetActive(true);
         if (victoryPanel != null) victoryPanel.SetActive(victory);
         if (defeatPanel != null) defeatPanel.SetActive(!victory);
-        if (victoryBanner != null) victoryBanner.SetActive(victory);
-        if (defeatBanner != null) defeatBanner.SetActive(!victory);
 
-        MpEndButtons_MP.Build(gameEndPanel);
+        // The tally brings the sign in by itself; the full-size banners would be a second copy of it on top.
+        if (victoryBanner != null) victoryBanner.SetActive(!useTally && victory);
+        if (defeatBanner != null) defeatBanner.SetActive(!useTally && !victory);
+
+        HideInGameHud();
+        HideAuthoredEndPanels();
+
+        // The singleplayer end screen: score tally first, then the sign with its buttons (see ScoreTallyUI). The old
+        // 2 x 2 button grid is only the fallback when there is nothing to tally.
+        if (useTally)
+        {
+            ScoreTallyUI.NetworkedButtons = MpEndButtons_MP.BuildStack;
+            tally.Play(ScoreManager.Instance.BuildReport(victory));
+        }
+        else
+        {
+            MpEndButtons_MP.Build(gameEndPanel);
+        }
 
         if (movement != null) movement.SetActivity(false);
         if (stateMachine != null) stateMachine.OpenCursor();

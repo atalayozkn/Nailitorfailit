@@ -15,6 +15,8 @@ public class MpNotice_MP : MonoBehaviour
 
     private const float CheckInterval = 1f;
     private const int MaxOneShot = 3;
+    public const float ShownSeconds = 5f;
+    private const float FadeSeconds = 0.6f;
 
     private static MpNotice_MP instance;
 
@@ -29,8 +31,12 @@ public class MpNotice_MP : MonoBehaviour
         public GameObject go;
         public TextMeshProUGUI text;
         public Image background;
-        public float hideAt; // 0 = persistent
+        public CanvasGroup group;
+        public float hideAt;
     }
+
+    // A problem notice that was shown (or clicked away) is not shown again until the problem text changes or clears.
+    private readonly Dictionary<string, string> dismissed = new Dictionary<string, string>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoSpawn() => Ensure();
@@ -47,9 +53,9 @@ public class MpNotice_MP : MonoBehaviour
 
     // ---------------- public API ----------------
 
-    public static void Error(string message, float seconds = 7f) => Ensure().ShowOneShot(message, Kind.Error, seconds);
-    public static void Warning(string message, float seconds = 6f) => Ensure().ShowOneShot(message, Kind.Warning, seconds);
-    public static void Info(string message, float seconds = 4f) => Ensure().ShowOneShot(message, Kind.Info, seconds);
+    public static void Error(string message, float seconds = ShownSeconds) => Ensure().ShowOneShot(message, Kind.Error, seconds);
+    public static void Warning(string message, float seconds = ShownSeconds) => Ensure().ShowOneShot(message, Kind.Warning, seconds);
+    public static void Info(string message, float seconds = ShownSeconds) => Ensure().ShowOneShot(message, Kind.Info, seconds);
 
     // Online multiplayer needs internet + a signed-in, connected Steam client. Returns a player-facing
     // reason when something is missing (used before hosting / joining, so we fail fast and clearly).
@@ -93,9 +99,24 @@ public class MpNotice_MP : MonoBehaviour
 
         for (int i = oneShots.Count - 1; i >= 0; i--)
         {
-            if (now < oneShots[i].hideAt) continue;
-            Destroy(oneShots[i].go);
+            if (!TickRow(oneShots[i], now)) continue;
             oneShots.RemoveAt(i);
+        }
+
+        List<string> finished = null;
+        foreach (KeyValuePair<string, Row> pair in persistent)
+        {
+            if (!TickRow(pair.Value, now)) continue;
+            (finished ??= new List<string>()).Add(pair.Key);
+        }
+
+        if (finished != null)
+        {
+            foreach (string key in finished)
+            {
+                dismissed[key] = persistent[key].text.text;
+                persistent.Remove(key);
+            }
         }
 
         if (now < nextCheck) return;
@@ -116,6 +137,28 @@ public class MpNotice_MP : MonoBehaviour
 
     // ---------------- UI ----------------
 
+    // Fades the notice out over its last moments and removes it. True once it is gone.
+    private static bool TickRow(Row row, float now)
+    {
+        if (row.go == null) return true;
+
+        float left = row.hideAt - now;
+        if (left <= 0f)
+        {
+            Destroy(row.go);
+            return true;
+        }
+
+        if (row.group != null) row.group.alpha = Mathf.Clamp01(left / FadeSeconds);
+        return false;
+    }
+
+    private static void Refresh(Row row, float seconds)
+    {
+        row.hideAt = Time.unscaledTime + seconds;
+        if (row.group != null) row.group.alpha = 1f;
+    }
+
     private void ShowOneShot(string message, Kind kind, float seconds)
     {
         if (string.IsNullOrWhiteSpace(message)) return;
@@ -124,10 +167,15 @@ public class MpNotice_MP : MonoBehaviour
         foreach (Row existing in oneShots)
         {
             if (existing.text.text != message) continue;
-            existing.hideAt = Time.unscaledTime + seconds;
+            Refresh(existing, seconds);
             return;
         }
-        foreach (Row p in persistent.Values) if (p.text.text == message) return;
+        foreach (Row p in persistent.Values)
+        {
+            if (p.text.text != message) continue;
+            Refresh(p, seconds); // pressing Create / Join again brings the same problem back on screen
+            return;
+        }
 
         if (oneShots.Count >= MaxOneShot)
         {
@@ -148,6 +196,7 @@ public class MpNotice_MP : MonoBehaviour
 
         if (string.IsNullOrEmpty(message))
         {
+            dismissed.Remove(key);
             if (row == null) return;
             Destroy(row.go);
             persistent.Remove(key);
@@ -155,56 +204,105 @@ public class MpNotice_MP : MonoBehaviour
         }
 
         if (row != null && row.text.text == message) return;
+        if (row == null && dismissed.TryGetValue(key, out string seen) && seen == message) return; // already shown once
         if (row != null) Destroy(row.go);
 
         row = CreateRow(message, kind);
+        row.hideAt = Time.unscaledTime + ShownSeconds;
         row.go.transform.SetAsFirstSibling(); // persistent problems on top
         persistent[key] = row;
 
         Debug.LogWarning($"[MP-NOTICE] persistent: {message}");
     }
 
+    // Same look as the menu: the opaque brown plate, a coloured edge for the kind, cream text in the game font.
+    private static Sprite plateSprite;
+    private static TMP_FontAsset gameFont;
+
+    private static readonly Color Cream = new Color(1f, 0.90f, 0.70f, 1f);
+
+    private static Color AccentOf(Kind kind) => kind == Kind.Error ? new Color(0.93f, 0.33f, 0.30f, 1f)
+                                              : kind == Kind.Warning ? new Color(0.99f, 0.77f, 0.26f, 1f)
+                                              : new Color(0.45f, 0.88f, 0.45f, 1f);
+
     private Row CreateRow(string message, Kind kind)
     {
         EnsureCanvas();
 
-        var go = new GameObject("Notice", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+        if (plateSprite == null) plateSprite = Resources.Load<Sprite>("Menu/MenuButtons_Panel");
+        if (gameFont == null)
+        {
+            foreach (TMP_FontAsset font in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
+                if (font.name.StartsWith("DynaPuff")) { gameFont = font; break; }
+        }
+
+        var go = new GameObject("Notice", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Button),
+                                typeof(HorizontalLayoutGroup), typeof(LayoutElement));
         go.transform.SetParent(stack, false);
 
         var background = go.GetComponent<Image>();
-        background.color = kind == Kind.Error ? new Color(0.62f, 0.12f, 0.12f, 0.92f)
-                         : kind == Kind.Warning ? new Color(0.70f, 0.45f, 0.08f, 0.92f)
-                         : new Color(0.12f, 0.42f, 0.22f, 0.92f);
-        background.raycastTarget = false;
-        go.GetComponent<LayoutElement>().minHeight = 54f;
+        background.sprite = plateSprite;
+        background.type = plateSprite != null ? Image.Type.Sliced : Image.Type.Simple;
+        background.color = plateSprite != null ? Color.white : new Color(0.35f, 0.24f, 0.16f, 1f);
+        go.GetComponent<LayoutElement>().minHeight = 84f;
 
-        var textGo = new GameObject("Text", typeof(RectTransform));
+        var layout = go.GetComponent<HorizontalLayoutGroup>();
+        layout.padding = new RectOffset(30, 34, 18, 18);
+        layout.spacing = 18f;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        // Icon: "!" in the colour of the kind ("i" for plain information).
+        var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(LayoutElement));
+        iconGo.transform.SetParent(go.transform, false);
+        var iconLayout = iconGo.GetComponent<LayoutElement>();
+        iconLayout.minWidth = iconLayout.preferredWidth = 22f;
+        iconLayout.minHeight = iconLayout.preferredHeight = 44f;
+
+        var icon = iconGo.AddComponent<TextMeshProUGUI>();
+        if (gameFont != null) icon.font = gameFont;
+        icon.text = kind == Kind.Info ? "i" : "!";
+        icon.fontSize = 46f;
+        icon.fontStyle = FontStyles.Bold;
+        icon.alignment = TextAlignmentOptions.Center;
+        icon.color = AccentOf(kind);
+        icon.outlineWidth = 0.22f;
+        icon.outlineColor = new Color32(34, 21, 14, 255);
+        icon.textWrappingMode = TextWrappingModes.NoWrap;
+        icon.raycastTarget = false;
+
+        var textGo = new GameObject("Text", typeof(RectTransform), typeof(LayoutElement));
         textGo.transform.SetParent(go.transform, false);
-        var rect = (RectTransform)textGo.transform;
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(18f, 8f);
-        rect.offsetMax = new Vector2(-18f, -8f);
+        textGo.GetComponent<LayoutElement>().flexibleWidth = 1f;
 
         var text = textGo.AddComponent<TextMeshProUGUI>();
-        if (TMP_Settings.defaultFontAsset != null) text.font = TMP_Settings.defaultFontAsset;
+        if (gameFont != null) text.font = gameFont;
+        else if (TMP_Settings.defaultFontAsset != null) text.font = TMP_Settings.defaultFontAsset;
         text.text = message;
-        text.fontSize = 24f;
-        text.enableAutoSizing = true;
-        text.fontSizeMin = 14f;
-        text.fontSizeMax = 24f;
-        text.alignment = TextAlignmentOptions.Center;
-        text.color = Color.white;
+        text.fontSize = 23f;
+        text.enableAutoSizing = false;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.color = Cream;
         text.raycastTarget = false;
 
-        return new Row { go = go, text = text, background = background };
+        var row = new Row { go = go, text = text, background = background, group = go.GetComponent<CanvasGroup>() };
+
+        // Click it away.
+        go.GetComponent<Button>().onClick.AddListener(() => row.hideAt = Time.unscaledTime - 0.01f);
+
+        return row;
     }
 
     private void EnsureCanvas()
     {
         if (stack != null) return;
 
-        var canvasGo = new GameObject("MpNoticeCanvas", typeof(Canvas), typeof(CanvasScaler));
+        var canvasGo = new GameObject("MpNoticeCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         canvasGo.transform.SetParent(transform, false);
 
         var canvas = canvasGo.GetComponent<Canvas>();
@@ -219,11 +317,12 @@ public class MpNotice_MP : MonoBehaviour
         var stackGo = new GameObject("Stack", typeof(RectTransform), typeof(VerticalLayoutGroup));
         stackGo.transform.SetParent(canvasGo.transform, false);
         stack = (RectTransform)stackGo.transform;
-        stack.anchorMin = new Vector2(0.5f, 1f);
-        stack.anchorMax = new Vector2(0.5f, 1f);
-        stack.pivot = new Vector2(0.5f, 1f);
-        stack.anchoredPosition = new Vector2(0f, -24f);
-        stack.sizeDelta = new Vector2(1000f, 0f);
+        // Middle of the right edge.
+        stack.anchorMin = new Vector2(1f, 0.5f);
+        stack.anchorMax = new Vector2(1f, 0.5f);
+        stack.pivot = new Vector2(1f, 0.5f);
+        stack.anchoredPosition = new Vector2(-28f, 0f);
+        stack.sizeDelta = new Vector2(560f, 0f);
 
         var layout = stackGo.GetComponent<VerticalLayoutGroup>();
         layout.spacing = 8f;

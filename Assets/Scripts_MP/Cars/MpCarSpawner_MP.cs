@@ -560,7 +560,7 @@ public class MpCarSpawner_MP : MonoBehaviour
         {
             prefabWarningLogged = true;
             InteractionDebug.Log($"[MP-CAR] no networked car prefab - '{ResourceName}' missing from " +
-                                 "Assets/Prefabs_MP/Cars/Resources and LobbyNetworkManager.trafficCarPrefab is empty.");
+                                 "Assets/Prefabs/MP/Cars/Resources and LobbyNetworkManager.trafficCarPrefab is empty.");
         }
 
         return null;

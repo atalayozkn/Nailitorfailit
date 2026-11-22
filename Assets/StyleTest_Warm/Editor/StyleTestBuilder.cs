@@ -287,8 +287,8 @@ public static partial class StyleTestBuilder
                 if (Convertible(m)) sources.Add(m);
 
         // Spawned tiles, cars and carriables use these.
-        // Prefabs_MP too: the levels are shared with multiplayer, which spawns its own copies.
-        foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs", "Assets/Prefabs_MP" }))
+        // Prefabs/MP (inside Prefabs) too: the levels are shared with multiplayer, which spawns its own copies.
+        foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs" }))
         {
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
             if (go == null) continue;

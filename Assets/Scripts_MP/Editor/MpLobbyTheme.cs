@@ -13,11 +13,11 @@ public static class MpLobbyTheme
 
     private static readonly string[] Targets =
     {
-        "Assets/Prefabs_MP/UI/MultiplayerMenu.prefab",
-        "Assets/Prefabs_MP/UI/CreateLobbyMenu.prefab",
-        "Assets/Prefabs_MP/UI/JoinLobbyMenu.prefab",
-        "Assets/Prefabs_MP/UI/LobbyMenu.prefab",
-        "Assets/Prefabs_MP/UI/MpMenuRoot.prefab",
+        "Assets/Prefabs/MP/UI/MultiplayerMenu.prefab",
+        "Assets/Prefabs/MP/UI/CreateLobbyMenu.prefab",
+        "Assets/Prefabs/MP/UI/JoinLobbyMenu.prefab",
+        "Assets/Prefabs/MP/UI/LobbyMenu.prefab",
+        "Assets/Prefabs/MP/UI/MpMenuRoot.prefab",
     };
 
     private static readonly Color Normal = new Color(0.9811321f, 0.70993024f, 0.4026344f, 1f);

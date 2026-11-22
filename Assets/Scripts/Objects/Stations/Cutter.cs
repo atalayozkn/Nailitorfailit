@@ -123,8 +123,7 @@ public class Cutter : MonoBehaviour, IInteractable, ILookAtInfo
         processHelper.ResetProcess();
         return true;
     }
-    // Multiplayer only: glass is never cut there, whatever the scene's list says. Singleplayer keeps the scene's list.
-    private bool IsCarriableTypeAccepted(CarriableType type) { return !(NetworkModeHelper.IsNetworked && type == CarriableType.Glass) && Array.Exists(acceptedCarriableTypes, acceptedType => acceptedType == type); }
+    private bool IsCarriableTypeAccepted(CarriableType type) { return Array.Exists(acceptedCarriableTypes, acceptedType => acceptedType == type); }
 
     private void PlaceObject()
     {

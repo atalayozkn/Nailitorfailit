@@ -165,7 +165,8 @@ public static class GameManagerMpCompat
             return isPassword ? manager.LobbyPassword : manager.LobbyID;
         };
 
-        label.text = field.Format(value);
+        MpCopyRow_MP.Convert(parent, label, field, isPassword ? "Password: " : "Lobby ID: ");
+        label.text = field.Prefix + field.Format(value);
     }
 
     private static GameObject FindSceneObject(string name)

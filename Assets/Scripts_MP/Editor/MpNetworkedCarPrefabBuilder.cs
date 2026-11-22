@@ -7,9 +7,9 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class MpNetworkedCarPrefabBuilder
 {
-    private const string TargetFolder = "Assets/Prefabs_MP/Cars/Resources";
+    private const string TargetFolder = "Assets/Prefabs/MP/Cars/Resources";
     private const string TargetPath = TargetFolder + "/Car_Active_MP.prefab";
-    private const string StackPrefabPath = "Assets/Prefabs_MP/MpStack.prefab";
+    private const string StackPrefabPath = "Assets/Prefabs/MP/MpStack.prefab";
 
     static MpNetworkedCarPrefabBuilder()
     {

@@ -518,6 +518,9 @@ public class MpLevelInstaller : MonoBehaviour
                 if (go.GetComponent(type) == null) go.AddComponent(type);
             }
 
+            // The tiles inside a constructor are networked on their own; they must exist before the identity does.
+            if (spi == typeof(Constructor)) Tile_MP.AttachTo(go);
+
             NetworkIdentity identity = go.AddComponent<NetworkIdentity>();
 
             identity.sceneId = ComposeSceneId(go);

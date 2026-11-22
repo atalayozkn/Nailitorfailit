@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 // Single owner of the mouse cursor in singleplayer. The cursor is locked and hidden unless some screen
 // holds it open (main menu, pause menu, emote wheel, score screen, info pop-up). Holders are counted,
 // so closing one screen never hides the cursor another still needs.
-// Multiplayer keeps its own cursor scripts, so this stays out of network sessions and Scenes_MP.
+// Multiplayer keeps its own cursor scripts, so this stays out of network sessions and the multiplayer scenes (names ending in _MP).
 public static class CursorManager
 {
     private static readonly HashSet<Object> holders = new();
@@ -50,6 +50,6 @@ public static class CursorManager
     private static bool Manages()
     {
         if (NetworkModeHelper.IsNetworked) return false;
-        return !SceneManager.GetActiveScene().path.Contains("/Scenes_MP/");
+        return !SceneManager.GetActiveScene().name.EndsWith("_MP");
     }
 }

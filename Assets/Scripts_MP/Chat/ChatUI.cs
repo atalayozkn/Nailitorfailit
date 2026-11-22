@@ -252,7 +252,7 @@ public class ChatUI : MonoBehaviour
     {
         if (rowPrefab == null)
         {
-            Debug.LogError("[CHAT] Row Prefab is empty. Assign Assets/Prefabs_MP/Chat/ChatMessageRow.prefab " +
+            Debug.LogError("[CHAT] Row Prefab is empty. Assign Assets/Prefabs/MP/Chat/ChatMessageRow.prefab " +
                            "to the 'Row Prefab' field on ChatUI.");
             return;
         }

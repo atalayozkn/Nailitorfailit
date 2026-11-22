@@ -18,7 +18,7 @@ public static class VersusSceneBuilder
 {
     private const string SourceScene = "Assets/Scenes/Level_05.unity";
     private const string ScenePath = "Assets/Scenes/VersusMultiplayer_Test.unity";
-    private const string PrefabDir = "Assets/Prefabs_Versus";
+    private const string PrefabDir = "Assets/Prefabs/MP/Versus";
     private const string BatPath = PrefabDir + "/BaseballBat_MP.prefab";
     private const string BaitPath = PrefabDir + "/DogBait_MP.prefab";
     private const string TruckPath = PrefabDir + "/Car_Active_OilTruck_MP.prefab";
@@ -488,7 +488,7 @@ public static class VersusSceneBuilder
 
     private static GameObject Save(GameObject instance, string path)
     {
-        if (!AssetDatabase.IsValidFolder(PrefabDir)) AssetDatabase.CreateFolder("Assets", "Prefabs_Versus");
+        if (!AssetDatabase.IsValidFolder(PrefabDir)) AssetDatabase.CreateFolder("Assets/Prefabs/MP", "Versus");
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(instance, path);
         Object.DestroyImmediate(instance);
         return prefab;
@@ -496,7 +496,7 @@ public static class VersusSceneBuilder
 
     private static GameObject BuildBat()
     {
-        GameObject bat = Unpacked("Assets/Prefabs_MP/Objects/EnergyDrink_MP.prefab", "BaseballBat_MP");
+        GameObject bat = Unpacked("Assets/Prefabs/MP/Objects/EnergyDrink_MP.prefab", "BaseballBat_MP");
         Object.DestroyImmediate(bat.GetComponent<EnergyDrink_SP>());
 
         MeshFilter mesh = bat.GetComponentInChildren<MeshFilter>(true);
@@ -537,7 +537,7 @@ public static class VersusSceneBuilder
 
     private static GameObject BuildBait()
     {
-        GameObject bait = Unpacked("Assets/Prefabs_MP/Objects/PetFood_MP.prefab", "DogBait_MP");
+        GameObject bait = Unpacked("Assets/Prefabs/MP/Objects/PetFood_MP.prefab", "DogBait_MP");
         bait.GetComponent<CarriableObject_SP>().carriableType = CarriableType.Usable;
         bait.AddComponent<VersusBait>();
         return Save(bait, BaitPath);

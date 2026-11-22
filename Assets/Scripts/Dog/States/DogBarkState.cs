@@ -11,7 +11,10 @@ public class DogBarkState : DogBaseState
         counter = 0f;
         stateMachine.animator.CrossFadeInFixedTime(barkHash, 0.1f);
         stateMachine.onBark?.Invoke();
-        stateMachine.mailmanController.Scare();
+        MailManController mailman = stateMachine.mailmanController;
+        InteractionDebug.Log($"[DOG-SCARE] bark: mailman={(mailman != null ? mailman.name : "NULL")} " +
+                             $"active={(mailman != null && mailman.gameObject.activeInHierarchy)} enabled={(mailman != null && mailman.enabled)}");
+        if (mailman != null) mailman.Scare();
     }
     public override void Tick(float deltaTime)
     {

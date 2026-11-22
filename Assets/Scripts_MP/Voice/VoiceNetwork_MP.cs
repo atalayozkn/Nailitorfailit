@@ -44,6 +44,7 @@ public class VoiceNetwork_MP : MonoBehaviour
     private float nextReadAt;
     private bool handlersRegistered;
     private bool recording;
+    private bool useLocalMicFallback;
 
     public bool IsTransmitting { get; private set; }
     // Kept for the UI/diagnostics that still read it: with push-to-talk only, the mic is never "muted".
@@ -111,7 +112,9 @@ public class VoiceNetwork_MP : MonoBehaviour
 
         ReportMicState();
 
-        if (!SteamManager.Initialized)
+        // No Steam, or Steam gave no voice data while the key was held (Steam's own mic setup is missing / muted /
+        // not supported here): talk through the Unity microphone instead, raw PCM that every client can play.
+        if (!SteamManager.Initialized || useLocalMicFallback)
         {
             StopRecording();
             UpdateLocalMic(WantsToTalk());
@@ -302,6 +305,15 @@ public class VoiceNetwork_MP : MonoBehaviour
         {
             if (talkingSince < 0f) talkingSince = now;
             bool silent = lastDataAt < talkingSince || now - lastDataAt > 2f;
+            if (silent && now - talkingSince > 1.5f && !useLocalMicFallback && LocalMicAvailable())
+            {
+                useLocalMicFallback = true;
+                talkingSince = -1f;
+                Debug.LogWarning($"[VOICE] Steam voice gave no data ({lastResult}); switching to the Unity microphone for this session.");
+                MpNotice_MP.Info("Voice: Steam gave no microphone input - using the system microphone.");
+                return;
+            }
+
             if (silent && now - talkingSince > 2f && now >= nextMicWarningAt)
             {
                 nextMicWarningAt = now + 15f;

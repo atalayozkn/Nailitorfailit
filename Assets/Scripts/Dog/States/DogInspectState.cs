@@ -79,6 +79,9 @@ public class DogInpectState : DogBaseState
 
         if (counter > animDuration)
         {
+            if (currentResult == ResultType.MailMan)
+                InteractionDebug.Log($"[DOG-SCARE] inspect found the mailman: attitude={stateMachine.GetAttitudePercent():0} (chases below 75)");
+
             if (currentResult == ResultType.MailMan && stateMachine.GetAttitudePercent() < 75)
             {
                 stateMachine.SetChaseTarget(currentTarget);

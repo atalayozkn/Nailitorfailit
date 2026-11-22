@@ -4904,7 +4904,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Single Player
+  m_text: Singleplayer
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
   m_sharedMaterial: {fileID: -1047776370151056155, guid: 35e166ef26f2ca2d4af2d1fe3d22174e, type: 2}
@@ -12590,7 +12590,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MpOpenButton
   mode: 0
-  mpScenePath: Assets/Scenes_MP/MenuScene_MP.unity
+  mpScenePath: Assets/Scenes/MenuScene.unity
   hideWhileOpen: []
   showWhileOpen: []
   logClicks: 1

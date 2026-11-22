@@ -110,8 +110,18 @@ public class ScoreTallyUI : MonoBehaviour, IPointerClickHandler
 
     // Victory: Next Level, Retry, Main Menu. Defeat: Retry, Main Menu. Next is left out after the last level.
     // The new buttons are copies of the panel's Main Menu button, stacked from its spot downwards.
+    // Multiplayer plugs its own buttons in here (Play again / Next level / Back to lobby / Main menu, host only), because
+    // GameManager.PlayLevel below would load a singleplayer scene. Gets the end screen parts the tally hid.
+    public static System.Action<IReadOnlyList<GameObject>, bool> NetworkedButtons;
+
     private void AddLevelButtons(bool isVictory)
     {
+        if (NetworkModeHelper.IsNetworked && NetworkedButtons != null)
+        {
+            NetworkedButtons(hiddenChildren, isVictory);
+            return;
+        }
+
         if (GameManager.Instance == null || GameSceneManager.Instance == null) return;
 
         int levelIndex = GameSceneManager.Instance.GetActiveSceneIndex();
@@ -143,7 +153,7 @@ public class ScoreTallyUI : MonoBehaviour, IPointerClickHandler
     }
 
     // The Main Menu label was hand-placed off centre (uneven margins, sideways offset); every stacked button gets a centred one.
-    private static void CenterLabel(Button button)
+    public static void CenterLabel(Button button)
     {
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
         if (text == null) return;

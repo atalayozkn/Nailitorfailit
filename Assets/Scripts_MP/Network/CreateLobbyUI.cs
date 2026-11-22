@@ -31,6 +31,14 @@ public class CreateLobbyUI : MonoBehaviour
 
     void OnCreate()
     {
+        // No Steam / no internet: say so on screen right away, before anything else is checked.
+        if (!LobbyNetworkManager.ForceDevTransport && !MpNotice_MP.CanUseSteamOnline(out string steamProblem))
+        {
+            MpNotice_MP.Error(steamProblem);
+            if (statusText != null) statusText.text = string.Empty;
+            return;
+        }
+
         string pw = passwordInput.text;
 
         if (string.IsNullOrWhiteSpace(pw))

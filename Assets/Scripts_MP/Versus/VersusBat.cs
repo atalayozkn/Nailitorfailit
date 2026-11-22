@@ -18,6 +18,9 @@ public class VersusBat : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private int maxHits = 3;
     [SerializeField] private float swingCooldown = 0.9f;
+    [Tooltip("The player plays the same hammering animation as nailing a tile; the hit lands this long after it starts.")]
+    [SerializeField] private float hitDelay = 0.25f;
+    [SerializeField] private float animationSeconds = 0.55f;
     [SerializeField] private Vector3 halfExtents = new Vector3(0.7f, 0.7f, 0.8f);
     [SerializeField] private float forwardOffset = 0.9f;
     [Tooltip("Height of the hit box bottom above the holder's feet, so the floor never counts as a hit.")]
@@ -27,7 +30,9 @@ public class VersusBat : MonoBehaviour
     [SerializeField] private LayerMask hitMask = ~0;
     [SerializeField] private LayerMask ignoredLayers;
 
-    private readonly Collider[] buffer = new Collider[24];
+    private const float ReachMeters = 2.2f;
+
+    private readonly Collider[] buffer = new Collider[96];
     private float nextSwingAt;
     private Coroutine swingRoutine;
     private Quaternion restRotation = Quaternion.identity;
@@ -47,7 +52,27 @@ public class VersusBat : MonoBehaviour
         if (!useAction.action.WasPressedThisFrame()) return;
 
         PlayerInteractionHandler holder = LocalHolder();
-        if (holder != null) Swing(holder);
+        if (holder != null) StartCoroutine(SwingWithAnimation(holder));
+    }
+
+    // Other machines see the animation through the owner's synced animator state, no extra message needed.
+    private IEnumerator SwingWithAnimation(PlayerInteractionHandler holder)
+    {
+        nextSwingAt = Time.time + swingCooldown;
+        PlayHammerAnimation(holder);
+
+        yield return new WaitForSeconds(hitDelay);
+
+        if (holder != null && LocalHolder() == holder) Swing(holder);
+    }
+
+    private void PlayHammerAnimation(PlayerInteractionHandler holder)
+    {
+        if (!holder.TryGetComponent(out PlayerStateMachine state)) return;
+        if (state.currentPlayerState != PlayerStates.Idle && state.currentPlayerState != PlayerStates.Navigation) return;
+
+        holder.HoldInteractFor(animationSeconds);
+        state.ChangeToInteractState();
     }
 
     // The player holding this bat, but only when that player is controlled on this machine and on their feet.
@@ -77,6 +102,27 @@ public class VersusBat : MonoBehaviour
         float nearest = float.MaxValue;
         bool hit = false;
 
+        // Players are found by position as well as by collider: a crowded hit box (floor tiles, props) or a collider on
+        // another layer used to let a swing miss a player standing right in front.
+        foreach (PlayerNetwork_MP candidate in FindObjectsByType<PlayerNetwork_MP>(FindObjectsSortMode.None))
+        {
+            if (candidate == null || candidate.isDead || candidate.transform.IsChildOf(ownRoot)) continue;
+
+            Vector3 offset = candidate.transform.position - body.position;
+            if (Mathf.Abs(offset.y) > 1.6f) continue;
+
+            Vector3 flat = new Vector3(offset.x, 0f, offset.z);
+            if (flat.magnitude > ReachMeters || Vector3.Angle(body.forward, flat) > 75f) continue;
+
+            hit = true;
+            float distance = flat.sqrMagnitude;
+            if (distance < nearest)
+            {
+                nearest = distance;
+                victim = candidate.netId;
+            }
+        }
+
         for (int i = 0; i < count; i++)
         {
             Collider other = buffer[i];
@@ -103,6 +149,8 @@ public class VersusBat : MonoBehaviour
 
             if (other.bounds.size.magnitude >= largeObjectSize) hit = true;
         }
+
+        InteractionDebug.Log($"[BAT] swing: colliders={count} victim={(victim != 0 ? victim.ToString() : "none")} hit={hit} versusMatch={(VersusMatch.Instance != null)}");
 
         if (VersusMatch.Instance != null) VersusMatch.Instance.ReportBatSwing(this, victim, hit);
         else ApplySwing(hit, hit ? Durability - 1 : Durability);

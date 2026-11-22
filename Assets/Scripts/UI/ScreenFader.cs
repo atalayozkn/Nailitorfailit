@@ -182,6 +182,7 @@ public class ScreenFader : MonoBehaviour
         foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
         {
             if (canvas == null || !canvas.isRootCanvas || canvas.transform.parent != null && canvas.transform.IsChildOf(instance.transform)) continue;
+            if (canvas.name == "MpNoticeCanvas") continue; // notices come and go on their own: not a panel switch
             Mix(canvas.transform, 0, ref hash);
         }
 

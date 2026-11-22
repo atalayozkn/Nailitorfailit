@@ -90,7 +90,7 @@ public class MpLevelNet : MonoBehaviour
 
     private static void OnClientLevel(LevelMessage message)
     {
-        MpLevelCatalog.Instance?.Select(message.index);
+        MpLevelCatalog.Instance?.ApplyReceived(message.index);
         InteractionDebug.Log($"level selection received -> {MpLevelCatalog.Instance?.SelectedLabel()}");
         LevelChanged?.Invoke(message.index);
     }

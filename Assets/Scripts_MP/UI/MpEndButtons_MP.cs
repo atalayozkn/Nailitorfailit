@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mirror;
 using TMPro;
 using UnityEngine;
@@ -54,6 +55,59 @@ public static class MpEndButtons_MP
         Add(mainMenu, "Lobby", "Back to lobby", center - right - up, host && manager != null, () => manager.HostReturnToLobby());
 
         HideAuthoredMainMenu(endPanel);
+    }
+
+    // The singleplayer end screen: after the score tally the sign comes back with its buttons stacked downwards from
+    // the Main menu button's spot (ScoreTallyUI calls this through ScoreTallyUI.NetworkedButtons). Victory: Next level,
+    // Play again, Back to lobby, Main menu. Defeat: Play again, Back to lobby, Main menu. The first three are host only.
+    public static void BuildStack(IReadOnlyList<GameObject> screens, bool victory)
+    {
+        var manager = NetworkManager.singleton as LobbyNetworkManager;
+        bool host = NetworkServer.active && manager != null;
+
+        foreach (GameObject screen in screens)
+        {
+            if (screen == null) continue;
+
+            Button mainMenu = FindMainMenuButton(screen);
+            if (mainMenu == null || mainMenu.transform.parent.Find(Marker + "_Replay") != null) continue;
+
+            var menuRect = (RectTransform)mainMenu.transform;
+            Vector2 slot = menuRect.anchoredPosition;
+            float step = menuRect.rect.height * menuRect.localScale.y + 12f;
+
+            var stack = new List<Button>();
+            if (victory) stack.Add(Clone(mainMenu, "Next", "Next level", host && manager.HasNextLevel, () => manager.HostNextLevel()));
+            stack.Add(Clone(mainMenu, "Replay", "Play again", host, () => manager.HostReplayLevel()));
+            stack.Add(Clone(mainMenu, "Lobby", "Back to lobby", host, () => manager.HostReturnToLobby()));
+            stack.Add(mainMenu);
+
+            for (int i = 0; i < stack.Count; i++)
+            {
+                ((RectTransform)stack[i].transform).anchoredPosition = slot - new Vector2(0f, step * i);
+                ScoreTallyUI.CenterLabel(stack[i]);
+            }
+
+            if (screen.transform.parent != null) HideAuthoredMainMenu(screen.transform.parent.gameObject);
+        }
+    }
+
+    private static Button Clone(Button template, string id, string label, bool usable, System.Action action)
+    {
+        Button button = Object.Instantiate(template, template.transform.parent);
+        button.name = Marker + "_" + id;
+        button.onClick = new Button.ButtonClickedEvent(); // not the template's "go to main menu" call
+        button.onClick.AddListener(() =>
+        {
+            Debug.Log($"[MP-END] '{label}' pressed.");
+            action();
+        });
+
+        foreach (TMP_Text text in button.GetComponentsInChildren<TMP_Text>(true))
+            text.text = usable || NetworkServer.active ? label : label + " (host)";
+
+        button.interactable = usable;
+        return button;
     }
 
     // The level's own (singleplayer) end panel carries its own big "Main menu" button at the very centre, which would be

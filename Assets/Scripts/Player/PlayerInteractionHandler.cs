@@ -246,9 +246,12 @@ public class PlayerInteractionHandler : MonoBehaviour
     {
         return currentCarriableType;
     }
+    // Keeps the "Interact" (hammering) state going without the key held, e.g. for a bat swing.
+    private float holdInteractUntil;
+    public void HoldInteractFor(float seconds) { holdInteractUntil = Time.time + seconds; }
     public bool IsInteracting()
     {
-        return interactAction.action.IsPressed();
+        return interactAction.action.IsPressed() || Time.time < holdInteractUntil;
     }
     public void RegisterCarriedObject(CarriableObject_SP carriable)
     {

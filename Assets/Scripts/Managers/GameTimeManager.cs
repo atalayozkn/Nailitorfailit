@@ -18,6 +18,9 @@ public class GameTimeManager : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onTimeIncreaseEvent;
 
+    // TEMP (testing the end screen): every round lasts this many seconds. 0 = off, use the scene's Max Round Time.
+    public const float TempRoundSecondsOverride = 10f;
+
     private float currentTime;
     private bool isActive;
     private Color timerColor = Color.white;
@@ -32,7 +35,7 @@ public class GameTimeManager : MonoBehaviour
 
         Instance = this;
 
-        currentTime = maxRoundTime;
+        currentTime = TempRoundSecondsOverride > 0f ? TempRoundSecondsOverride : maxRoundTime;
         UpdateUI();
         Invoke(nameof(ActivateCounter), roundStartTimer);
     }

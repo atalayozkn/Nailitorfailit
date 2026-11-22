@@ -76,23 +76,17 @@ public class MpPlayerColor_MP : MonoBehaviour
             if (sw != null) swatches[i] = sw.GetComponent<Image>();
         }
 
-        // An authored panel predates the character picker: grow it downwards and add the row.
+        // The character picker is gone (one body for everybody): the panel only has the colour swatches.
         var caption = panel.Find("Caption");
         if (caption != null && caption.TryGetComponent(out TMP_Text captionText)) captionText.text = "COLOR";
 
-        var panelRect = (RectTransform)panel;
         ApplyPanelLook(panel.GetComponent<Image>());
-        var existing = panel.Find("CharacterName");
-        if (existing == null)
+
+        // A scene saved by an older version may still carry the picker: remove it.
+        foreach (string leftover in new[] { "CharacterCaption", "CharacterName", "CharacterPrev", "CharacterNext" })
         {
-            panelRect.sizeDelta += new Vector2(0f, 140f);
-            panelRect.anchoredPosition += new Vector2(0f, -70f);
-            foreach (RectTransform child in panelRect) child.anchoredPosition += new Vector2(0f, 70f);
-            BuildCharacterRow(panelRect);
-        }
-        else
-        {
-            characterLabel = existing.GetComponent<TMP_Text>();
+            var extra = panel.Find(leftover);
+            if (extra != null) Destroy(extra.gameObject);
         }
     }
 
@@ -215,17 +209,17 @@ public class MpPlayerColor_MP : MonoBehaviour
         RectTransform root = (RectTransform)canvasGo.transform;
 
         RectTransform panel = NewRect(root, "ColorPanel");
-        panel.sizeDelta = new Vector2(170f, 470f);
+        panel.sizeDelta = new Vector2(170f, 330f);
         panel.anchorMin = new Vector2(1f, 0.5f);
         panel.anchorMax = new Vector2(1f, 0.5f);
-        panel.anchoredPosition = new Vector2(-115f, -70f); // the panel grew downwards: its top edge stays where it was
+        panel.anchoredPosition = new Vector2(-115f, 0f);
 
         Image backdrop = panel.gameObject.AddComponent<Image>();
         backdrop.color = new Color(0.05f, 0.06f, 0.08f, 0.75f);
         backdrop.raycastTarget = false;
         ApplyPanelLook(backdrop);
 
-        TMP_Text caption = NewText(panel, "Caption", new Vector2(0f, 208f), 20f, "COLOR");
+        TMP_Text caption = NewText(panel, "Caption", new Vector2(0f, 138f), 20f, "COLOR");
         caption.color = new Color(0.98f, 0.71f, 0.40f, 1f);
 
         for (int i = 0; i < Palette.Length; i++)
@@ -237,7 +231,7 @@ public class MpPlayerColor_MP : MonoBehaviour
 
             RectTransform cell = NewRect(panel, "Swatch" + i);
             cell.sizeDelta = new Vector2(46f, 46f);
-            cell.anchoredPosition = new Vector2(column == 0 ? -33f : 33f, 166f - row * 62f);
+            cell.anchoredPosition = new Vector2(column == 0 ? -33f : 33f, 96f - row * 62f);
 
             Image image = cell.gameObject.AddComponent<Image>();
             image.color = Palette[i];
@@ -249,7 +243,6 @@ public class MpPlayerColor_MP : MonoBehaviour
             swatches[i] = image;
         }
 
-        BuildCharacterRow(panel);
     }
 
     // Character row under the colour swatches: CHARACTER / < NAME >.

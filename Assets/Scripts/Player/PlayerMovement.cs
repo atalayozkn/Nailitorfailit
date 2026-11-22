@@ -71,6 +71,13 @@ public class PlayerMovement : MonoBehaviour
 
     // Code hooks for feel effects (foot dust, landing shake). The bool is true on water.
     public event System.Action<bool> Stepped;
+
+    // Multiplayer: a step made by another player (their copy gets no input of its own), same sound as an own step.
+    public void PlayRemoteStep(bool onWater)
+    {
+        if (onWater) onWaterStepEvent?.Invoke();
+        else onWoodStepEvent?.Invoke();
+    }
     public event System.Action Landed;
 
     private Vector2 moveInput;

@@ -28,6 +28,12 @@ public class CarriableObject_MP : NetworkBehaviour
     private Vector3 lastSentPos;
     private Quaternion lastSentRot;
     private float nextSettleCheck;
+    // After a drop / throw / station release the resting pose is re-sent for a few seconds, even when it equals the last
+    // one sent: every machine simulates the fall on its own, so their copies rest in slightly different places, and the
+    // item has to be where the server has it for the pickup to be reliable.
+    private const float ForcedSettleSeconds = 6f;
+    private float forceSettleUntil;
+    private void ForceSettleWindow() => forceSettleUntil = Time.time + ForcedSettleSeconds;
 
     public NetworkIdentity Carrier => carrier;
 
@@ -223,6 +229,14 @@ public class CarriableObject_MP : NetworkBehaviour
     {
         string refusal = null;
 
+        // "Occupied" means in a station or in the dog's mouth, and both of those are a parent. A free item that still
+        // has the flag (a hand-over that missed the reset) would be refused for ever: clear it.
+        if (carriableSp != null && carriableSp.IsOccupied() && transform.parent == null)
+        {
+            ClearOccupied();
+            InteractionDebug.Log($"[MP-HEAL] '{name}' #{netId}: stale 'occupied' flag cleared on pickup.");
+        }
+
         if (serverConsumed) refusal = "consumed";
         else if (carriableSp != null && carriableSp.IsOccupied()) refusal = "occupied (station/dog)";
         else if (carrier != null && carrier != requester) refusal = $"held by '{carrier.name}'";
@@ -263,6 +277,7 @@ public class CarriableObject_MP : NetworkBehaviour
         carrier = null;
         RpcApplyDrop(requester);
         nextSettleCheck = Time.time + SettleCheckInterval;
+        ForceSettleWindow();
     }
 
     private static readonly System.Reflection.FieldInfo ThrowMultiplierField =
@@ -285,6 +300,7 @@ public class CarriableObject_MP : NetworkBehaviour
 
         RpcApplyThrow(holder, flat.normalized * force);
         nextSettleCheck = Time.time + 1f;
+        ForceSettleWindow();
 
         thrower = holder;
         thrownAt = Time.time;
@@ -395,6 +411,7 @@ public class CarriableObject_MP : NetworkBehaviour
         carrier = null;
         RpcApplyDropFromStation();
         nextSettleCheck = Time.time + SettleCheckInterval;
+        ForceSettleWindow();
     }
 
     // Same as ServerDropFromStation, but the item leaves the station at a given point with a given push.
@@ -404,6 +421,7 @@ public class CarriableObject_MP : NetworkBehaviour
         carrier = null;
         RpcApplyDropFromStationAt(position, velocity);
         nextSettleCheck = Time.time + SettleCheckInterval;
+        ForceSettleWindow();
     }
 
     [ClientRpc]
@@ -443,14 +461,15 @@ public class CarriableObject_MP : NetworkBehaviour
     private void Update()
     {
         if (Time.time < nextSettleCheck) return;
-        nextSettleCheck = Time.time + SettleCheckInterval;
+        nextSettleCheck = Time.time + (Time.time < forceSettleUntil ? 0.75f : SettleCheckInterval);
 
         if (carrier != null || serverConsumed || rb == null || rb.isKinematic) return;
         if (transform.parent != null) return;
         if (carriableSp != null && carriableSp.IsOccupied()) return;
         if (!rb.IsSleeping() && rb.linearVelocity.sqrMagnitude > SettleSpeed * SettleSpeed) return;
 
-        if ((transform.position - lastSentPos).sqrMagnitude < SettleMinMove * SettleMinMove &&
+        bool forced = Time.time < forceSettleUntil;
+        if (!forced && (transform.position - lastSentPos).sqrMagnitude < SettleMinMove * SettleMinMove &&
             Quaternion.Angle(transform.rotation, lastSentRot) < 2f) return;
 
         lastSentPos = transform.position;

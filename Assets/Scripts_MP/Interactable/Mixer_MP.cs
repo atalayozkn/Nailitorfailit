@@ -14,6 +14,27 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
     [SyncVar(hook = nameof(OnSlotChanged))] private int slot2 = -1;
     [SyncVar(hook = nameof(OnSlotChanged))] private int slot3 = -1;
 
+    // The generator fuel lives on the server (refuel and mixing run there). Mirrored here so the fuel bar on the mixer
+    // moves on every machine, same as the cutter's.
+    [SyncVar(hook = nameof(OnEnergyChanged))] private float generatorEnergy = -1f;
+    private float nextEnergyCheck;
+
+    [ServerCallback]
+    private void Update()
+    {
+        if (generator == null || Time.time < nextEnergyCheck) return;
+        nextEnergyCheck = Time.time + 0.2f;
+
+        float energy = generator.GetEnergy();
+        if (!Mathf.Approximately(energy, generatorEnergy)) generatorEnergy = energy;
+    }
+
+    private void OnEnergyChanged(float oldValue, float newValue)
+    {
+        if (isServer || generator == null || newValue < 0f) return;
+        generator.ApplyNetworkedEnergy(newValue);
+    }
+
     private void Awake()
     {
         mixer = GetComponentInChildren<Mixer>();
@@ -90,7 +111,11 @@ public class Mixer_MP : NetworkBehaviour, IInteractionNetworkProxy
         slot1 = slot2 = slot3 = -1;
     }
 
-    public override void OnStartClient() => ApplySlots();
+    public override void OnStartClient()
+    {
+        ApplySlots();
+        OnEnergyChanged(0f, generatorEnergy);
+    }
 
     private void OnSlotChanged(int oldValue, int newValue) => ApplySlots();
 

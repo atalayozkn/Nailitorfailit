@@ -21,9 +21,23 @@ public class InteractionUIHelper : MonoBehaviour
     {
         sliderComponent.maxValue = maxValue;
     }
+    // The bar glides up to the new value instead of jumping in one step per interaction (it never glides down:
+    // a reset or a lower value shows at once).
+    private const float GlideFractionPerSecond = 2.5f;
+    private float targetValue;
+
     public void UpdateUI(float value)
     {
-        sliderComponent.value = value;
+        targetValue = value;
+        if (value <= sliderComponent.value) sliderComponent.value = value;
+    }
+
+    private void Update()
+    {
+        if (sliderComponent == null || sliderComponent.value >= targetValue) return;
+
+        float step = Mathf.Max(0.0001f, sliderComponent.maxValue - sliderComponent.minValue) * GlideFractionPerSecond * Time.unscaledDeltaTime;
+        sliderComponent.value = Mathf.MoveTowards(sliderComponent.value, targetValue, step);
     }
 
 }

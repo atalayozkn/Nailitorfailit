@@ -34,7 +34,7 @@ public class LobbyNetworkManager : NetworkManager
     public const int MinPlayers = 2;
     public const int MaxPlayers = 4;
 
-    public const string GameScenePath = "Assets/Scenes_MP/DemoScene_MP.unity";
+    public const string GameScenePath = "Assets/Scenes/DemoScene_MP.unity";
 
     public static string SelectedGameScenePath
     {
@@ -176,7 +176,7 @@ public class LobbyNetworkManager : NetworkManager
 
     // Switch for the local KCP transport (F8 / the saved editor preference). Off for now: the Steam transport is the
     // only one used, whatever the saved preference says. Set to true to get F8 and the preference back.
-    public const bool DevTransportEnabled = false;
+    public const bool DevTransportEnabled = true;
 
     private static bool forceDevTransport;
 
