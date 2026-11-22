@@ -176,7 +176,7 @@ public class LobbyNetworkManager : NetworkManager
 
     // Switch for the local KCP transport (F8 / the saved editor preference). Off for now: the Steam transport is the
     // only one used, whatever the saved preference says. Set to true to get F8 and the preference back.
-    public const bool DevTransportEnabled = true;
+    public const bool DevTransportEnabled = false;
 
     private static bool forceDevTransport;
 

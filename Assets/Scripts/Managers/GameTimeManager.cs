@@ -19,7 +19,7 @@ public class GameTimeManager : MonoBehaviour
     [SerializeField] private UnityEvent onTimeIncreaseEvent;
 
     // TEMP (testing the end screen): every round lasts this many seconds. 0 = off, use the scene's Max Round Time.
-    public const float TempRoundSecondsOverride = 10f;
+    public const float TempRoundSecondsOverride = 0f;
 
     private float currentTime;
     private bool isActive;
