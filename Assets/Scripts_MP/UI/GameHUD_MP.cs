@@ -131,7 +131,7 @@ public class GameHUD_MP : MonoBehaviour
 
     // The round is over: the money, timer, dog, stamina, inventory and hint panels of every HUD on screen (this player's
     // and the level's own singleplayer one) go away, so only the end screen is left. They stay off until the scene changes.
-    private static readonly string[] InGameHudNames =
+    public static readonly string[] InGameHudNames =
     {
         "Emote_Wheel", "TimeCounter", "TimeCounter_Shadow", "Stamina_Shadow", "Stamina_Slider",
         "Currency", "Currency_Shadow", "DogUI", "InventoryPanel", "LookAtInfoPanel",

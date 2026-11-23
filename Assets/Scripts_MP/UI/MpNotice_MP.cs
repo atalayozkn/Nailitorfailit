@@ -162,6 +162,7 @@ public class MpNotice_MP : MonoBehaviour
     private void ShowOneShot(string message, Kind kind, float seconds)
     {
         if (string.IsNullOrWhiteSpace(message)) return;
+        message = Localization.T(message); // the rows hold the text in the current language
 
         // Same text already on screen: just extend it instead of stacking duplicates.
         foreach (Row existing in oneShots)
@@ -192,6 +193,7 @@ public class MpNotice_MP : MonoBehaviour
 
     private void SetPersistent(string key, string message, Kind kind)
     {
+        message = Localization.T(message);
         persistent.TryGetValue(key, out Row row);
 
         if (string.IsNullOrEmpty(message))

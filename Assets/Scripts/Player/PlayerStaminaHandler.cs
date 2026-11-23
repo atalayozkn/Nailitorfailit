@@ -148,6 +148,10 @@ namespace PlayerScripts
 
         private void BecomeDrained()
         {
+            // Multiplayer: every copy of the player runs this, only the owner is told.
+            bool isOwnPlayer = !NetworkModeHelper.IsNetworked || GetComponentInParent<PlayerNetwork_MP>() is { isOwned: true };
+            if (isOwnPlayer) WarningManager.ShowLocal("You're out of stamina!");
+
             costMultiplier = drainedMultiplier;
             onDrainedEvent?.Invoke();
             CancelInvoke(nameof(ReverseDrained));

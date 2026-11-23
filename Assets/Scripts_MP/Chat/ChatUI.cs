@@ -25,6 +25,7 @@ public class ChatUI : MonoBehaviour
 
     void OnEnable()
     {
+        MpChatStyle_MP.Apply(scrollRect, inputField);
         Subscribe();
 
         if (sendButton != null) sendButton.onClick.AddListener(SendCurrent);

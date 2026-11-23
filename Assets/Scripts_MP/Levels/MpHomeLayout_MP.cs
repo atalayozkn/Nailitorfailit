@@ -39,6 +39,10 @@ public static class MpHomeLayout_MP
         {
             Transform otherMail = FindDeep(package, "MailManPackage");
             if (otherMail != null && otherMail.gameObject.activeSelf) otherMail.gameObject.SetActive(false);
+
+            // One dog house for everybody too (the host's): the other packages' houses are off on every machine.
+            Transform otherHouse = FindDeep(package, "DogHouse");
+            if (otherHouse != null && otherHouse.gameObject.activeSelf) otherHouse.gameObject.SetActive(false);
         }
 
         if (!MpLevelInstaller.HasAuthoredSpawn) return;
@@ -73,7 +77,9 @@ public static class MpHomeLayout_MP
 
         if (ownsMail) AlignMailMan(package, authored);
 
-        Place(package, authored, "DogHouse", dogShift);
+        // The single dog house stands where the level designer put it, and every dog sleeps by it.
+        Place(package, authored, "DogHouse", Vector3.zero);
+        Place(package, authored, "BedTransform", Vector3.zero);
         Place(package, authored, "FoodBowl", dogShift);
         Place(package, authored, "MailBox", mailShift);
 

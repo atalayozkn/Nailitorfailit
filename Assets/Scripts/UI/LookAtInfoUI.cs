@@ -225,15 +225,18 @@ public class LookAtInfoUI : MonoBehaviour
     private void Show(LookAtInfo info)
     {
         string binding = mpBindingLabel != null ? mpBindingLabel(isUsingGamepad) : handler.GetInteractBindingLabel(isUsingGamepad);
-        string actionLine = info.IsBlocked ? info.Action : $"[{binding}] {info.Action}";
+        // The labels hold the text in the current language, so that is what is compared (and set).
+        string nameLine = Localization.T(info.Name);
+        string action = Localization.T(info.Action);
+        string actionLine = info.IsBlocked ? action : $"[{binding}] {action}";
         Color actionColor = info.IsBlocked ? BlockedColor : ActionColor;
 
-        if (nameText.text != info.Name || actionText.text != actionLine)
+        if (nameText.text != nameLine || actionText.text != actionLine)
         {
-            nameText.text = info.Name;
+            nameText.text = nameLine;
             actionText.text = actionLine;
 
-            float width = Mathf.Max(nameText.GetPreferredValues(info.Name).x, actionText.GetPreferredValues(actionLine).x);
+            float width = Mathf.Max(nameText.GetPreferredValues(nameLine).x, actionText.GetPreferredValues(actionLine).x);
             panelRect.sizeDelta = new Vector2(width + PanelPadding * 2f, PanelHeight);
         }
 

@@ -24,6 +24,10 @@ public class MpPlayerColor_MP : MonoBehaviour
     };
 
     private CanvasGroup group;
+    private RectTransform panelRect;
+    private float nextAlignAt;
+    private float swatchBaseHeight;
+    private readonly System.Collections.Generic.Dictionary<RectTransform, float> swatchBaseY = new System.Collections.Generic.Dictionary<RectTransform, float>();
     private readonly Image[] swatches = new Image[Palette.Length];
     private TMP_Text characterLabel;
 
@@ -69,6 +73,7 @@ public class MpPlayerColor_MP : MonoBehaviour
         group = canvasChild.GetComponent<CanvasGroup>();
         var panel = canvasChild.Find("ColorPanel");
         if (panel == null) return;
+        panelRect = panel as RectTransform;
 
         for (int i = 0; i < swatches.Length; i++)
         {
@@ -122,6 +127,8 @@ public class MpPlayerColor_MP : MonoBehaviour
 
         if (!inLobby) return;
 
+        AlignToChat();
+
         LobbyPlayer local = NetworkClient.localPlayer.GetComponent<LobbyPlayer>();
         if (local == null) return;
 
@@ -141,6 +148,59 @@ public class MpPlayerColor_MP : MonoBehaviour
 
             Button button = swatches[i].GetComponent<Button>();
             if (button != null) button.interactable = !takenByOther;
+        }
+    }
+
+    private const float ChatGap = 10f;
+
+    // In the lobby the colour panel stands right next to the chat, and chat + gap + colour panel together are as wide as the
+    // panel with the lobby id and password above them. Done from the real on-screen rectangles of both.
+    private void AlignToChat()
+    {
+        if (panelRect == null || Time.unscaledTime < nextAlignAt) return;
+        nextAlignAt = Time.unscaledTime + 0.25f;
+
+        ChatUI chatUi = FindAnyObjectByType<ChatUI>();
+        if (chatUi == null) return;
+
+        var chat = (RectTransform)chatUi.transform;
+        Transform lobby = chat.parent;
+        var info = lobby != null ? lobby.Find("Lobby_Info_Backdrop") as RectTransform : null;
+        Canvas ownCanvas = panelRect.GetComponentInParent<Canvas>();
+        if (info == null || ownCanvas == null || !(panelRect.parent is RectTransform root)) return;
+
+        var chatCorners = new Vector3[4];
+        var infoCorners = new Vector3[4];
+        chat.GetWorldCorners(chatCorners);
+        info.GetWorldCorners(infoCorners);
+
+        float scale = Mathf.Max(0.01f, ownCanvas.scaleFactor);
+        float chatRight = chatCorners[3].x;
+        float infoRight = infoCorners[3].x;
+        float left = chatRight + ChatGap * scale;
+        float widthPx = infoRight - left;
+        float heightPx = chatCorners[1].y - chatCorners[0].y;
+        if (widthPx < 60f * scale || heightPx < 60f * scale) return;
+
+        var screen = new Vector2(left + widthPx * 0.5f, (chatCorners[0].y + chatCorners[1].y) * 0.5f);
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screen, null, out Vector2 local)) return;
+
+        panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = local;
+
+        float height = heightPx / scale;
+        if (swatchBaseHeight <= 0f) swatchBaseHeight = panelRect.sizeDelta.y;
+        panelRect.sizeDelta = new Vector2(widthPx / scale, height);
+
+        // The caption and the swatch rows keep their relative places when the panel gets taller.
+        float k = swatchBaseHeight > 0f ? height / swatchBaseHeight : 1f;
+        foreach (Transform child in panelRect)
+        {
+            if (!(child is RectTransform childRect)) continue;
+            if (!swatchBaseY.TryGetValue(childRect, out float baseY)) swatchBaseY[childRect] = baseY = childRect.anchoredPosition.y;
+
+            childRect.anchoredPosition = new Vector2(childRect.anchoredPosition.x, baseY * k);
         }
     }
 
@@ -209,6 +269,7 @@ public class MpPlayerColor_MP : MonoBehaviour
         RectTransform root = (RectTransform)canvasGo.transform;
 
         RectTransform panel = NewRect(root, "ColorPanel");
+        panelRect = panel;
         panel.sizeDelta = new Vector2(170f, 330f);
         panel.anchorMin = new Vector2(1f, 0.5f);
         panel.anchorMax = new Vector2(1f, 0.5f);

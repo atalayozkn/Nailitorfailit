@@ -10,7 +10,7 @@ public static class InvariantCulture
 {
     // For now (testing) the culture follows the language of the Steam client once Steam is up. Set to false to keep the
     // invariant culture all the time (the Turkish "i" -> "İ" problem above comes back with a Turkish Steam).
-    public const bool FollowSteamLanguage = true;
+    public const bool FollowSteamLanguage = false;
 
     private static readonly Dictionary<string, string> SteamLanguageCultures = new Dictionary<string, string>
     {

@@ -36,6 +36,7 @@ public class MpPauseHotkey_MP : MonoBehaviour
 
         DisableSpBinding(menu);
         MpPauseButtons_MP.EnsureBuilt(menu);
+        MpPauseStyle_MP.Update(menu);
 
         if (ChatUI.IsAnyOpen || ChatUI.EscapeHandledRecently) return;
         if (TextInputFocused()) return;

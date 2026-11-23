@@ -61,6 +61,8 @@ public static class MpSteamAvatar_MP
             }
         }
 
+        MakeRound(pixels, (int)width, (int)height);
+
         var texture = new Texture2D((int)width, (int)height, TextureFormat.RGBA32, false);
         texture.SetPixels32(pixels);
         texture.Apply();
@@ -70,6 +72,28 @@ public static class MpSteamAvatar_MP
         Register(texture);
 
         return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    // The picture is cut to a circle (soft 1.5 px edge), so it fills the round frame in the player list completely.
+    private static void MakeRound(Color32[] pixels, int width, int height)
+    {
+        float cx = (width - 1) * 0.5f;
+        float cy = (height - 1) * 0.5f;
+        float radius = Mathf.Min(width, height) * 0.5f;
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float distance = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                float alpha = Mathf.Clamp01((radius - distance) / 1.5f);
+                if (alpha >= 1f) continue;
+
+                Color32 pixel = pixels[y * width + x];
+                pixel.a = (byte)(pixel.a * alpha);
+                pixels[y * width + x] = pixel;
+            }
+        }
     }
 
     private static void Register(Texture2D texture)

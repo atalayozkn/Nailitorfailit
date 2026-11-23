@@ -21,6 +21,11 @@ public class ScreenFader : MonoBehaviour
 
     private static ScreenFader instance;
 
+    // Multiplayer menu: moving between its panels (Multiplayer, mode, Create / Join) does not fade. Asked when the button is
+    // pressed (false) and when it is released (true); no fade only when both say quiet.
+    public static System.Func<bool, bool> QuietPanelSwitch;
+    private bool quietAtPress;
+
     private Image black;
     private bool armed;
     private int signatureAtPress;
@@ -127,6 +132,7 @@ public class ScreenFader : MonoBehaviour
         if (!PressedOnButton(mouse.position.ReadValue())) return;
 
         armed = true;
+        quietAtPress = QuietPanelSwitch != null && QuietPanelSwitch(false);
         settingsOpenAtPress = SettingsOpen();
         signatureAtPress = Signature();
     }
@@ -145,6 +151,8 @@ public class ScreenFader : MonoBehaviour
 
         // Only when the click actually switched panels.
         if (Signature() == signatureAtPress) return;
+
+        if (quietAtPress && QuietPanelSwitch != null && QuietPanelSwitch(true)) return;
 
         BlackThenFadeIn(PanelFade);
     }

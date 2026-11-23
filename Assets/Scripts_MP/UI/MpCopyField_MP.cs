@@ -23,7 +23,8 @@ public class MpCopyField_MP : MonoBehaviour, IPointerClickHandler
         if (Source == null) return;
         if (label == null && !TryGetComponent(out label)) return;
 
-        string shown = Prefix + Format(Source());
+        string title = Prefix.Trim().TrimEnd(':');
+        string shown = (title.Length > 0 ? Localization.T(title) + ": " : string.Empty) + Format(Source());
         if (label.text != shown) label.text = shown;
     }
 

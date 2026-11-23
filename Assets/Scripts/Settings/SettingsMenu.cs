@@ -40,8 +40,16 @@ public class SettingsMenu : MonoBehaviour
         BuildUI();
         root.SetActive(false);
     }
-    private void OnEnable() => GameSettings.Changed += Refresh;
-    private void OnDisable() => GameSettings.Changed -= Refresh;
+    private void OnEnable()
+    {
+        GameSettings.Changed += Refresh;
+        Localization.Changed += Refresh;
+    }
+    private void OnDisable()
+    {
+        GameSettings.Changed -= Refresh;
+        Localization.Changed -= Refresh;
+    }
     private void Update()
     {
         if (IsOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Close();
@@ -123,12 +131,12 @@ public class SettingsMenu : MonoBehaviour
         var content = CreateRect("Content", board.transform);
         Anchor(content, ContentArea);
 
-        string[] tabNames = { "Audio", "Display", "Graphics" };
+        string[] tabNames = { "Audio", "Display", "Graphics", "Language" };
         for (int i = 0; i < tabNames.Length; i++)
         {
             int index = i;
             var tab = CreateButton(tabNames[i], tabs, tabNames[i], () => SelectTab(index));
-            Anchor(tab.rectTransform, new Rect(i / 3f + 0.01f, 0f, 1f / 3f - 0.02f, 1f));
+            Anchor(tab.rectTransform, new Rect(i / (float)tabNames.Length + 0.01f, 0f, 1f / tabNames.Length - 0.02f, 1f));
             tabImages.Add(tab);
 
             var page = CreateRect(tabNames[i] + "Page", content).gameObject;
@@ -157,6 +165,10 @@ public class SettingsMenu : MonoBehaviour
         AddChoice(graphics, 2, "Ambient Occlusion", () => 2, () => GameSettings.AmbientOcclusion, i => GameSettings.AmbientOcclusion = i, i => GameSettings.OnOffNames[i]);
         AddChoice(graphics, 3, "Render Scale", () => GameSettings.RenderScales.Length, () => GameSettings.RenderScale, i => GameSettings.RenderScale = i,
             i => Mathf.RoundToInt(GameSettings.RenderScales[i] * 100f) + "%");
+
+        // Language (Resources/Localization/Strings_tr.txt holds the Turkish texts)
+        var language = pages[3].transform;
+        AddChoice(language, 0, "Language", () => 2, () => (int)Localization.Current, i => Localization.Set((GameLanguage)i), i => Localization.LanguageName((GameLanguage)i));
 
         var reset = CreateButton("ResetButton", board.transform, "Defaults", GameSettings.ResetToDefaults);
         Anchor(reset.rectTransform, ResetButtonArea);

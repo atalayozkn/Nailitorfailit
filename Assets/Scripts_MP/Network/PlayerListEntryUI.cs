@@ -43,10 +43,17 @@ public class PlayerListEntryUI : MonoBehaviour
     private UnityEngine.UI.Image ring;
 
     private const float RingPixels = 46f;
-    private const float AvatarPixels = 32f;
+    private const float AvatarPixels = 40f; // the round picture fills the ring (inner diameter about 41)
     private const float RingCentreX = 28f;
 
-    private void Awake() => EnsureRing();
+    private void Awake()
+    {
+        // The row's own background (a yellow-bordered rounded plate) ended up as a small yellow frame around the avatar:
+        // not drawn. Its size still counts for the layout, so the Image stays and is only made invisible.
+        if (TryGetComponent(out UnityEngine.UI.Image background)) background.color = Color.clear;
+
+        EnsureRing();
+    }
 
     // Orange ring at the left end of the row. The Steam picture (when there is one) sits inside it.
     private void EnsureRing()

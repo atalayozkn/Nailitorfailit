@@ -36,9 +36,13 @@ public class DogMoodUI : MonoBehaviour
         moodText.alignment = TextAlignmentOptions.Center;
         moodText.fontStyle = FontStyles.Bold;
         moodText.fontSize = fontSize;
+        // "Rebellious" is wider than the label: one line, shrunk to fit (it wrapped onto a second line).
+        moodText.textWrappingMode = TextWrappingModes.NoWrap;
+        moodText.enableAutoSizing = true;
+        moodText.fontSizeMax = fontSize;
+        moodText.fontSizeMin = fontSize * 0.5f;
         moodText.raycastTarget = false;
-        moodText.outlineWidth = 0.2f;
-        moodText.outlineColor = Color.black;
+        TextOutline.Attach(moodText, 1.8f, Color.black); // a solid black outline: green / yellow / red must read on the orange board
 
         DogStateIcon.Create(stateMachine);
     }

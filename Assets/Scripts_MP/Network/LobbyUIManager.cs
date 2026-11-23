@@ -54,9 +54,8 @@ public class LobbyUIManager : MonoBehaviour
             voiceHint.alignment = TextAlignmentOptions.Center;
             voiceHint.color = new Color(1f, 0.86f, 0.62f, 1f);
             voiceHint.raycastTarget = false;
-            // Dark brown outline so it reads on any background.
-            voiceHint.outlineWidth = 0.3f;
-            voiceHint.outlineColor = new Color32(34, 21, 14, 255);
+            // Black outline so it reads on any background.
+            TextOutline.Attach(voiceHint, 1.6f, Color.black);
         }
 
         VoiceNetwork_MP voice = VoiceNetwork_MP.Instance;
@@ -106,13 +105,13 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
-    // The Invite button follows the session instead of being decided once at Start: it is there for whoever hosts the
-    // lobby (Steam or local), hidden for plain clients.
+    // The Invite button follows the session instead of being decided once at Start: every player in the lobby has it (a
+    // Steam lobby lets any member invite friends), the host as well as the clients.
     private void RefreshInviteButton()
     {
         if (inviteFriendsButton == null) return;
 
-        bool show = NetworkServer.active;
+        bool show = NetworkServer.active || NetworkClient.active;
         if (inviteFriendsButton.gameObject.activeSelf != show) inviteFriendsButton.gameObject.SetActive(show);
         if (show && !inviteFriendsButton.interactable) inviteFriendsButton.interactable = true;
     }
@@ -174,7 +173,10 @@ public class LobbyUIManager : MonoBehaviour
 
         string password = (NetworkManager.singleton as LobbyNetworkManager)?.LobbyPassword;
         string passwordPart = string.IsNullOrEmpty(password) ? string.Empty : $" / password {password}";
-        string joinInfo = (steamLobby ? steam.CurrentCode : LocalAddress()) + passwordPart;
+        // Without Steam the friend joins the HOST's address: a client copies the address it connected to, not its own.
+        string address = steamLobby ? steam.CurrentCode
+            : NetworkServer.active ? LocalAddress() : NetworkManager.singleton.networkAddress;
+        string joinInfo = address + passwordPart;
         GUIUtility.systemCopyBuffer = joinInfo;
 
         MpNotice_MP.Info(steamLobby
