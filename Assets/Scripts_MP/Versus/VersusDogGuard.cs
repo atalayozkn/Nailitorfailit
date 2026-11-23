@@ -54,6 +54,7 @@ public class VersusDogGuard : MonoBehaviour
             Vector3 delta = side.dogAnchor.position - (bed != null ? bed.position : dog.transform.position);
             delta.y = 0f;
             package.position += delta;
+            SitBowlOnGround(package);
 
             Vector3 dogPosition = side.dogAnchor.position + side.dogAnchor.forward * 1.2f;
             dogPosition.y = dog.transform.position.y;
@@ -65,6 +66,34 @@ public class VersusDogGuard : MonoBehaviour
 
         if (side.depotZone != null && PatrolBoundariesSetter != null)
             PatrolBoundariesSetter.Invoke(dog, new object[] { new Collider[] { side.depotZone } });
+    }
+
+    // The package moves sideways only (y stays), but the compete map's ground under the anchors is a road slab 0.2 m above
+    // the spawn-circle height: the 0.1 m bowl ended up buried and invisible. Put it on whatever solid surface is under it.
+    private static void SitBowlOnGround(Transform package)
+    {
+        FoodBowl bowl = package.GetComponentInChildren<FoodBowl>(true);
+        if (bowl == null) return;
+
+        Renderer[] renderers = bowl.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0) return;
+
+        Bounds bounds = renderers[0].bounds;
+        foreach (Renderer r in renderers) bounds.Encapsulate(r.bounds);
+
+        float groundY = float.MinValue;
+        Vector3 from = new Vector3(bowl.transform.position.x, bounds.max.y + 3f, bowl.transform.position.z);
+
+        foreach (RaycastHit hit in Physics.RaycastAll(from, Vector3.down, 8f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.collider.transform.IsChildOf(package) || hit.collider.attachedRigidbody != null) continue;
+            groundY = Mathf.Max(groundY, hit.point.y);
+        }
+
+        if (groundY == float.MinValue) return;
+
+        float lift = groundY - bounds.min.y + 0.01f;
+        if (lift > 0.005f) bowl.transform.position += Vector3.up * lift;
     }
 
     private void Update()

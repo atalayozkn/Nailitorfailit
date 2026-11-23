@@ -28,7 +28,7 @@ public static class VersusSceneBuilder
     private const float HouseX = 13f, HouseZ = -10.5f;
     private const float StationsX = 10f, StationsZ = 7.5f;
     private const float FenceStep = 1.44f, PadBackZ = 13.4f;
-    private const int BaitCost = 40, BatCost = 60;
+    private const int BaitCost = 40, BatCost = 30;
     private const float MatchSeconds = 900f; // 15 minutes
 
     private static readonly Rect PlayRect = Rect.MinMaxRect(-18.5f, -17.5f, 18.5f, 22f);

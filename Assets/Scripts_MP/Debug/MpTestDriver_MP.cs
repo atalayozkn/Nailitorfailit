@@ -210,6 +210,8 @@ public class MpTestDriver_MP : MonoBehaviour
             case "emote": return Once(() => Sm()?.ChangeToEmoteState((int)F(c, 1, 1)));
             case "tiles": return Once(LogTiles);
             case "fakeprogress": return Once(FakeProgress);
+            case "bowls": return Once(LogBowls);
+            case "pickversus": return Once(() => { typeof(VersusMenuButton).GetMethod("SetPending", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null, new object[] { true }); var cat = MpLevelCatalog.Instance; for (int i = 0; cat != null && i < cat.Count; i++) if (MpLevelCatalog.IsVersusScene(cat.Get(i).scenePath)) { cat.Select(i); Log("pickversus " + i + " -> " + cat.SelectedScenePath); } });
             case "wait": return Wait(F(c, 1, 1f));
             case "quit": return Once(() => { Report(); Application.Quit(0); });
         }
@@ -654,6 +656,22 @@ public class MpTestDriver_MP : MonoBehaviour
 
             for (int i = 0; i < t; i++) room.IncreaseCounter();
             Log($"fakeprogress: {room.name} finished ({t})");
+        }
+    }
+
+    private void LogBowls()
+    {
+        foreach (FoodBowl bowl in FindObjectsByType<FoodBowl>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            int on = 0, total = 0;
+            Bounds b = default; bool first = true;
+            foreach (Renderer r in bowl.GetComponentsInChildren<Renderer>(true))
+            {
+                total++; if (r.enabled && r.gameObject.activeInHierarchy) on++;
+                if (first) { b = r.bounds; first = false; } else b.Encapsulate(r.bounds);
+            }
+            Transform t = bowl.transform; string path = t.name; for (Transform p = t.parent; p != null; p = p.parent) path = p.name + "/" + path;
+            Log($"BOWL {path} activeSelf={bowl.gameObject.activeSelf} inHierarchy={bowl.gameObject.activeInHierarchy} pos={t.position:0.0} renderersOn={on}/{total} boundsCenter={b.center:0.0} size={b.size:0.0} {(NetworkServer.active ? "server" : "client")}");
         }
     }
 

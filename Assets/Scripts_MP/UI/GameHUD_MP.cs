@@ -174,6 +174,23 @@ public class GameHUD_MP : MonoBehaviour
         if (gameEnded) return;
         gameEnded = true;
 
+        // Compete: the level manager only knows "time ran out" (fail for everybody). The result is the match's: the side with
+        // the higher build percent NAILS IT, the other FAILS IT (a draw fails for both).
+        VersusMatch match = VersusMatch.Instance;
+        if (match != null && match.LocalSideIndex() >= 0)
+        {
+            int local = match.LocalSideIndex();
+            int result = match.Winner;
+
+            if (result == VersusMatch.NoWinner)
+            {
+                float mine = match.GetSide(local).percent, theirs = match.GetSide(1 - local).percent;
+                result = Mathf.Abs(mine - theirs) < 0.0005f ? VersusMatch.Draw : mine > theirs ? local : 1 - local;
+            }
+
+            victory = result == local;
+        }
+
         if (gameEndPanel != null) MpEndUiSuppressor_MP.StripIn(gameEndPanel);
         if (victoryPanel != null) MpEndUiSuppressor_MP.StripIn(victoryPanel);
         if (defeatPanel != null) MpEndUiSuppressor_MP.StripIn(defeatPanel);

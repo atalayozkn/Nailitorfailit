@@ -93,7 +93,7 @@ public class VersusHud : MonoBehaviour
         banner.gameObject.SetActive(true);
         banner.text = winner == VersusMatch.Draw ? "DRAW"
             : local < 0 ? match.GetSide(winner).label + " WINS"
-            : winner == local ? "YOU WIN" : "YOU LOSE";
+            : winner == local ? "NAIL IT" : "FAIL IT";
     }
 
     private static RectTransform Panel(string name, Transform parent, Color color)

@@ -19362,6 +19362,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mixer
       objectReference: {fileID: 0}
+    - target: {fileID: 8525784986140713835, guid: 2bc4ddc6f2ae89c40a10ef6a49380583, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.0340002
+      objectReference: {fileID: 0}
     - target: {fileID: 8644694931191523752, guid: 2bc4ddc6f2ae89c40a10ef6a49380583, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.3500003
@@ -32343,6 +32347,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6069510879728401807, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.0799997
+      objectReference: {fileID: 0}
     - target: {fileID: 7313507888434762851, guid: 72cccd737422bc24291048a1b5e770ab, type: 3}
       propertyPath: m_Name
       value: Station_WoodCutter
@@ -34316,7 +34324,7 @@ PrefabInstance:
 
         Bat
 
-        60'
+        30'
       objectReference: {fileID: 0}
     - target: {fileID: 3011375498502142927, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
       propertyPath: m_Name
@@ -34372,7 +34380,7 @@ PrefabInstance:
       objectReference: {fileID: -1579241630799410176, guid: 555f542f03fc8214787457dea3e94de9, type: 3}
     - target: {fileID: 8449155624487304980, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
       propertyPath: cost
-      value: 60
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8449155624487304980, guid: 69f52ec78b8adbb4e96eb48956750eeb, type: 3}
       propertyPath: objectPrefab

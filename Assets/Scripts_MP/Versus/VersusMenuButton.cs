@@ -76,6 +76,7 @@ public class VersusMenuButton : MonoBehaviour
         LayoutTopRows(panel, create, clone.transform, back);
 
         SetLabel(clone, Label);
+        AddBetaBadge(clone);
         SetLabel(create.gameObject, CoopLabel);
 
         OpenModeOnClick(create.GetComponent<Button>(), false, panel.gameObject, modeGroup);
@@ -162,6 +163,39 @@ public class VersusMenuButton : MonoBehaviour
         VersusLobbyPending = pending;
         LobbyNetworkManager.MaxPlayersOverride = pending ? VersusPlayers : 0;
         Debug.Log($"[VERSUS] versus lobby pending -> {pending}");
+    }
+
+    // "BETA" in the bottom right corner of the Compete button (sized from the button's own rect, so it follows its scale).
+    private static void AddBetaBadge(GameObject button)
+    {
+        TMP_Text source = button.GetComponentInChildren<TMP_Text>(true);
+        if (source == null || button.transform.Find("BetaBadge") != null) return;
+
+        var go = new GameObject("BetaBadge", typeof(RectTransform));
+        go.layer = button.layer;
+        RectTransform rect = (RectTransform)go.transform;
+        rect.SetParent(button.transform, false);
+        rect.anchorMin = new Vector2(0.45f, 0.03f);
+        rect.anchorMax = new Vector2(0.96f, 0.36f);
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+        var text = go.AddComponent<TextMeshProUGUI>();
+        text.font = source.font;
+        text.text = "BETA";
+        text.alignment = TextAlignmentOptions.BottomRight;
+        text.fontStyle = FontStyles.Bold;
+        text.color = new Color(1f, 0.82f, 0.2f, 1f);
+        // A fixed size from the button's own height (auto sizing came out tiny): about 15% of the plank, close to the label.
+        float height = ((RectTransform)button.transform).rect.height;
+        text.enableAutoSizing = false;
+        text.fontSize = height > 1f ? height * 0.15f : Mathf.Max(20f, source.fontSize * 0.8f);
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.raycastTarget = false;
+        TextOutline.Attach(text, Mathf.Max(1f, text.fontSize * 0.03f), Color.black);
+
+        var layout = go.AddComponent<LayoutElement>();
+        layout.ignoreLayout = true; // the button may sit in a layout group
     }
 
     private static void SetLabel(GameObject button, string label)
