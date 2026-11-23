@@ -139,8 +139,9 @@ public class CreateLobbyUI : MonoBehaviour
             radio.label.color = on ? RadioInkOn : RadioInkOff;
             radio.button.interactable = !locked;
 
-            // A locked row keeps its picked number lit; the others fade.
-            if (locked && !on) radio.plate.color = new Color(RadioOff.r, RadioOff.g, RadioOff.b, 0.45f);
+            // Compete is always 2 players: the 3 and the 4 are not shown at all.
+            bool shown = !locked || on;
+            if (radio.button.gameObject.activeSelf != shown) radio.button.gameObject.SetActive(shown);
         }
     }
 

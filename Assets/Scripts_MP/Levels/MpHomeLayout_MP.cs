@@ -35,15 +35,29 @@ public static class MpHomeLayout_MP
     {
         if (package == null) return;
 
+        // Compete keeps every side's own dog, house and bowl exactly where its scene put them.
+        bool competing = VersusMatch.Instance != null;
+
         if (!ownsMail)
         {
             Transform otherMail = FindDeep(package, "MailManPackage");
             if (otherMail != null && otherMail.gameObject.activeSelf) otherMail.gameObject.SetActive(false);
 
-            // One dog house for everybody too (the host's): the other packages' houses are off on every machine.
-            Transform otherHouse = FindDeep(package, "DogHouse");
-            if (otherHouse != null && otherHouse.gameObject.activeSelf) otherHouse.gameObject.SetActive(false);
+            // Together: ONE dog for everybody (the host's). The other players' dog, house, bed and bowl are off on every
+            // machine, and their dog panel with them (it would show a dog that is not there).
+            if (!competing)
+            {
+                Transform otherDogs = FindDeep(package, "DogPackage");
+                if (otherDogs != null && otherDogs.gameObject.activeSelf) otherDogs.gameObject.SetActive(false);
+
+                Transform dogPanel = FindDeep(package, "DogUI");
+                if (dogPanel != null && dogPanel.gameObject.activeSelf) dogPanel.gameObject.SetActive(false);
+            }
         }
+
+        // Compete: the scene's own match code (VersusDogGuard) moves each side's whole dog package to its dog anchor. The
+        // rows below would put the house, bed and bowl somewhere else.
+        if (competing) return;
 
         if (!MpLevelInstaller.HasAuthoredSpawn) return;
 
@@ -77,10 +91,10 @@ public static class MpHomeLayout_MP
 
         if (ownsMail) AlignMailMan(package, authored);
 
-        // The single dog house stands where the level designer put it, and every dog sleeps by it.
-        Place(package, authored, "DogHouse", Vector3.zero);
-        Place(package, authored, "BedTransform", Vector3.zero);
-        Place(package, authored, "FoodBowl", dogShift);
+        // Together: the one dog house (the host's) stands where the level designer put it.
+        Place(package, authored, "DogHouse", competing ? dogShift : Vector3.zero);
+        Place(package, authored, "BedTransform", competing ? dogShift : Vector3.zero);
+        Place(package, authored, "FoodBowl", competing ? dogShift : Vector3.zero);
         Place(package, authored, "MailBox", mailShift);
 
         InteractionDebug.Log($"[MP-HOME] '{package.name}' slot {slot}: dog house shifted {dogShift:0.0}, mailbox shifted {mailShift:0.0}.");

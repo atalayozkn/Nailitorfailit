@@ -80,13 +80,14 @@ public class PlayerMailBox_MP : NetworkBehaviour, IInteractionNetworkProxy
         if (reward > 0f && GameTimeManager.Instance != null)
             GameTimeManager.Instance.IncreaseRoundTime(reward);
 
-        RpcMailCollected();
+        RpcMailCollected(reward);
     }
 
     [ClientRpc]
-    private void RpcMailCollected()
+    private void RpcMailCollected(float reward)
     {
         if (mailBox != null) VfxManager.Play(VfxId.MailCollect, mailBox.transform.position);
+        if (reward > 0f) MpNotice_MP.Info("Mail bonus: +" + Mathf.RoundToInt(reward) + " s");
     }
 
     private void OnMailPresentChanged(bool oldValue, bool newValue)

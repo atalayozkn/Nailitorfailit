@@ -79,7 +79,10 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
 
         if (target.TryGetComponent(out FoodBowl _))
         {
-            ServerFeedBowl(requester);
+            // The bowl that was pressed belongs to one player's package (in Together there is only the host's): its own
+            // router keeps the food, whoever fills it.
+            PlayerInteractRouter_MP owner = target.GetComponentInParent<PlayerInteractRouter_MP>(true);
+            (owner != null ? owner : this).ServerFeedBowl(requester, true);
             return;
         }
 
@@ -94,9 +97,9 @@ public class PlayerInteractRouter_MP : NetworkBehaviour
     }
 
     [Server]
-    public void ServerFeedBowl(NetworkIdentity requester)
+    public void ServerFeedBowl(NetworkIdentity requester, bool ownBowl = false)
     {
-        FoodBowl bowl = ResolveBowlFor(requester);
+        FoodBowl bowl = ownBowl ? GetComponentInChildren<FoodBowl>(true) : ResolveBowlFor(requester);
         if (bowl == null)
         {
             Debug.LogError($"PlayerInteractRouter_MP: no FoodBowl found for " +

@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 // A solid outline around a TextMeshPro UGUI label: copies of the label in the outline colour sit behind it, pushed a little
 // in 8 directions. (TextMeshPro's own outline is limited by the font atlas padding and stays a hair thin on small text.)
@@ -45,6 +46,8 @@ public class TextOutline : MonoBehaviour
             go.layer = label.gameObject.layer;
             go.transform.SetParent(label.transform.parent, false);
             go.transform.SetSiblingIndex(label.transform.GetSiblingIndex()); // behind the label
+
+            go.AddComponent<LayoutElement>().ignoreLayout = true; // a layout group around the label leaves the copies alone
 
             var copy = go.AddComponent<TextMeshProUGUI>();
             copy.raycastTarget = false;

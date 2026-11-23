@@ -412,19 +412,23 @@ namespace PlayerScripts
         private IInteractable FindForwardInteractable()
         {
             int count = Physics.SphereCastNonAlloc(detectionOrigin.position, forwardRadius, detectionOrigin.forward, hits, forwardDistance, interactableMask);
-            return GetClosestInteractable(count);
+            return GetClosestInteractable(count, detectionOrigin.position);
         }
 
         private IInteractable FindGroundInteractable()
         {
             Vector3 origin = transform.position + transform.forward * groundForwardOffset + Vector3.up * groundHeight;
             int count = Physics.SphereCastNonAlloc(origin, groundRadius, Vector3.down, hits, groundDistance, interactableMask);
-            return GetClosestInteractable(count);
+            return GetClosestInteractable(count, origin);
         }
 
-        private IInteractable GetClosestInteractable(int hitCount)
+        // The nearest interactable. A sphere cast reports distance 0 for every collider it already overlaps at its start, so a
+        // big collider (a floor or blueprint slab, a wide station) next to the player tied with - and often beat - the small
+        // object right in front of them: the focus jumped to something farther away (most visible in the Compete level). The
+        // distance to the object's centre breaks those ties and weighs a little in general.
+        private IInteractable GetClosestInteractable(int hitCount, Vector3 origin)
         {
-            float closestDistance = float.MaxValue;
+            float bestScore = float.MaxValue;
             IInteractable closestInteractable = null;
 
             for (int i = 0; i < hitCount; i++)
@@ -432,8 +436,11 @@ namespace PlayerScripts
                 Collider hitCollider = hits[i].collider;
                 if (hitCollider == null) continue;
                 if (!hitCollider.TryGetComponent<IInteractable>(out var interactable)) continue;
-                if (hits[i].distance >= closestDistance) continue;
-                closestDistance = hits[i].distance;
+
+                float score = hits[i].distance + 0.35f * Vector3.Distance(origin, hitCollider.bounds.center);
+                if (score >= bestScore) continue;
+
+                bestScore = score;
                 closestInteractable = interactable;
             }
             return closestInteractable;

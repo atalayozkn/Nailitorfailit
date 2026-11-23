@@ -16,7 +16,7 @@ public class VersusBat : MonoBehaviour
     [SerializeField] private Transform visual;
 
     [Header("Settings")]
-    [SerializeField] private int maxHits = 3;
+    [SerializeField] private int maxHits = 2; // two hits on opponents
     [SerializeField] private float swingCooldown = 0.9f;
     [Tooltip("The player plays the same hammering animation as nailing a tile; the hit lands this long after it starts.")]
     [SerializeField] private float hitDelay = 0.25f;
@@ -147,7 +147,7 @@ public class VersusBat : MonoBehaviour
             if (other.GetComponentInParent<DogStateMachine>() != null) continue;
             if (other.GetComponentInParent<CarriableObject_SP>() != null) continue;
 
-            if (other.bounds.size.magnitude >= largeObjectSize) hit = true;
+            // Walls, trees and other big objects no longer wear the bat out: only a player in front of it counts.
         }
 
         InteractionDebug.Log($"[BAT] swing: colliders={count} victim={(victim != 0 ? victim.ToString() : "none")} hit={hit} versusMatch={(VersusMatch.Instance != null)}");

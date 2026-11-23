@@ -291,6 +291,7 @@ public class MpNotice_MP : MonoBehaviour
         text.alignment = TextAlignmentOptions.MidlineLeft;
         text.color = Cream;
         text.raycastTarget = false;
+        TextOutline.Attach(text, 1.3f, Color.black); // a black outline: readable on any plate and background
 
         var row = new Row { go = go, text = text, background = background, group = go.GetComponent<CanvasGroup>() };
 

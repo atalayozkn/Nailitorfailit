@@ -26,6 +26,8 @@ public class LobbyUIManager : MonoBehaviour
 
     void OnEnable()
     {
+        // The panel is switched on and off with the menus: whenever it shows again it is the manager the lobby players look for.
+        Instance = this;
         if (leaveLobbyButton != null) leaveLobbyButton.interactable = true;
         ShowVoiceHint();
     }
@@ -85,6 +87,7 @@ public class LobbyUIManager : MonoBehaviour
         if (statusText != null) statusText.text = nm.ReadySummary();
 
         RefreshInviteButton();
+        RefreshRoleButtons();
 
         if (!NetworkServer.active || startGameButtonComponent == null) return;
 
@@ -114,6 +117,16 @@ public class LobbyUIManager : MonoBehaviour
         bool show = NetworkServer.active || NetworkClient.active;
         if (inviteFriendsButton.gameObject.activeSelf != show) inviteFriendsButton.gameObject.SetActive(show);
         if (show && !inviteFriendsButton.interactable) inviteFriendsButton.interactable = true;
+    }
+
+    // Start (host) / Ready (guests) follow the local lobby player every frame the lobby is on screen. They used to be set
+    // only once, when the player's own row was added, so a row that came late (or not at all) left both buttons missing.
+    private void RefreshRoleButtons()
+    {
+        if (NetworkClient.localPlayer == null || !NetworkClient.localPlayer.TryGetComponent(out LobbyPlayer local)) return;
+
+        if (startGameButton != null && startGameButton.activeSelf != local.isHost) startGameButton.SetActive(local.isHost);
+        if (readyButton != null && readyButton.activeSelf == local.isHost) readyButton.SetActive(!local.isHost);
     }
 
     private void BindLobbyButtons()

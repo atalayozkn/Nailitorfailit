@@ -209,6 +209,7 @@ public class MpTestDriver_MP : MonoBehaviour
             case "ragwatch": return RagWatch(F(c, 1, 6f));
             case "emote": return Once(() => Sm()?.ChangeToEmoteState((int)F(c, 1, 1)));
             case "tiles": return Once(LogTiles);
+            case "fakeprogress": return Once(FakeProgress);
             case "wait": return Wait(F(c, 1, 1f));
             case "quit": return Once(() => { Report(); Application.Quit(0); });
         }
@@ -637,8 +638,30 @@ public class MpTestDriver_MP : MonoBehaviour
     private Constructor lastBuilt;
 
     // TMP-TILES: every constructor and tile as THIS machine sees it.
+    // TEST: every room except LivingRoom is counted as finished and LivingRoom is one tile short, so the next tile finished
+    // there ends the level on this machine.
+    private void FakeProgress()
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        FieldInfo total = typeof(RoomController).GetField("totalRequiredItemCount", flags);
+        FieldInfo done = typeof(RoomController).GetField("completedItemCount", flags);
+
+        foreach (RoomController room in FindObjectsByType<RoomController>(FindObjectsSortMode.None))
+        {
+            int t = (int)total.GetValue(room);
+
+            if (room.name == "LivingRoom") { done.SetValue(room, t - 1); Log($"fakeprogress: {room.name} set to {t - 1}/{t}"); continue; }
+
+            for (int i = 0; i < t; i++) room.IncreaseCounter();
+            Log($"fakeprogress: {room.name} finished ({t})");
+        }
+    }
+
     private void LogTiles()
     {
+        foreach (RoomController room in FindObjectsByType<RoomController>(FindObjectsSortMode.None))
+            Log($"ROOM {room.name} missing={room.GetMissingTileCount()} completed={room.IsCompleted()} {(NetworkServer.active ? "server" : "client")}");
+
         foreach (Constructor k in FindObjectsByType<Constructor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (!k.IsBuilt()) continue;

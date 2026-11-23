@@ -23399,7 +23399,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameTimeManager
   timerText: {fileID: 0}
-  maxRoundTime: 480
+  maxRoundTime: 900
   roundStartTimer: 5
   lowTimeWarning: 30
   lowTimeColor: {r: 1, g: 0.2, b: 0.15, a: 1}
@@ -34251,7 +34251,7 @@ Terrain:
   m_GameObject: {fileID: 1668510696}
   m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 63ae5c3775a31564499e3ff125c63e72, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 266bb30c1a1eece23917042e1c17a112, type: 2}
   m_TreeDistance: 5000
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
@@ -34300,7 +34300,7 @@ TerrainCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 63ae5c3775a31564499e3ff125c63e72, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: 266bb30c1a1eece23917042e1c17a112, type: 2}
   m_EnableTreeColliders: 1
 --- !u!1001 &1669327610
 PrefabInstance:
@@ -37274,6 +37274,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
   roomCurrencyReward: 0
+  rewardSafetyMargin: 1.15
   roomTimeReward: 0
   onVictoryEvent:
     m_PersistentCalls:
@@ -44580,6 +44581,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 522620a2ff54a204b85e59e3f425f110, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VersusMatch
+  controls: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sides:
   - label: Blue
     color: {r: 0.25, g: 0.55, b: 1, a: 1}
@@ -44627,7 +44629,6 @@ MonoBehaviour:
   - {fileID: 3594357879078389369, guid: 8a52e2a1aede2c2418177cf65ce3e6ca, type: 3}
   - {fileID: 6055049401394853128, guid: 80bc6356c47e8894d8a35d5c170effa2, type: 3}
   - {fileID: 4064863328087059342, guid: cbfc9448e2dfa834da3cb6eb2a774e9a, type: 3}
-  controls: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &2100729076
 GameObject:
   m_ObjectHideFlags: 0

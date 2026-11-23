@@ -86,11 +86,20 @@ public class LobbyPlayer : NetworkBehaviour
             GameManager.Instance.ShowLobbyMenu();
     }
 
+    // How long a new lobby player waits for the lobby panel before giving up on its row (it used to be 10 s). The panel is
+    // looked up right away, so this is only for a scene that is still loading.
+    private const float RowWaitSeconds = 3f;
+
     private IEnumerator AddRowWhenReady()
     {
         float waited = 0f;
-        while (LobbyUIManager.Instance == null && waited < 10f)
+        while (LobbyUIManager.Instance == null && waited < RowWaitSeconds)
         {
+            // The manager lives on the (inactive) lobby panel: find it there instead of waiting for it to wake up.
+            LobbyUIManager found = FindAnyObjectByType<LobbyUIManager>(FindObjectsInactive.Include);
+            if (found != null) LobbyUIManager.Instance = found;
+            if (LobbyUIManager.Instance != null) break;
+
             yield return new WaitForSeconds(0.1f);
             waited += 0.1f;
         }

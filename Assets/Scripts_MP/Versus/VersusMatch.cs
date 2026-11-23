@@ -450,6 +450,31 @@ public partial class VersusMatch : MonoBehaviour
         ServerStun(message.victim);
     }
 
+    private const float BatFlingSpeed = 7f;
+    private const float BatFlingLift = 4f;
+
+    // A bat hit throws the victim: the ragdoll takes a push away from the swinger first, then lies stunned (the same
+    // as a car hit), instead of dropping on the spot.
+    private bool ServerBatHit(NetworkIdentity swinger, uint victim)
+    {
+        if (winner != NoWinner) return false;
+        if (!NetworkServer.spawned.TryGetValue(victim, out NetworkIdentity identity)) return false;
+
+        PlayerNetwork_MP player = identity.GetComponentInChildren<PlayerNetwork_MP>(true);
+        if (player == null || player.isDead) return false;
+
+        if (lastStunAt.TryGetValue(victim, out float last) && Time.time - last < stunImmunity) return false;
+        lastStunAt[victim] = Time.time;
+
+        Vector3 away = player.transform.position - (swinger != null ? swinger.transform.position : player.transform.position);
+        away.y = 0f;
+        if (away.sqrMagnitude < 0.01f) away = swinger != null ? swinger.transform.forward : Vector3.forward;
+        away.Normalize();
+
+        player.ServerStunFling(away * BatFlingSpeed + Vector3.up * BatFlingLift);
+        return true;
+    }
+
     private bool ServerStun(uint victim)
     {
         if (winner != NoWinner) return false;
@@ -483,8 +508,11 @@ public partial class VersusMatch : MonoBehaviour
         if (!NetworkServer.spawned.TryGetValue(message.bat, out NetworkIdentity identity)) return;
         if (!identity.TryGetComponent(out VersusBat bat) || bat.Durability <= 0) return;
 
-        if (message.hit && message.victim != 0 && conn.identity != null && conn.identity.netId != message.victim)
-            ServerStun(message.victim);
+        // Only a hit that really lands on the opponent costs the bat a use (a swing at a wall or at a player who was just
+        // hit and is still protected costs nothing).
+        bool landed = message.hit && message.victim != 0 && conn.identity != null && conn.identity.netId != message.victim &&
+                      ServerBatHit(conn.identity, message.victim);
+        message.hit = landed;
 
         message.remaining = message.hit ? bat.Durability - 1 : bat.Durability;
         NetworkServer.SendToAll(message, Channels.Reliable, true);
