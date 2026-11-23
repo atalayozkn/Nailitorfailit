@@ -131,7 +131,8 @@ public class SettingsMenu : MonoBehaviour
         var content = CreateRect("Content", board.transform);
         Anchor(content, ContentArea);
 
-        string[] tabNames = { "Audio", "Display", "Graphics", "Language" };
+        // Language tab is disabled while Localization.Enabled is false.
+        string[] tabNames = Localization.Enabled ? new[] { "Audio", "Display", "Graphics", "Language" } : new[] { "Audio", "Display", "Graphics" };
         for (int i = 0; i < tabNames.Length; i++)
         {
             int index = i;
@@ -167,8 +168,11 @@ public class SettingsMenu : MonoBehaviour
             i => Mathf.RoundToInt(GameSettings.RenderScales[i] * 100f) + "%");
 
         // Language (Resources/Localization/Strings_tr.txt holds the Turkish texts)
+        if (Localization.Enabled)
+        {
         var language = pages[3].transform;
         AddChoice(language, 0, "Language", () => 2, () => (int)Localization.Current, i => Localization.Set((GameLanguage)i), i => Localization.LanguageName((GameLanguage)i));
+        }
 
         var reset = CreateButton("ResetButton", board.transform, "Defaults", GameSettings.ResetToDefaults);
         Anchor(reset.rectTransform, ResetButtonArea);

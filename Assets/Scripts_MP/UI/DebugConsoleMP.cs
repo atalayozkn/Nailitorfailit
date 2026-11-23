@@ -113,7 +113,7 @@ public class DebugConsoleMP : MonoBehaviour
 
     // Switch for the debug windows (console, network/performance panels): the ` / Insert key opens them. On for testing;
     // set to false and nothing opens them.
-    public const bool DebugMenuEnabled = true;
+    public const bool DebugMenuEnabled = false;
 
     static bool ReadToggleKey()
     {

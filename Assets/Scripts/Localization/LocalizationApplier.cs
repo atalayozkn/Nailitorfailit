@@ -23,6 +23,7 @@ public class LocalizationApplier : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Boot()
     {
+        if (!Localization.Enabled) return;
         if (FindAnyObjectByType<LocalizationApplier>() != null) return;
 
         var go = new GameObject("LocalizationApplier");

@@ -61,6 +61,15 @@ public class CurrencyManager_MP : MonoBehaviour
         }
     }
 
+    // Room reward: true when multiplayer took care of it (the caller then must not add it locally too).
+    public static bool TryRoomReward(int amount)
+    {
+        if (!NetworkModeHelper.IsNetworked || PerPlayerOverride != null) return false;
+
+        if (NetworkServer.active) ApplyServerChange(Mathf.Abs(amount));
+        return true; // clients: the server's StateMessage brings the new total
+    }
+
     public void RequestGain(int amount) => RequestChange(Mathf.Abs(amount));
 
     public void RequestSpend(int amount) => RequestChange(-Mathf.Abs(amount));

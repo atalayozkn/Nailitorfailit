@@ -40,7 +40,9 @@ public class LevelManager : MonoBehaviour
         remainingRoomCount--;
 
         // Bigger rooms pay more, so finishing the small rooms first pays for the oil the big one needs.
-        CurrencyManager.Instance?.GainCurrency(GetRoomReward(tileCount));
+        // Multiplayer: the wallet belongs to the server (a local gain was lost at the next purchase, which reset everybody to the
+        // server's older total). The host adds the reward to the shared wallet; clients receive the new total.
+        if (!CurrencyManager_MP.TryRoomReward(GetRoomReward(tileCount))) CurrencyManager.Instance?.GainCurrency(GetRoomReward(tileCount));
         GameTimeManager.Instance.IncreaseRoundTime(roomTimeReward); //Time Reward
 
         if (remainingRoomCount <= 0)

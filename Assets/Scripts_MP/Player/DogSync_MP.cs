@@ -45,6 +45,60 @@ public class DogSync_MP : NetworkBehaviour
     [SyncVar(hook = nameof(OnDogAnimChanged))] private int netDogAnimStateHash;
     [SyncVar(hook = nameof(OnMailAnimChanged))] private int netMailAnimStateHash;
 
+    // The host's dog bars (satiety, favor, energy, bowl). Every machine ran its own dog's timers, so a client's bars drifted away
+    // from the host's dog (and never showed the host's feeding). The host's player object publishes its numbers; the other
+    // machines write them over their own (hidden) dog's controllers and sliders.
+    [SyncVar] private bool netBarsPublished;
+    [SyncVar] private float netSatiety;
+    [SyncVar] private float netFavor;
+    [SyncVar] private float netEnergy;
+    [SyncVar] private int netBowlFood;
+    private float nextBarsAt;
+
+    private void SyncBars()
+    {
+        if (dog == null || Time.unscaledTime < nextBarsAt) return;
+        nextBarsAt = Time.unscaledTime + 0.25f;
+
+        if (VersusMatch.Instance != null) return; // Compete: everybody has their own dog
+
+        if (isServer && isOwned)
+        {
+            var bowl = transform.root.GetComponentInChildren<FoodBowl>(true);
+            netSatiety = MpSharedCompat.MpGetField(dog.GetComponent<SatietyController>(), "currentSatiety", netSatiety);
+            netFavor = MpSharedCompat.MpGetField(dog.GetComponent<FavorController>(), "currentFavor", (int)netFavor);
+            netEnergy = MpSharedCompat.MpGetField(dog.GetComponent<DogEnergyController>(), "currentEnergy", netEnergy);
+            if (bowl != null) netBowlFood = MpSharedCompat.MpGetField(bowl, "currentFood", netBowlFood);
+            netBarsPublished = true;
+            return;
+        }
+
+        if (isServer || isOwned || !netBarsPublished) return;
+
+        // Another machine's copy of the host's player: write its numbers onto THIS machine's own dog.
+        DogSync_MP mine = NetworkClient.localPlayer != null ? NetworkClient.localPlayer.GetComponentInChildren<DogSync_MP>(true) : null;
+        if (mine == null || mine == this || mine.dog == null) return;
+
+        ApplyBar(mine.dog.GetComponent<SatietyController>(), "currentSatiety", netSatiety);
+        ApplyBar(mine.dog.GetComponent<FavorController>(), "currentFavor", netFavor);
+        ApplyBar(mine.dog.GetComponent<DogEnergyController>(), "currentEnergy", netEnergy);
+        ApplyBar(mine.transform.root.GetComponentInChildren<FoodBowl>(true), "currentFood", netBowlFood);
+    }
+
+    private static void ApplyBar(MonoBehaviour bar, string field, float value)
+    {
+        if (bar == null) return;
+
+        var info = bar.GetType().GetField(field, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        if (info == null) return;
+
+        if (info.FieldType == typeof(int)) info.SetValue(bar, Mathf.RoundToInt(value));
+        else info.SetValue(bar, value);
+
+        var sliderInfo = bar.GetType().GetField("slider", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        if (sliderInfo?.GetValue(bar) is UnityEngine.UI.Slider slider) slider.value = value;
+    }
+
     private class PoseTrack
     {
         private struct Snapshot { public double time; public Vector3 pos; public Quaternion rot; }
@@ -258,6 +312,8 @@ public class DogSync_MP : NetworkBehaviour
     private void Update()
     {
         if (dog == null) return;
+
+        SyncBars();
 
         if (isOwned)
         {

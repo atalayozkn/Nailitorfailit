@@ -19,6 +19,10 @@ public enum GameLanguage
 // culture turns the "i" of English text into a capital "İ").
 public static class Localization
 {
+    // The language feature is switched OFF for now (not shipping yet): the game stays English, the Settings menu has no
+    // Language tab and LocalizationApplier does nothing. Set to true to bring it all back.
+    public const bool Enabled = false;
+
     private const string PrefKey = "NIOFI.Language";
     private const string TablePath = "Localization/Strings_tr";
 
@@ -43,6 +47,7 @@ public static class Localization
     {
         get
         {
+            if (!Enabled) return GameLanguage.English;
             if (current == null) current = (GameLanguage)Mathf.Clamp(PlayerPrefs.GetInt(PrefKey, 0), 0, 1);
             return current.Value;
         }
@@ -63,6 +68,7 @@ public static class Localization
 
     public static void Set(GameLanguage language)
     {
+        if (!Enabled) return;
         if (Current == language) return;
 
         current = language;
